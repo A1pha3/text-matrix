@@ -4,18 +4,18 @@ date: 2026-06-28T18:06:10+08:00
 slug: "fission-ai-openspec-spec-driven-development-guide"
 github_repo: "Fission-AI/OpenSpec"
 source_key: "gh:Fission-AI/OpenSpec"
-description: "对照 @fission-ai/openspec 1.13.1 与仓库 main 分支实跑一遍 openspec 的变更闭环：specs 与 changes 两个目录怎么分、delta spec 的四种操作、归档时怎么合并回真相、40 个工具目标靠 30 个命令适配器和 10 个 skills-only 落地，以及遥测在什么条件下才真的发出第一条数据。"
+description: "对照 @fission-ai/openspec 1.13.2 与仓库 main 分支实跑一遍 openspec 的变更闭环：specs 与 changes 两个目录怎么分、delta spec 的四种操作、归档时怎么合并回真相、40 个工具目标靠 30 个命令适配器和 10 个 skills-only 落地，以及遥测在什么条件下才真的发出第一条数据。"
 draft: false
 categories: ["技术笔记"]
 tags: ["AI Agent", "Spec-Driven Development", "Claude Code", "Cursor"]
-lastmod: "2026-09-21T10:05:00+08:00"
+lastmod: "2026-09-29T10:30:00+08:00"
 ---
 
 > **读者**：用过 Claude Code、Cursor 一类编码助手，正在判断「要不要把 spec 写进仓库、以及写进去的东西能不能跨工具活下来」的工程师。
 >
 > **读法**：先给系统地图，再把「数据格式」和「工具适配」两条线分开讲，最后给采用顺序、排查清单和一条一条可以照着跑的复核命令。
 >
-> **核对基线**：`@fission-ai/openspec` **1.13.1**（npm 发布于 2026-09-17）与仓库 `main` 分支提交 `bae58cf`（2026-09-17），核对日期 2026-09-21。本地实跑了 `init --tools claude,cursor`、`new change`、`validate`、`status`、`archive`、`list`、`doctor`、`config list`，在一个临时 git 仓库里走完一个真实变更的闭环，文中的命令输出都是这次跑出来的。没有实跑的是各 AI 工具客户端里的斜杠命令触发——那要装齐 40 个客户端；这类断言一律写成文档口径（标 `docs/...`），不和实测混在一起。
+> **核对基线**：`@fission-ai/openspec` **1.13.2**（npm 发布于 2026-09-23）与仓库 `main` 分支提交 `d4e1c77`（2026-09-28），核对日期 2026-09-29。本地实跑了 `init --tools claude,cursor`、`new change`、`validate`、`status`、`archive`、`list`、`doctor`、`config list`，在一个临时 git 仓库里走完一个真实变更的闭环，文中的命令输出都是这次跑出来的（实测输出采集于 1.13.1；1.13.2 是纯补丁版本，全部行号与文档引用已对 1.13.2 逐一复核，两者在本文涉及的面上无差异）。没有实跑的是各 AI 工具客户端里的斜杠命令触发——那要装齐 40 个客户端；这类断言一律写成文档口径（标 `docs/...`），不和实测混在一起。
 
 ## 目录
 
@@ -47,18 +47,18 @@ OpenSpec 里最值得留下的东西，不是那 12 条工作流命令的提示�
 
 ## 仓库速览
 
-| 项目 | 信息（核对时间 2026-09-21） |
+| 项目 | 信息（核对时间 2026-09-29） |
 |------|------|
 | 仓库 | [github.com/Fission-AI/OpenSpec](https://github.com/Fission-AI/OpenSpec) |
 | 描述 | Spec-driven development (SDD) for AI coding assistants. |
 | 语言 / 许可证 | TypeScript / MIT |
 | 仓库建立 | 2025-08-05；npm 首个版本 `0.1.0` 发布于 2025-09-06 |
-| 当前版本 | `1.13.1`，npm 发布 2026-09-17；累计发布 49 个版本 |
-| 关注度 | 69,684 stars、4,772 forks；开放 issue 125 个、开放 PR 119 个。注意 GitHub 的 `open_issues_count` 字段把两者合并报（此刻是 244），很多脚本把它当「issue 数」用 |
+| 当前版本 | `1.13.2`，npm 发布 2026-09-23；累计发布 50 个版本 |
+| 关注度 | 70,595 stars、4,841 forks；开放 issue 124 个、开放 PR 100 个。注意 GitHub 的 `open_issues_count` 字段把两者合并报（此刻是 224），很多脚本把它当「issue 数」用 |
 | 安装 | `npm install -g @fission-ai/openspec@latest` |
 | 运行要求 | Node.js 20.19.0 及以上（`package.json` 的 `engines`） |
 | 运行时依赖 | 10 个：commander、zod、yaml、chalk、ora、fast-glob、diff、cross-spawn、@inquirer/core、@inquirer/prompts |
-| 代码规模 | `src/` 196 个 `.ts` 文件、47,978 行；`test/` 209 个文件 |
+| 代码规模 | `src/` 197 个 `.ts` 文件、48,593 行；`test/` 218 个文件 |
 | 工具目标 | 注册表 `AI_TOOLS` 共 40 项（`src/core/config.ts:41` 起），README 对外写的是 "30+ tools" |
 
 「仓库 2025-08-05 建立」和「npm 首发 2025-09-06」是两个不同的日期，很多介绍会把它俩混成一个。星标数这类数字只会随时间变，看的时候以自己现场查一次 GitHub 的结果为准。
@@ -231,12 +231,12 @@ the system preference.
 
 另外两件实测出来的行为，对判断「能不能信它」比上面那段更关键：
 
-- **没做完的任务不会拦住归档。** `tasks.md` 里留一个未勾选项，`openspec archive` 在交互模式下会问你（默认答案是不），带 `-y` 时只打一行警告继续（`src/core/archive.ts:1365`）；`--json` 且没有 `--yes` 才抛错，错误码 `archive_tasks_incomplete`。
+- **没做完的任务不会拦住归档。** `tasks.md` 里留一个未勾选项，`openspec archive` 在交互模式下会问你（默认答案是不），带 `-y` 时只打一行警告继续（`src/core/archive.ts:1591` 起）；`--json` 且没有 `--yes` 才抛错，错误码 `archive_tasks_incomplete`。
 - **归档目标名在动任何 spec 之前算好。** 同一天第二次归档同名 change 是常事，若等到合并之后再发现冲突，specs 已经被改而变更没归档（`src/core/archive.ts` 在那段前面留了注释说明这个次序是刻意的）。
 
 ## 命令行这一半
 
-`openspec --help` 在 1.13.1 下列出 23 个顶层条目，早就不止 `init` / `list` / `view` 三个：
+`openspec --help` 在 1.13.x 下列出 23 个顶层条目，早就不止 `init` / `list` / `view` 三个：
 
 ```text
 init  update  list  view  change  archive  spec  config  schema  schemas
@@ -293,7 +293,7 @@ Fix: Run openspec init to create a root here.
 
 还有一处容易写错的映射：命令 ID 和 skill 名不是一一对应。`/opsx:apply` 对应的 skill 叫 `openspec-apply-change`，`/opsx:sync` 叫 `openspec-sync-specs`。我在 Claude Code 目录下看到的 6 个文件夹是 `openspec-{propose,explore,apply-change,update-change,sync-specs,archive-change}`。想凭 `/opsx:<id>` 拼 skill 目录名，会有一半拼不上。
 
-生成出来的每份 skill 都带一行 `allowed-tools: Bash(openspec:*)`，字面读法是把这条 skill 允许的命令面收在 `openspec` 前缀上。它在你机器上究竟换来多少次免确认，我没有装客户端去实测，属于要自己验的一格；能确认的是这一行是刻意加的而不是模板残留——仓库里那条还没归档的 change `add-skill-cli-auto-approval` 就是在推进它。
+生成出来的每份 skill 都带一行 `allowed-tools: Bash(openspec:*)`。别按字面把它读成「把允许的命令收窄到 `openspec` 前缀」——`src/core/command-generation/shared/allowed-tools.ts` 的注释写明了语义：这个字段**只预批准、不限制**，认它的助手会跳过对 `openspec` 调用的逐次确认，而 skill 里需要的其他工具（读文件、写文件、跑构建测试的任意 Bash）照常走用户既有的权限设置；不认这个字段的工具则直接忽略它。它在你机器上究竟换来多少次免确认，我没有装客户端去实测，属于要自己验的一格；能确认的是这一行是刻意加的而不是模板残留——仓库里那条还没归档的 change `add-skill-cli-auto-approval` 就是在推进它。
 
 命令文件里则写死了计划边界：`propose` 的正文要求助手只产出计划文档，产出后停下、不在同一轮开始实现，等一次新的用户指令再走 apply——即便最初那句话听起来像是在要求修 bug。
 
@@ -419,7 +419,7 @@ README 里三段对比是原话，我把能核对的部分量化了一遍：
 <details>
 <summary>2. 归档会做几件事？如果 tasks.md 里还有未勾选项会怎样？</summary>
 
-两件事：把 delta 并进 `openspec/specs/`，把 change 文件夹搬到 `changes/archive/<日期>-<名字>/`。未完成任务不会硬拦：交互模式弹确认且默认不继续，带 `-y` 只警告后继续，`--json` 且没有 `--yes` 才抛错，错误码 `archive_tasks_incomplete`（`src/core/archive.ts:1365`）。
+两件事：把 delta 并进 `openspec/specs/`，把 change 文件夹搬到 `changes/archive/<日期>-<名字>/`。未完成任务不会硬拦：交互模式弹确认且默认不继续，带 `-y` 只警告后继续，`--json` 且没有 `--yes` 才抛错，错误码 `archive_tasks_incomplete`（`src/core/archive.ts:1591` 起）。
 </details>
 
 <details>

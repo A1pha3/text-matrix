@@ -1,666 +1,193 @@
 ---
-title: "Rockyzsu/stock：7.5K Stars·Python量化交易系统"
+title: "Rockyzsu/stock：10 年实盘攒出的 Python 量化交易工作台"
 date: "2026-04-12T02:31:39+08:00"
+lastmod: "2026-09-30T10:00:00+08:00"
 slug: rockyzsu-stock-quant-trading-system-guide
 github_repo: "Rockyzsu/stock"
 source_key: "gh:Rockyzsu/stock"
-description: "Rockyzsu/stock 是一个 Python 量化交易系统，覆盖 A 股、港股、基金、可转债等，支持机器学习和技术分析。"
+description: "以 2026-09-30 的 master 分支核对 Rockyzsu/stock：集思录采集、转债监控、easytrader 实盘下单、PTrade 逆回购串成一条个人量化流水线。README 的文件清单已随重构漂移，本文按真实目录拆解工程细节、可复用的部分与上手顺序。"
 draft: false
 categories: ["技术笔记"]
-tags: ["量化交易", "Python", "A股", "机器学习", "金融"]
+tags: ["量化交易", "Python", "A股", "可转债", "开源项目"]
 ---
 
-# Rockyzsu/stock：7.5K Stars·Python 量化交易系统·A 股/港股/基金/转债全覆盖·机器学习+技术分析
+# Rockyzsu/stock：10 年实盘攒出的 Python 量化交易工作台
 
-## 学习目标
+先给判断：这不是一个拿来就能用的策略库，而是一个人把炒股全流程代码化的活标本。数据怎么采、登录态怎么维持、行情怎么监控、单子怎么下、持仓怎么入库——工程侧的每一环都有能跑的实盘代码；至于策略本身，仓库里没有圣杯，作者自己的 README 开头就把姿态摆正了：**"更好的帮助自己炒股(亏钱-。-)"**。
 
-阅读本文后，你应该能够：
+作者 Rocky Chen 从 2016 年 4 月开始维护这个仓库，写代码的同时经营博客 [30daydo.com](http://30daydo.com) 和公众号"可转债量化分析"，仓库描述是"30天掌握量化交易 (持续更新)"。截至 2026-09-30，它有 8614 stars、1654 forks、747 次提交，BSD-3-Clause 许可，纯 Python。
 
-1. **了解 Rockyzsu/stock 项目**：理解其定位、核心功能和项目结构
-2. **掌握选股策略**：能够使用 filter_stock.py 和 select_stock.py 进行选股
-3. **理解基金分析**：掌握 LOF 监控、ARK ETF 持仓分析等方法
-4. **应用机器学习**：能够使用贝叶斯分类器等进行股价预测
-5. **评估适用性**：判断该系统是否适合你的量化交易需求**
+## 先知道一件事：README 已经落后于代码
 
-## 目录
+读这个仓库前有一个必要前提。README 顶部留着一行 2022 年 12 月的声明：
 
-- [项目概述](#一项目概述)
-- [核心功能](#二核心功能)
-- [数据库配置](#三数据库配置)
-- [安装与使用](#四安装与使用)
-- [回测系统](#五回测系统)
-- [自动交易接口](#六自动交易接口)
-- [数据分析示例](#七数据分析示例)
-- [相关资源](#八相关资源)
-- [常见问题](#常见问题)
-- [自测题](#自测题)
-- [练习](#练习)
-- [进阶路径](#进阶路径)
-- [资料口径说明](#资料口径说明)
-- [总结](#九总结)
+> 目前正在重构项目代码，目录结构可能与下面描述有些出入，后期会慢慢更新修改，感谢大家的关注与支持。
 
-## 一，项目概述
+这不是客套话。README 后半部分列的根目录脚本，一半以上已经搬进子目录或改名，对照 2026-09-30 的 master 分支实际目录：
 
-### 1.1 项目定位
-
-**Rockyzsu/stock** 是一个**面向中文市场的 Python 量化交易系统**，作者署名 Rocky Chen，slogan 是"更好的帮助自己炒股（亏钱-。-）"。
-
-> "码农的量化交易，把经历写成代码推送到 github。"
-
-**核心定位**：用代码实现股票、基金、可转债的自动化分析、监控与交易。
-
-### 1.2 核心数据
-
-| 指标 | 数值 |
+| README 说的 | 实际情况 |
 |------|------|
-| Stars | **7.5k** ⭐ |
-| Forks | 1.5k |
-| Watchers | 276 |
-| 贡献者 | 2 (Rockyzsu, pi-pi) |
-| 提交数 | **745** |
-| 语言 | **Python 100%** |
-| 许可证 | **BSD-3-Clause** |
+| 根目录 `filter_stock.py` | 已迁到 `analysis/filterstock.py`（`FilterStock` 类） |
+| 根目录 `jisilu.py` | 已迁到 `datahub/jisilu.py`（15KB 的 `Jisilu` 类） |
+| 根目录 `push_msn.py` | 已迁到 `utils/push_msn.py` |
+| 根目录 `big_deal.py` | 已迁到 `monitor/big_deal.py`，根目录另有 `real_time_big_deal.py` |
+| 根目录 `get_break_high.py` | 已迁到 `analysis/get_break_high_low.py` |
+| `fund/LOFShareDection.py` | 实际文件名是 `LOFShareDetection.py`（README 少了个 t） |
+| `analysis/get_zt_info` | 当前分支已找不到此文件 |
+| `bond_monitor/` | 当前分支已找不到此目录 |
 
-### 1.3 项目结构
+`fetch_each_day.py`、`simulation.py`、`win_or_lost_each_day.py`、`foreign_exchange.py`、`ipo_stock.py` 这些 README 点过名的脚本也都不在了。所以本文全部按实际目录讲，不按 README 讲。
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    stock 项目目录结构                                         │
-├─────────────────────────────────────────────────────────────┤
-│                                                               │
-│   analysis/           数据分析模块                                          │
-│   ├── get_zt_info    次新板块涨停强度分析                              │
-│   ├── diagnose_stock  股票诊断（黑历史/东北股检测）                       │
-│   ├── ipospeed       IPO发行速度与指数相关性                            │
-│   └── fd_money       涨停板封单金额                                      │
-│                                                               │
-│   datahub/            数据源采集模块                                      │
-│   ├── foreignexchange  美元兑人民币汇率                                   │
-│   ├── niwen           宁稳可转债下载                                     │
-│   ├── bond_industry   可转债行业分布                                     │
-│   └── ceiling_break   涨停板封榜监控                                     │
-│                                                               │
-│   fund/               基金分析模块                                        │
-│   ├── LOFShareDection  LOF/ETF场内份额变动                             │
-│   ├── ark_funds       ARK ETF每日持仓                                   │
-│   ├── etf_info        指数基金持仓股监控                                 │
-│   └── ttjj            天天基金数据                                       │
-│                                                               │
-│   futu/               富途牛牛接口                                       │
-│   hk_stock/           港股分析                                           │
-│   k-line/             K线技术形态识别                                    │
-│   machine_learning/    机器学习预测                                       │
-│   trader/             交易模块                                           │
-│   ptrade/             P-trade自动交易实盘                                │
-│   common/             常用函数库                                         │
-│   configure/          数据库配置                                         │
-│   daily/              日常数据                                           │
-│   monitor/            监控模块                                           │
-│   juejin/             掘金量化                                           │
-│   source_code_reading/ 源码阅读                                           │
-│   backtest/           回测模块                                           │
-│   temp/               临时文件                                           │
-│                                                               │
-└─────────────────────────────────────────────────────────────┘
+## 系统地图：一条流水线，五个环节
+
+抛开目录名，这个仓库真正的东西是一条个人量化流水线：
+
+```mermaid
+graph LR
+    A["datahub/ 采集<br/>集思录 · 东财热点 · 巨潮公告 · 汇率"] --> DB[("MySQL / MongoDB")]
+    M["monitor/ 监控<br/>转债价格 · 大单 · 涨停开板"] --> DB
+    DB --> F["fund/ · analysis/ 分析<br/>份额 · 持仓 · 选股过滤"]
+    F --> T["trader/ 交易<br/>easytrader 客户端下单"]
+    DB --> P["ptrade/ · futu/<br/>逆回购策略 · 港股行情"]
+    C["configure/<br/>DBSelector 多环境配置"] -.支撑.-> A
+    C -.-> M
+    C -.-> F
+    C -.-> T
 ```
 
-## 二，核心功能
+各环节的体量（文件数按 2026-09-30 的 git tree 统计）：
 
-### 2.1 选股策略
+| 环节 | 目录 | 体量 | 干什么 |
+|------|------|------|------|
+| 采集 | `datahub/` | 33 个文件 | 集思录、东财热点板块、同花顺行业、巨潮公告、汇率、黑名单 |
+| 分析 | `fund/` + `analysis/` | 54 + 50 | LOF/ETF 份额、ARK 持仓、封基轮动、选股过滤、龙虎榜 |
+| 监控 | `monitor/` | 10 个文件 | 转债实时价格、大单、涨停开板、预警推送 |
+| 交易 | `trader/` `ptrade/` `futu/` | 3 + 3 + 6 | easytrader 客户端下单、PTrade 逆回购、富途行情 |
+| 底座 | `configure/` `common/` `utils/` | 4 + 8 + 4 | 数据库多环境切换、日志基类、推送、交割单 |
 
-| 功能 | 文件 | 说明 |
-|------|------|------|
-| **条件选股** | `filter_stock.py` | 市盈率、流通量、股东数、基金持股数等因子 |
-| **技术选股** | `select_stock.py` | 根据经验自定义策略 |
-| **新股分析** | `new_stock_break.py` | 新股开板后多少天回到开板价 |
-| **50 日新高** | `get_break_high.py` | 获取当天破 50 天新高的股票 |
-| **热门股** | `fetch_each_day.py` | 每天换手率前 50 的热门股 |
+## 底座：DBSelector 和一份诚实的 config.json
+
+几乎所有脚本的数据存取都走 `configure/settings.py` 里的 `DBSelector`。它的思路简单直接：一份 `config.json`，按"数据库类型 + 环境名"两维取连接参数，同一套代码在本地和服务器之间切换时只改一个参数：
 
 ```python
-# filter_stock.py 示例：多因子选股
-def filter_stock(factors):
-    """
-    factors: dict，包含以下参数
-    - pe_ratio: 市盈率范围 (min, max)
-    - turnover: 换手率范围
-    - holder_count: 股东数范围
-    - fund_holding: 基金持股比例
-    """
-    stocks = fetch_all_stocks()
-    filtered = []
-    for stock in stocks:
-        if (factors['pe_ratio'][0] <= stock.pe <= factors['pe_ratio'][1]
-            and factors['turnover'][0] <= stock.turnover <= factors['turnover'][1]
-            and stock.holder_count >= factors['holder_count']
-            and stock.fund_holding_ratio >= factors['fund_holding']):
-            filtered.append(stock)
-    return filtered
-```
-
-### 2.2 基金分析
-
-| 功能 | 文件 | 说明 |
-|------|------|------|
-| **LOF 监控** | `LOFShareDection.py` | LOF、ETF 场内份额变动 |
-| **ARK ETF** | `ark_funds.py` | ARK ETF 每日持仓数据 |
-| **基金份额** | `fund_share_monitor.py` | 上交所/深交所基金份额 |
-| **ETF 持仓** | `etf_info.py` | 市场指数基金的持仓股监控 |
-| **天天基金** | `ttjj.py` | 天天基金数据获取 |
-| **蛋卷基金** | `danjuan_fund.py` | 雪球蛋卷基金数据 |
-
-```python
-# ark_funds.py 示例：获取ARK ETF持仓
-def get_ark_daily_holdings():
-    """获取ARK ETF每日持仓数据并存入MongoDB"""
-    import requests
-    from datetime import datetime
-    from pymongo import MongoClient
-    
-    url = "https://arkfunds.com/api/holdings"
-    headers = {"User-Agent": "Mozilla/5.0"}
-    response = requests.get(url, headers=headers)
-    data = response.json()
-    
-    client = MongoClient('mongodb://user:pass@host:27017')
-    db = client['ark_funds']
-    collection = db['daily_holdings']
-    
-    for etf_name, holdings in data.items():
-        doc = {
-            'etf': etf_name,
-            'date': datetime.now().strftime('%Y-%m-%d'),
-            'holdings': holdings
-        }
-        collection.insert_one(doc)
-```
-
-### 2.3 可转债监控
-
-| 功能 | 文件 | 说明 |
-|------|------|------|
-| **集思录** | `jisilu.py` | 集思录可转债行情 |
-| **可转债监控** | `bond_monitor/` | 可转债实时监控 |
-| **行业分布** | `bond_industry_info.py` | 可转债行业分布 |
-| **溢价率** | `jisilu_bond_release.py` | 集思录基金折价/溢价率 |
-
-```python
-# jisilu.py 示例：获取集思录可转债数据
-def fetch_jisilu_bonds():
-    """从集思录获取可转债行情数据"""
-    import requests
-    import pandas as pd
-    
-    url = "https://www.jisilu.com/data/cbnew/cb_list_new"
-    headers = {
-        "User-Agent": "Mozilla/5.0",
-        "X-Requested-With": "XMLHttpRequest"
-    }
-    response = requests.post(url, headers=headers)
-    
-    if response.status_code == 200:
-        data = response.json()
-        df = pd.DataFrame(data['rows'])
-        return df
-    return None
-```
-
-### 2.4 K 线技术形态识别
-
-| 功能 | 文件 | 说明 |
-|------|------|------|
-| **形态识别** | `recognize_form.py` | 通过 talib 识别常见形态 |
-| **K 线时态** | `k_line.py` | K 线时态数据 |
-
-```python
-# recognize_form.py 示例：识别K线形态
-import talib
-import numpy as np
-
-def recognize_pattern(prices):
-    """
-    识别常见K线形态：三只乌鸦、锤子线、吞没形态等
-    prices: dict，包含 'open', 'high', 'low', 'close'
-    """
-    open_prices = np.array(prices['open'])
-    high_prices = np.array(prices['high'])
-    low_prices = np.array(prices['low'])
-    close_prices = np.array(prices['close'])
-    
-    patterns = {}
-    
-    # 锤子线 (Hammer)
-    patterns['HAMMER'] = talib.CDLHAMMER(
-        open_prices, high_prices, low_prices, close_prices
-    )
-    
-    # 三只乌鸦 (Three Black Crows)
-    patterns['TRISTAR'] = talib.CDL3WHITESOLDIERS(
-        open_prices, high_prices, low_prices, close_prices
-    )
-    
-    # 吞没形态 (Engulfing)
-    patterns['ENGULFING'] = talib.CDLENGULFING(
-        open_prices, high_prices, low_prices, close_prices
-    )
-    
-    return {k: v[-1] for k, v in patterns.items() if v[-1] != 0}
-```
-
-### 2.5 机器学习预测
-
-| 功能 | 目录 | 说明 |
-|------|------|------|
-| **贝叶斯预测** | `machine_learning/` | 贝叶斯分类器 |
-| **回归分析** | `machine_learning/` | 股价回归预测 |
-
-```python
-# machine_learning/bayes_predict.py 示例
-from sklearn.naive_bayes import GaussianNB
-from sklearn.model_selection import train_test_split
-import numpy as np
-
-def train_stock_predictor(features, labels):
-    """
-    使用贝叶斯分类器预测股票涨跌
-    features: 特征矩阵 (n_samples, n_features)
-    labels: 标签 (涨/跌)
-    """
-    X_train, X_test, y_train, y_test = train_test_split(
-        features, labels, test_size=0.2
-    )
-    
-    model = GaussianNB()
-    model.fit(X_train, y_train)
-    
-    accuracy = model.score(X_test, y_test)
-    return model, accuracy
-```
-
-### 2.6 实时监控
-
-| 功能 | 文件 | 说明 |
-|------|------|------|
-| **大单监控** | `big_deal.py` | 每天 A 股大单交易 |
-| **涨停监控** | `ceiling_break.py` | 涨停板封榜 |
-| **股价提醒** | `push_msn.py` | 短信/微信价格提醒 |
-| **新股监控** | `new_stock_fund.py` | 打新基金 |
-
-```python
-# push_msn.py 示例：价格提醒
-def check_and_notify(stock_code, target_price, condition='above'):
-    """
-    检查股价，达到条件时发送通知
-    condition: 'above' 或 'below'
-    """
-    current_price = get_realtime_price(stock_code)
-    
-    if condition == 'above' and current_price >= target_price:
-        send_notification(f"{stock_code} 达到 {target_price}")
-    elif condition == 'below' and current_price <= target_price:
-        send_notification(f"{stock_code} 跌破 {target_price}")
-```
-
-## 三，数据库配置
-
-### 3.1 配置结构
-
-```
-configure/
-├── sample_config.json  # 配置模板
-├── config.json         # 实际配置
-└── setting.py         # 配置读取类
-```
-
-### 3.2 setting.py 核心代码
-
-```python
-# configure/setting.py
-class Config:
-    def __init__(self):
-        self.json_data = self.load_config()
-    
-    def load_config(self):
-        import json
-        with open('configure/config.json', 'r', encoding='utf-8') as f:
-            return json.load(f)
-    
-    def config(self, db_type='mysql', local='ubuntu'):
-        """获取数据库连接配置"""
+class DBSelector(object):
+    def config(self, db_type='mysql', local='qq'):
         db_dict = self.json_data[db_type][local]
-        return (
-            db_dict['user'],
-            db_dict['password'],
-            db_dict['host'],
-            db_dict['port']
-        )
-    
-    def get_engine(self, db, type_='ubuntu'):
-        """获取SQLAlchemy引擎"""
-        from sqlalchemy import create_engine
-        user, password, host, port = self.config('mysql', type_)
-        engine = create_engine(
-            f'mysql+pymysql://{user}:{password}@{host}:{port}/{db}?charset=utf8'
-        )
-        return engine
-    
-    def get_mysql_conn(self, db, type_='ubuntu'):
-        """获取PyMySQL连接"""
-        import pymysql
-        user, password, host, port = self.config('mysql', type_)
-        conn = pymysql.connect(
-            host=host, port=port, user=user,
-            password=password, db=db, charset='utf8'
-        )
-        return conn
-    
-    def mongo(self, location_type='ubuntu', async_type=False):
-        """获取MongoDB连接"""
-        user, password, host, port = self.config('mongo', location_type)
-        connect_uri = f'mongodb://{user}:{password}@{host}:{port}'
-        
-        if async_type:
-            from motor.motor_asyncio import AsyncIOMotorClient
-            return AsyncIOMotorClient(connect_uri)
-        else:
-            import pymongo
-            return pymongo.MongoClient(connect_uri)
+        user = db_dict['user']
+        password = db_dict['password']
+        host = db_dict['host']
+        port = db_dict['port']
+        return (user, password, host, port)
 ```
 
-### 3.3 config.json 示例
+`configure/sample_config.json` 给出了全貌：MySQL 预留了 `local`/`qq`/`ubuntu`/`ptrade`/`tencent-1c` 五个环境，MongoDB、Redis、邮件各一节，剩下的配置键暴露了这个系统真实的依赖面——`jsl_cookies`（集思录登录态）、`jsl_monitor`（监控参数）、`ts_token`（tushare）、`xc_token_pro`（湘财证券版 tushare）、`enterprise_wechat`（企业微信推送）、`twilio`。
 
-```json
-{
-    "mysql": {
-        "ubuntu": {
-            "user": "root",
-            "password": "your_password",
-            "host": "localhost",
-            "port": 3306
-        },
-        "server": {
-            "user": "prod_user",
-            "password": "prod_password",
-            "host": "db.example.com",
-            "port": 3306
-        }
-    },
-    "mongo": {
-        "ubuntu": {
-            "user": "mongo_user",
-            "password": "mongo_password",
-            "host": "localhost",
-            "port": 27017
-        }
-    }
-}
-```
+对这套设计的取舍，作者在 README 里写得坦白：这是"为了同一套代码便于切换线上和本地的数据库，并没有采用环境变量的方式存储用户密码"，需要的人可以自己改。注意文件名是 `settings.py`，README 里写的 `setting.py` 是旧写法。
 
-## 四，安装与使用
+一个要提醒的坑：`sample_config.json` 也滞后于代码。`monitor/jsl_monitor.py` 读的是 `ZZ_PERCENT`、`ZG_PERCENT`、`REMAIN_SIZE`、`ACCESS_INTERVAL_REALTIME` 这些键，sample 里根本没有，sample 给的是另一个名字 `MONITOR_PERCENT`。照着 sample 配置，监控模块跑不起来——配的时候以代码里实际读取的键为准。
 
-### 4.1 环境要求
+## 采集：集思录是整个仓库的中轴
 
-```bash
-# Python 3.x
-python --version  # Python 3.7+
+`datahub/jisilu.py` 是这个仓库最有含金量的单文件。它解决的问题是：集思录的可转债数据要登录才能拿全，而登录有前端加密。作者的解法是 `jsl_login.py` 配一个 126KB 的 `js_file/encode_jsl.js`，把加密参数的计算交给 JS 引擎执行，拿到登录态后抓全市场转债行情，写入 MySQL。
 
-# 核心依赖
-pip install pandas numpy
-pip install sqlalchemy pymysql pymongo
-pip install requests
-pip install talib  # 技术分析
-pip install scikit-learn  # 机器学习
-```
-
-### 4.2 快速开始
-
-```bash
-# 1. 克隆仓库
-git clone https://github.com/Rockyzsu/stock.git
-cd stock
-
-# 2. 安装依赖
-pip install -r requirements.txt
-
-# 3. 配置数据库
-cp configure/sample_config.json configure/config.json
-# 编辑 config.json 填入你的数据库信息
-
-# 4. 运行示例
-python select_stock.py          # 选股
-python jisilu.py               # 可转债数据
-python get_break_high.py       # 50日新高
-```
-
-### 4.3 常用命令
-
-| 命令 | 功能 |
-|------|------|
-| `python select_stock.py` | 执行选股策略 |
-| `python filter_stock.py` | 多因子选股 |
-| `python jisilu.py` | 获取集思录数据 |
-| `python big_deal.py` | 大单监控 |
-| `python push_msn.py` | 价格提醒 |
-
-## 五，回测系统
-
-### 5.1 backtest 目录
-
-```
-backtest/
-├── macd_demo.py      # MACD策略回测
-├── rsi_demo.py      # RSI策略回测
-└── bollinger_demo.py # 布林带策略回测
-```
-
-### 5.2 回测示例
+同样思路贯穿其他采集脚本：`ark_funds.py` 抓 ARK 官网的持仓 PDF 并解析，写进 MongoDB 并建了唯一索引防重：
 
 ```python
-# backtest/macd_demo.py
-import pandas as pd
-import numpy as np
-import talib
-
-def backtest_macd(data, fast=12, slow=26, signal=9):
-    """
-    MACD策略回测
-    金叉买入，死叉卖出
-    """
-    # 计算MACD
-    macd, signal_line, hist = talib.MACD(
-        data['close'].values,
-        fastperiod=fast,
-        slowperiod=slow,
-        signalperiod=signal
-    )
-    
-    # 生成信号
-    data['macd'] = macd
-    data['signal'] = signal_line
-    data['hist'] = hist
-    data['signal'][data['hist'] > 0] = 1   # 买入
-    data['signal'][data['hist'] < 0] = -1  # 卖出
-    
-    # 计算收益
-    returns = data['close'].pct_change()
-    strategy_returns = returns * data['signal'].shift(1)
-    
-    # 累计收益
-    cumulative = (1 + strategy_returns).cumprod()
-    
-    return {
-        'total_return': cumulative.iloc[-1] - 1,
-        'sharpe_ratio': strategy_returns.mean() / strategy_returns.std() * np.sqrt(252)
-    }
+class ARKFundSpider(BaseService):
+    def __init__(self):
+        super(ARKFundSpider, self).__init__('../log/ark.log')
+        self.url = 'https://ark-funds.com/auto/gettopten.php'
+        self.data = {'ticker': None}
+        self.doc = self.mongodb()
 ```
 
-## 六，自动交易接口
+其余采集脚本各有分工：`zdt.py` 抓涨停热度、`SPSIOP_PRICE.py` 爬华宝油气估值来算折价、`jucao_announcement.py` 批量下载巨潮公告 PDF、`black_list_sql.py` 维护有黑历史的股票名单。`foreignexchange.py` 盯美元兑人民币汇率。宁稳网的可转债数据在 `ninwen.py`（README 写作 `niwen.py`，又是旧拼写）。
 
-### 6.1 P-trade 接口
+## 分析：基金侧最厚，选股有两条线
+
+`fund/` 是全仓库最大的目录。除了采集脚本，核心是三类：
+
+**份额监控**。`LOFShareDetection.py`、`ETFShareDetection.py` 和共用的 `ShareDetection.py` 跟踪场内基金份额变动——LOF/ETF 份额申赎是这类折溢价策略的核心信号。`fund_share_update.py` 和 `fund_share_monitor.py` 分别负责沪深两所份额的更新和查询。
+
+**封基轮动回测**。`closed_end_fund_backtrade/` 子目录带了一套完整的周度份额轮动回测，目录里还留着一张跑出来的收益率曲线图。这是仓库里少有的"策略 + 回测 + 结果"齐全的部分。
+
+**持仓穿透**。`etf_info.py` 监控指数基金的持仓股，`ttjj.py` 和 `danjuan_fund.py` 分别对接天天基金和雪球蛋卷。
+
+选股这边的新旧分明要这么看。根目录 `select_stock.py` 是文件头自注"适用 tushare 0.7.5"的老代码，里面还有 `Queue`、`unicode()` 这种 Python 2 写法，在新版 tushare 和 Python 3 下跑不了；`analysis/filterstock.py` 名字最接近 README 说的"多因子选股"，实际内容却是另一回事——一年新低筛选、每日全市场行情入库、地区分类统计，用的同样是 tushare 已下线的旧接口。选股相关的工作更多以 notebook 形态留在 `analysis/选股.ipynb`（198KB）里；README 那句"市盈率、流通量、股东数、基金持股数"描述的旧版 `filter_stock.py` 已被删除，`select_stock.py` 里只剩零星的市盈率统计，成型的多因子过滤器在当前仓库并不存在。
+
+`analysis/` 里还散着几十个 Jupyter notebook，从龙虎榜到退市转债分析，是作者的日常工作台，质量参差，翻翻可以，别当成品。
+
+## 机器学习：一个文件，而且不在本地跑
+
+`machine_learning/` 目录只有一个文件：`贝叶斯预测涨跌.py`。它基于优矿（uqer）平台的 `DataAPI` 取行业分类和行情，用 `BernoulliNB` 做次日涨跌预测，特征是三组五分位：行业哑变量、对数市值、5 日动量，逐日滚动训练、滚动预测，最后按预测结果加权画出策略累计收益曲线。
+
+两句实话：第一，它依赖优矿平台的 DataAPI，克隆下来直接跑不了；第二，`scikit-learn` 不在 `requirements.txt` 里。README 里"机器学习预测"这四个字的实际分量，就是这个文件。想参考的是它把行业、市值、动量编码成哑变量喂朴素贝叶斯的写法，而不是预期一个能上实盘的模型。
+
+## 交易执行：easytrader 是主力，PTrade 和富途是配角
+
+`trader/auto_trader.py` 是真正的实盘下单代码，接的是 easytrader 的国金证券客户端：
 
 ```python
-# ptrade/ptrade_api.py
-class PTradeAPI:
-    def __init__(self, account, password):
-        self.account = account
-        self.password = password
-        self.base_url = "https://ptrade.example.com/api"
-    
-    def login(self):
-        """登录交易账户"""
-        import requests
-        data = {
-            'account': self.account,
-            'password': self.password
-        }
-        response = requests.post(
-            f"{self.base_url}/login",
-            json=data
-        )
-        return response.json()
-    
-    def buy(self, stock_code, price, quantity):
-        """买入股票"""
-        order = {
-            'stock_code': stock_code,
-            'price': price,
-            'quantity': quantity,
-            'action': 'buy'
-        }
-        return self.send_order(order)
-    
-    def sell(self, stock_code, price, quantity):
-        """卖出股票"""
-        order = {
-            'stock_code': stock_code,
-            'price': price,
-            'quantity': quantity,
-            'action': 'sell'
-        }
-        return self.send_order(order)
+self.user = easytrader.use('gj_client')
+self.user.prepare('user.json')
 ```
 
-### 6.2 富途接口
+它的日常流程：从 MySQL 的候选表读可转债列表，开盘后轮询行情，跌幅达到条件就按卖一价加 0.1 元买入 10 手；收盘前执行 `set_ceiling()`，按"昨收 × 1.07"给持仓挂涨停附近的卖单（`SELL = 7` 是写死的个人经验值，源码注释里还留着"配置为8%个点卖"的旧注释）；持仓快照每天存回 MySQL。全程走 `logging` 落盘到 `log/`。
 
-```python
-# futu/futu_api.py
-class FutuAPI:
-    def __init__(self, open_id, api_key):
-        self.open_id = open_id
-        self.api_key = api_key
-        self.base_url = "https://openapi.futunnasy.com"
-    
-    def get_quote(self, stock_code):
-        """获取实时行情"""
-        import requests
-        params = {
-            'code': stock_code,
-            'open_id': self.open_id,
-            'sign': self.generate_sign()
-        }
-        response = requests.get(
-            f"{self.base_url}/quote/get",
-            params=params
-        )
-        return response.json()
-```
+`ptrade/` 的实际内容只有一个 `逆回购.py`——一段 PTrade 平台策略脚本，每天 14:58 把闲置资金买成国债逆回购（沪市 204001、深市 131810 可开关）。README 说的"ptrade 自动交易实盘代码"，体量就这一个样例，价值在于展示了 PTrade 的 `run_daily` + `order` 接口怎么用。
 
-## 七，数据分析示例
+`futu/` 是富途官方 `futu-api` 的基础用法：`OpenQuoteContext` 连本机 FutuOpenD 网关（`127.0.0.1:11111`），拿港股行情快照、订阅推送，六个文件都在 basic usage 层面。
 
-### 7.1 涨停板分析
+顺带说清 README 末尾那段"券商福利"：这是作者的推广返佣。开通量化接口的门槛是入金——券商一 1 万、券商二 2 万；费率按品种是股票万一、可转债万 0.4、基金 ETF/LOF 万 0.5。要不要为这个门槛换券商，读者自己权衡，接口文档在 README 里是两张截图，仓库内没有可点的文档链接。
 
-```python
-# analysis/get_zt_info.py
-def analyze_zt_strength(stock_list, date):
-    """
-    分析次新板块中的涨停强度
-    """
-    results = []
-    for stock in stock_list:
-        zt_info = get_zt_info(stock, date)
-        results.append({
-            'code': stock,
-            'zt_date': zt_info['zt_date'],
-            'zt_strength': zt_info['strength'],  # 封单金额/流通市值
-            'break_count': zt_info['break_times']  # 开板次数
-        })
-    
-    # 按强度排序
-    df = pd.DataFrame(results)
-    df = df.sort_values('zt_strength', ascending=False)
-    return df
-```
+## 监控与提醒：邮件为主，企业微信为辅
 
-### 7.2 股票诊断
+`monitor/` 的 `jsl_monitor.py` 是转债监控的主程序：带着集思录登录态按配置的间隔轮询行情，对持仓候选按涨跌幅阈值触发预警，触发的标的记进一个自带的 `HistorySet`（内存字典加过期时间，默认 1800 秒）防止重复推送，并且默认过滤已公告强制赎回（强赎）的转债。`big_deal.py` 用 tushare 的分笔数据过滤大单成交；`ceiling_break.py` 做涨停开板监测，封板打开就发提醒；根目录的 `yesterday_zt_monitor.py` 盯的是"昨日涨停的今日实时情况"，配画图推送。
 
-```python
-# analysis/diagnose_stock.py
-def diagnose_stock(stock_code):
-    """
-    股票诊断：是否有黑历史、是否为东北股
-    """
-    diagnosis = {
-        'code': stock_code,
-        'has_blacklist': False,
-        'is_northeast': False,
-        'warnings': []
-    }
-    
-    # 检查黑名单
-    if is_in_blacklist(stock_code):
-        diagnosis['has_blacklist'] = True
-        diagnosis['warnings'].append('该股票有黑历史')
-    
-    # 检查东北股
-    if is_northeast_stock(stock_code):
-        diagnosis['is_northeast'] = True
-        diagnosis['warnings'].append('该股票为东北股')
-    
-    return diagnosis
-```
+提醒推送这块，`utils/push_msn.py` 走的是 SMTP 邮件（价格触发阈值就发邮件到手机），文件里 `import itchat` 的微信推送被注释掉了；企业微信推送在 `configure/util.py` 里，被 `jisilu.py` 等脚本调用。README 里"短信提醒"的说法对应的是老版本，现在实际是邮件 + 企业微信两条路。
 
-## 八，相关资源
+## 一天怎么跑通：转债轮动的完整流转
 
-### 8.1 项目链接
+把前面的模块串起来，作者的可转债轮动一天是这样过的：
+
+1. **盘前采集**：`datahub/jisilu.py` 带登录态抓全市场转债行情（价格、溢价率、余额），写入 MySQL 当日表。
+2. **筛候选**：按价格、溢价率等条件从库里筛出候选池，写进 `tb_stock_candidates` 表。
+3. **盘中监控**：`monitor/jsl_monitor.py` 按固定间隔轮询候选转债的实时价格，触发阈值就推送预警。
+4. **下单**：`trader/auto_trader.py` 从候选表读列表，开盘按跌幅条件买入，收盘前 `set_ceiling()` 挂 +7% 卖单。
+5. **收盘落账**：持仓快照写回 MySQL，`utils/delivery_order.py` 还能把交割单导入数据库对账。
+
+数据库是这条链的中枢——这也解释了为什么 `DBSelector` 和那份 config.json 是全仓库最先该看的东西。
+
+## 部署：能跑，但别指望开箱即用
+
+真实的依赖清单（`requirements.txt`，2026-09-30 版）：`easytrader`、`easyquotation`、`tushare`、`akshare`、`sqlalchemy`、`pymysql`、`pymongo`、`redis`、`loguru`、`parsel`、`rsa`、`pypinyin`、`xlwt`。注意里面没有 `scikit-learn`、没有 `TA-Lib`——机器学习和 K 线形态那两个目录的依赖要自己补。
+
+部署路径是 README 给的三步：克隆仓库，`cp configure/sample_config.json configure/config.json` 填数据库和各平台的凭证，然后从仓库根目录运行各脚本。第三步有个隐含约束：子目录脚本都是 `sys.path.append('..')` 加相对路径 `../log` 的写法，工作目录不对就会挂，别从子目录里单独启动。
+
+没有 Docker，没有 CI，没有测试——个人仓库的正常形态。另外根目录那批 2017 年前后的老脚本（`select_stock.py`、`new_stock_break.py` 用的是 tushare 早已下线的 `get_stock_basics` 接口）多数已经跑不通，这是"持续更新"仓库里新老代码并存的现状，遇到先看文件头的时间注释。
+
+## 谁该看，谁不必
+
+**值得读源码的三类人**：
+
+- 做 A 股、可转债的个人开发者，想抄一条"采集 → 入库 → 监控 → 下单"的流水线——这仓库每一环都有能跑的写法；
+- 需要集思录数据的人——`jsl_login` + `encode_jsl.js` 处理登录加密的方案是现成参考；
+- 想接实盘但没见过真代码的人——`auto_trader.py` 展示了 easytrader 接券商客户端、挂单、撤单、查持仓的完整姿势。
+
+**不必期待的四种人**：找现成盈利策略的（策略要自己写，`SELL = 7%` 这类参数是作者个人经验）；想要 pip 装完就用的（无包、无文档站、目录在重构中）；想找多因子回测框架的（`backtest/` 只是几个 backtrader 课程练习，SMA 金叉demo 水平）；期待工程规范的（无测试无 CI，`settings.py` 里还有裸 `except`）。
+
+上手顺序建议：先配 `config.json` 跑通 `datahub/jisilu.py` 的数据入库，再挑 `monitor/` 里一个监控脚本接到企业微信，最后才看 `trader/auto_trader.py`。实盘代码动的是真钱，easytrader 依赖券商客户端版本，接之前先用模拟环境验证。
+
+## 回到判断
+
+这个仓库的价值排序很清楚：**数据采集与监控的工程细节 > 实盘接入的真实姿势 > 策略本身**。它最像一份"一个人如何把炒股流程代码化"的十年实验记录——有精巧的部分（集思录登录态、多环境配置），有过时的部分（Python 2 遗留脚本、README 漂移），也有被 README 放大了的部分（"机器学习预测"其实是一个依赖优矿的单文件）。把它当参考实现和脚手架素材，比当策略库更符合它的真实成色。
+
+## 相关资源
 
 | 资源 | 链接 |
 |------|------|
-| **GitHub** | https://github.com/Rockyzsu/stock |
-| **作者博客** | http://30daydo.com |
-| **公众号** | 可转债量化分析 |
-
-### 8.2 券商接口
-
-项目提供**P-trade 自动交易接口**，支持：
-
-| 券商 | 门槛 | 费率 |
-|------|------|------|
-| 券商一 | 入金 1W | 股票万一 |
-| 券商二 | 入金 2W | 可转债万 0.4 |
-
-接口文档：https://github.com/Rockyzsu/stock/blob/master/ptrade/API文档地址
-
-## 九，总结
-
-Rockyzsu/stock 是**中文量化交易的优秀开源项目**：
-
-| 维度 | 说明 |
-|------|------|
-| 📊 **数据全面** | 股票、基金、可转债、港股全覆盖 |
-| 🤖 **机器学习** | 贝叶斯等预测模型 |
-| 📈 **技术分析** | K 线形态识别、MACD、RSI 等 |
-| 💰 **自动交易** | P-trade、富途实盘接口 |
-| 🔔 **实时监控** | 大单、涨停、价格提醒 |
-| 🛠️ **工具完善** | 回测、选股、数据采集 |
-
----
-
-**🔗 相关资源：**
-
-| 资源 | 链接 |
-|------|------|
-| GitHub | https://github.com/Rockyzsu/stock |
+| GitHub 仓库 | https://github.com/Rockyzsu/stock |
 | 作者博客 | http://30daydo.com |
+| 公众号 | 可转债量化分析 |
 
----
-
-_🦞 本文由钳岳星君撰写，基于 Rockyzsu/stock (7.5k Stars)_
+数据口径：Stars、Forks、提交数、贡献者、目录结构均按 GitHub API 于 2026-09-30 读取；代码引用对应 master 分支当日快照。

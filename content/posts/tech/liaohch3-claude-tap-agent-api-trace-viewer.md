@@ -1,6 +1,7 @@
 ---
-title: "claude-tap：把 9 个 agent CLI 的 API 流量变成可追溯可对比的本地 trace"
+title: "claude-tap 复核：客户端长到 16 个，Codex App 和 Cursor 换了采集路线"
 date: 2026-06-27T02:40:00+08:00
+lastmod: 2026-10-05T00:00:00+08:00
 draft: false
 categories:
   - 技术笔记
@@ -9,163 +10,112 @@ slug: liaohch3-claude-tap-agent-api-trace-viewer
 github_repo: "liaohch3/claude-tap"
 source_key: "gh:liaohch3/claude-tap"
 author: 钳岳星君
-description: "liaohch3 的 claude-tap（MIT，2021 stars），支持 13 个 agent 客户端的本地 API 流量拦截与 trace viewer；用 reverse proxy + forward proxy（TLS MITM）+ SQLite 本地存储 + 嵌入式 HTML viewer，把 agent 的实际 API 请求变成可逐字段对比的调试材料。"
+description: "liaohch3 的 claude-tap（MIT，发文时 2,021 stars，2026-10-05 复核 3,260 stars，v0.1.145），用本地 reverse/forward 代理把 16 个 agent CLI 的 LLM API 流量截成逐字段可对比的 trace：SQLite 存储、SSE 实时广播、单文件 HTML viewer，数据不出本机。"
 ---
 
-# claude-tap：把 9 个 agent CLI 的 API 流量变成可追溯可对比的本地 trace
+# claude-tap 复核：客户端长到 16 个，Codex App 和 Cursor 换了采集路线
 
 ## 核心判断
 
-[liaohch3/claude-tap](https://github.com/liaohch3/claude-tap) 是 2026 年 2 月开源的 agent API 流量拦截工具，发布 4 个月到 2021 stars / 203 forks，是 agent 可观测性赛道目前社区认可度最高的工作。命令名 `claude-tap`，把任何 agent CLI 的所有 LLM API 请求截下来、存到本地 SQLite、渲染成可对比的浏览器 viewer，**所有 trace 数据不出本机**。
+[liaohch3/claude-tap](https://github.com/liaohch3/claude-tap) 是 2026 年 2 月开源的 agent API 流量拦截工具：把 agent CLI 对 LLM provider 发出的 HTTPS 请求截下来，存进本地 SQLite，渲染成浏览器里逐字段可对比的 trace viewer。所有数据留在本机，README 的说法是「no hosted dashboard is required」。发文时（2026-06-27）它在 v0.1.122 附近、2,021 stars；2026-10-05 复核时 v0.1.145、3,260 stars——三个月发了 23 个版本，客户端从 14 个涨到 16 个，不是均匀铺量，而是两条采集路线（Codex App、Cursor）整体换了实现方式。
 
-支撑这个判断的是这个项目的覆盖宽度。claude-tap v0.1.x 当前支持 **13 个客户端**：
+支撑判断的是覆盖宽度。`--tap-client` 现在接受 17 个 key、对应 16 个产品（Kimi 家族占两个 key），GitHub 仓库描述点名 Claude Code、Codex CLI、Gemini CLI、Cursor CLI、OpenCode、Kimi、Pi、Hermes。命令把任何 agent CLI 的 LLM 请求截下来、写进本地 SQLite、渲染成可对比的浏览器 viewer，**所有 trace 数据不出本机**。
 
-| 类型 | 客户端 |
-|---|---|
-| **原生支持（9 个）** | Claude Code、Codex CLI、Codex App、Gemini CLI、Kimi CLI、MiMo Code、OpenCode、OpenClaw、Pi、Hermes Agent、Cursor CLI |
-| **Forward proxy 模式（4 个）** | Qoder CLI、Antigravity CLI、CodeBuddy CLI |
+本文基于现行 v0.1.145 与发文时点 commit（4d6e4c85，v0.1.122）双时点对照写成；直播流的广播机制、客户端默认代理模式这类易变口径，一律以源码与现行 README 为准。三个月里的形态级变化集中在 Codex App 与 Cursor 两节单独交代。
 
-13 个客户端覆盖了 2026 年中所有主流 coding agent CLI。GitHub Description 直接列出来：「Intercept and inspect Coding Agent API traffic from Claude Code, Codex CLI, Gemini CLI, Cursor CLI, OpenCode, Kimi/Kimi Code, Pi, and Hermes in a local trace viewer」——**这是 agent observability 赛道的「一家通吃」工具**。
+## 生态卡位：agent 调试缺的那块
 
-把 claude-tap 放进 agent 基础设施六联篇来看，它的卡位在「**比 Phistory 更底层**」：
+Web 应用的调试有浏览器 DevTools Network 面板兜底；agent CLI 跑在终端里，和 provider 走 HTTPS + SSE 流式 JSON，开发者看不到它实际发了什么。claude-tap 对应三类具体问题：
 
-- [Phistory](https://txtmix.com/posts/tech/weifeng2333-phistory-system-prompt-version-archive/) 在 claude-tap 之上构建——用 claude-tap 的 `--tap-export-prompt` capture-only 模式做系统提示词版本归档
-- [SkillSpector](https://txtmix.com/posts/tech/nvidia-skillspector-agent-skill-security-scanner/) 在 skill 维度做安全扫描
-- [Virtue AI](https://txtmix.com/posts/tech/meta-poaches-virtue-ai-agent-security-talent-war/) 是人才与组织战争
-- [FTShare SDK](https://txtmix.com/posts/tech/ftshare-python-sdk-financial-data-agent-access-layer/) 是 skill 的数据接入
-- [DAO Code](https://txtmix.com/posts/tech/tigicion-dao-code-deepseek-coding-agent-cache-engineering/) 是 agent 工程取舍
-- **claude-tap 是 agent 的「X-Ray」**——看 agent 实际在和 LLM 说什么
+1. **prompt 调试**——agent 声称「system prompt 已生效」，真实请求里的值是不是你想要的，看 trace 就知道；
+2. **token 计量**——每轮 input/output/cache read/cache creation 四项用量，session 级累计；
+3. **跨请求 diff**——相邻两次请求哪个字段变了，viewer 内置结构化 diff。
 
-claude-tap 不是 prompt 归档、不是 skill 安全、不是数据接入，是**「agent ↔ LLM 之间那条看不见的线」的观测器**。任何一个写 agent、debug agent、研究 agent 行为的人，都离不开这条路。
+它的上游消费者已经出现：[Phistory](https://txtmix.com/posts/tech/weifeng2333-phistory-system-prompt-version-archive/)（WEIFENG2333/phistory）用 claude-tap 的 capture-only prompt 导出（`--tap-export-prompt`）做系统提示词版本归档，README 的 Built with claude-tap 一节点名了这个用法。相邻赛道还有 [SkillSpector](https://txtmix.com/posts/tech/nvidia-skillspector-agent-skill-security-scanner/)（skill 安装前安全扫描）、[Virtue AI 人才战](https://txtmix.com/posts/tech/meta-poaches-virtue-ai-agent-security-talent-war/)、[FTShare SDK](https://txtmix.com/posts/tech/ftshare-python-sdk-financial-data-agent-access-layer/)（数据接入层）和 [DAO Code](https://txtmix.com/posts/tech/tigicion-dao-code-deepseek-coding-agent-cache-engineering/)（缓存工程取舍）。claude-tap 自己的位置最底层：**agent 与 LLM 之间那条 HTTP 线的观测器**。写 agent、调 agent、研究 agent 行为，最后都要落到这层证据上。
 
-## 学习目标
-
-读完本文后，你应当能够：
-
-1. 说出 claude-tap 在 agent 基础设施六联篇里的卡位（X-Ray 工具），以及它和 Phistory、SkillSpector、Virtue AI、FTShare SDK、DAO Code 的关系。
-2. 解释 reverse proxy 和 forward proxy 两种模式的核心差异（client 显式连 claude-tap vs client 走 HTTP_PROXY + CONNECT + TLS MITM），以及为什么 forward proxy 能保留 OAuth 认证。
-3. 列出 claude-tap 支持的 13 个客户端及其分类（9 个原生 / 4 个 forward proxy），并指出每个客户端对应的 upstream URL 模式。
-4. 描述 SQLite 本地 trace 存储 + Live Viewer Server WebSocket 广播 + 嵌入式 HTML viewer（viewer.html 单文件自包含）这三层的数据流。
-5. 解释 `SENSITIVE_HEADER_KEYS` 包含 authorization / cookie / x-api-key / cosy-key / cosy-machinetoken 等敏感 header 的脱敏策略，以及为什么 Qoder / Cosy 客户端的运行时 header 会被特别保护。
-6. 跑 `claude-tap -- --model claude-sonnet-4-6 -p "hello"` 在本地启动一个 trace viewer，看浏览器里逐字段的请求/响应 diff。
-
-## 目录
-
-- [核心判断](#核心判断)
-- [学习目标](#学习目标)
-- [生态卡位：agent 的 X-Ray](#生态卡位agent-的-x-ray)
-- [总览图：一次 trace 抓取的 4 大支柱](#总览图一次-trace-抓取的-4-大支柱)
-- [Reverse Proxy 模式：client 显式连 claude-tap](#reverse-proxy-模式client-显式连-claude-tap)
-- [Forward Proxy 模式：CONNECT + TLS MITM](#forward-proxy-模式connect--tls-mitm)
-- [SQLite 本地 trace + 统计累积](#sqlite-本地-trace--统计累积)
-- [Live Viewer Server + viewer.html 单文件自包含](#live-viewer-server--viewerhtml-单文件自包含)
-- [敏感 header 脱敏策略](#敏感-header-脱敏策略)
-- [13 个客户端的 upstream URL 模式](#13-个客户端的-upstream-url-模式)
-- [任务如何流过系统：一次完整 trace](#任务如何流过系统一次完整-trace)
-- [决策启示：agent 作者 / debug 用户 / 团队 lead / 审计各看什么](#决策启示agent-作者--debug-用户--团队-lead--审计各看什么)
-- [采用顺序与边界](#采用顺序与边界)
-- [参考资料](#参考资料)
-
-## 生态卡位：agent 的 X-Ray
-
-claude-tap 的卡位要先从「agent 调试为什么难」讲起。传统的 web 应用调试，浏览器开发者工具 Network 面板能直接看 HTTP 请求。但 agent CLI 跑在终端里、和 LLM provider 走 HTTPS、请求体是 SSE 流式 JSON——开发者看不到 agent 实际发了什么、改了什么、收到了什么。
-
-claude-tap 解决的三个具体问题：
-
-1. **prompt 调试**——agent 报告「system prompt 没生效」，但实际 prompt 里某个开关是 `false`——怎么验证？
-2. **token 计数**——「这一轮花了多少 token」「cache hit ratio 是多少」「prompt cache 实际命中了多少」
-3. **跨请求 diff**——「上一轮和这一轮有什么字段变了」「某个工具调用到底错在哪一步」
-
-对应这三类问题的三类读者：
-
-| 读者 | 用 claude-tap 干什么 |
-|---|---|
-| agent 开发者 | 调试 agent prompt 设计，验证 model 收到的真实 prompt |
-| agent 用户 | 排查 agent 行为异常，看实际请求参数 |
-| agent 研究者 | 写 agent 行为分析文章，引用具体 trace 证据 |
-| 团队 lead | 监控团队 agent 使用成本，发现 prompt 泄露 |
-| 审计 | 验证 agent 不发敏感数据出去，看 redact 后的字段 |
-
-claude-tap 不是 prompt 工程工具（不改 prompt）、不是 agent 框架（不调度工具）、不是 LLM 可观测性平台（不存储调用历史到云端）。它是**纯本地、纯 Python、单进程的 trace 拦截器**——和 Linux 下的 `tcpdump`、Chrome 的 DevTools Network 面板定位类似。
-
-## 总览图：一次 trace 抓取的 4 大支柱
+## 系统总览：四层结构
 
 ```text
-                        Agent CLI
-                            │
-                            │ HTTPS 请求
-                            ▼
-    ┌───────────────────────────────────────────┐
-    │  Reverse Proxy (proxy.py)                 │
-    │  或 Forward Proxy (forward_proxy.py)      │
-    │  - HTTPS termination / TLS MITM          │
-    │  - Header 过滤 (SENSITIVE_HEADER_KEYS)    │
-    │  - SSE 流重组 (SSEReassembler)            │
-    └──────────┬────────────────────────────────┘
-               │
-               ▼
-    ┌───────────────────────────────────────────┐
-    │  TraceWriter (trace.py)                   │
-    │  - async SQLite writer                    │
-    │  - 统计累积（input/output/cache tokens）  │
-    │  - Live WebSocket 广播                     │
-    └──────────┬────────────────────────────────┘
-               │
-       ┌───────┴───────┐
-       ▼               ▼
-   SQLite store    Live Viewer Server
-   (本地持久)      (WebSocket 广播)
-                       │
-                       ▼
-                  viewer.html
-                  (嵌入式单文件)
+                 Agent CLI（claude / codex / gemini / …）
+                     │  基址改写或 HTTP(S)_PROXY
+                     ▼
+   ┌─────────────────────────────────────────────┐
+   │  Proxy 层                                    │
+   │  reverse: proxy.py（改写 base URL 直连本地）  │
+   │  forward: forward_proxy.py（CONNECT + TLS   │
+   │           MITM，按 SNI 现签证书）             │
+   │  - filter_headers()：14 项敏感 header 脱敏    │
+   │  - 路径白名单 ALLOWED_PATH_PREFIXES          │
+   │  - SSE/WS 流边收边转发，低开销                │
+   └──────────────────┬──────────────────────────┘
+                      ▼
+   ┌─────────────────────────────────────────────┐
+   │  TraceWriter（trace.py）                     │
+   │  asyncio.Lock 串行写入；逐请求累积           │
+   │  input/output/cache 四项 token 统计          │
+   │  写完即经 SSE 向浏览器广播（live.py）         │
+   └──────────────────┬──────────────────────────┘
+                      ▼
+   ┌────────────────────┐   ┌──────────────────┐
+   │ SQLite（trace_store │   │ Live viewer /    │
+   │ .py：5 张表，本地   │   │ dashboard：固定   │
+   │ 持久，跨重启可读）  │   │ 端口，浏览器直开  │
+   └────────────────────┘   └──────────────────┘
+                      ▼
+            export：单文件自包含 HTML
 ```
 
-四大支柱：
+四层各自的职责：
 
-1. **Proxy 层**——reverse 或 forward，截获 agent ↔ LLM 的 HTTPS 流量
-2. **TraceWriter 层**——async SQLite writer，累积统计 + Live 广播
-3. **SQLite 存储层**——本地持久化 trace session（可跨重启读）
-4. **Live Viewer + HTML viewer**——浏览器实时看 + 可导出自包含 HTML 分享
+1. **Proxy 层**——reverse 或 forward，截获 agent 与 LLM 之间的流量并按白名单过滤；
+2. **TraceWriter 层**——async SQLite 写入器，顺带累积 token 统计并广播；
+3. **存储层**——本地 SQLite，5 张表，重启后 dashboard 还能读历史 session；
+4. **Viewer 层**——实时直播 + 静态导出两形态，单文件 HTML 无外部依赖。
 
-## Reverse Proxy 模式：client 显式连 claude-tap
+## Reverse proxy：改写基址，不碰网络栈
 
-Reverse proxy 是最常见的模式。Client 启动时把 `--tap-client claude` 之类的参数传给 claude-tap，claude-tap 在本地启 HTTP server（默认 0.0.0.0:8888），agent 启动后所有 LLM API 请求被改写到 claude-tap。
+Reverse 模式是大多数客户端的默认。claude-tap 启动本地代理，然后在子进程环境里把客户端的 base URL 环境变量（如 `ANTHROPIC_BASE_URL`）指到本地，客户端以为自己在和 provider 说话，流量全部落在代理上：
 
 ```bash
-# Claude Code 走 reverse proxy
+# -- 后面的参数原样传给被包裹的客户端
 claude-tap -- --model claude-sonnet-4-6 -p "hello"
 ```
 
-`cli_clients.py` 里 `run_client()` 负责根据 `--tap-client` 选不同的 AgentSpec，调 `forward_proxy.py` 或 `proxy.py`：
+基址检测是自动的：claude 系读 `ANTHROPIC_BASE_URL`、`ANTHROPIC_BEDROCK_BASE_URL`、`ANTHROPIC_VERTEX_BASE_URL`（环境变量或 Claude settings），用户配了 DeepSeek/自建网关也能直接被记录，`--tap-target` 只在想手动覆盖时才需要。代理端口用 `--tap-port` 指定，不指定则自动分配——**不是**固定端口。
+
+上游 URL 拼接有一个专门防呆设计。`upstream.py` 的 `build_upstream_url()` docstring 原话：
 
 ```python
-# proxy.py 核心：拦截 client 请求、转发到 upstream、记录 trace
-class proxy_handler:
-    async def handle(self, request):
-        # 1. 过滤敏感 header
-        filtered_headers = filter_headers(dict(request.headers))
-        # 2. 解析请求体（提取 system prompt / messages / tools）
-        parsed_body = _parse_request_body_for_trace(request_body)
-        # 3. 转发到 upstream
-        upstream_response = await self.forward(request, ...)
-        # 4. 重组 SSE 流 + 解析 usage
-        sse_events = SSEReassembler.feed(upstream_response)
-        usage = normalize_usage(upstream_response)
-        # 5. 写 trace
-        await self.trace_writer.write(record)
-        return upstream_response
+"""Join a configured upstream target with a forwarded request path.
+
+Some users pass a complete request endpoint such as
+``https://gateway.example/v1/messages`` to ``--tap-target``. Avoid turning
+a client request for ``/v1/messages`` into ``/v1/messages/v1/messages``.
+"""
 ```
 
-Reverse proxy 的优点是简单——client 启动参数一改即可，所有 API 请求都过 claude-tap。**缺点是要改 client 启动命令**——这在「agent CLI 是 npm 全局安装 + 我想不污染我的 shell 配置」时不便。
+用户把完整 endpoint（带 `/v1/messages`）填进 `--tap-target` 时，转发路径再拼一遍就会产生 `/v1/messages/v1/messages` 这种重复——claude-tap 显式处理了这个分支。
 
-## Forward Proxy 模式：CONNECT + TLS MITM
+reverse 模式的代价是改客户端启动方式。对 npm 全局安装、不想动 shell 配置的场景，forward 模式更合适。
 
-Forward proxy 是更巧妙的设计。client 用 `HTTP_PROXY` / `HTTPS_PROXY` 环境变量把流量发给 claude-tap，claude-tap 走 HTTP CONNECT 协议在本地建 TLS MITM 隧道，把 HTTPS 解密后再转发给真实 upstream：
+## Forward proxy：CONNECT 隧道 + TLS MITM
+
+Forward 模式不改客户端，只吃环境变量：
+
+```bash
+export HTTPS_PROXY=http://127.0.0.1:<port>
+claude  # 照常启动，流量自动过 claude-tap
+```
+
+`forward_proxy.py` 模块 docstring 把六步流程写得很清楚，逐字引用：
 
 ```python
-# forward_proxy.py 注释（核心解释）
-"""HTTP forward proxy with CONNECT tunneling and man-in-the-middle TLS termination.
+"""Forward proxy server with CONNECT/TLS termination.
+
+Implements an HTTP forward proxy that handles CONNECT tunneling with
+man-in-the-middle TLS termination. This allows claude-tap to intercept
+HTTPS traffic while Claude Code uses the real api.anthropic.com endpoint
+(preserving OAuth authentication).
 
 Flow:
   1. Client sends CONNECT api.anthropic.com:443
@@ -177,303 +127,141 @@ Flow:
 """
 ```
 
-TLS MITM 的关键是 `certs.py` 维护的本地 CA：
+TLS 侧由 `certs.py` 支撑：`ensure_ca()` 维护本地 CA，`CertificateAuthority.get_host_cert_pem(hostname)` 按客户端握手中的 SNI 现场签发 host 证书。macOS 上 `trust_macos_ca()` 把 CA 自动加进**当前用户的 login keychain**（不动 System keychain，也用不着 sudo），也有独立的 `claude-tap trust-ca` 子命令给想提前信任的场景。
+
+这一设计的直接收益是 OAuth 流程零改动：客户端的 token 还是发给 `api.anthropic.com`，只是网络路径多了本地一跳，claude-tap 解密后带着原始 Authorization header 转发。对那些不暴露 base URL 配置的客户端（典型是各家桌面 App 和用多家 endpoint 的 CLI），forward 是唯一能抓到真实请求体的路径。
+
+## 客户端矩阵：17 个 key，三种路线
+
+`cli_clients.py` 的 `CLIENT_CONFIGS` 是客户端矩阵的权威源码。按默认代理模式分三组（2026-10-05 源码读数）：
+
+**默认 reverse（7 个）**——单个 provider、有 base URL 环境变量可改写：
+
+| 客户端 | base URL env | 默认上游 |
+|---|---|---|
+| claude（Claude Code） | `ANTHROPIC_BASE_URL`（另有 BEDROCK/VERTEX 两个附加 env） | `api.anthropic.com` |
+| codex（Codex CLI） | `OPENAI_BASE_URL` | `api.openai.com`；OAuth 登录走 `chatgpt.com/backend-api/codex` |
+| grok（Grok Build CLI） | `GROK_CLI_CHAT_PROXY_BASE_URL` | `cli-chat-proxy.grok.com/v1` |
+| kimi / kimi-code | `KIMI_BASE_URL` / `KIMI_CODE_BASE_URL` | `api.kimi.com/coding/v1` |
+| openclaw | `OPENAI_BASE_URL` | 按所选 provider 补丁临时配置文件 |
+| codebuddy | `CODEBUDDY_BASE_URL` | 自动探测 `~/.codebuddy/local_storage/` 登录缓存，缺失时回退 `copilot.tencent.com/v2` |
+
+**默认 forward（9 个）**——多家 endpoint 或不暴露 base URL 配置：
+
+| 客户端 | 默认上游 / 说明 |
+|---|---|
+| codexapp（Codex App） | `chatgpt.com/backend-api/codex`，只记该路径的产品流量 |
+| dsh（DeepSeek Harness） | `api.deepseek.com`，需 Node 支持 `--use-env-proxy` |
+| gemini | 多个 Google endpoint，OAuth/Code Assist 流量 |
+| opencode / mimo | 多 provider，任意 HTTPS 上游（MiMo Code 是小米的 OpenCode fork） |
+| pi | 任意 HTTPS 上游，openai-codex OAuth 实测通过 |
+| hermes | 任意 HTTPS 上游，凭证在 `~/.hermes/` |
+| qoder | Qoder 多 endpoint，支持 `QODER_PERSONAL_ACCESS_TOKEN` |
+| agy（Antigravity CLI） | `daily-cloudcode-pa.googleapis.com`，自动注入 `CLOUD_CODE_URL` |
+
+**transcript-only（1 个）**：cursor。现行实现不碰网络——启动 `cursor-agent` 后监听 `~/.cursor/projects/*/agent-transcripts/*.jsonl`，每个对话 JSONL 生成一个 dashboard session。README 原话「It does not MITM `api2.cursor.sh`」。
+
+这张表与直觉相悖的格子不少——Codex App 走 forward、Cursor 纯转录、CodeBuddy 反而是 reverse。发文时点的版本里，Codex App 是「本地 JSONL 导入 + best-effort CDP WebSocket 旁路」，Cursor CLI 默认 forward——两条路线后来都整体重写了，细节见下节。仓库的 `docs/support-matrix.md` 维护着 30 行 client × auth × target × transport 组合表（含实测状态列），接非主流网关前先查它。
+
+## 三个月里的两条路线换向
+
+这是发文后变化最大的部分，读旧版介绍的人需要校准：
+
+**Codex App：从「转录导入」到「真抓请求」。** 发文时，`--tap-client codexapp` 不启动 App、不开代理，只从 `CODEX_HOME`/`~/.codex` 导入本地 session JSONL，App 有调试端点时再尽力补一份 CDP WebSocket 证据——README 当时自称「CDP capture is a side-channel observer, not a proxy」。现行版本反过来：通过 forward proxy 启动 Codex App（macOS 上是 `ChatGPT.app`，老 `Codex.app` 也认），抓真实的 `/backend-api/codex/responses` HTTP/WebSocket 请求体；已开着的 App 不受影响，claude-tap 会用独立 `--user-data-dir` 起一个隔证实例（`~/.claude-tap/codex-app-profiles/tap`），可能需要重新登录。原始 WebSocket/SSE 事件数组默认不存，`--tap-store-stream-events` 才持久化。
+
+**Cursor：从「forward 抓流量」到「纯转录」。** 发文时 Cursor CLI 默认走 forward proxy。现行版本彻底放弃 MITM：监听本地 transcript JSONL，不碰 `api2.cursor.sh`。代价是看不到未写入 transcript 的流量，收益是零证书、零代理配置、对 IDE 内 Agent 也生效（`--tap-no-launch` 只监听不启动 CLI）。源码里 cursor 的 `default_proxy_mode` 字段还在但注释明说 unused，以 README 为准。
+
+两条路线换向的方向一致：**抓不到真实请求时，退而求其次抓本地可验证的记录**，并把取舍写进 README 而不是藏起来。
+
+## 安全设计：脱敏清单与路径白名单
+
+`proxy.py` 顶部的 `SENSITIVE_HEADER_KEYS` 是 frozenset，共 14 项：通用的 `authorization`、`cookie`、`set-cookie`、`set-cookie2`、`x-api-key`、`x-amz-security-token`，加上 8 项 `cosy-*` 运行时 header。清单上方注释原话：
 
 ```python
-# certs.py 核心
-class CertificateAuthority:
-    """本地 CA，自动生成自签证书，macOS 上自动 trust 到 keychain"""
-
-    def generate_cert_for_host(hostname: str) -> CertPair:
-        # 用本地 CA 签发 host-specific 证书
-        ...
+# Qoder/Cosy runtime headers can carry account, machine, or token-derived
+# identifiers and must not be persisted in trace evidence.
 ```
 
-client 的 TLS 握手时，claude-tap 拿到 client 的 SNI（Server Name Indication，比如 `api.anthropic.com`），用本地 CA 签发一个 host-specific 证书返回给 client。client 因为已经 trust 了 claude-tap 的 CA（macOS 上 `trust_macos_ca()` 自动加进 keychain），会接受这个证书。
+这 8 项 `cosy-*` 是给 CodeBuddy/Qoder 一类国产客户端的专门保护——它们的 header 里可能带账号、机器指纹或 token 派生值，落进 trace 就等于泄露。脱敏的输出形态也值得写准：默认值替换为 `***`；`authorization` 和 `x-api-key` 两项走 `PREFIX_REDACTED_HEADER_KEYS`，保留**前 12 个字符**加 `...`，方便分辨认证方式又不泄露完整密钥。viewer 里看到的就是这份处理后的值。
 
-**这是 forward proxy 能保留 OAuth 认证的关键**——client 的 OAuth token 还是发给 `api.anthropic.com`，只是网络路径经过 claude-tap。claude-tap 解密后用**客户端原始 Authorization header**转发给真实 upstream，OAuth 流程完全不变。
+写入侧还有一层路径白名单：`ALLOWED_PATH_PREFIXES` 只放行已知 API 路径（`/v1/messages`、`/v1/responses`、Gemini 的 `/v1beta/models` 等 20 余条），扫描器打过来的 `/etc/passwd`、`/swagger`、`/metrics` 一律 404，不转发也不记录。
 
-forward proxy 对**客户端完全透明**——用户不用改 client 启动命令，只要：
+边界要写清楚：脱敏覆盖的是 header。**请求体不受保护**——prompt 里如果直接出现了 API key（agent 代码 bug），claude-tap 管不到，它会把 body 原样记录。
+
+## 存储、viewer 与导出
+
+`trace_store.py` 的 SQLite 有 5 张表：`sessions`（id、started_at、client、proxy_mode、status、record_count、summary_json 等）、`records`（主键 `(session_id, record_index)`，带 `turn` 序号，外键级联删除）、`proxy_logs`、`migration_state`、`record_blobs`。`TraceWriter`（trace.py）用一把 `asyncio.Lock` 串行化并发写入，`write_next_turn()` 在锁内分配 turn 序号；每写一条顺带更新 session 级累计——`total_input_tokens`、`total_output_tokens`、`total_cache_read_tokens`、`total_cache_create_tokens` 和 `models_used` 计数字典。viewer 顶栏的用量汇总直接来自这些累计值。
+
+实时侧是 `live.py` 的 `LiveViewerServer`：每条记录写完即广播。**广播走 SSE**（README 原话「broadcasts updates to the browser via SSE」），v0.1.75 起默认开启，`--tap-no-live` 关闭。`claude-tap dashboard` 可以随时单独打开历史 session 浏览器（`dashboard stop` 关闭），dashboard 固定端口，`--tap-port` 只管代理端口——两套端口别混。
+
+viewer 本体是单文件自包含 HTML，零外部依赖。`viewer.py` 的 `LAZY_THRESHOLD = 50`：超过 50 条记录自动切 lazy 加载。前端拆成 12 个 JS 模块打进单文件——state（响应式容器）、renderers、diff（相邻请求结构化对比）、lazy_loading、filters_search、sidebar、detail_trace、responses、sections_json、i18n_ui、live_bootstrap、utilities_mobile——文件名即职责。功能面上有按 endpoint 过滤、按模型分组、tool 卡片（名称/描述/参数 schema）、全文搜索、明暗主题、j/k 键盘导航、一键复制请求 JSON 或 cURL、iframe 嵌入参数。i18n 覆盖 8 种语言（英、简中、日、韩、法、阿拉伯、德、俄），字典在 `viewer_i18n.json`。
+
+导出语法（现行 README）：
 
 ```bash
-export HTTPS_PROXY=http://127.0.0.1:8888
-claude  # 正常启动，所有流量过 claude-tap
+# compact 是默认导出格式（可移植 bundle，之后可再渲染）
+claude-tap export <session-id> -o trace.ctap.json
+
+# 从 JSONL 重新生成单文件 HTML viewer
+claude-tap export .traces/2026-02-28/trace_141557.jsonl -o trace.html
+
+# 从 compact bundle 再渲染
+claude-tap export trace.ctap.json -o trace.html
 ```
 
-## SQLite 本地 trace + 统计累积
+生成的 HTML 可以直接发给同事，对方浏览器打开即可，不需要装 claude-tap。
 
-`trace.py` 的 `TraceWriter` 是 trace 写入的核心：
+## 任务流：一条 trace 的完整路径
 
-```python
-class TraceWriter:
-    def __init__(self, session_id, live_server=None, ...):
-        self.session_id = session_id
-        self._lock = asyncio.Lock()
-        self.count = 0
-        self.total_input_tokens = 0
-        self.total_output_tokens = 0
-        self.total_cache_read_tokens = 0
-        self.total_cache_create_tokens = 0
-        self.models_used: dict[str, int] = {}
-
-    async def write(self, record: dict) -> None:
-        async with self._lock:
-            self._write_locked(record)
-        if self._live_server:
-            await self._live_server.broadcast(record)
-```
-
-关键设计：
-
-1. **asyncio.Lock** 保护并发写——多请求并发转发时，trace 写不互相覆盖
-2. **统计累积**——每个请求写完后更新 token 计数，viewer 可以直接显示本 session 累计花费
-3. **Live broadcast**——每次写完调 `live_server.broadcast()` 推给 WebSocket，浏览器实时刷新
-
-`trace_store.py` 的 SQLite 表结构（推断）：
-
-```
-trace_sessions (id, created_at, agent, total_input_tokens, ...)
-trace_records (session_id, turn, request_body, response_body, usage, ...)
-```
-
-`dashboard.py` 是 session-first dashboard——把所有 session 列出来，每个 session 显示「agent / 时间 / token 总数 / 状态」，点进去看具体 trace。
-
-## Live Viewer Server + viewer.html 单文件自包含
-
-claude-tap v0.1.75+ 默认开启 Live Viewer（`--tap-no-live` 可关闭）。`live.py` 的 `LiveViewerServer` 启动一个 WebSocket server，TraceWriter 写每条记录都广播过去。
-
-`viewer.py` 把整段 trace 渲染成单文件 HTML：
-
-```python
-LAZY_THRESHOLD = 50  # 超过 50 条记录用 lazy mode
-VIEWER_JS_PATHS = (
-    "state.js", "responses.js", "lazy_loading.js",
-    "i18n_ui.js", "live_bootstrap.js", "filters_search.js",
-    "sidebar.js", "detail_trace.js", "renderers.js",
-    "sections_json.js", "diff.js", "utilities_mobile.js",
-)
-```
-
-12 个 JS 模块各司其职——state 是响应式 state 容器、renderers 渲染各种 trace 字段、diff 做跨请求 diff、lazy_loading 处理大 trace 分页、i18n_ui 多语言支持、live_bootstrap WebSocket 初始化。
-
-`viewer.html` 模板 + CSS + JS 全部打包进单文件，浏览器可以直接打开。`export.py` 把 trace 导出成单文件 HTML，可以邮件发给同事——对方不需要装 claude-tap 也能看。
-
-i18n 是亮点——`viewer_i18n.json` 多语言字典（README 提到有中英两套），screenshot 里有 light/dark 模式切换、diff modal 弹窗、Structured diff across adjacent requests。
-
-## 敏感 header 脱敏策略
-
-`proxy.py:30-50` 的 `SENSITIVE_HEADER_KEYS` 是关键的安全设计：
-
-```python
-SENSITIVE_HEADER_KEYS = frozenset({
-    "authorization",
-    "cookie",
-    "set-cookie",
-    "set-cookie2",
-    "x-api-key",
-    "x-amz-security-token",
-    # Qoder/Cosy 运行时 headers can carry account, machine, or token-derived
-    # identifiers and must not be persisted in trace evidence.
-    "cosy-key",
-    "cosy-machinetoken",
-    "cosy-machine-token",
-    "cosy-machineid",
-    ...
-})
-```
-
-脱敏三类：
-
-1. **认证类**：`authorization` / `cookie` / `x-api-key` / `x-amz-security-token`（AWS Bedrock SigV4 token）
-2. **OAuth state**：`set-cookie` / `set-cookie2`（OAuth 流程的 state token）
-3. **国产客户端运行时**：`cosy-key` / `cosy-machinetoken` / `cosy-machine-token` / `cosy-machineid`（Qoder/Cosy 是腾讯的 CodeBuddy 系）
-
-注释特意提到 Qoder/Cosy headers：「can carry account, machine, or token-derived identifiers and must not be persisted in trace evidence」。这是对国产 agent 客户端的特别保护——它们可能在 header 里塞用户标识符 / 机器指纹 / token 派生值，存到 trace 里就泄露了。
-
-`filter_headers()` 在 trace 写入前把这些 header 替换为 `REDACTED`，viewer 里看到的就是「REDACTED」而不是真值。
-
-**测的是什么、不能推出什么**：脱敏测的是「已知敏感 header 不会被持久化」。**不能推出**「请求体里没有泄露」——如果 prompt 里出现 `os.environ["API_KEY"]`，脱敏不会保护请求体里的内容。这是 prompt engineering 责任，不是 claude-tap 责任。
-
-## 13 个客户端的 upstream URL 模式
-
-`upstream.py` 的 `KNOWN_UPSTREAM_ENDPOINT_PATHS` 列了 7 类标准 endpoint：
-
-```python
-KNOWN_UPSTREAM_ENDPOINT_PATHS = (
-    "/v1/chat/completions",
-    "/chat/completions",
-    "/v1/messages",
-    "/messages",
-    "/v1/responses",
-    "/responses",
-    "/v1/completions",
-    "/completions",
-)
-```
-
-13 个客户端的 upstream 分类：
-
-| 客户端 | Endpoint 路径 | 认证 | 模式 |
-|---|---|---|---|
-| Claude Code | `/v1/messages` | ANTHROPIC_API_KEY / OAuth / Bedrock SigV4 | Reverse |
-| Codex CLI | `/v1/responses` 或 `/chat/completions` | OPENAI_API_KEY / ChatGPT OAuth | Reverse |
-| Codex App | (本地 CDP WebSocket) | ChatGPT OAuth | CDP Listener |
-| Gemini CLI | (Google API) | Google OAuth / Code Assist | Reverse |
-| Kimi CLI | (Moonshot API) | MOONSHOT_API_KEY | Reverse |
-| MiMo Code | (Xiaomi fork of OpenCode) | 多 provider | Reverse |
-| OpenCode | (multi-provider) | 多 provider | Reverse |
-| OpenClaw | (multi-provider) | 多 provider | Reverse |
-| Pi | (OpenAI Codex OAuth) | OAuth | Reverse |
-| Hermes Agent | (NousResearch) | 多 provider | Reverse |
-| Cursor CLI | (Cursor Agent) | Cursor OAuth | Reverse + Transcript Import |
-| Qoder CLI | (Qoder Agent) | cosy-* headers | Forward |
-| Antigravity CLI | (Google) | Google OAuth | Forward |
-| CodeBuddy CLI | (Tencent) | Tencent OAuth | Forward |
-
-`cli_clients.py` 的 `_BEDROCK_HOST_RE` 检测 AWS Bedrock SigV4-signed endpoints（`bedrock-runtime.us-east-1.amazonaws.com` 等）——这是 Claude Code 走 AWS Bedrock 时的特殊路径，claude-tap 要重写 URL 避免变成 `/v1/messages/v1/messages` 这种重复。
-
-`build_upstream_url()` 注释特别说明：
-
-```python
-"""Join a configured upstream target with a forwarded request path.
-
-Some users pass a complete request endpoint such as
-``https://gateway.example/v1/messages`` to ``--tap-target``. Avoid turning
-a client request for ``/v1/messages`` into ``/v1/messages/v1/messages``.
-"""
-```
-
-这是 forward proxy 模式常见的坑——target 已经是 endpoint，forward 的 path 又拼一遍，导致 `/v1/messages/v1/messages`。claude-tap 显式避免这个重复。
-
-## 任务如何流过系统：一次完整 trace
-
-为了让 4 大支柱抽象落地，看一个具体的「用 Claude Code 跑 hello」怎么走完整 trace 流程。
-
-**命令**：
+以包裹 Claude Code 跑一条最小任务为例：
 
 ```bash
 claude-tap -- --model claude-sonnet-4-6 -p "hello"
 ```
 
-**Step 1：CLI 解析 + 选 AgentSpec**
+1. **CLI 解析**。`cli.py` 的 `main_entry()` 解析参数；`--tap-client` 不指定时默认 `claude`，`--` 之后的参数原样传给子进程。
+2. **基址检测**。读环境变量与 Claude settings 里的 `ANTHROPIC_BASE_URL`（没配则默认 `api.anthropic.com`），启动本地 reverse proxy（端口自动分配），准备把子进程的 base URL 指向它。
+3. **启动子进程**。claude-tap 用 subprocess 拉起 `claude --model claude-sonnet-4-6 -p "hello"`，环境里注入改写后的 base URL。
+4. **请求拦截**。Claude Code 向本地代理 POST `/v1/messages`，带 system prompt、messages、tools。代理路径白名单放行，`filter_headers()` 脱敏，请求体解析出可读结构后写入第一条 trace。
+5. **转发与重组**。请求带着原始认证头转发到真实上游；SSE 响应边收边转发回客户端，同时由代理侧重组，提取 usage 四项 token 数，写第二条 trace。
+6. **实时与累计**。`TraceWriter` 更新 session 累计统计，`LiveViewerServer` 把新记录经 SSE 推给浏览器。
+7. **收尾**。claude 退出时自动生成一份自包含 HTML viewer 并打开；浏览器里 dashboard 列出本 session（模型、请求数、token 四项累计），点进任意请求可看完整请求体、重组后的响应，以及与相邻请求的结构化 diff。
 
-`cli.main_entry()` 解析参数，发现 `--tap-client` 没指定但有 `--`，自动从「claude」detect。`cli_clients.py:run_client('claude', ...)` 选 `CLAUDE_CONFIG`，启动 reverse proxy server on 8888。
-
-`ANTHROPIC_BASE_URL` 没设（默认走 api.anthropic.com），所以 reverse proxy 把请求改写到 `http://localhost:8888`。
-
-**Step 2：启动 Claude Code 子进程**
-
-claude-tap 用 subprocess 启动 `claude --model claude-sonnet-4-6 -p "hello"`，env 里设 `ANTHROPIC_BASE_URL=http://localhost:8888`，让 Claude Code 把所有 LLM 请求发到本地 proxy。
-
-**Step 3：Claude Code 发起请求**
-
-Claude Code 准备发送 system prompt + `user: "hello"`，HTTP POST 到 `http://localhost:8888/v1/messages`。
-
-**Step 4：proxy_handler 拦截**
-
-`proxy.py:proxy_handler.handle()`：
-
-1. 过滤 headers（SENSITIVE_HEADER_KEYS → REDACTED）
-2. 解析请求体（提取 system prompt / messages / tools / model）
-3. 通过 `TraceWriter.write_next_turn()` 分配 turn number + 写 trace
-4. 转发到 upstream `https://api.anthropic.com/v1/messages`（使用原始 Authorization header）
-5. 接收 upstream SSE 流
-6. `SSEReassembler` 重组流式 chunks
-7. `normalize_usage` 提取 token usage（input/output/cache_read/cache_create）
-8. 写第二条 trace（response）
-9. 更新 TraceWriter 的累计统计（total_input_tokens += ...）
-10. `live_server.broadcast(record)` 推给 WebSocket
-11. 返回响应给 Claude Code
-
-**Step 5：Claude Code 收到响应**
-
-Claude Code 拿到 SSE 流式响应（"hi there!"），显示给用户，结束。
-
-**Step 6：viewer 渲染**
-
-用户浏览器打开 `http://localhost:8888/dashboard`（或者 Live Viewer 默认 URL）：
-
-- dashboard 列出本 session（含 token 总数 / 请求数 / 状态）
-- 点进 session 看每条 trace
-- 左右栏 diff 跨请求字段差异
-- 系统 prompt / messages / tool calls / SSE 重组后的完整响应 全部可读
-
-**Step 7：导出（可选）**
-
-`claude-tap export --output trace.html` 把整个 session 打包成单文件 HTML，发给同事 review——对方不需要装 claude-tap，浏览器打开就能看。
-
-## 决策启示：agent 作者 / debug 用户 / 团队 lead / 审计各看什么
-
-claude-tap 对四类读者的信号不同。
-
-**agent 作者**——claude-tap 是 agent 调试的「必备 X-Ray」。具体动作：
-
-- 写 agent prompt 时开 `--tap-live` 看每次请求的完整 system prompt + messages，验证设计意图和实际发出去的一致
-- 调 `--model` / `--permission-mode` 等参数时看 trace 变化，确认改动生效
-- 调试 tool use 错误时看具体 tool call 参数和返回，比看 agent 终端输出直观得多
-
-**debug 用户**——遇到 agent 行为异常（答非所问、工具调用失败、莫名卡住）时，第一步用 claude-tap 看实际请求：
-
-- 答非所问：检查 system prompt 是否被截断 / 上下文是否完整
-- 工具调用失败：检查 tool schema 是否对得上 / 返回值是否在 context 里被消化
-- 莫名卡住：检查是否某个 request 在 retry loop 里死循环
-
-**团队 lead**——claude-tap 提供 agent 使用成本的可观测性：
-
-- 每月一次全员 agent trace review，看 token 使用 / cache hit / 高频 prompt pattern
-- 监控 prompt 泄露风险——trace 里看到 PII / 公司代码片段就能及时提醒
-- 培训新人时用真实 trace 做案例（「看，这就是 Claude Code 实际发的 system prompt」）
-
-**审计 / 合规**——claude-tap 是「agent 实际发出去什么」的权威证据：
-
-- 第三方 agent SDK 接入时用 claude-tap 抓 1 周，看实际请求里有没有可疑调用
-- 内部 agent 出问题时回放 trace，证明 agent 行为符合预期
-- 在合规报告里附 trace snapshot（记得脱敏！）
+整条链路里 claude-tap 只做三件事：截、记、展。不修改 prompt，不调度工具，不上传任何数据。
 
 ## 采用顺序与边界
 
-对想用 claude-tap 的读者，按以下顺序最经济：
+**第一步：安装**。要求 Python 3.11+，`uv tool install claude-tap` 或 `pip install claude-tap`；升级用 `claude-tap update`。项目迭代快（137 个 release），装完先升一次。
 
-**第一步：`uv tool install claude-tap`**——一行装上，命令立即可用。
+**第二步：最小 trace**。`claude-tap -- -p "say hi"` 跑一条，浏览器里把 system prompt、messages、tools、response、usage 五块各看一遍，建立「trace 长什么样」的直觉。
 
-**第二步：跑一次最小 trace**——`claude-tap -- -p "say hi"` 看浏览器默认 URL（通常 http://localhost:8888/dashboard 或类似）打开的 viewer。理解一次请求的 5 个字段（system / messages / tools / response / usage）。
+**第三步：接入日常工作流**。日常用的 agent CLI 前面套上 claude-tap（或 `HTTPS_PROXY` 指过去），开始记录真实任务。**注意这会记录全部 prompt 内容——敏感信息不要进 prompt**。macOS 用户可以考虑 `claude-tap build-macos-app` 做成菜单栏应用：Start Monitor 会把临时 base URL 写进 `~/.claude/settings.json` 与 `~/.codex/config.toml`，Stop Monitor 逐字节恢复，强杀后用 `claude-tap monitor-restore` 兜底。
 
-**第三步：把真实工作流接入**——在你日常用的 agent CLI 前面加 `claude-tap`（或 export HTTPS_PROXY），开始记录真实任务。**注意：这会记录所有 API 请求的 prompt——敏感信息不要在 prompt 里直接出现**。
+**第四步：diff 调 bug**。agent 行为异常时，对比正常 turn 与异常 turn 的结构化 diff，定位是哪次请求的哪个字段变了——system prompt 截断、tool schema 不匹配、某请求在重试循环里打转，都藏不过这一步。
 
-**第四步：跨请求 diff 调 bug**——遇到 agent 异常行为时，对比「正常 turn」和「异常 turn」的 trace diff，定位具体哪个字段变了。
+**不建议做的事**：
 
-**第五步：导出 + 分享**——`claude-tap export --output trace.html` 生成可分享的单文件，发给同事 / 贴 issue。
+- 不要把 trace 传云端。工具的全部价值建立在「本地」上，上传等于主动泄露 prompt；
+- 不要多用户共享同一台机器的 trace 库，session 里是别人的 prompt；
+- 不要假设脱敏完备。header 有清单，请求体没有；
+- 不要把它当常驻监控。它是调试与研究工具，不是 APM。
 
-**不一定要做的事**：
+**覆盖边界**：claude-tap 看的是 agent 发出的 HTTP/WebSocket 流量。工具执行的本机副作用（shell stdout、文件读写）只在它们被塞进 tool result 回传时才出现在 trace 里；provider 内部处理完全不可见。它是 client-side 观测，与服务端 tracing 互补而非替代。Cursor 的 transcript-only 路线还要再窄一层：transcript 里没写的流量，任何模式下都看不到。
 
-- 不要把 trace 存到云端——claude-tap 设计就是「本地」，上传云端会泄露 prompt 内容
-- 不要在生产环境长开——claude-tap 增加 ~10-50ms 延迟，dev / debug 阶段用
-- 不要给多用户共享机器开——trace SQLite 是用户隔离的，混用会泄露不同人的 prompt
-- 不要假设脱敏完整——`SENSITIVE_HEADER_KEYS` 保护 header，但请求体里如果出现 API key（agent 代码 bug）脱敏管不到
-
-**边界**：claude-tap 主要覆盖「agent ↔ LLM 之间的 HTTP 流量」，对以下场景只能部分覆盖：
-
-- **Tool 内部副作用**——tool 调用 shell command 的 stdout / stderr 不在 trace 里（除非 agent 把它们塞进 tool result）
-- **文件系统操作**——agent 读 / 写文件的内容不在 trace 里（除非通过 Read tool 发回 LLM）
-- **非 HTTP 客户端**——某些 agent 用 gRPC / WebSocket 时需要 codex_app_cdp 模式（best-effort）
-- **云端 LLM provider 内部**——claude-tap 看到的是 client 发出的请求，看不到 provider 内部处理
-
-最后一个边界值得强调——claude-tap 是「client-side」可观测性。Provider 端（Anthropic / OpenAI 自己的 trace）claude-tap 看不到。这和传统 APM 的 server-side tracing 互补。
+对四类读者的落点：agent 开发者用它验证「设计意图 == 实际发出的请求」；排查异常行为的用户用它拿到第一手证据；团队负责人用它看 token 用量与高频 prompt 模式（真实 trace 顺手就是培训案例）；安全/合规则用它回答「agent 到底往外发了什么」——发 trace 快照给别人前，记得先过一遍脱敏边界。
 
 ## 参考资料
 
-- [liaohch3/claude-tap GitHub 仓库](https://github.com/liaohch3/claude-tap)，MIT 协议，截至 2026-06-27 共 2021 stars / 203 forks，v0.1.75+
-- [claude_tap/proxy.py](https://github.com/liaohch3/claude-tap/blob/main/claude_tap/proxy.py)——reverse proxy handler + `SENSITIVE_HEADER_KEYS` 定义
-- [claude_tap/forward_proxy.py](https://github.com/liaohch3/claude-tap/blob/main/claude_tap/forward_proxy.py)——CONNECT + TLS MITM forward proxy
-- [claude_tap/cli.py](https://github.com/liaohch3/claude-tap/blob/main/claude_tap/cli.py)——CLI 入口 + `--tap-client` 调度
-- [claude_tap/cli_clients.py](https://github.com/liaohch3/claude-tap/blob/main/claude_tap/cli_clients.py)——13 个客户端的 launch + target detection
-- [claude_tap/certs.py](https://github.com/liaohch3/claude-tap/blob/main/claude_tap/certs.py)——本地 CA 自动 trust 到 macOS keychain
-- [claude_tap/trace.py](https://github.com/liaohch3/claude-tap/blob/main/claude_tap/trace.py)——async SQLite TraceWriter
-- [claude_tap/viewer.py](https://github.com/liaohch3/claude-tap/blob/main/claude_tap/viewer.py)——单文件 HTML viewer 生成（12 个 JS 模块）
-- [claude_tap/upstream.py](https://github.com/liaohch3/claude-tap/blob/main/claude_tap/upstream.py)——upstream URL 构造（避免 `/v1/messages/v1/messages` 重复）
+- [liaohch3/claude-tap](https://github.com/liaohch3/claude-tap)——MIT，Python 3.11+；2026-10-05 读数 3,260 stars / 282 forks / 9 contributors，最新 release v0.1.145（2026-08-16），累计 137 个 release
+- [docs/support-matrix.md](https://github.com/liaohch3/claude-tap/blob/main/docs/support-matrix.md)——client × auth × target × transport 权威组合表（[中文版](https://github.com/liaohch3/claude-tap/blob/main/docs/support-matrix.zh.md)）
+- [claude_tap/cli_clients.py](https://github.com/liaohch3/claude-tap/blob/main/claude_tap/cli_clients.py)——`CLIENT_CONFIGS` 客户端矩阵
+- [claude_tap/proxy.py](https://github.com/liaohch3/claude-tap/blob/main/claude_tap/proxy.py)——reverse proxy、`SENSITIVE_HEADER_KEYS`、路径白名单
+- [claude_tap/forward_proxy.py](https://github.com/liaohch3/claude-tap/blob/main/claude_tap/forward_proxy.py)——CONNECT + TLS MITM 实现
+- [claude_tap/certs.py](https://github.com/liaohch3/claude-tap/blob/main/claude_tap/certs.py)——本地 CA 与 macOS login keychain 信任
+- [claude_tap/trace.py](https://github.com/liaohch3/claude-tap/blob/main/claude_tap/trace.py)——`TraceWriter` 与统计累积
+- [claude_tap/trace_store.py](https://github.com/liaohch3/claude-tap/blob/main/claude_tap/trace_store.py)——SQLite 5 张表
+- [claude_tap/viewer.py](https://github.com/liaohch3/claude-tap/blob/main/claude_tap/viewer.py)——单文件 viewer 生成（`LAZY_THRESHOLD`、12 个 JS 模块）
+- [claude_tap/upstream.py](https://github.com/liaohch3/claude-tap/blob/main/claude_tap/upstream.py)——上游 URL 拼接与防重复端点
 - [docs/guides/agent-trace-viewer.md](https://github.com/liaohch3/claude-tap/blob/main/docs/guides/agent-trace-viewer.md)——本地 trace viewer 使用指南
-- [Phistory: WEIFENG2333/phistory](https://github.com/WEIFENG2333/phistory)——claude-tap 下游消费者（系列）
-- [NVIDIA SkillSpector](https://txtmix.com/posts/tech/nvidia-skillspector-agent-skill-security-scanner/)——agent skill 安全（系列）
-- [Meta 挖角 Virtue AI](https://txtmix.com/posts/tech/meta-poaches-virtue-ai-agent-security-talent-war/)——agent 安全人才战（系列）
-- [FTShare Python SDK](https://txtmix.com/posts/tech/ftshare-python-sdk-financial-data-agent-access-layer/)——agent skill 数据接入（系列）
-- [DAO Code](https://txtmix.com/posts/tech/tigicion-dao-code-deepseek-coding-agent-cache-engineering/)——agent 工程（系列）
+- [Phistory（WEIFENG2333/phistory)](https://github.com/WEIFENG2333/phistory)——claude-tap 下游消费者，capture-only prompt 导出做提示词归档
+- [SkillSpector 解读](https://txtmix.com/posts/tech/nvidia-skillspector-agent-skill-security-scanner/) · [Virtue AI 人才战](https://txtmix.com/posts/tech/meta-poaches-virtue-ai-agent-security-talent-war/) · [FTShare SDK](https://txtmix.com/posts/tech/ftshare-python-sdk-financial-data-agent-access-layer/) · [DAO Code](https://txtmix.com/posts/tech/tigicion-dao-code-deepseek-coding-agent-cache-engineering/)（本站系列）

@@ -1,7 +1,7 @@
 ---
 title: "pm-skills 解读：69 个技能与 42 条命令怎样占住 Claude Code 的上下文"
 date: "2026-06-25T21:05:13+08:00"
-lastmod: "2026-09-26T04:57:36+08:00"
+lastmod: "2026-09-29T10:00:00+08:00"
 slug: "phuryn-pm-skills-product-management-agent-skills-guide"
 github_repo: "phuryn/pm-skills"
 source_key: "gh:phuryn/pm-skills"
@@ -14,7 +14,7 @@ keywords: ["pm-skills", "Claude Code 插件", "技能与命令", "上下文常�
 
 pm-skills 把 Teresa Torres、Marty Cagan、Alberto Savoia 那一整套产品经理方法论拆成 69 份技能说明和 42 条命令。装载目标是 Claude Code、Cowork 和 Codex。它没有任何运行时代码：9 个插件在 Claude Code 的组件清单里报出的 Agents、Hooks、MCP servers、LSP servers 全部是 0。于是"值不值得装"不再取决于框架收得全不全，而取决于两件可以当场量出来的事：这些文本在什么时刻被读进上下文，以及每个会话为它固定付多少。
 
-文中的结论都来自 2026-09-26 的一次走查：克隆仓库、跑它自带的校验器和测试套件、把 9 个插件全装进一个隔离配置目录的 Claude Code 2.1.278，再逐条回读到文件与行号。核对基准是 main 分支 `8607e3b077817f89bf4a9b623246219734ac3be0`（2026-09-14 提交）。仓库创建于 2026-03-01，MIT 许可，67 次提交出自 3 人之手，当天 26,596 颗星、2,830 个复刻、26 个未关闭议题加 16 个未合并请求。这类数字只在这里出现一次。
+文中的结论都来自 2026-09-26 的一次走查：克隆仓库、跑它自带的校验器和测试套件、把 9 个插件全装进一个隔离配置目录的 Claude Code 2.1.278，再逐条回读到文件与行号。核对基准是 main 分支 `8607e3b077817f89bf4a9b623246219734ac3be0`（2026-09-14 提交，2026-09-29 复核时仍是最新）。仓库创建于 2026-03-01，MIT 许可，67 次提交出自 3 人之手；2026-09-29 读到 26,640 颗星、2,837 个复刻、26 个未关闭议题加 16 个未合并请求。这类数字只在这里出现一次。
 
 ## 目录
 
@@ -35,7 +35,7 @@ pm-skills 把 Teresa Torres、Marty Cagan、Alberto Savoia 那一整套产品经
 
 ## 它交付的是文本不是工具
 
-装完之后最该先看的一眼，是权限面。`claude plugin details` 报出的组件类型里只有 skills 一项非零，其余四类全为 0。它不改写工具调用，不挂外部服务，也不在会话之外执行任何东西。整个市场就是一批按约定摆放的 Markdown 文件，加一份清单。
+装完之后最该先看的，是权限面。`claude plugin details` 报出的组件类型里只有 skills 一项非零，其余四类全为 0。它不改写工具调用，不挂外部服务，也不在会话之外执行任何东西。整个市场就是一批按约定摆放的 Markdown 文件，加一份清单。
 
 唯一一处对工具权限的显式约束在两个静态审计命令的 frontmatter 里：
 
@@ -74,7 +74,7 @@ pm-data-analytics             3     3     6     ~335   SQL、队列分析、A/B 
 合计                         69    42   111   ~6,625
 ```
 
-组件那列把命令也算进了技能，为什么两栏数字会重合，后文"装一遍到底发生什么"一节给答案。69 与 42 这两个数与仓库自带校验器的汇总行一致：
+组件那列把命令也算进了技能，所以装完只会看到一个合并后的数，后文"装一遍到底发生什么"一节给答案。69 与 42 这两个数与仓库自带校验器的汇总行一致：
 
 ```text
   Plugins:   9
@@ -140,7 +140,7 @@ identify-assumptions-new        八类：以上四类 + Ethics / Go-to-Market /
                                       Strategy & Objectives / Team
 ```
 
-新产品那一份的开头还写了一句它自己的前提：好的团队会假定自己至少四分之三的想法不会如所料地成。
+新产品那一份的开头还写了一句它自己的前提：好的团队会假定自己至少四分之三的想法不会如愿成真。
 
 命令之间的衔接有一条硬规则：不许跨插件硬引用。
 
@@ -163,7 +163,7 @@ git show HEAD:pm-ai-shipping/commands/ship-check.md   | grep -c '^### Step'
 
 新增的两步各有来历。第三步是正确性复查，让 `code-review` 技能只跑 correctness 维度，找"编译通过、测试通过、两处单看都合理但互相矛盾"的缺陷。第六步是独立未引导复查：把目标交给**另一个模型的干净会话**，并立下三条规矩。其一，不能是写过这段代码的那个会话；其二，不给它检查清单，也不给它前序结论；其三，审查范围机械算出来，用 `git log --oneline <上一个标签>..HEAD` 和 `git status`，不用散文描述。最后一条理由写得很实在：未引导的审阅者没有反证纪律，会自信地报出代码早已挡住的"发现"，所以入包前必须逐条回代码手工验证。
 
-这一步带来的 `code-review` 技能本身还没进任何版本——它在 `CHANGELOG.md` 的 `## Unreleased` 段里。查一下标签就知道：
+这一步用到的 `code-review` 技能本身还没进任何版本——它在 `CHANGELOG.md` 的 `## Unreleased` 段里。查一下标签就知道：
 
 ```text
 v2.0.0  skills=68  code-review 不存在
@@ -175,7 +175,7 @@ main    skills=69  code-review 存在
 
 这是全文最该抄下来的一条：同一份仓库里同时存在 68 和 69 两个说法，而它们不是随手写的。
 
-被测试锁住的有四处，全在 `tests/test_consistency.py` 的 126 到 205 行，比对的都是这种形状的计数句：
+被测试锁住的有四处，全在 `tests/test_consistency.py` 的 126 到 203 行，比对的都是这种形状的计数句：
 
 ```text
 README.md:11                    "69 PM skills and 42 chained workflows across 9 plugins"
@@ -283,7 +283,7 @@ done
 
 下面按现象排查，最常见的四类占了绝大多数。
 
-**敲 `/discover` 没有这条命令。** 先看插件是否真装上（`claude plugin list` 会列出插件名、版本、作用域和 enabled 状态）。装了还没有，就是你走的是复制技能目录那条路——命令不在技能目录里。Codex 侧则是设计如此，改用自然语言描述流程。
+**敲 `/discover` 没有这条命令。** 先看插件是否真装上（`claude plugin list` 会列出插件名、版本、作用域和 enabled 状态）。装了还没有，说明你走的是复制技能目录那条路——命令不在技能目录里。Codex 侧则是设计如此，改用自然语言描述流程。
 
 **技能没有被自动用上。** 自动加载只看 `description`，触发线索全在 "Use when" 那半句里，你的说法离它远就不命中。强制加载两种写法：`/pm-execution:prioritization-frameworks` 或直接 `/prioritization-frameworks`，前者带插件前缀更稳。
 
@@ -303,17 +303,17 @@ done
 
 不适用的人也说清楚。只用 Notion AI 或网页端 ChatGPT 的团队没有挂载点；已经有稳定的内部模板与评审流程的人，套一层引导式提问多半是负收益；把 PM 方法论当素材自己写提示词的，直接读它的几个 `SKILL.md` 比装全套快——文本全在仓库里，MIT。
 
-三个配套仓库各管一段，别混：pm-brain 把 PM 的上下文存成放在本地文件夹里的纯文本笔记，供模型读与写（881 星）；claude-usage 是本地跑的 Claude Code 词元用量与花费面板（2,237 星）；burnstop 是预算保险丝，按词元或金额给单次会话封顶并对目标自动挂 50 美元上限（10 星，最后一次提交停在 2026-06-22）。三者同为 MIT，与 pm-skills 的关系用作者自己的话说：技能是"做一次工作怎么做"，大脑是"你做过很多次之后知道什么"。
+三个配套仓库各管一段，别混：pm-brain 把 PM 的上下文存成放在本地文件夹里的纯文本笔记，供模型读与写（882 星）；claude-usage 是本地跑的 Claude Code 词元用量与花费面板（2,239 星）；burnstop 是预算保险丝，按词元或金额给单次会话封顶并对目标自动挂 50 美元上限（10 星，最后一次提交停在 2026-06-22）。三者同为 MIT，与 pm-skills 的关系用作者自己的话说：技能是"做一次工作怎么做"，大脑是"你做过很多次之后知道什么"。
 
-星数、议题数、词元数这些数都会变；上面每个数字都标了 2026-09-26 这个取数日，复算命令照抄即可。
+星数、议题数、词元数这些数都会变；走查与安装发生在 2026-09-26，仓库读数复核于 2026-09-29，复算命令照抄即可。
 
 ## 下一步读哪几段代码
 
 顺序上先读守卫，再读内容，判断会更快：
 
 ```text
-tests/test_consistency.py:126-205   四道数字断言，看哪些位置被锁、哪些没被锁
-validate_plugins.py:31-45           必需字段与 README 期望小节，全部约束的源头
+tests/test_consistency.py:126-203   四道数字断言，看哪些位置被锁、哪些没被锁
+validate_plugins.py:31-44           必需字段与 README 期望小节，全部约束的源头
 CLAUDE.md:49-60                     名词/动词、不跨插件硬引用、技能名等于目录名
 CLAUDE.md:73-79                     版本同步与 CHANGELOG 作为发布真源
 pm-product-discovery/commands/discover.md   131 行，一条链式命令的完整写法
@@ -328,6 +328,13 @@ pm-ai-shipping/skills/code-review/references/correctness-taxonomy.md
 3. `/discover` 七步里哪几步调用了技能？为什么它不给跨插件的命令写硬引用？
 4. `identify-assumptions-existing` 与 `-new` 的假设分类为什么不是同一套？多出来的四类是什么？
 5. 今天克隆 main 装出来的插件清单里 `version` 写 2.1.0，但内容里有一个未发布的技能。叫什么名字？从哪条命令能看出来？
+
+**参考答案**（只取上文出现过的数，不复述分析）：
+1. 68 出自 `CLAUDE.md:7`（锁外的口径），69 是磁盘/`README.md:11` 的计数，111 是 69 skills + 42 commands 的合并组件数；tag 与 main 不一致。
+2. 没有单条命令能让插件完全退常驻——常驻只吃 frontmatter `description`；`claude plugin details <插件>@pm-skills` 报 always-on 与 on-invoke 两列，按合计卸载用不到的插件即可。
+3. 是第 2–5 步（创意→假设→优先级→实验）；不写跨插件硬引用，因插件独立安装，写死别家命令装一半会撞空。
+4. existing 四类：Value / Usability / Viability / Feasibility；new 在它之上多四类：Ethics / Go-to-Market / Strategy & Objectives / Team。分类不是同一套是刻意的，新产品那句话的前提是"好的团队假定至少四分之三的想法不成"。
+5. 未发布的技能是 `code-review`（v2.0.0/v2.1.0 都没有，仅 main）；证据是安装记录 `version: 2.1.0` 却配 `gitCommitSha` 指向 main，配合 `CHANGELOG.md` 的 `## Unreleased` 段。
 
 ## 参考
 

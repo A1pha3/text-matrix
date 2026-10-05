@@ -1,558 +1,225 @@
 ---
-title: "Antigravity Awesome Skills：1,400+ AI工具插件生态系统完全指南"
+title: "Agentic Awesome Skills 拆解：2,488 个 agent 技能、AAS Core 的信任边界，和八个月里的三次变形"
 date: "2026-04-12T18:01:00+08:00"
+lastmod: "2026-09-30T12:00:00+08:00"
 slug: antigravity-awesome-skills-ai-tools-ecosystem-guide
-github_repo: "sickn33/antigravity-awesome-skills"
-source_key: "gh:sickn33/antigravity-awesome-skills"
-description: "33.3k Stars的Antigravity Awesome Skills专辑，收录1,400+AI工具插件。涵盖官方26个插件、多Agent系统、AI编程、AI搜索、AI音乐等12大分类，是AI工具爱好者的一站式资源库。"
+github_repo: "sickn33/agentic-awesome-skills"
+source_key: "gh:sickn33/agentic-awesome-skills"
+description: "sickn33/agentic-awesome-skills 的 2026-09-30 快照：从 1 月的 179 个技能到 9 月的 2,488 个，7 月改名并转向 AAS Core——本地 MCP 只做目录发现、结构校验和计划预览，把「选哪个技能」留给 agent 自己。附安装命令、分类与 risk 分布实统、一次完整任务流和采用边界。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI 工具", "Antigravity", "Claude Code"]
+tags: ["Agent Skills", "Claude Code", "Codex", "MCP", "AI 工具"]
+toc: true
 ---
 
-# Antigravity Awesome Skills：1,400+ AI 工具插件生态系统完全指南
+## 这篇文章在回答什么
+
+`sickn33/agentic-awesome-skills`（下文简称 AAS）是社区维护的 agent 技能目录，截至 2026-09-29 收录 2,488 个可安装的 `SKILL.md` 文件，47,075 stars（GitHub API）。它容易和两类东西混淆：一是 awesome 清单——只给链接不管安装；二是「技能商店」——替你挑好、打包、一键启用。AAS 两个都不是，它的 README 把自己放在中间：目录可搜索、可安装、机器可读，但**选哪个技能这件事，项目刻意不替你做**。
+
+这个立场在 2026 年 7 月变得明确。v15.0.0 引入 AAS Core——一个本地 CLI 加 stdio MCP（Model Context Protocol，agent 连接外部工具的标准协议），把「给 agent 配技能」变成一条可审查的流水线：agent 读你的项目、自己挑技能，Core 只校验所选 ID 的结构和身份，生成一份不可变的计划预览供人过目。搜索结果没有相关性评分，Core 不做排名，manifest 上限 128 个技能，`apply`（应用）和 `recover`（恢复）至今是实验性的可选项。一句话概括这个设计取舍：**AAS 把目录和校验做成了基础设施，把判断留在你和你的 agent 手里**。
+
+名字里的「Antigravity」是历史遗留。项目 1 月创建时叫 Antigravity Awesome Skills，7 月 9 日 v14.0.0 改名 Agentic Awesome Skills，README 同时声明这是独立社区项目，与 Google 没有隶属或背书关系。旧仓库地址 301 重定向到新地址。
+
+这篇文章回答四个问题：这个项目半年多经历了什么；AAS Core 具体怎么工作、边界画在哪；2,488 个技能的目录里实际有什么；真要用，从哪一步开始。
 
 ## 快速信息卡
 
-> **GitHub 仓库**: [sickn33/antigravity-awesome-skills](https://github.com/sickn33/antigravity-awesome-skills)
->
-> | 指标 | 数值 |
-> |------|------|
-> | ⭐ Stars | 41,737+ |
-> | 🍴 Forks | 6,690+ |
-> | 📜 License | MIT |
-> | 💻 主要语言 | Python |
-> | 📅 最后更新 | 2026-06-25 |
-> | 🔗 在线预览 | [GitHub Pages](https://sickn33.github.io/antigravity-awesome-skills/) |
+| 指标 | 数值 | 来源与快照时间 |
+|------|------|----------------|
+| 仓库 | [sickn33/agentic-awesome-skills](https://github.com/sickn33/agentic-awesome-skills)（旧名 301 重定向） | GitHub API，2026-09-29 |
+| Stars / Forks | 47,075 / 6,856 | 同上 |
+| 当前版本 | v18.9.0（2026-09-29 发布） | Releases 页 |
+| 技能总数 | 2,488 | README registry-sync 注释，v18.9.0 |
+| 许可证 / 主语言 | MIT / Python | GitHub API |
+| npm 包 | `agentic-awesome-skills`，latest 18.9.0（2026-07-09 首版，62 个版本） | npm registry |
+| 托管目录 | [aaskills.tech](https://aaskills.tech/)（Vercel OSS 项目托管） | README |
+| 分类标签 | 107 个 category 值 | 本文对 `skills_index.json` 实统 |
 
----
+## 从 179 到 2,488：八个月三次变形
 
-## 学习目标
+AAS 的变化速度是这个项目最容易被低估的属性。三个 tag 把演变切成三段：
 
-- 理解 Antigravity Awesome Skills 在 AI 工具生态中的定位
-- 掌握 Antigravity Tools 官方 26 个插件的功能边界
-- 了解 1,400+ AI 工具的 12 大分类体系
-- 学会按场景挑选工具组合，避免在选项海里反复试错
-- 识别这个资源库的适用边界与时效风险
+| 时间 | 版本 | 发生了什么 |
+|------|------|------------|
+| 2026-01-14 | — | 建仓 |
+| 2026-01-19 | v1.0.0 "Marketing Edition" | 首发 179 个技能，定位「Antigravity Awesome Skills」，靠复制文件安装 |
+| 2026-04-14 | v10.1.0 | 1,410 个技能、32,985 stars（README registry-sync 注释）；有了 npm 安装器 `npx antigravity-awesome-skills` |
+| 2026-06-21 | v13.1.0 | 1,681 个技能；npm 包名仍是旧名 |
+| 2026-07-09 | v14.0.0 | **改名**：项目身份、npm 包、公开 URL 全部切到 Agentic Awesome Skills；1,936 个技能 |
+| 2026-07-18 | v15.0.0 | **转型**：发布 AAS Core，仓库围绕「本地、确定性的 Core」重新定位，保留目录、插件、bundle 等原有入口 |
+| 2026-09-08 | v17.0.0 | 证据（evidence）与便携 bundle；2,115 个技能 |
+| 2026-09-27 | v18.7.0 | 全目录分类完成，`uncategorized` 清零；2,474 个技能 |
+| 2026-09-29 | v18.9.0 | 目录迁到 Vercel 托管的 aaskills.tech；2,488 个技能 |
 
----
+发布节奏同样值得注意：323 个 tag，9 月下旬几乎一天一个 release。按 `skills_index.json` 的 `date_added` 字段统计，技能增长有两个高峰——2 月净增 923 个（最早的批量收录潮），9 月净增 596 个。这不是一个「稳定维护」的项目，而是一个高速膨胀中的项目；下文的信任边界设计，也要放在这个背景下理解。
 
-## 目录
+## 系统地图：五层各管一件事
 
-- [快速信息卡](#快速信息卡)
-- [学习目标](#学习目标)
-- [一句话判断](#一句话判断)
-- [总览地图](#总览地图)
-- [Antigravity Tools 官方插件](#antigravity-tools-官方插件)
-- [AI 编程工具生态](#ai-编程工具生态)
-- [AI 搜索工具](#ai-搜索工具)
-- [AI 对话助手](#ai-对话助手)
-- [AI 音乐创作](#ai-音乐创作)
-- [AI 视频制作](#ai-视频制作)
-- [AI 数据分析](#ai-数据分析)
-- [AI 写作助手](#ai-写作助手)
-- [AI 思维导图](#ai-思维导图)
-- [工作流自动化](#工作流自动化)
-- [开发工具](#开发工具)
-- [安全与隐私](#安全与隐私)
-- [AI 基础设施](#ai-基础设施)
-- [精选资源导航](#精选资源导航)
-- [资源统计总览](#资源统计总览)
-- [任务流案例](#任务流案例从需求到工具组合)
-- [实用技巧](#实用技巧)
-- [采用建议](#采用建议)
-- [自测题](#自测题)
-- [进阶路径](#进阶路径)
-- [常见问题](#常见问题)
+AAS 的仓库容易看晕，因为它同时是技能库、网站、CLI、插件仓库。拆开是五层：
 
----
+| 层 | 组成 | 职责 |
+|----|------|------|
+| 目录层 | `skills/` 下 2,488 个 `SKILL.md`；`skills_index.json`（配 v1 JSON schema）；`CATALOG.md` | 技能正典与机器可读清单 |
+| 核心层 | AAS Core：`aas` CLI + 本地 stdio MCP | 目录搜索、结构校验、计划预览 |
+| 分发层 | `npx agentic-awesome-skills` 安装器；Claude Code / Codex 插件镜像；`plugins/` 下 60 个插件目录 | 把技能文件放进各 host 的技能目录 |
+| 发现层 | aaskills.tech 托管目录；Workbench（浏览器本地） | 网页端浏览与栈/计划审查 |
+| 治理层 | Skills Registry CI、Skill Review、CodeQL、Socket、Snyk | 收录审查与依赖安全 |
 
-## 一句话判断
+数据流向是单向的：目录层是唯一的正典来源，核心层只读它，分发层把审查过的结果落盘到你的技能目录，发现层是同一份目录的网页视图。Workbench 在浏览器内存里审查工件，不碰你的文件系统。
 
-Antigravity Awesome Skills 是一个由社区维护的 AI 工具索引仓库，把分散在 GitHub 各处的 1,400+ 工具按用途归类，并配套 26 个官方插件做统一接入。它适合做工具发现入口；决策依据需要回到原始仓库核对——仓库里的 Stars、下载量、版本号会随时间漂移。
+## AAS Core 的工作方式：五步，外加一排「不做」
 
-## 总览地图
+Core 的完整流程（v18.9.0 的 [Core 指南](https://github.com/sickn33/agentic-awesome-skills/blob/v18.9.0/docs/users/aas-core.md)）：
 
-仓库把 AI 工具生态拆成两条主线：
-
-| 主线 | 角色 | 代表内容 |
-|------|------|----------|
-| Antigravity Tools | 底层代理平台，负责 API 路由和账号管理 | 26 个官方插件 |
-| Antigravity Awesome Skills | 上层索引，收录 1,400+ 工具的资源链接 | 12 大分类清单 |
-
-Antigravity Tools 解决"如何调用"，Awesome Skills 解决"调什么"。两者通过插件市场衔接：用户在 Awesome Skills 里发现工具，回到 Antigravity Tools 里安装对应插件。
-
-### 仓库核心数据（截至 2026-04-09）
-
-| 指标 | 数值 |
-|------|------|
-| GitHub Stars | 41,675+ |
-| Forks | 6,682+ |
-| Watchers | 41,675 |
-| 贡献者 | 1 人（sickn33） |
-| 最新版本 | v1.0.0（2026-04-09） |
-| 许可证 | MIT |
-
-> 注：仓库目前由单人维护，分类标准与收录门槛取决于维护者判断；下文 Stars 等数据均为文章撰写时的快照，最新数字以仓库 README 为准。
-
----
-
-## Antigravity Tools 官方插件
-
-### 26 个官方插件一览
-
-下表按 Stars 排序，列出头部插件。完整名单见仓库 README。
-
-| 插件名称 | Stars | 下载量 | 核心功能 |
-|----------|-------|--------|----------|
-| claude-code | ⭐ 28.1k | 高 | Claude Code 官方集成 |
-| gemini-cli | ⭐ 15.0k | 高 | Gemini CLI 官方集成 |
-| codex | ⭐ 8.5k | 中 | OpenAI Codex 集成 |
-| antigravity-manager | ⭐ 6.0k | 高 | 核心管理器 |
-| qwen-code | ⭐ 4.2k | 中 | 阿里通义灵码 |
-| iflow | ⭐ 3.8k | 中 | iFlow 集成 |
-| gemini-studio | ⭐ 2.5k | 低 | Gemini Studio |
-| ... | ... | ... | ... |
-
-头部插件集中在编程助手（claude-code、gemini-cli、codex、qwen-code）和管理工具（antigravity-manager），反映出 Antigravity Tools 的主要使用场景是 AI 编程工作流。
-
-### 插件安装方法
+1. **配置本地 MCP**。把 AAS 的 MCP server 挂进 Codex 或 Claude Code：
 
 ```bash
-# 通过 Antigravity Tools 内置商店安装
-# 1. 打开 Antigravity Tools
-# 2. 进入插件市场
-# 3. 搜索插件名称
-# 4. 点击安装
-
-# 或手动安装
-# 将插件文件夹放入 ~/.antigravity/skills/
+npm exec --yes --ignore-scripts --package=agentic-awesome-skills@18.9.0 -- aas mcp configure \
+  --host codex \
+  --scope user \
+  --config /absolute/path/to/codex/config.toml \
+  --cache-root /absolute/path/to/aas-cache
 ```
 
-手动安装路径 `~/.antigravity/skills/` 是用户级目录，不需要 root 权限，便于在多账号环境下隔离插件配置。
+2. **让 agent 挑技能**。你描述目标，agent 用 `search_skills` 查目录、按自己的项目理解挑出具体 ID。搜索结果按稳定的目录顺序返回，没有相关性评分——Core 明确不替你做语义判断。
+3. **校验所选集合**。只读工具 `compose_stack` 校验 ID 是否存在、结构是否合法，产出一份 schema 2 的 stack manifest（`aas-stack.json`），上限 128 个技能。
+4. **生成计划预览**。`aas stack plan` 写一份不可变（immutable）的预览，`aas stack validate` 复查 manifest。这一步的产物是给人看的，不落盘到任何技能目录。
+5. **审查后安装**。确认无误后走 `aas stack install-preview`，把选中的 ID 交给直接安装器，永远以 `--dry-run` 预览开头；你复查文件清单后，去掉 `--dry-run` 真正安装。
 
----
+第 5 步里藏着一个容易被误读的边界：**Core 本体不安装任何东西**。MCP 调用不装不删、不改 host 配置；真正动文件系统的是独立的直接安装器，而且走预览-确认两步。`stack apply` 和 `stack recover` 这两条 Core 自己的应用路径至今是实验性 opt-in，官方文档明确把它们排除在受支持的安全声明之外。
 
-## AI 编程工具生态
+把 v18.9.0 文档里的边界汇成一张表：
 
-### 核心编程助手
+| 能力 | 状态 |
+|------|------|
+| 排名 / 推荐 / 语义适配认证 | 不提供，agent 自己判断 |
+| stack manifest 上限 | 128 个技能 |
+| 技能正文（经 MCP 返回时） | 标记为不可信内容（untrusted content），不因经过 MCP 而获得指令权威 |
+| MCP 调用的副作用 | 无——不安装、不删除、不改配置、不更新目录 |
+| apply / recover | 实验性，需显式 opt-in |
+| 守护进程 / 隐式自动更新 | 无 |
+| 结构校验的含义 | 只证明 ID 存在、结构合法，不证明语义匹配、兼容性、设置正确或运行安全 |
 
-| 工具 | Stars | 特色功能 |
-|------|-------|----------|
-| **Claude Code** | 28.1k | Anthropic 官方 CLI，深度集成 |
-| **Cursor** | 65k+ | AI 优先 IDE |
-| **Cline** | 25k | VS Code 扩展 |
-| **Aider** | 19.6k | 终端 AI 结对编程 |
-| **GoCode** | 6.7k | Go 语言专用 |
-| **Devin** | 16k | autonomous coder |
+最后一条是全文最值得记住的：Core 的校验是**结构和身份**层面的。一份通过校验的 stack manifest 不保证里面的技能适合你的项目，甚至不保证技能内容本身安全——这层判断被刻意留在了流程之外。
 
-这一档工具按集成位置区分：Cursor 改造 IDE，Aider 走终端，Cline 寄生在 VS Code，Devin 走云端 autonomous 模式。选型时先确定工作流入口，再选工具。
+## 目录里有什么：分类、risk 与来源的实统
 
-### 多 Agent 系统
+107 个 category 标签长尾很重，头部集中：
 
-| 工具 | Stars | 特色功能 |
-|------|-------|----------|
-| **Multi-Agent Studio** | 精选 | 多 Agent 协作 |
-| **Agent Protocol** | 精选 | Agent 通信协议 |
-| **CrewAI** | 35k | 多 Agent 编排框架 |
-| **AutoGen** | 32k | 微软多 Agent 框架 |
-| **LangGraph** | 18k | 状态机 Agent |
+| category | 技能数 | category | 技能数 |
+|----------|-------:|----------|-------:|
+| security | 263 | marketing | 104 |
+| development | 214 | business | 82 |
+| devops | 163 | content | 77 |
+| cloud | 147 | web-development | 69 |
+| ai-ml | 136 | workflow | 68 |
 
-CrewAI、AutoGen、LangGraph 三者定位接近，差异在编排范式：CrewAI 走角色分工，AutoGen 走对话驱动，LangGraph 走显式状态机。Multi-Agent Studio 和 Agent Protocol 标注为"精选"，意味着仓库维护者认可但缺少公开 Stars 数据。
+（按 v18.9.0 的 `skills_index.json` 统计，2026-09-29 快照。）
 
-### Autonomous Research
+每个技能还带一个 `risk` 字段，官方分档语义写在 getting-started 指南里：`none`（纯文本/推理指引）、`safe`（只读或低风险操作）、`critical`（改变状态或影响部署）、`offensive`（带 Authorized Use Only 警告的渗透测试/红队指引）、`unknown`（待维护者分诊的存量内容）。实测分布：`critical` 1,235、`safe` 971、`offensive` 142、`none` 103、`unknown` 37。这个字段是信息性的——Core 不用它排名或排除技能——但安装器认它：OpenCode 这类支持过滤的 host 可以 `--risk safe,none` 只装低风险档。近半技能标 `critical` 不必慌，它说的是「这份指引会教你做改状态的事」，装之前值得看一眼 `SKILL.md` 自己写了什么；安装器还提供 `npx agentic-awesome-skills audit --skills <ids>` 做静态审计，官方同时说明它「报告高风险能力，但不证明技能安全」。
 
-| 工具 | Stars | 特色功能 |
-|------|-------|----------|
-| **AutoResearch** | 7k | 自主研究 Agent |
-| **Deep Research** | 精选 | 深度研究模式 |
-| **MiniMax** | 精选 | 海螺 AI 研究 |
-| **OpenDeepSearch** | 3.4k | 开源深度搜索 |
+来源结构：`source` 字段里 1,430 个标 `community`，165 个标 `self`，其余按收录出处标注具体仓库——包括 anthropics/skills、openai/skills、microsoft/skills、google-gemini/gemini-skills、vercel-labs/agent-skills、supabase、expo、huggingface、weaviate 等官方技能库的整批收录，也包括 BagelHole/DevOps-Security-Agent-Skills（163 个）这样单次贡献上百个技能的社区仓库。出处和许可证集中在 [attribution ledger](https://github.com/sickn33/agentic-awesome-skills/blob/main/docs/sources/sources.md) 里逐条可查，其中不少批次明确标注 docs-only（只收文档、不带运行时）。2,488 个技能里只有 20 个标了 `manual` 设置，其余开箱即用；插件分发覆盖面也高——2,426 个支持 Claude 插件目标，2,401 个支持 Codex。
 
----
+### 专项插件：13 个推荐位，58 个 bundle
 
-## AI 搜索工具
+README 的「Recommended Specialized Plugins」推荐表列了 13 个领域插件，按技能数打包：
 
-### 开源替代方案
+| 插件 | 技能数 | 面向 |
+|------|-------:|------|
+| AAS Web App Builder | 10 | 前端与全栈开发 |
+| AAS Product Design Studio | 10 | 产品 UI、品牌、无障碍 |
+| AAS Security Engineer | 10 | 授权范围内的安全测试与加固 |
+| AAS Agent & MCP Builder | 10 | agent 应用、MCP 工具、RAG |
+| AAS API Platform Builder | 10 | API 设计、OpenAPI 契约、鉴权 |
+| AAS SaaS Launch & Revenue | 10 | SaaS MVP、定价、支付、SEO |
+| AAS AI Product & Evaluation Ops | 10 | AI 产品指标、评测、追踪 |
+| AAS Data Analytics / QA & Test / DevOps & Cloud | 各 10 | 数据分析、测试自动化、基础设施 |
+| AAS Secure App Builder / Documents & Presentations | 各 9 | 安全内建开发、办公文档 |
+| AAS Accessibility & Inclusive UX | 8 | WCAG 审计与无障碍 QA |
 
-| 工具 | Stars | 特色功能 |
-|------|-------|----------|
-| **Perplexica** | 19.6k | 开源 Perplexity 替代 |
-| **Free-AskAI** | 5.9k | 免费 AI 搜索 |
-| **Open Deep Search** | 3.4k | 深度搜索开源 |
-| **Khoj** | 11k | 私有 AI 搜索 |
-| **GPT Researcher** | 21k | 研究助手 |
+`plugins/` 目录下实际有 60 个插件目录：2 个主插件加 58 个 bundle 形态的领域包，13 个推荐位是其中打过「可兼容」标签的子集。
 
-### API 代理支持
+### Bundles 与 Workflows：两个容易被混用的词
 
-| 工具 | 支持协议 | 备注 |
-|------|----------|------|
-| **Perplexica** | Antigravity 代理 | ⭐推荐 |
-| **OpenDeepSearch** | OpenAI | 需 API Key |
-| **GPT Researcher** | LangChain | 需配置 |
+[Bundles](https://github.com/sickn33/agentic-awesome-skills/blob/main/docs/users/bundles.md) 按**角色**打包技能——Essentials、Web Wizard、Security Engineer、OSS Maintainer 等；[Workflows](https://github.com/sickn33/agentic-awesome-skills/blob/main/docs/users/workflows.md) 按**顺序**组织技能——比如先用 `concise-planning` 做规划、再用 `verification-before-completion` 做验收。官方对两者的定位：bundle 是「工具箱」，workflow 是「执行手册」；它们是安装子集和激活预设，不是 `@web-wizard` 这种可以整体调用的超大技能。Antigravity 用户如果装多了导致上下文过载，可以用 `./scripts/activate-skills.sh --clear "Web Wizard"` 只保留一个 bundle 的技能处于激活态。
 
-"Antigravity 代理"列表示该工具可以直接走 Antigravity Tools 的 API 路由，免去单独配置 Key 的步骤；标注 OpenAI 或 LangChain 的工具需要自行准备对应凭据。
+## 任务流案例：给 Codex 配一套带验收的规划技能
 
----
+把上面的机制串成一次真实操作。目标：给 Codex CLI 配上「规划 + 完成前验证」两个技能，全程不装多余的东西。
 
-## AI 对话助手
+**第一步，配 MCP**（跑一次即可，命令见上文「AAS Core 的工作方式」）。
 
-### 主流平台
+**第二步，让 agent 自己选**。在 Codex 里说：检查我的项目，从 AAS 目录里挑出做实现规划和完成前验证的技能。agent 通过 MCP 搜目录、读技能描述，返回它选中的 ID——比如 `concise-planning` 和 `verification-before-completion`。这一步它的判断依据是技能的元数据和正文，Core 没有参与推荐。
 
-| 平台 | 特色功能 |
-|------|----------|
-| **ChatGPT** | OpenAI 官方 |
-| **Claude** | Anthropic 官方 |
-| **Gemini** | Google 官方 |
-| **Grok** | xAI |
-| **Meta AI** | Facebook |
-| **Poe** | 聚合平台 |
+**第三步，校验并预览**：
 
-### 本地部署方案
+```bash
+aas stack validate   # 复查 manifest 的结构与 ID
+aas stack plan       # 写出不可变的计划预览
+```
 
-| 工具 | Stars | 特色功能 |
-|------|-------|----------|
-| **Ollama** | 90k+ | 本地 LLM 运行 |
-| **Jan** | 15k | 本地 ChatGPT 替代 |
-| **LocalAI** | 23k | 本地 API 服务 |
-| **llamafile** | 12k | 单文件 LLM |
+**第四步，预览安装，确认执行**：
 
-本地部署这一档按易用性与控制力区分：Ollama 牺牲部分定制换开箱即用，LocalAI 走 OpenAI 兼容 API 路线方便迁移，llamafile 把模型打包成单文件便于分发。
+```bash
+aas stack install-preview   # 生成 dry-run 预览，不落盘
+npx agentic-awesome-skills --codex \
+  --skills concise-planning,verification-before-completion --dry-run
+# 复查预览里的目标路径与文件清单后，去掉 --dry-run 重新执行
+```
 
----
+整条链路上，人审了两次：一次审 plan（agent 的选择是否合理），一次审 dry-run（文件将落到哪里）。Core 负责的是让这两次审查有可靠的依据——ID 真实存在、结构合法、计划不可被中途篡改。
 
-## AI 音乐创作
+## 安装：一条 npx 命令对十二个目标
 
-| 平台 | 特色功能 |
-|------|----------|
-| **Suno** | 音乐生成标杆 |
-| **Udio** | 高质量音乐 |
-| **Splash** | AI DJ 混音 |
-| **AI DJ** | 人工智能 DJ |
-| **Mureka** | 音乐创作 |
+不经过 Core 也可以直接安装。安装器按 host 区分目标：
 
-音乐类工具多为闭源 SaaS，仓库只做收录，不提供本地替代。
+```bash
+npx agentic-awesome-skills --cursor    # Cursor
+npx agentic-awesome-skills --gemini    # Gemini CLI
+npx agentic-awesome-skills --codex     # Codex CLI
+npx agentic-awesome-skills --agy       # Antigravity CLI
+npx agentic-awesome-skills --path .agents/skills --category development --risk safe,none
+```
 
----
+README 的「Choose Your Tool」表列了十二个具名目标：Claude Code（另有插件市场入口）、Cursor、Gemini CLI、Codex CLI、Autohand Code、Antigravity IDE 与 Antigravity CLI（`agy`）、Kiro CLI 与 Kiro IDE、GitHub Copilot（preview，`gh skill install` 需 `--pin` 锁版本）、OpenCode、AdaL CLI，外加任意 `--path` 自定义目录。
 
-## AI 视频制作
+两个实操提醒。其一，**Antigravity 的技能目录是被监听的**，装太多会撑爆上下文，所以对 Antigravity 目标安装器默认要求显式选择（`--skills` 列表、过滤器或 `--all` 覆盖），这是有意设计而非限制。其二，裸安装必须带明确的选择——不带 `--skills` 的全量安装需要显式 `--all`，这个约束挡住了「一键把 2,488 个技能全塞进去」的误操作。
 
-### 视频生成
+## 采用建议：谁该用，谁不必急
 
-| 平台 | Stars | 特色功能 |
-|------|-------|----------|
-| **Runway** | 35k | 视频生成标杆 |
-| **Kling** | 25k | 快手可灵 |
-| **Pika** | 18k | 轻量视频 |
-| **Sora** | OpenAI | 视频生成 |
-| **Hai** | 精选 | 新兴工具 |
+**适合现在就上手**：
 
-### 视频处理
+- 每天用 Codex / Claude Code / Cursor，想系统性给 agent 配技能，而不是每次手写长 prompt 的人。
+- 要给团队定一份可审查的技能清单的人——`aas-stack.json` 就是现成的清单载体，plan 预览可以直接当评审材料。
+- 插件作者想一次覆盖多个 host 的——Claude / Codex 插件镜像加机器可读的 `skills_index.json` 省掉自己写分发的工作。
 
-| 工具 | 特色功能 |
-|------|----------|
-| **CapCut** | 剪映海外版 |
-| **HeyGen** | AI 虚拟人 |
-| **D-ID** | 照片说话 |
+**不必急，或只用一半**：
 
----
+- 只需要一两个具体技能——跳过 Core，直接 `npx` + `--dry-run` 装完即走。
+- 期待「精选高质量技能」——2,488 个技能的目录里，docs-only 的转载数量庞大、质量参差是结构性的；Core 的结构校验不等于质量认证，README 也没有做任何排名。挑技能仍要自己读 `SKILL.md`。
+- 受监管行业的生产环境——技能是别人写的 Markdown 指令，可能要求调用付费 API、向外部服务发数据；`offensive` 档的 142 个技能是安全测试用途，装之前先过 [安全指引](https://github.com/sickn33/agentic-awesome-skills/blob/main/docs/users/security-and-antivirus.md) 和你自己的合规流程。
 
-## AI 数据分析
+**起步顺序**：先用 `npx` 挑两三个技能装到当前项目跑一周，确认这个形式对你的工作流有用；需要规模化选型时再配 Core 的 MCP；把 bundles 和 workflows 当起点，而不是追求装满 128 个的上限。
 
-| 工具 | Stars | 特色功能 |
-|------|-------|----------|
-| **Mito** | 8k | Python 数据分析 |
-| **MindsDB** | 32k | 预测分析 |
-| **PandasAI** | 12k | 自然语言 Pandas |
+## 质量与维护：CI 挡在收录前面，发布一天一个
 
----
+收录侧的自动化相当完整：PR 要过 Skills Registry CI、Skill Review、Dependency Review、CodeQL、Socket、Snyk 六道检查，贡献者被要求跑 `npm run validate`、从官方模板起步，并且「技能内容与高风险指引需要人工逻辑与安全审查」。18.7.0 把全目录 `uncategorized` 清零，说明元数据纪律在收紧。
 
-## AI 写作助手
-
-| 工具 | Stars | 特色功能 |
-|------|-------|----------|
-| **Notion AI** | 集成 | 笔记增强 |
-| **Copy.ai** | 25k | 营销文案 |
-| **Jasper** | 18k | 企业写作 |
-| **Writesonic** | 15k | 多语言 |
-
----
-
-## AI 思维导图
-
-| 工具 | Stars | 特色功能 |
-|------|-------|----------|
-| **Xmind Copilot** | 精选 | 思维导图 AI |
-| **Mapify** | 精选 | 思维导图 |
-| **Amy Kris** | 精选 | AI 头脑风暴 |
-
----
-
-## 工作流自动化
-
-| 工具 | Stars | 特色功能 |
-|------|-------|----------|
-| **Zapier** | 25k | 工作流自动化 |
-| **Make** | 18k | 场景自动化 |
-| **n8n** | 48k | 开源工作流 |
-| **AutoGPT** | 165k | 自主 Agent |
-| **SuperAGI** | 12k | Agent 框架 |
-
----
-
-## 开发工具
-
-### 版本控制与 CI/CD
-
-| 工具 | Stars | 特色功能 |
-|------|-------|----------|
-| **GitHub Copilot** | 集成 | 代码补全 |
-| **GitLab Duo** | 集成 | GitLab AI |
-| **Dependabot** | 集成 | 依赖更新 |
-
-### 数据库与 API
-
-| 工具 | Stars | 特色功能 |
-|------|-------|----------|
-| **Supabase** | 45k | Postgres+AI |
-| **PlanetScale** | 15k | Serverless DB |
-| **Postman** | 集成 | API 测试 |
-
----
-
-## 安全与隐私
-
-| 工具 | Stars | 特色功能 |
-|------|-------|----------|
-| **Claude Security** | 精选 | 安全分析 |
-| **Semgrep** | 12k | 静态分析 |
-| **Snyk** | 15k | 漏洞扫描 |
-
----
-
-## AI 基础设施
-
-### 向量数据库
-
-| 工具 | Stars | 特色功能 |
-|------|-------|----------|
-| **Pinecone** | 云服务 | 托管向量 DB |
-| **Chroma** | 18k | 本地向量 DB |
-| **Qdrant** | 32k | Rust 向量 DB |
-| **Weaviate** | 25k | 混合搜索 |
-
-### LLM 网关
-
-| 工具 | Stars | 特色功能 |
-|------|-------|----------|
-| **LiteLLM** | 18k | 统一 LLM 接口 |
-| **PortKey** | 8k | LLM 网关 |
-| **GPTCache** | 12k | LLM 缓存 |
-
----
-
-## 精选资源导航
-
-### 学习资源
-
-| 资源 | 特色内容 |
-|------|----------|
-| **AI 安全** | 对齐研究、安全实践建议 |
-| **Prompt 工程** | 提示词技巧、模板库 |
-| **AI 法规** | 全球 AI 政策追踪 |
-
-### 社区资源
-
-| 社区 | 特色内容 |
-|------|----------|
-| **Hugging Face** | 模型库 |
-| **AI Reddit** | 最新资讯 |
-| **AI Newsletter** | 每周精选 |
-
----
-
-## 资源统计总览
-
-### 分类分布
-
-| 分类 | 工具数量 | 代表项目 |
-|------|----------|----------|
-| AI 编程 | 50+ | Claude Code, Cursor, Cline |
-| 多 Agent 系统 | 30+ | CrewAI, AutoGen |
-| AI 搜索 | 20+ | Perplexica, GPT Researcher |
-| AI 音乐 | 10+ | Suno, Udio |
-| AI 视频 | 30+ | Runway, Kling, Sora |
-| 工作流自动化 | 40+ | n8n, AutoGPT |
-| AI 基础设施 | 50+ | 向量数据库、LLM 网关 |
-
----
-
-## 任务流案例：从需求到工具组合
-
-以"技术调研报告自动化"为例：
-
-1. **定位分类**：在仓库 README 里找"Autonomous Research"和"AI 搜索"两个分类。
-2. **筛选工具**：Autonomous Research 给出 AutoResearch、Deep Research、OpenDeepSearch；AI 搜索给出 Perplexica、GPT Researcher。
-3. **核对兼容性**：查"API 代理支持"表，Perplexica 支持 Antigravity 代理，OpenDeepSearch 需要 OpenAI Key。
-4. **组合工作流**：用 Perplexica 做初步检索，把检索结果喂给 GPT Researcher 做深度报告，最后用 Antigravity Manager 统一管理 API 凭据。
-5. **回查时效**：执行前回到每个工具的原始 GitHub 仓库，确认 Stars、版本、维护状态仍然有效。
-
-这个流程的关键在于"先查分类表，再查兼容性表，最后回原始仓库核对"——Awesome Skills 提供入口，决策仍需原始数据支撑。
-
----
-
-## 实用技巧
-
-### 如何选择 AI 工具
-
-1. **明确需求**：编程、搜索、创作、自动化四类先选一类。
-2. **检查兼容性**：是否支持 Antigravity 代理，决定凭据管理复杂度。
-3. **评估成本**：免费额度与付费档位的边界。
-4. **考虑隐私**：本地部署与云服务的数据流向差异。
-
-### Antigravity 集成推荐组合
-
-| 场景 | 推荐组合 |
-|------|----------|
-| 日常编程 | Claude Code + Cline + Aider |
-| 深度研究 | Perplexica + GPT Researcher |
-| 内容创作 | Suno + Runway + Gamma |
-| 自动化工作流 | n8n + AutoGPT |
-
----
-
-## 采用建议
-
-这个仓库定位在索引层，执行层需要回到各工具本身。采用顺序分三步：
-
-1. **入门阶段**：先装 Antigravity Manager 和 claude-code 或 gemini-cli，跑通一个编程工作流，熟悉插件市场机制。
-2. **扩展阶段**：按需求分类逐个翻 Awesome Skills 清单，把候选工具加入 Antigravity Manager 的 API 路由。
-3. **维护阶段**：定期回查仓库更新，关注 sickn33 的提交记录，因为单人维护意味着收录标准和分类口径可能随时调整。
-
-适用边界：仓库适合做工具发现和初步筛选；涉及生产部署、合规审查、安全评估时，回到每个工具的官方文档和原始仓库做二次确认。仓库数据有快照属性，引用前核对时间戳。
-
----
-
-## 自测题
-
-1. **Antigravity Awesome Skills 和 Antigravity Tools 的关系是什么？**
-   - 参考答案：Awesome Skills 是工具索引（解决"调什么"），Antigravity Tools 是代理平台（解决"如何调用"），两者通过插件市场衔接。
-
-2. **为什么仓库里的 Stars 数据会过时？**
-   - 参考答案：文章撰写时快照的数据，随着时间推移，工具的 Stars、版本、维护状态会变化，需要回到原始仓库核对。
-
-3. **如果你需要做一个"技术调研报告自动化"的工作流，你会如何从 Awesome Skills 入手？**
-   - 参考答案：先在仓库 README 里找"Autonomous Research"和"AI 搜索"分类 → 筛选工具 → 核对兼容性 → 组合工作流 → 回查时效。
-
-4. **本地部署 AI 工具和云端 SaaS 工具的选择标准是什么？**
-   - 参考答案：本地部署（Ollama、LocalAI）适合对数据隐私有要求、需要定制的场景；云端 SaaS（ChatGPT、Claude）适合快速上手、不想维护基础设施的场景。
-
-5. **Antigravity Tools 的"API 代理"功能解决了什么问题？**
-   - 参考答案：统一管理多个 AI 工具的 API 凭据，避免在每个工具里单独配置 Key，便于在多账号环境下隔离插件配置。
-
----
-
----
-
-## 练习
-
-为了把本文真正学扎实，建议你完成下面三个练习：
-
-### 练习 1：按场景挑选工具组合
-
-从本文的12大分类中，选择一个你当前的使用场景（如AI编程、AI搜索、工作流自动化）：
-
-1. 列出这个场景下排名前3的工具
-2. 比较它们的Stars、Forks、更新频率
-3. 测试其中1-2个工具，评估其实际效果
-4. 记录你的评估结果，形成自己的工具选择标准
-
-**目标**：掌握如何根据场景从1,400+工具中挑选合适的工具组合。
-
-### 练习 2：为你的团队定制工具清单
-
-假设你需要为你的团队（如开发团队、数据分析团队）推荐AI工具：
-
-1. 列出团队的核心需求（至少3个）
-2. 从本文中找出满足这些需求的工具
-3. 评估这些工具的许可证、部署方式、集成难度
-4. 形成一份团队AI工具推荐清单
-
-**目标**：理解如何根据实际需求选择合适的AI工具。
-
-### 练习 3：贡献一个新的工具到Awesome Skills
-
-如果你发现了一个好用的AI工具，但本文还没有收录：
-
-1. 阅读Awesome Skills的贡献指南（通常在GitHub仓库的CONTRIBUTING.md）
-2. 按照规范格式添加工具信息（名称、描述、链接、分类）
-3. 提交Pull Request
-4. 观察维护者的反馈，学习如何维护一个社区资源库
-
-**目标**：理解开源社区资源库的维护方式，掌握贡献流程。
-
----
-
-## 进阶路径
-
-### 阶段一：工具发现（1-2 周）
-- 目标：熟悉 Awesome Skills 的分类体系和 Antigravity Tools 的插件市场
-- 行动：浏览 12 大分类，挑选 3-5 个与当前工作相关的工具，安装试用
-- 验收：能独立从分类表定位工具，并成功安装一个插件
-
-### 阶段二：工作流组合（2-4 周）
-- 目标：把多个工具串成可重复执行的工作流
-- 行动：参考"任务流案例"章节，设计一个自己的自动化场景（如代码审查、技术调研、内容生成）
-- 验收：能用 Antigravity Manager 管理 2+ 个工具的 API 凭据，并跑通一个完整任务流
-
-### 阶段三：工具评估与贡献（1-2 个月）
-- 目标：从"使用者"进阶到"评估者"，并能贡献新工具
-- 行动：对每个使用的工具做深度评估（Stars 趋势、Issue 响应速度、文档质量），尝试提交一个新工具到 Awesome Skills（提 PR）
-- 验收：能写出一份工具评估报告，并成功贡献一个工具到仓库
-
-### 阶段四：生态建设（长期）
-- 目标：参与 Antigravity 生态建设，开发自己的插件或工具集
-- 行动：阅读 Antigravity Tools 的插件开发文档，开发一个解决自己痛点的插件，分享到社区
-- 验收：开发出可被他人安装的插件，并获得至少 10 个 Stars
-
-**进阶资源**：
-- [Antigravity Tools 插件开发文档](https://github.com/sickn33/antigravity-tools)
-- [Awesome Skills 贡献指南](https://github.com/sickn33/antigravity-awesome-skills/blob/main/CONTRIBUTING.md)
-- [Agent Skills 协议规范](https://github.com/agent-skills/agent-skills)
-
----
+维护结构是「单主体 + 机器人 + 社区」：sickn33 个人 930 次提交居首，github-actions bot 811 次居次，社区贡献者 sck000 468 次居第三，其余三百多名贡献者的提交量都在数十次以下。发布节奏几乎一天一个版本——好处是新技能收录快、问题修复快；代价是版本漂移也快，把 AAS 接进自动化流程时应该锁版本号（npm 命令里显式写 `@18.9.0`，而不是追 latest）。文档是对这个项目的好评点：`docs/users/` 下十余篇指南覆盖安装、Core 信任边界、插件兼容、过载恢复、Windows 截断恢复等实际问题，另有 [docs_zh-CN](https://github.com/sickn33/agentic-awesome-skills/tree/main/docs_zh-CN) 中文文档。
 
 ## 常见问题
 
-### Q1: Awesome Skills 里的工具都是免费的吗？
-**A**: 不一定。仓库收录的是工具链接，不是工具本身。很多工具（如 ChatGPT、Claude）有免费额度，但高级功能需要付费。本地部署工具（如 Ollama）本身免费，但需要硬件资源。
+**免费吗？** 技能本体是 Markdown 文档，各自带许可证（MIT 居多，attribution ledger 逐条可查）。但相当一部分技能会驱动你调用外部服务——有的需要 API key，README 里明确标注 paid 的也不少。装技能免费，跑技能的成本取决于它调什么。
 
-### Q2: 为什么有些工具标注为"精选"而没有 Stars 数据？
-**A**: "精选"表示仓库维护者认可该工具的价值，但可能因为工具较新、闭源、或不以 GitHub 为主要平台，导致缺少公开的 Stars 数据。这类工具需要更多手动调研。
+**和 awesome-claude-skills 这类清单的差别？** AAS 官方有一篇[对比文档](https://github.com/sickn33/agentic-awesome-skills/blob/main/docs/users/agentic-awesome-skills-vs-awesome-claude-skills.md)。差别可以归到三点：可安装（npx 直达各 host 目录）、机器可读（schema 化的索引给集成方用）、有 Core 这层校验与计划流程。纯清单的浏览体验更轻，AAS 的分发设施更重。
 
-### Q3: Antigravity Tools 和直接使用 API Key 有什么区别？
-**A**: Antigravity Tools 提供统一的 API 路由和账号管理，可以在多个工具间共享凭据、设置配额、切换账号。直接使用 API Key 更简单，但难以管理多个工具和多个账号的场景。
+**结构校验通过就安全吗？** 不是。官方文档反复强调：结构与身份合法不证明语义匹配、兼容性、设置正确或运行安全。技能正文按不可信内容处理——这层判断留给使用者和使用者的 agent。
 
-### Q4: 这个仓库适合生产环境使用吗？
-**A**: 仓库定位在索引层，不适合直接用于生产环境。生产环境需要：1) 回到每个工具的官方文档核实；2) 做安全评估（特别是闭源 SaaS）；3) 验证工具的 SLA 和支持情况。
-
-### Q5: 如何判断一个工具是否值得长期使用？
-**A**: 看四个指标：1) Stars 增长趋势（是否持续活跃）；2) Issue 响应速度（维护者是否积极）；3) 文档质量（是否有清晰的 API 文档和示例）；4) 社区规模（是否有活跃的讨论群体）。
-
----
-
-🦞
-
----
+**中文资料？** 仓库自带 [docs_zh-CN](https://github.com/sickn33/agentic-awesome-skills/tree/main/docs_zh-CN) 目录，核心用户文档有官方中文版；托管目录 aaskills.tech 界面是英文的。
 
 ## 资料口径说明
 
-1. **来源标注**：本文以 [sickn33/antigravity-awesome-skills](https://github.com/sickn33/antigravity-awesome-skills) 仓库的 README、工具分类、Stars 数据为准，并比对仓库最新主干内容做了事实校验。
-2. **时效性**：仓库内容会随版本更新，文中涉及的工具数量、分类、Stars 数据以本文写作时（2026 年 5 月）的主干为准，后续可能变化。
-3. **示例数据**：文中涉及的人名、项目代号、金额、时间等示例数据均为说明性内容，非真实业务数字。
-4. **功能边界**：本文描述的是仓库当前状态，维护者可能在不通知的情况下调整工具分类、增加或下线某些工具链接。
-5. **适用场景**：本文的工具分类和建议基于仓库维护者的精选标准和常见 AI 工具使用实践，你的团队可能需要根据实际情况调整。
-6. **合规要求**：如果您的团队在受监管行业（金融、医疗、政府等），在使用某些闭源 SaaS 工具处理敏感数据前，请先完成安全评估和合规审批。
-
----
-
+- 本文数据快照为 2026-09-29/30：仓库元数据、贡献者、release 列表来自 GitHub API；技能数、分类与 risk 分布来自对 v18.9.0 `skills_index.json`（2,488 条）的本地统计；历史规模数据取自各版本 README 的 registry-sync 注释与 CHANGELOG。
+- 仓库曾用名 Antigravity Awesome Skills（2026-01 至 2026-07），旧地址 301 重定向；本文 frontmatter 的 slug 沿用首发时的旧名，正文一律使用现名。
+- 命令均摘自 v18.9.0 README 与 docs/users/ 指南原文；执行前请以当时的最新文档为准。
+- 本文首发于 2026-04-12，当时仓库处于 v9.x、约 1,400 个技能的阶段；2026-09-30 按当前状态全文重写。

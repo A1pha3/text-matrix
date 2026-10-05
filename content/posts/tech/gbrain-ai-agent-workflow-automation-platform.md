@@ -1,562 +1,157 @@
 ---
-title: "gbrain：开源 AI Agent 与工作流自动化平台"
+title: "GBrain：Garry Tan 给自己的 AI agent 造了一个带出处的记忆层"
 date: "2026-04-11T23:01:28+08:00"
+lastmod: 2026-09-30
 slug: gbrain-ai-agent-workflow-automation-platform
 github_repo: "garrytan/gbrain"
 source_key: "gh:garrytan/gbrain"
-description: 'gbrain 真正解决的不是"又一个 Agent 框架"，而是把多模型切换、多 Agent 协作和知识检索三条线拧成一套可落地的工程方案。'
+description: "GBrain（garrytan/gbrain）不是又一个 Agent 框架，而是给现有 agent 补上记忆层：显式事实带出处、可更正可撤回、跨 agent 共享，靠 PGLite/Postgres + 混合检索 + 夜间富化循环运转。本文拆解其架构、协议与成本，并给出采用建议。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI Agent", "工作流", "自动化", "Python"]
+tags: ["AI Agent", "记忆系统", "MCP", "开源", "Garry Tan"]
 ---
 
-# gbrain：开源 AI Agent 与工作流自动化平台
-
-**读完可以判断：**
-
-- 用一句话讲清 gbrain 和 LangChain / CrewAI 各自在什么位置，什么场景选哪个
-- 画出 gbrain 三条主线（模型网关、Agent 编排、RAG（检索增强生成））的数据流，解释它们怎么组合、怎么独立使用
-- 照着代码示例跑通一个多 Agent 协作任务，从安装到 `crew.kickoff()` 不超过 10 分钟
-- 判断你的团队现在该不该上 gbrain，以及从哪里切入
+Y Combinator 总裁兼 CEO Garry Tan 开源的 [garrytan/gbrain](https://github.com/garrytan/gbrain)，名字容易被误读成又一个 Agent 框架。它解决的是另一件事：**让已经在用的 AI agent 拥有一个自己掌控、能积累、能查询的记忆层**。Garry Tan 用它做自己 OpenClaw 和 Hermes 部署的生产记忆库，README 自述规模已到 155,795 页、24,589 个联系人、5,340 家公司，由 66 个 cron 任务自动维护。
 
-## 学习目标
+它和 ChatGPT Memory 那类托管记忆的区别在三个约束上：存的是**显式事实并带出处**，不是聊天摘要；支持**更正和撤回**，错了能修；**跨 agent 共享**，Claude Code、Codex、Grok Bot 读的是同一个库。数据落在你自己的 Postgres 里，密钥是你自己的。
 
-读完后你应当能够：
+写作时数据：30,448 Stars / 4,570 Forks / MIT 协议 / v0.60.11.0（2026-09-30 实测，GitHub API）。仓库 2026 年 4 月 5 日创建，发版节奏很快，9 月 29 日一天就发了 4 个版本。
 
-1. 说清 gbrain 的核心定位：模型网关、Agent 编排、RAG 三条主线如何协同工作
-2. 在 Python 环境中完成 gbrain 的安装、第一个 Agent 的创建和多 Agent 协作任务的运行
-3. 解释 gbrain 与 LangChain、CrewAI 的核心差异，以及各自的适用边界
-4. 描述 gbrain 的四种 Agent 编排模式（层级协作、共享记忆、规则路由、并行执行）各自适合什么场景
-5. 规划 gbrain 在团队中的采用路径：从试用到生产化的四个阶段
+## 它要解决的两个真实问题
 
-## 目录
+GBrain 源自 Garry Tan 的个人 agent 项目 OpenClaw。最初的记忆就是一堆 Markdown 文件，搜索靠 ripgrep。项目的[起源文档](https://github.com/garrytan/gbrain/blob/master/docs/ethos/ORIGIN.md)承认这很快撞上两个问题：
 
-- [学习目标](#学习目标)
-- [一、gbrain 解决什么问题](#一gbrain-解决什么问题)
-- [二、三条主线：系统总览](#二三条主线系统总览)
-- [三、主线一：模型网关](#三主线一模型网关)
-- [四、主线二：多 Agent 编排](#四主线二多-agent-编排)
-- [五、主线三：内置 RAG](#五主线三内置-rag)
-- [六、工具系统](#六工具系统)
-- [七、企业级功能](#七企业级功能)
-- [八、快速上手](#八快速上手)
-- [九、配置与部署](#九配置与部署)
-- [十、实践建议](#十实践建议)
-- [十一、常见问题](#十一常见问题)
-- [十二、采用建议](#十二采用建议)
-- [FAQ](#faq)
-- [自测题](#自测题)
-- [进阶路径](#进阶路径)
+1. **跨会话遗忘**。每个新对话都在重新问基础问题，上周介绍过的人、周二做的决定，到周四就没了。记忆文件存在，agent 却用不上。
+2. **重复劳动**。同一个公司的两条消息变成两个联系人页面，三次会面变成三条互不关联的时间线。信噪比实时衰减。
 
----
+GBrain 的解法不是某个大发明，而是一叠小改造的叠加：查询先查自己的 brain 再调外部 API；每次写页面自动提取图链接；关系用带类型的边存，"谁在 Acme 工作"这种问题才有确定答案；向量检索之上叠关键词和重排序；夜间 cron 去重、修引用、找矛盾。贡献全在"一起做齐"这件事上，底座是跑在 WASM 里的 Postgres + pgvector，不需要单独的数据库服务器。
 
-## 一、gbrain 解决什么问题
+## 系统地图：四组概念先分清
 
-市面上的 AI Agent 框架不少，但多数在"调模型"和"编排 Agent"之间只能做好一头。LangChain 管抽象管得细，但工程落地需要自己补的东西很多；CrewAI 侧重多 Agent 角色分配，但模型切换和知识检索需要额外集成。
+GBrain 的文档密度很高，动手前先分清四组容易混淆的概念：
 
-gbrain 走的是另一条路：**把模型网关、Agent 编排和 RAG 做成三个内置模块，用同一套配置串起来。** 你不用在三个库之间来回接管线——40+ 模型、60+ 工具、四种向量数据库，都在同一个进程里跑。
+| 维度 | 两边各是什么 | 怎么选 |
+|------|-------------|--------|
+| 存储引擎 | PGLite（Postgres 17 编译成 WASM，零配置）vs Postgres + pgvector（Supabase 或自托管） | 个人用、5 万页以内默认 PGLite；共享或大规模用 Postgres |
+| 访问入口 | CLI（`gbrain <命令>`）vs MCP 服务器（`gbrain serve`） | 人自己操作走 CLI；给 agent 用走 MCP |
+| 查询方式 | `gbrain search`（返回排序页面）vs `gbrain think`（返回合成答案） | 要原始材料用 search；要结论和出处用 think |
+| 组织单位 | brain（一个数据库）vs source（brain 里的一个仓库） | 一个 brain 可装 wiki、笔记、文章等多个 source |
 
-它的代价也很明确：抽象层比 LangChain 薄，定制深度不如自己搭 pipeline。但如果你需要的是"开工就能跑起来的多 Agent 系统"，这套代价是可接受的。
+最后一条展开说：agent 按目录写页面时，路由规则放在 `.gbrain-source` 点文件里，按 6 层优先级链解析。这意味着你可以把公司 wiki、个人笔记、项目文档装进同一个 brain，各自保持独立的授权和路由。
 
-| 指标 | 数值 |
-|------|------|
-| Stars | 8.9k ⭐ |
-| Forks | 427 |
-| 语言 | Python 100% |
-| 最新版本 | v0.4.3 (2026-04-06) |
-| 许可证 | Apache-2.0 |
-| 贡献者 | 77 |
+架构上还有一个关键设计：**contract-first 的 BrainEngine 接口**（`src/core/engine.ts`，140+ 方法），CLI 和 MCP 服务器都从这个接口生成。所以 README 里每个 CLI 命令，agent 通过 MCP 都能调到等价操作，两边不会漂移。
 
----
+## 记忆怎么存：带出处的事实，不是聊天记录
 
-## 二、三条主线：系统总览
+GBrain 存储的基本单位是**页面**（Markdown 文件）加**显式事实**。你说"记住这个：我们选了 Stripe 而不是 Adyen"，它存下这句话并记录出处（哪次对话、哪份文档）。每条事实可以更正、可以撤回，撤回后不会在检索里继续冒出来。
 
-gbrain 内部有三条独立且可组合的主线，每条都有自己的生命周期和边界：
+这套设计的系统记录是 Markdown 仓库：git 里删掉一个文件，数据库里对应软删除。但数据库里还有机器生成的页面、未解析事实和修订历史，这些不在 git 里——官方在[系统记录契约](https://github.com/garrytan/gbrain/blob/master/docs/architecture/system-of-record.md)里明确说 Markdown 导出不等于完整备份，要备份得另做数据库备份。
 
-```
-┌──────────────────────────────────────────────────┐
-│                    gbrain                        │
-│                                                  │
-│  ┌──────────┐   ┌──────────────┐   ┌─────────┐  │
-│  │ 模型网关  │   │ Agent 编排   │   │  RAG    │  │
-│  │          │   │              │   │         │  │
-│  │ 40+ 模型 │──▶│ Crew 调度    │──▶│ 向量检索 │  │
-│  │ 统一 API │   │ 层级/并行    │   │ 4 种 DB │  │
-│  └──────────┘   └──────────────┘   └─────────┘  │
-│        │               │                │        │
-│        ▼               ▼                ▼        │
-│  ┌──────────────────────────────────────────┐    │
-│  │          工具系统 (60+ 预置)              │    │
-│  └──────────────────────────────────────────┘    │
-│  ┌──────────────────────────────────────────┐    │
-│  │        企业层 (SSO / RBAC / 审计)         │    │
-│  └──────────────────────────────────────────┘    │
-└──────────────────────────────────────────────────┘
-```
+页面类型由 **schema pack** 决定。默认包 `gbrain-base-v2` 定义 15 种类型：person、company、deal、email、slack、project、tweet 等，14 个规范类型加 1 个兜底的 note。不合身可以自建：`gbrain schema detect` 聚类你的实际目录结构，`gbrain schema suggest` 用 LLM 细化，`gbrain schema review-candidates --apply` 人工把关后启用。类型不是标签摆设——`whoknows` 专家路由只认声明了 `expert_routing: true` 的类型，事实抽取只跑在 `extractable: true` 的类型上。
 
-三条主线各自独立——你可以只用模型网关来统一 LLM 调用，不碰 Agent 编排；也可以只用 RAG 做知识库检索，不进多 Agent 场景。但三者组合时，共享同一套工具系统和配置层。
-
----
-
-## 三、主线一：模型网关
-
-### 3.1 它做了什么
-
-gbrain 的模型网关对外暴露一个 `LLM` 类，内部封装了各家 Provider 的认证、调用格式和返回结构。切换模型就是改一行字符串：
-
-```python
-from gbrain import LLM
-
-llm = LLM("gpt-4o")           # OpenAI
-llm = LLM("claude-3-5-sonnet") # Anthropic
-llm = LLM("llama-3.1-70b")    # Groq
-llm = LLM("qwen-2.5-72b")     # Ollama 本地
-
-response = llm.chat("用 Python 写一个快速排序")
-```
-
-### 3.2 为什么需要这一层
-
-多模型切换的痛点不在"调用"，而在"切换成本"。每换一个 Provider，调用格式、token 计数、错误码都不一样。模型网关把这部分差异吃掉了，你的 Agent 逻辑不需要感知底层是 OpenAI 还是本地 Ollama。
-
-这一点对生产环境尤其重要：你可以先用 Groq 的免费 API 做原型验证，确认逻辑通了再切到 OpenAI 正式跑——一行配置的事。
-
-### 3.3 支持的 Provider
-
-| Provider | 模型示例 | 适用场景 |
-|----------|----------|----------|
-| OpenAI | GPT-4o, GPT-4-turbo | 通用推理，质量优先 |
-| Anthropic | Claude 3.5 Sonnet, Claude 3 Opus | 长文本、复杂推理 |
-| Azure | Azure OpenAI Service | 企业合规部署 |
-| Groq | Llama 3.1 70B, Mixtral 8x7B | 免费高速，原型验证 |
-| Ollama | 本地模型 | 隐私优先，离线可用 |
-| LM Studio | 本地模型 | 离线运行，无需服务端 |
-| HuggingFace | Inference API | 托管推理，模型丰富 |
-
----
-
-## 四、主线二：多 Agent 编排
-
-### 4.1 它做了什么
-
-Agent 编排引擎负责两件事：把任务拆给多个 Agent，以及管理 Agent 之间的上下文传递。核心概念是 `Agent`（角色定义 + 工具绑定）和 `Crew`（调度器）：
-
-```python
-from gbrain import Agent, Crew
-
-researcher = Agent(
-    name="研究助手",
-    role="信息收集与总结",
-    backstory="你是一个专业的研究员，擅长从多个来源收集信息",
-    tools=["tavily_search", "browser"]
-)
-
-writer = Agent(
-    name="写作助手",
-    role="内容创作",
-    backstory="你是一个资深编辑，擅长撰写清晰、有说服力的文章",
-    tools=["document_writer"]
-)
-
-crew = Crew(agents=[researcher, writer])
-result = crew.kickoff("写一篇关于 AI Agent 的博客文章")
-```
-
-### 4.2 编排的四种模式
-
-| 模式 | 工作机制 | 适用场景 |
-|------|----------|----------|
-| 层级协作 | 主 Agent 拆任务，子 Agent 执行 | 复杂任务分解 |
-| 共享记忆 | Agent 之间读写同一上下文 | 多步骤需要前序结果 |
-| 规则路由 | 按条件把任务分给不同 Agent | 分类→处理流水线 |
-| 并行执行 | 独立任务同时跑 | 多源数据采集 |
-
-### 4.3 为什么需要编排层，而不是一个 Agent 干到底
-
-单个 Agent 的有效上下文窗口和推理深度是有限的。把"收集信息""写作""校对"拆给三个 Agent，每个只背自己的角色和工具，比一个大 Agent 同时做三件事更可靠。这背后是注意力稀释问题——Agent 能用的工具越多、背的 prompt 越长，其输出质量下降越明显。
-
-### 4.4 一个完整的任务流案例
-
-拿「写一篇 AI Agent 博客文章」走一遍完整流程：
-
-1. **用户发起** → `crew.kickoff("写一篇关于 AI Agent 的博客文章")`
-2. **Crew 拆解** → 识别出需要"信息收集→写作→校对"三个子任务
-3. **研究助手执行** → 调用 `tavily_search` 搜索"AI Agent 2026 最新动态"，用 `browser` 抓取 3 篇参考文章，返回结构化摘要
-4. **写作助手执行** → 拿到研究助手的摘要存入共享记忆，按"背景→技术原理→实践案例"的结构生成初稿
-5. **自检** → Crew 检查输出是否完整，若缺章节则补写
-6. **返回结果** → 组合后的完整文章返回给用户
-
-这个流程里，模型网关负责每一步的 LLM 调用（模型可以在不同步骤用不同的 Provider），编排引擎负责调度和上下文传递，RAG 可选介入——如果写作助手需要参考公司内部文档，RAG 在步骤 4 之前注入检索结果。
-
----
-
-## 五、主线三：内置 RAG
-
-### 5.1 它做了什么
-
-RAG 模块封装了文档入库、向量化和语义检索的完整链路：
-
-```python
-from gbrain import RAG
-
-rag = RAG(
-    vectorstore="chroma",          # chroma / faiss / qdrant / milvus
-    embedding_model="text-embedding-3-small"
-)
-
-rag.add_documents(
-    documents=["技术文档...", "产品手册..."],
-    metadata=[{"source": "docs"}, {"source": "manual"}]
-)
-
-results = rag.search("如何配置 SSO？", top_k=5)
-```
-
-### 5.2 为什么内置 RAG，而不是外挂
-
-外挂 RAG 的典型问题是：Agent 需要上下文增强时，你得在 Agent 逻辑里手动调检索、塞 prompt、去重。内置 RAG 把这个过程自动化了——Agent 可以在执行步骤中声明"我需要检索知识库"，系统自动注入相关片段。
-
-### 5.3 向量数据库选择
-
-| 数据库 | 定位 | 选它当 |
-|--------|------|--------|
-| ChromaDB | 轻量嵌入式 | 原型开发、单机部署 |
-| FAISS | 高性能 C++ 后端 | 查询延迟敏感 |
-| Qdrant | 云原生、带过滤 | 需要复杂筛选条件 |
-| Milvus | 大规模分布式 | 百万级以上向量 |
-
----
-
-## 六、工具系统
-
-gbrain 预置了 60+ 工具，覆盖搜索、数据抓取、云服务、数据库、支付和通信六类。Agent 通过 `tools` 参数绑定工具，运行时由编排引擎决定何时调用哪个工具。
-
-```python
-from gbrain import Agent
-
-agent = Agent(
-    name="运营助手",
-    tools=[
-        "tavily_search",     # 搜索
-        "firecrawl_scrape",  # 网页抓取
-        "github_repo",       # GitHub 操作
-        "slack_message",     # Slack 通知
-        "notion_create",     # Notion 文档
-        "linear_issue",      # Linear 工单
-        "airtable_record",   # Airtable 记录
-    ]
-)
-```
-
-自定义工具也很直接——用 `@tool` 装饰器包装任意 Python 函数即可：
-
-```python
-from gbrain import tool
-
-@tool(name="天气查询", description="查询指定城市的天气")
-def get_weather(city: str) -> str:
-    import requests
-    response = requests.get(f"https://api.weather.com?q={city}")
-    return response.json()
-```
-
----
-
-## 七、企业级功能
-
-### 7.1 安全与权限
-
-```python
-from gbrain import Enterprise
-
-enterprise = Enterprise(
-    sso_enabled=True,
-    sso_provider="okta",       # okta / azure / google
-
-    rbac_enabled=True,
-    roles={
-        "admin": ["*"],
-        "user": ["agent:run", "tool:use"],
-        "viewer": ["agent:read"]
-    },
-
-    audit_enabled=True,
-    ssl_enabled=True,
-)
-```
-
-### 7.2 可观测性
-
-```python
-from gbrain import observe
-
-observe.langsmith(
-    api_key="your-api-key",
-    project="production-agents"
-)
-
-observe.otel(
-    endpoint="http://otel-collector:4317",
-    service_name="gbrain-agent"
-)
-```
-
----
-
-## 八、快速上手
-
-### 8.1 安装
+## 记忆怎么取：search 给材料，think 给答案
 
 ```bash
-pip install gbrain            # 基础安装
-uv add gbrain                 # 或用 uv（更快）
+# 原始检索：按混合得分返回页面，不生成答案
+gbrain search "who's working on AI agents at portfolio companies?"
 
-pip install gbrain[enterprise]  # 企业功能
-pip install gbrain[all]         # 全部功能
+# brain 层：合成带引用的答案，外加缺口分析
+gbrain think "who's working on AI agents at portfolio companies?"
 ```
 
-### 8.2 第一个 Agent
+`search` 的排序是五种信号叠加：向量、关键词、RRF、来源层级加权、重排序器。新装默认用 Voyage 的 `voyage-4` 嵌入（1024 维）加 `rerank-2.5` 重排序，也可以换 OpenAI、Gemini、Ollama 本地模型等 13 家嵌入供应商，或用 llama.cpp 跑 Qwen3-Reranker 做全本地方案。
 
-```python
-from gbrain import Agent
+真正值得花时间的是 `think`。它跑同样的检索，然后把结果合成一篇**带页面级引用的答案**，末尾附一份缺口分析：哪些页面已经过时、哪些说法没有出处、哪些页面互相矛盾、哪里还有空洞。README 原话是"The gap analysis is the part that changes how you use the brain"——你知道了脑子哪里空着，才知道该往哪里补。
 
-assistant = Agent(
-    name="助手",
-    role="通用助手",
-    backstory="你是一个有用的人工智能助手"
-)
+成本边界要分清：keyless 模式（不配任何 API key）下关键词检索照常工作，但语义检索、重排序会把文本发给配置的供应商并计费，`think` 需要单独配置对话模型。
 
-result = assistant.run("用 Python 写一个 Hello World")
-print(result)
+## 图谱层：模式匹配抽边，数字要会读
+
+GBrain 的知识图谱走的是便宜路线：可信的本地页面写入时，用**纯模式匹配**（不调 LLM）从 `[[people/alice-example]]` 这类引用里抽出带类型的边。远程写入不内联抽边——stdio 连接靠启动和空闲时扫描补，HTTP 连接需要显式维护或授权的 `add_link` 调用。官方反复强调：抽出来的边是待核查的证据，不是关系为真的证明。
+
+效果有基准数字。在 BrainBench 关系类问题上，图适配器拿到 P@5 0.3421 / R@5 0.9791，纯混合检索是 0.1917 / 0.6874（[2026-09-09 刷新](https://github.com/garrytan/gbrain-evals/blob/main/docs/benchmarks/2026-09-09-retrieval-refresh.md)）。读这组数字要注意三点：它测的是"问关系类问题时图检索对混合检索的增益"，不是全任务普遍提升；增益主要来自召回率近乎翻倍（图边把相关页面直接带回来了）；它衡量的是整套系统在特定基准上的表现，换成你的数据分布不能直接外推。
+
+## 后台循环：白天记录，夜里做账
+
+GBrain 的日常运转是一个六环节循环，README 给的图示是：
+
+```text
+signal → search → respond → write → auto-link → sync
 ```
 
-### 8.3 第一个工作流
+信号检测器（需要显式开启）从对话里捕捉可以长期留存的实质想法和实体提及；每次回答前先查 brain 再调外部 API；写回页面时自动连图；cron 负责同步。
 
-```python
-from gbrain import Workflow
+真正的差异在夜间。官方叫 dream cycle，cron 跑起来做五类事：给联系人页面去重、修引用、给信息打显著度分、找页面间矛盾、准备第二天的任务清单。这个设计把"记忆维护"从 agent 对话里挪走了——对话窗口宝贵，整理账目这种活交给后台。在 OpenClaw 或 Hermes 这类常驻平台上，这个循环 24 小时不停，这正是 README 那组大规模数字的来源。
 
-workflow = Workflow(
-    name="博客写作流程",
-    steps=[
-        {"agent": "researcher", "task": "收集 AI Agent 最新动态"},
-        {"agent": "writer", "task": "撰写博客文章"},
-        {"agent": "editor", "task": "校对和发布"}
-    ]
-)
+## 协议与接入：把记忆当成一根网线来卖
 
-result = workflow.execute()
-```
+GBrain 最有意思的工程决策是定义了一份**记忆协议**。[MEMORY_VERBS v1](https://github.com/garrytan/gbrain/blob/master/docs/protocol/MEMORY_VERBS_v1.md) 把全部记忆操作收敛成七个动词：`recall`、`remember`、`entity`、`synthesize`、`forget`、`context_pack`、`delta`。协议版本 1 的字段名和语义**永久冻结**，只允许向后兼容地加可选字段——文档原话是"让每个 harness 依赖它的方式，像每个 Postgres 客户端依赖线缆协议一样"。还配了 `gbrain protocol conformance` 命令验证任何端点是否符合协议。这等于把记忆层做成了公共接口：其他记忆服务器实现同样七个动词，就能接入同一个生态。
 
----
+接入面做得很全。MCP 工具目录（自动生成、有新鲜度守护）列出 **133 个工具、23 个分区**，默认 starter surface 约 38 个操作，`gbrain serve --surface verbs` 则只暴露七个动词。已验证的客户端覆盖 Claude Code、Codex、Cursor、Windsurf、OpenClaw、Hermes、Grok Bot、Muse、opencode、ChatGPT、Perplexity 等（各自有专门指南）。
 
-## 九、配置与部署
+远程访问是另一条主线。`gbrain mcp expose` 把 HTTP 服务器发布到你的 Tailscale 网络，自动装 launchd/systemd 用户服务，加 `--funnel` 可以开放公网给云上 agent 用。HTTP 服务器带 OAuth 2.1、动态客户端注册和限流，权限按 `read` / `write` / `admin` / `agent` 四种 scope 划分。给整个团队用的话，`gbrain agent register` 能为每个 agent 铸造带 scope 的 OAuth 客户端和 30 天 token。官方对共享边界的说明很直白：远程客户端被 source 授权和可见性过滤器约束，但能碰到本地文件和数据库凭据的调用方是另一层信任边界——授权测试覆盖的是具体路径，不是"零泄漏"保证。
 
-```yaml
-# gbrain.yaml
-llm:
-  default_provider: openai
-  models:
-    gpt-4o:
-      provider: openai
-      api_key: ${OPENAI_API_KEY}
-    claude-3-5-sonnet:
-      provider: anthropic
-      api_key: ${ANTHROPIC_API_KEY}
-
-vectorstore:
-  type: chroma
-  persist_directory: ./data/chroma
-
-enterprise:
-  sso_enabled: true
-  rbac_enabled: true
-
-observability:
-  langsmith_enabled: true
-  otel_enabled: true
-```
+## 安装与成本
 
 ```bash
-# .env
-OPENAI_API_KEY=sk-...
-ANTHROPIC_API_KEY=sk-ant-...
-LANGCHAIN_API_KEY=ls-...
+bun install -g github:garrytan/gbrain
+gbrain init --pglite --no-embedding   # keyless 本地 brain，无 Docker
+gbrain doctor                          # 体检
 ```
 
----
+要求 Bun 1.3.11 以上。**注意：GBrain 不通过 npm 分发**，npm 上同名的 `gbrain` 包是无关项目，装了会遮蔽真正的命令；README 专门警告了这件事，`gbrain doctor` 能检测并给出修复命令。PyPI 上也没有同名 Python 包。
 
-## 十、实践建议
+最小接入只需两步——初始化本地 brain，然后把它挂给你的编程 agent：
 
-### 10.1 设计 Agent 的经验
-
-**角色定义要窄。** 一个 Agent 的 `role` 和 `backstory` 越宽泛，输出越容易偏移。宁可多用几个专注的 Agent，也不要让一个 Agent 背太多身份。
-
-**控制工具数量。** 给 Agent 10 个工具，它选错的概率远高于给 3 个。按场景拆 Agent，每个只带该场景需要的工具。
-
-**善用共享记忆。** 多步骤任务中，后面的 Agent 能不能拿到前序结果，直接影响最终质量。别让每个 Agent 都从零开始推理。
-
-```python
-from gbrain import Agent, Memory
-
-agent = Agent(
-    name="客服助手",
-    role="客户支持",
-    backstory="你是一个耐心的客服，擅长解决客户问题",
-    tools=["search_kb", "create_ticket", "send_email"],
-    memory=Memory(
-        max_turns=10,
-        summary=True
-    )
-)
+```bash
+gbrain init --pglite --no-embedding
+claude mcp add gbrain -- gbrain serve --surface verbs   # 或 codex mcp add
 ```
 
-### 10.2 工作流优化
+成本分三档。keyless 本地记忆不花钱，用的是你已有的 harness 订阅；接上嵌入和重排序后按供应商计费；完整的 OpenClaw/Hermes 常驻部署（README 称之为"as intended"的用法）需要一台 8GB+ 内存的服务器加随用量增长的 API 开销，官方明说这远超一个聊天订阅。另有三个官方教程给了预估：个人 agent 全栈搭建约 2 小时，公司 brain（10–50 人团队）约 90 分钟，`gbrain skillopt` 技能优化一轮约 20 分钟、约 1 美元 API 费。
 
-并行执行适合独立任务（比如同时从三个数据源拉数据），条件路由适合分类→分发场景：
+## 任务流案例：准备明早和 Alice 的会面
 
-```python
-from gbrain import Crew, Workflow
+README 里的例子最能说明 search 和 think 的差别。你明天要见 Alice，想让 agent 帮你准备。
 
-crew = Crew(
-    agents=[researcher1, researcher2, researcher3],
-    execution_mode="parallel"
-)
+用传统个人知识工具，你得到的是五条搜索结果：Alice 的主页、三份会面记录、一条定价笔记——每条都要自己点开读。用 GBrain，你问"见 Alice 之前我需要知道什么"，`think` 返回的是这样的答案：
 
-workflow = Workflow(
-    steps=[
-        {"agent": "classifier", "task": "分类输入"},
-        {"agent": "technical", "condition": "type=='技术'"},
-        {"agent": "business", "condition": "type=='商务'"}
-    ]
-)
-```
+> Alice 在 Acme（一家 B 轮金融科技公司）管工程。你们上次交流是 4 月 22 日，谈了一次定价。有三件事还开着：她欠你新定价层的安全评审（截止 5 月 1 日，之后没有更新）；你答应给 500 席位层报价（4 月 25 日发出，尚未回复）；她提到在招 CISO，你说要介绍人脉。
+>
+> 提醒：brain 里关于 Alice 和 Acme 的信息已经六周没有更新了。她可能通过邮件或 Slack 回复过——这些渠道 brain 看不到。见面前值得先跟她确认。
 
----
+注意最后那段。它不是检索结果的一部分，是缺口分析：brain 知道自己**不知道**什么。这个例子在 README 里完整可查，官方将其总结为一句话："Search finds the pages. The brain reads them for you and writes the answer."
 
-## 十一、常见问题
+配套机制在这个案例里各就各位：会面纪要由信号捕捉或邮件集成（Gmail/Calendar/Contacts 原生同步，也有 Twilio + OpenAI Realtime 的电话转 brain 页面方案）进入 brain；夜间 dream cycle 已经把 Alice 的多次会面合并成一条时间线、修好了引用；白天你用自然语言提问，agent 路由到 `synthesize`，答案带着每条事实的出处页面。
 
-**Q: gbrain 和 LangChain / CrewAI 的边界在哪？**
+## 采用建议
 
-A: 假设你刚接手一个新项目，要在一个月内上线一个带 RAG 的多 Agent 客服系统。LangChain 给你更细粒度的抽象层（Chain、Tool、Memory 各自独立），适合需要深度定制的团队，但你需要自己把这三块拼起来。CrewAI 专注多 Agent 角色扮演，但模型切换和知识检索需要额外集成。gbrain 把这三块做成内置模块——省了集成时间，但抽象层比 LangChain 薄。如果你的团队已经在用 LangChain 生态且有一套成熟的 pipeline，迁移成本可能高于收益。
+**适合现在就上的：**
 
-**Q: 支持本地模型吗？**
+- 已经重度使用某个编程或个人 agent（Claude Code、Codex、OpenClaw 等），苦于它记不住跨会话的事——keyless 路径两分钟接入，不装任何额外服务。
+- 在跑 OpenClaw 或 Hermes 这类常驻 agent，想要完整的采集-富化循环——这是 GBrain 的设计目标场景，代价是服务器和 API 开销。
+- 想给 10–50 人团队建联邦式机构记忆、且愿意自己管 Postgres 的团队——company brain 教程走完约 90 分钟。
 
-A: 支持，通过 Ollama 或 LM Studio 集成。比如你在处理医疗或金融数据，合规要求数据不能出内网——这种场景下，本地模型是唯一选项。不过本地模型在复杂推理任务上的表现通常弱于云端大模型，建议简单任务（摘要、分类）用本地模型，复杂推理任务（多步逻辑、代码生成）走云端。
+**可以再等等的：**
 
-**Q: 数据安全怎么保证？**
+- 想要一个纯托管、零运维记忆服务的团队——GBrain 是自托管软件，数据库、密钥、升级（大版本升级可能要重建索引）都得自己管。
+- 期望"多 Agent 编排框架"的人——它不管 agent 之间怎么分工，只管记忆这一层。
+- 对检索质量有极致要求又不愿跑外部嵌入 API 的场景——全本地方案（Ollama/llama.cpp）可行，但效果要自己评测，官方的基准数字用的是 Voyage。
 
-A: 假设你的团队需要通过 SOC2 审计或客户要求数据驻留声明。企业版提供 SSO、RBAC、审计日志和 SSL 加密。数据默认存储在本地 SQLite 数据库，不经过 gbrain 的服务器。但要注意：如果你用云端 Provider（如 OpenAI），prompt 和响应仍然会经过第三方 API——敏感数据场景记得切到 Ollama 本地模型。
-
-**Q: 能接入自己的模型吗？**
-
-A: 可以。比如公司自研了一个针对垂直领域的模型，或者微调过的 Llama——实现 gbrain 的 LLM 接口规范即可接入，不需要改 Agent 编排或 RAG 层的代码。接入后，Agent 和 RAG 可以无缝使用你的私有模型，切换方式跟切换 OpenAI/Anthropic 一样，改一行配置。
-
-**Q: Agent 数量多了以后怎么管理？**
-
-A: 从 2 个 Agent 扩展到 8 个以后，常见的坑是上下文混乱和工具调用冲突。建议三条：角色定义保持窄（一个 Agent 只做一件事），工具数量控制在 3-5 个，善用共享记忆而不是让每个 Agent 重新推理。如果发现输出质量下降，先检查是不是某个 Agent 背了太多工具或角色，而不是急着加 Agent。
-
----
-
-## 十二、采用建议
-
-**先上的团队：**
-
-- 需要快速搭建多 Agent 协作系统的中小团队，不想在 LangChain/CrewAI 之间做集成选型。
-- 有多个 LLM Provider 切换需求（比如开发用 Groq、生产用 OpenAI）的团队。
-- 需要把 RAG 和 Agent 无缝衔接，而不是分别维护两套系统的场景。
-
-**可以等等的团队：**
-
-- 已经在 LangChain 生态有成熟 pipeline，迁移成本大于收益。
-- 需要深度定制 Agent 推理逻辑（比如自定义 ReAct 循环、复杂工具调用链），gbrain 的抽象层还不够厚。
-- 对本地模型推理性能有极致要求，需要自己控制推理引擎的每个环节。
-
-**从哪开始：**
-
-1. 先用 `pip install gbrain` 跑通第一个 Agent（5 分钟）
-2. 接上你的数据源，跑通 RAG 检索链路
-3. 拆出 2-3 个 Agent，用 Crew 编排一个最小工作流
-4. 确认逻辑可行后，再加企业功能（SSO、审计）和可观测性
-
----
-
-## FAQ
-
-**Q: gbrain 的 Agent 和 LangChain 的 Chain 有什么区别？**
-
-A: LangChain 的 Chain 是固定的执行链路，每一步做什么在代码里写死；gbrain 的 Agent 是有角色、有工具、能自主决策的执行单元。Chain 适合确定性的流水线，Agent 适合需要判断、需要工具调用的任务。
-
-**Q: 多 Agent 协作时，上下文怎么传递？**
-
-A: gbrain 通过共享记忆机制传递上下文。前面的 Agent 把结果写入共享记忆，后面的 Agent 从共享记忆读取。你也可以显式通过 Crew 的输出传递。
-
-**Q: 本地模型的效果会不会很差？**
-
-A: 取决于任务。摘要、分类、简单提取这类任务，本地模型（如 Llama 3.1 70B）效果已经不错；复杂推理、代码生成、多步逻辑，还是云端大模型更稳。建议简单任务用本地，复杂任务走云端。
-
-**Q: gbrain 支持异步执行吗？**
-
-A: 支持。从 v0.3.0 开始，gbrain 的 Agent 和 Crew 都支持 async/await 异步执行，适合高并发场景。
-
-**Q: 如果 Agent 执行失败了，怎么调试？**
-
-A: gbrain 提供可观测性集成（LangSmith、OpenTelemetry）。你可以在 LangSmith 里看到每个 Agent 的思考过程、工具调用、输入输出；也可以开启详细日志，看每一步的执行情况。
-
----
-
-## 自测题
-
-1. gbrain 的三条主线分别是什么？如果你只需要统一 LLM 调用入口，不碰多 Agent 编排，你需要用到哪条主线？
-2. 一个 Agent 的 `role` 和 `backstory` 写得太宽泛会有什么后果？如果你要给 Agent 配 10 个工具，更大的风险是什么？
-3. 假设你要做一个「搜新闻 → 写摘要 → 发 Slack」的自动化流程，在 gbrain 里应该用 `Crew` 还是 `Workflow`？为什么？
-4. 什么情况下你该选 gbrain 而不是 LangChain？什么情况下该反过来？
-5. gbrain 的四种编排模式（层级协作、共享记忆、规则路由、并行执行）各自适合什么场景？举一个具体例子。
-
----
-
-## 进阶路径
-
-### 阶段一：跑起来（1-2 天）
-- 安装 gbrain（`pip install gbrain`）
-- 跑通第一个 Agent（5 分钟快速上手）
-- 接上你的数据源，跑通 RAG 检索链路
-- 在 AI Studio 或本地环境完成第一次多 Agent 协作
-
-### 阶段二：接到自己的项目（3-7 天）
-- 把 gbrain 集成到现有 Python 项目
-- 设计 Agent 角色分工（参考实践建议）
-- 配置工具绑定（避免工具过多导致选择错误）
-- 实现第一个多步骤工作流
-
-### 阶段三：生产优化（1-2 周）
-- 配置企业功能（SSO、RBAC、审计）
-- 接入可观测性（LangSmith / OpenTelemetry）
-- 优化 Agent 编排（选择合适的编排模式）
-- 配置错误处理和重试机制
-
-### 阶段四：团队推广（持续）
-- 制定团队内部的 Agent 设计规范
-- 建立共享的工具库和 Agent 模板
-- 监控 Agent 执行成本和性能
-- 持续优化 Agent 角色定义和工具配置
-
-**推荐资源：**
-- [gbrain GitHub](https://github.com/garrytan/gbrain)
-- [gbrain 文档](https://garrytan.github.io/gbrain/)
-- [LangChain 对比分析](https://github.com/garrytan/gbrain/blob/main/docs/langchain-comparison.md)
-- [多 Agent 设计模式](https://github.com/garrytan/gbrain/blob/main/docs/multi-agent-patterns.md)
-
----
+**起步顺序：** 先 `gbrain init --pglite --no-embedding` 加 `--surface verbs` 挂到现有 agent，验证一轮 remember/recall/更正/撤回；再导入你的笔记目录（`gbrain import`）看关键词检索够不够用；最后才考虑开语义检索、接邮箱日历、上 dream cycle 这些花钱花机器的环节。官方文档专门提醒：默认情况下 agent 存的记忆是 brain 级可见的，私密事实记得传 `visibility: "private"`。
 
 ## 相关资源
 
 | 资源 | 链接 |
 |------|------|
-| GitHub | https://github.com/garrytan/gbrain |
-| 文档 | https://garrytan.github.io/gbrain/ |
-| PyPI | https://pypi.org/project/gbrain |
-| 示例 | https://github.com/garrytan/gbrain/tree/main/examples |
+| GitHub 仓库 | https://github.com/garrytan/gbrain |
+| 安装文档 | https://github.com/garrytan/gbrain/blob/master/docs/INSTALL.md |
+| 记忆协议 v1 | https://github.com/garrytan/gbrain/blob/master/docs/protocol/MEMORY_VERBS_v1.md |
+| 个人 agent 教程 | https://github.com/garrytan/gbrain/blob/master/docs/tutorials/personal-brain.md |
+| 公司 brain 教程 | https://github.com/garrytan/gbrain/blob/master/docs/tutorials/company-brain.md |
+| 评测仓库 | https://github.com/garrytan/gbrain-evals |
+| 起源故事 | https://github.com/garrytan/gbrain/blob/master/docs/ethos/ORIGIN.md |
 
 ---
 
-_🦞 本文由钳岳星君撰写，基于 gbrain v0.4.3_
+_🦞 本文由钳岳星君撰写，基于 gbrain v0.60.11.0_

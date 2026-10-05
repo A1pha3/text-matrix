@@ -1,7 +1,7 @@
 ---
 title: "CodeGraph 深度解析：把 AI Coding Agent 的代码探索从文件扫描变成图查询"
 date: "2026-05-25T20:16:19+08:00"
-lastmod: "2026-09-19T10:00:00+08:00"
+lastmod: "2026-10-02T10:00:00+08:00"
 slug: "codegraph-semantic-code-knowledge-graph-for-ai-coding-agents"
 github_repo: "colbymchenry/codegraph"
 source_key: "gh:colbymchenry/codegraph"
@@ -18,7 +18,7 @@ CodeGraph 把 AI Coding Agent 在大型仓库里最耗钱、也最容易失焦�
 
 这类工具只有在「结构理解」任务里才会明显拉开差距。问「一个请求怎么打到数据库」「改这个接口会影响哪些实现」「这个 handler 是从哪条路由进来的」，CodeGraph 往往能把几十次文件扫描压缩成几次图查询。要只是搜一段字符串，`rg` 依旧更直接。
 
-下面按 v1.6.0 的当前实现来分析，官方 README 的 benchmark 复测时间是 2026-08-05。版本之间差异不小：早期版本（0.9.4）暴露的是 `codegraph_context`、`codegraph_trace`、`codegraph_explore` 三个工具，而 0.9.9 起这两个窄工具被删掉，只留一个。这个改动本身就是理解这套系统最好的切入点。
+下面按 v1.6.1（2026-09-29 发布）的实现来分析，官方 README 的 benchmark 复测时间是 2026-08-05。版本之间差异不小：早期版本（0.9.4）暴露的是 `codegraph_context`、`codegraph_trace`、`codegraph_explore` 三个工具，而 0.9.9 起这两个窄工具被删掉，只留一个。这个改动本身就是理解这套系统最好的切入点。
 
 ## 这篇文章要回答的五个问题
 
@@ -63,7 +63,7 @@ flowchart LR
 
 如果准备顺着仓库读一遍实现，最省时间的入口也是这 4 层：`src/extraction/` 负责解析与符号抽取，`src/resolution/` 负责导入解析、名称匹配和框架路由，`src/graph/` 负责遍历与查询，`src/context/` 负责把结果整理成 agent 能直接消费的输出。重型解析会被分流到 `src/extraction/parse-worker.ts`，避免把交互式查询卡死在单线程上。
 
-数据层单独落在 `src/db/`。Schema 写在 `src/db/schema.sql`，查询走预编译语句；官方实现同时用 `better-sqlite3` 和 Node 自带的 `node:sqlite` 两类后端，并默认启用 WAL 模式（对应 `src/db/wal-valve.ts`）。日常读取不会因为一次索引写入就整库阻塞，真要排查锁冲突时，也更容易判断问题是出在旧版本安装，还是出在网络盘、WSL 挂载目录这类不适合 WAL 的文件系统上。
+数据层单独落在 `src/db/`。Schema 写在 `src/db/schema.sql`，查询走预编译语句，数据库用 Node 自带的 `node:sqlite`，并默认启用 WAL 模式（对应 `src/db/wal-valve.ts`）。日常读取不会因为一次索引写入就整库阻塞，真要排查锁冲突时，也更容易判断问题是出在旧版本安装，还是出在网络盘、WSL 挂载目录这类开不了 WAL 的文件系统上。
 
 ## 这张图是怎么建出来的
 
@@ -75,7 +75,7 @@ CodeGraph 的第一步是解析源码。它的关键词从「多语言 tree-sitt
 
 ### 用 SQLite 和 FTS5 把索引落到本地
 
-官方 README 给出的存储实现很直接：索引写入本地数据库 `.codegraph/codegraph.db`，全文搜索由 FTS5 提供。这一套设计很务实。
+官方 README 给出的存储实现很直接：索引写入本地数据库 `.codegraph/codegraph.db`，全文搜索由 FTS5 提供。
 
 - SQLite 足够轻，适合和项目目录一起初始化、一起迁移。
 - FTS5 让 CodeGraph 不只能走图关系，也能按名称和文本检索。
@@ -91,23 +91,23 @@ CodeGraph 的第一步是解析源码。它的关键词从「多语言 tree-sitt
 
 对 Web 项目来说，更有用的一层补边，是把「这段代码到底挂在哪条入口上」补出来。CodeGraph 会识别框架路由文件，生成 `route` 节点并用 `references` 边连到处理函数；查某个 view 或 controller 的调用方时，能直接看到绑定它的路由。
 
-按当前文档，framework-aware routes 覆盖 17 组框架，包括 Django、Flask、FastAPI、Express、NestJS、Laravel、Drupal、Rails、Spring、Play、Gin / chi / gorilla / mux、Axum / actix / Rocket、ASP.NET、Vapor、Astro。另外还有一类前端路由会额外生成 `navigates` 边，把「跳到哪」这个动作连到目标屏幕：Expo Router、Next.js、React Router、TanStack Router、Vue Router / Nuxt、SvelteKit 都在其中。
+按当前文档，framework-aware routes 覆盖 17 组框架，包括 Django、Flask、FastAPI、Express、NestJS、Laravel、Drupal、Rails、Spring、Play、Gin / chi / gorilla / mux、Axum / actix / Rocket、ASP.NET、Vapor、Astro。另外还有一类前端路由会额外生成 `navigates` 边，把「跳到哪」这个动作连到目标屏幕：Expo Router、Next.js、React Router、TanStack Router、Vue Router / Nuxt、SvelteKit、Angular 都在其中。
 
 这里有两个容易被忽略的边界。一是多应用仓库里，每套应用的路由只跟写在这套应用内部的跳转匹配，不会把 A 应用的 `Link` 错误连到 B 应用的同名页面。二是这种导航只认字面目标：跳转写在配置里、渲染前就能确定的路径会落进图里；真正靠运行结果才能算出来的目标，以及没有 `route` 节点服务的地址，CodeGraph 宁可留成「未解析」也不会去猜，写在模板标记里的链接则会标成 inferred，避免把推理冒充成事实。
 
-在 iOS、React Native、Expo 这类混合工程里，静态解析会在语言边界处断掉：Swift 调用一个被自动桥接的 Objective-C selector，JS 通过 RN bridge 调 native 模块。CodeGraph 会把这些边界接上，生成的边带有 `provenance: 'heuristic'` 和稳定的 `synthesizedBy` 通道名（如 `swift-objc-bridge`、`rn-event-channel`），agent 因此能看出一跳是怎么进来的。
+在 iOS、React Native、Expo 这类混合工程里，静态解析会在语言边界处断掉：Swift 调用一个被自动桥接的 Objective-C selector，JS 通过 RN bridge 调 native 模块。CodeGraph 会把这些边界接上，并且每一跳都标注来路：由桥接解析器补出的边带 `resolvedBy: 'framework'` 和解析器名（如 `swift-objc-bridge`、`react-native-bridge`），靠事件通道合成出来的边带 `provenance: 'heuristic'` 和 `synthesizedBy` 通道名（如 `rn-event-channel`、`fabric-native-impl`），agent 因此能看出一跳是怎么进来的。
 
 ### 自动增量同步解决的是「日常开发能不能用」
 
 如果每保存一次文件都要全量重建索引，CodeGraph 只适合做演示。它的实现是用原生文件事件接口 FSEvents、inotify、ReadDirectoryChangesW 监听变化，在默认 2 秒安静窗口（可用 `CODEGRAPH_WATCH_DEBOUNCE_MS` 调整，范围 `[100ms, 60s]`）后合并成一次增量同步，且只处理源码文件。
 
-这里有两个容易忽略的细节。一是零配置不等于「什么都索引」：默认排除 `node_modules`、`vendor`、`dist`、`build`、`target`、`.venv`、`Pods`、`.next` 这类依赖、产物和缓存目录；Git 仓库下尊重 `.gitignore`，非 Git 项目直接读取 `.gitignore`；大于 1 MB 的文件默认不进图。二是同步窗口内不静默给错答案：MCP 响应若引用到还在等待同步的文件，会在开头加一条 `⚠️` 提示让 agent 直接 `Read`；MCP server 重连时，也会先对做一次 `(size, mtime)` 加内容哈希的追赶，把离线期间的改动吸收掉。
+这里有两个容易忽略的细节。一是零配置不等于「什么都索引」：默认排除 `node_modules`、`vendor`、`dist`、`build`、`target`、`.venv`、`Pods`、`.next` 这类依赖、产物和缓存目录；Git 仓库下尊重 `.gitignore`，非 Git 项目直接读取 `.gitignore`；大于 1 MB 的文件默认不进图。二是同步窗口内不静默给错答案：MCP 响应若引用到还在等待同步的文件，会在开头加一条 `⚠️` 提示让 agent 直接 `Read`；MCP server 重连时，也会先做一次 `(size, mtime)` 加内容哈希的追赶，把离线期间的改动吸收掉。
 
 ## Agent 只有一个工具要记：codegraph_explore
 
 官方 README 里最值得记住的一条设计，是它把查询面收窄了。v0.9.9 的更新日志写得很直白：`codegraph_explore` 现在是主工具，一次调用通常就够——它返回相关符号的逐字源码（按文件分组，query 用自然语言即可、不必给精确符号名，点名某个文件或符号时还能拿到带行号的当前源码），并且已经内联了符号之间的调用流，所以早期那两个更窄的 `codegraph_context` 和 `codegraph_trace` 被删掉了，与其留三个工具让 agent 挑，不如留一个明显的。
 
-这不是功能缩水，而是对着真实 agent 行为调出来的结论：项目自己的设计笔记里记着「新工具的表现不如把已有工具做厚——agent 甚至会漏选 trace，context 直接被删」。常用工具现在大致是这样：
+这不是功能缩水，而是对着真实 agent 行为调出来的结论。官方在 MCP 工具文档里写明了实测依据：一个强大的工具比一排窄工具更能引导 agent——误选更少，每个会话还省上下文（README 原话："one strong tool steers agents better than a menu of narrower ones — fewer mis-picks, and it saves context every session"）。常用工具现在大致是这样：
 
 | 工具 | 状态 | 作用 |
 | ------ | ------ | ------ |
@@ -137,7 +137,7 @@ CodeGraph 的第一步是解析源码。它的关键词从「多语言 tree-sitt
 
 ## Benchmark：值得看，但两种成本要分开读
 
-截至 2026-08-05 的复测（v1.6.0），CodeGraph 在 7 个真实开源仓库上的平均收益是：少 88% 工具调用、快 53%、少 62% tokens、省 44% 成本，且七个仓库的文件读取中位数全部降到 0。
+2026-08-05 的复测（当时 1.6.0 尚未发布，测的是发布前的构建）显示，CodeGraph 在 7 个真实开源仓库上的平均收益是：少 88% 工具调用、快 53%、少 62% tokens、省 44% 成本，且七个仓库的文件读取中位数全部降到 0。
 
 | 代码库 | 语言·规模 | 工具调用（有 vs 无） | 时间 | 文件读取 | Tokens | 成本 |
 | ------ | ------ | ------ | ------ | ------ | ------ | ------ |
@@ -155,7 +155,7 @@ CodeGraph 的第一步是解析源码。它的关键词从「多语言 tree-sitt
 - 反映了什么：当问题本质是结构理解时，图最直接压低的是 discovery 成本，省不省又更多取决于问题要多少 discovery、而不是仓库多大——需要 28 到 43 次调用的问题省 57%–78%，14 次就能到的 Django 只省 13%，7 次到的 Gin 基本持平。
 - 不能推出什么：这不能证明 CodeGraph 对所有任务都有用，纯文本生成、一次性脚本、小仓库里的单点定位本就不依赖深度 discovery。
 
-README 还特意补了一句容易被忽略的话，值得原样记住它的方向：上面测的是**吞吐**——为拿到一个答案处理了多少 token、花多少钱，它没有衡量**事后还留在上下文窗口里的东西**。而在这个维度上 CodeGraph 反而更贵：多轮会话里，它的响应会留下约 80% 更多的检索上下文驻留（VS Code 上是 67k 对 18k），原因正是让它快的那个机制——一次返回一个又密又完整、读完即答的负载，它就一直待在窗口里，而 grep-and-read 是许多小结果、用完即被挤出去。处理得少、占得久，两件事同时为真。长会话配小窗口的话，要把这笔预算算进去。
+README 还补了一句容易被忽略的话：上面测的是**吞吐**——为拿到一个答案处理了多少 token、花多少钱，它没有衡量**事后还留在上下文窗口里的东西**。而在这个维度上 CodeGraph 反而更贵：多轮会话里，它的响应会留下约 80% 更多的检索上下文驻留（VS Code 上是 67k 对 18k），原因正是让它快的那个机制——一次返回一个又密又完整、读完即答的负载，它就一直待在窗口里，而 grep-and-read 是许多小结果、用完即被挤出去。处理得少、占得久，两件事同时为真。长会话配小窗口的话，要把这笔预算算进去。
 
 ## 原生 Rust 内核带来的工程余量
 
@@ -178,9 +178,11 @@ curl -fsSL https://raw.githubusercontent.com/colbymchenry/codegraph/main/install
 # Windows (PowerShell)
 irm https://raw.githubusercontent.com/colbymchenry/codegraph/main/install.ps1 | iex
 
-# 或者用 npm
-npx @colbymchenry/codegraph
+# 已经有 Node.js 时，也可以用 npm 装 CLI
 npm install -g @colbymchenry/codegraph
+
+# npx 一步到位：下载 CLI 并直接运行交互安装器
+npx @colbymchenry/codegraph
 ```
 
 装好命令行后，交互安装器会自动检测并配置它认得的 agent——现在是九个：Claude Code、Cursor、Codex CLI、opencode、Hermes Agent、Gemini CLI、Antigravity IDE、Kiro，以及 GitHub Copilot（VS Code、Copilot CLI、JetBrains IDE）。它写入各 agent 的 MCP 配置，并在 `CLAUDE.md` / `AGENTS.md` / `GEMINI.md` 里放一小段带标记的 CodeGraph 说明（子代理和不走 MCP 的 harness 看不到 MCP 自带的指引，就靠这段学会 `codegraph explore`）。
@@ -192,7 +194,7 @@ cd your-project
 codegraph init          # 建这个项目的图；此后随文件变更自动同步
 ```
 
-（早期文档里的 `codegraph init -i` 现在被标为「已弃用，索引默认就会跑」，直接 `codegraph init` 即可。）一个全局 `codegraph install` 对你打开的每个项目都生效，不必逐项目重装；重启一次 agent 让 MCP server 加载，出现 `.codegraph/` 目录后工具就会自动被用上。
+（早期版本要靠 `codegraph init -i` 单独触发索引；现在 `codegraph init` 一步建图，不需要任何 flag。）一个全局 `codegraph install` 对你打开的每个项目都生效，不必逐项目重装；重启一次 agent 让 MCP server 加载，出现 `.codegraph/` 目录后工具就会自动被用上。从 1.6.0 之前的版本升级上来的话，官方建议对旧项目重跑一次 `codegraph index`——1.6.x 的若干修复和新的导航边都是在建索引时写入的，不重索引拿不到。
 
 如果想精确控制接入方式，可以手动把 server 写进 `~/.claude.json`：
 
@@ -209,7 +211,7 @@ codegraph init          # 建这个项目的图；此后随文件变更自动同
 }
 ```
 
-这里的 `alwaysLoad: true` 是有讲究的：Claude Code 默认会把每个 MCP 工具都挡在一次 tool-search 后面，新会话里模型只看到工具名、不搜就不知道它能干嘛；`alwaysLoad` 让 `codegraph_explore` 从第一条提示起就在列表里。大多数情况下直接跑安装器更省事。
+这里的 `alwaysLoad: true` 是有原因的：Claude Code 默认会把每个 MCP 工具都挡在一次 tool-search 后面，新会话里模型只看到工具名、不搜就不知道它能干嘛；`alwaysLoad` 让 `codegraph_explore` 从第一条提示起就在列表里。大多数情况下直接跑安装器更省事。
 
 ## 排查：几类会真实遇到的问题
 
@@ -218,7 +220,7 @@ codegraph init          # 建这个项目的图；此后随文件变更自动同
 - `CodeGraph not initialized`：先在项目目录里跑 `codegraph init`。
 - Missing symbols：等自动同步跑完，或手动 `codegraph sync`；再检查文件语言是否受支持、是否被 `.gitignore` 或默认排除目录挡掉。
 - `database is locked`：现在的构建自带运行时、用 `node:sqlite` 的 WAL 模式，理论上读不会因写被挡；如果还遇到，先确认不是 pre-0.9 的旧安装（重装即可拿到 bundled runtime），再看项目是不是在网络盘或 WSL2 的 `/mnt` 这类不适合 WAL 的文件系统上。
-- `Transport closed` 而 `status` / `sync` 都正常：几乎总是 WSL2 把工程放在 Windows 盘（`/mnt/c`、`/mnt/d`），共享后台 server 的本地 socket（套接字）不可靠；把项目挪到 Linux 原生文件系统，或设 `CODEGRAPH_NO_DAEMON=1` 让每个会话各跑一个进程。
+- `Transport closed` 而 `status` / `sync` 都正常：几乎总是 WSL2 把工程放在 Windows 盘（`/mnt/c`、`/mnt/d`），共享后台 server 的本地 socket（套接字）不可靠。新版遇到这种情况会自动回退到在会话内直接起服务；仍复现的话，把项目挪到 Linux 原生文件系统，或设 `CODEGRAPH_NO_DAEMON=1` 让每个会话各跑一个进程。
 
 还有一个只在 CI 里才显出来的命令：`codegraph affected`。它沿导入依赖做传递分析，找出某些源码文件变更后哪些测试会受影响，让 CodeGraph 不只在「回答问题」时省钱，也能在 CI 和本地回归里少跑无意义的全量测试。
 

@@ -2,733 +2,310 @@
 github_repo = "plastic-labs/honcho"
 source_key = "gh:plastic-labs/honcho"
 date = '2026-05-23T13:09:23+08:00'
+lastmod = '2026-09-30T16:11:57+08:00'
 draft = false
-title = 'honcho：为有状态 Agent 打造的记忆库'
+title = 'honcho：把「AI 对人的理解」做成可查询的记忆基础设施'
 slug = 'honcho-memory-library-stateful-agents'
-description = 'honcho 是 Plastic Labs 开源的有状态 Agent 记忆库，通过对话历史持久化存储让 AI Agent 在跨会话场景中保持上下文连续性。'
+description = 'honcho 是 Plastic Labs 开源的推理型记忆基础设施：消息入库后由后台 deriver 持续提炼每个 peer 的表征，再经 chat、representation、context、混合搜索四条路径查询。本文基于 2026-09-30 核实的 v3.2.1 代码库，拆解 peer 模型、异步推理管线、三种部署形态与选型边界。'
 categories = ['技术笔记']
 tags = ['AI Agent', '开源']
 +++
 
-# honcho: 为有状态 Agent 打造的记忆库，让 Agent 记住一切
+# honcho：把「AI 对人的理解」做成可查询的记忆基础设施
 
-**🏷️ 分类：** AI Agent · 记忆框架  
-**⭐ Stars：** 4,032  
-**🔗 地址：** https://github.com/plastic-labs/honcho  
-**🌐 官网：** https://plasticlabs.ai
+**⭐ Stars：** 7,403（2026-09-30）
+**🔗 地址：** https://github.com/plastic-labs/honcho
+**🌐 文档：** https://honcho.dev/docs
+**📜 许可证：** AGPL-3.0
 
-**一句话总结：** 一个专为有状态 Agent 设计的记忆库，让 AI Agent 能跨会话记住用户偏好、对话历史、关键事实，打造真正个性化的 AI 体验。
+多数「Agent 记忆」方案做的是搬运工作：把聊天记录切块、算向量、检索时拼回提示词。Plastic Labs 的 honcho 走的是另一条路——消息入库之后，由后台推理管线持续提炼「系统对每个参与者的认识」，再把这份认识以自然语言问答、低延迟表征、会话上下文、混合搜索四种形式取出来。用官方 README 的话说，它提取的是「从对话和事件中得出的结论，而不只是匹配文本块」。honcho 存的不只是消息，还有 AI 对人的理解本身。
 
----
-
-## 学习目标
-
-读完本文，你应该能：
-
-1. 理解 honcho 的核心定位与有状态 Agent 的价值
-2. 掌握 honcho 的多层次记忆架构（短期/中期/长期）
-3. 熟练安装和配置 honcho（Python/JavaScript/TypeScript）
-4. 使用 honcho SDK 实现记忆存储、检索、融合
-5. 理解向量检索的工作原理与嵌入模型选择
-6. 应用 honcho 到实际场景（个人助手、客服、研究、教育）
-7. 评估何时需要/不需要记忆系统
-8. 设计合理的记忆过期与清理策略
-
----
+一句话判断：如果你的产品需要记住「用户是个什么样的人」而不只是「用户说过什么」，honcho 值得认真评估；反之，它对你就是多养一个服务。本文基于 2026-09-30 核实的 v3.2.1 代码库。
 
 ## 目录
 
-- [一，项目概述](#一项目概述)
-- [二，核心特性](#二核心特性)
-- [三，安装](#三安装)
-- [四，快速上手](#四快速上手)
-- [五，适用场景](#五适用场景)
-- [六，对比同类](#六对比同类)
-- [七，注意事项](#七注意事项)
-- [八，API 详解](#八api-详解)
-- [九，进阶用法](#九进阶用法)
-- [十，部署指南](#十部署指南)
-- [十一，总结](#十一总结)
-- [十二，进阶路径](#十二进阶路径)
-- [十三，自测题](#十三自测题)
-- [十四，练习](#十四练习)
-- [十五，资料口径说明](#十五资料口径说明)
+- [项目坐标](#项目坐标)
+- [先看地图：五原语、双服务、一个循环](#先看地图五原语双服务一个循环)
+- [Peer 模型：人与 Agent 一视同仁](#peer-模型人与-agent-一视同仁)
+- [异步推理管线：deriver 在后台做什么](#异步推理管线deriver-在后台做什么)
+- [查询面：四种取回结果的方式](#查询面四种取回结果的方式)
+- [一次完整流转：数学辅导 Agent](#一次完整流转数学辅导-agent)
+- [快速上手：SDK 与真实代码](#快速上手sdk-与真实代码)
+- [三种部署形态](#三种部署形态)
+- [集成：给现役 Agent 接上共享记忆](#集成给现役-agent-接上共享记忆)
+- [官方评测怎么读](#官方评测怎么读)
+- [横向定位与选型边界](#横向定位与选型边界)
+- [结语](#结语)
+- [资料口径](#资料口径)
 
----
+## 项目坐标
 
-## 一，项目概述
-
-### 1.1 honcho 是什么
-
-**honcho** 是 [Plastic Labs](https://plasticlabs.ai) 开源的**有状态 Agent 记忆库**，用于探索、构建和分享让 AI Agent「记住」用户的能力。
-
-> "A memory library for stateful agents. Remember everything across conversations."
-
-### 1.2 核心数据
-
-| 指标 | 数值 |
+| 指标 | 数值（2026-09-30，GitHub API） |
 |------|------|
-| Stars | **4,032** ⭐ |
-| Forks | 120+ |
-| 贡献者 | 15+ |
-| 最新版本 | **v0.2.1** (2026-05) |
-| 许可证 | MIT |
-| 语言 | Python 60%, TypeScript 40% |
+| Stars / Forks | 7,403 / 914 |
+| 贡献者 | 62 |
+| 最新 release | v3.2.1（2026-09-24），README 部署徽章显示 Server 3.2.2 |
+| 仓库创建 | 2023-09 |
+| 许可证 | AGPL-3.0 |
+| 语言构成 | Python ≈91%、TypeScript ≈8% |
+| SDK 版本 | PyPI `honcho-ai` 2.5.1 · npm `@honcho-ai/sdk` 2.5.1（独立于服务端版本演进） |
 
-### 1.3 核心定位
+代码仓库里同时放着服务端（`src/` 下的 FastAPI 应用）、两套官方 SDK（`sdks/python`、`sdks/typescript`）、命令行工具（`honcho-cli/`）和 MCP 接入层（`mcp/`）。也就是说，一个仓库就是一个完整的记忆服务，而不是某个框架的插件。
 
-| 维度 | 说明 |
-|------|------|
-| 🧠 **有状态 Agent** | 跨会话保持上下文 |
-| 🔗 **记忆持久化** | 对话历史存储与检索 |
-| 🎯 **个性化 AI** | 记住用户偏好与习惯 |
-| 🔒 **隐私优先** | 本地优先，数据归用户所有 |
-| 🌐 **多语言 SDK** | Python/JavaScript/TypeScript |
+一个容易踩的坑先说在前面：PyPI 上的 `honcho` 包跟这个项目毫无关系，它是 Foreman（Procfile 进程管理器）的 Python 克隆。honcho 的 Python SDK 包名是 `honcho-ai`。
 
-### 1.4 核心特性
+## 先看地图：五原语、双服务、一个循环
 
-| 特性 | 说明 |
-|------|------|
-| ✅ **多层次记忆架构** | 短期/中期/长期三层记忆 |
-| ✅ **向量检索** | 基于 embeddings 的语义搜索 |
-| ✅ **记忆融合** | 自动整合多条相关记忆 |
-| ✅ **隐私优先** | 本地优先，可选云端同步 |
-| ✅ **多语言支持** | Python/JavaScript/TypeScript SDK |
-| ✅ **灵活存储** | 可选内存/SQLite/PostgreSQL/向量数据库 |
+honcho 的概念面很窄，五个原语讲完：
 
----
+| 原语 | 职责 | 备注 |
+|------|------|------|
+| Workspace | 顶层容器，按用例隔离数据 | 前身叫 App |
+| Peer | 参与者：人类用户和 AI Agent 一视同仁 | 前身叫 User |
+| Session | 一段对话上下文，与 Peer 多对多 | 类似别家的 thread |
+| Scope | Session 的命名分组，划定召回边界 | v3 新增 |
+| Message | 原子数据单元：对话消息或导入的文档切块 | 挂在 Session 上 |
 
-## 二，核心特性详解
+数据组织是一棵简单的树：
 
-### 2.1 多层次记忆架构
-
-honcho 采用**三层记忆架构**，模拟人类记忆系统：
-
-| 层级 | 保留时间 | 内容类型 | 实现方式 |
-|------|----------|----------|----------|
-| **短期记忆** | 当前会话 | 对话上下文 | 内存缓存 |
-| **中期记忆** | 最近几次会话 | 关键决策点 | 向量数据库 |
-| **长期记忆** | 永久 | 用户偏好、背景信息 | 持久化存储 |
-
-**设计原理**：
-
-人类记忆不是 flat 的——你会记得「今天午餐吃了什么」（短期）、「上周的项目讨论」（中期）、「我的咖啡因耐受度」（长期）。honcho 的三层架构让 Agent 也能这样「记住」。
-
-### 2.2 向量检索
-
-honcho 使用 **embeddings** 将记忆转换为高维向量，然后通过**余弦相似度**检索相关记忆。
-
-**工作流程**：
-
-```
-用户输入查询
-    ↓
-文本 → Embedding 模型 → 向量
-    ↓
-与历史记忆向量计算相似度
-    ↓
-返回 Top-K 相关记忆
-    ↓
-融合到当前上下文
+```text
+Workspace
+├── Peers（内部 collections 以 observer/observed peer 对为键）
+├── Scopes（与 Session 多对多）
+└── Sessions（与 Peer 多对多）
+    ├── Peers
+    └── Messages（标明来源 peer）
 ```
 
-**支持的 Embedding 模型**：
+服务内部一分为二：**Storage** 负责工作区、peer、session、scope、消息的同步读写；**Insights** 负责一切推理——结论提炼、表征更新、会话摘要，走后台队列，由 deriver 工作进程异步消费。你调用 API 存消息是同步的、立刻返回的；系统「想明白」这些消息意味着什么，是异步的、滞后的。这个划分决定了使用 honcho 的正确姿势：写完就走，稍后再查。
 
-| 模型 | 维度 | 速度 | 质量 | 适用场景 |
-|------|------|------|------|----------|
-| `text-embedding-3-small` | 1536 | ⭐⭐⭐⭐ | ⭐⭐⭐ | 快速原型 |
-| `text-embedding-3-large` | 3072 | ⭐⭐ | ⭐⭐⭐⭐ | 生产环境 |
-| `all-MiniLM-L6-v2` | 384 | ⭐⭐⭐⭐⭐ | ⭐⭐ | 本地部署 |
-| `bge-large-zh-v1.5` | 1024 | ⭐⭐⭐ | ⭐⭐⭐⭐ | 中文场景 |
+官方把这套路数总结成一个循环：
 
-### 2.3 记忆融合
-
-honcho 不仅能**检索**相关记忆，还能**融合**多条记忆生成连贯的上下文。
-
-**示例**：
-
-```
-检索到的相关记忆：
-1. "用户喜欢意式浓缩咖啡"
-2. "用户通常在早上 8 点喝咖啡"
-3. "用户对乳糖不耐受"
-
-融合后的上下文：
-"用户是咖啡爱好者，偏好意式浓缩，通常早上 8 点饮用。
- 注意用户对乳糖不耐受，建议避免含奶咖啡。"
+```mermaid
+flowchart LR
+    A["Store<br/>消息入库"] --> B["Reason<br/>deriver 后台推理"]
+    B --> C["Query<br/>chat / context / search"]
+    C --> D["Inject<br/>to_openai / to_anthropic"]
+    D -. 下一轮对话 .-> A
 ```
 
-### 2.4 隐私优先
+## Peer 模型：人与 Agent 一视同仁
 
-honcho 的设计原则是**本地优先**：
+honcho 里没有「用户表」和「Agent 表」的区分，一切参与者都是 peer。学生和辅导老师、人类顾客和客服机器人，在数据模型里是同一种东西。这带来三个直接后果：
 
-- 默认使用本地 SQLite 存储（无需外部服务）
-- 可选连接 PostgreSQL 或向量数据库（如 Pinecone、Weaviate）
-- 云端同步需要显式启用（默认关闭）
-- 所有数据加密存储
+一，**会话天然支持多参与者**。一个 session 里可以同时有人类和多个 AI Agent，每个消息都标明来源 peer。
 
----
+二，**Agent 之间可以互相建模**。内部存储以 (observer, observed) peer 对为键存放向量化的文档集合——peer X 对 peer Y 的观察，和 peer X 对自己的观察（observer == observed），走的是同一套机制。这些内部集合不直接暴露，公开出口是 Conclusions API。
 
-## 三，安装
+三，**观察关系可以配置**。哪些 peer 观察哪些 peer，按 session 粒度设置，这让你能表达「这个助手只在该会话里了解这个用户」这类约束。
 
-### 3.1 Python 安装
+Scope 是 v3 补上的一块：给一组 session 起个名字，之后 chat、representation、session context、workspace search 走这个 scope 查询时，只见得到组内成员 session 里发生的事，而 peer 的统一表征仍然跨 scope 通用。它解决的是「一个用户在不同场景下的记忆该不该互通」——比如「工作」和「私人」两个 scope。两个细节值得记住：一次读取中 scope 与 session/filters 互斥，只能二选一；查询落在一个空 scope 上会直接失败（fail closed），而不是静默返回全库结果。
+
+## 异步推理管线：deriver 在后台做什么
+
+消息入库后发生的事情，官方 README 给的四步：
+
+1. 消息通过 API 创建；
+2. 派生任务入队——至少包括 `representation`（更新 peer 表征）和 `summary`（生成会话摘要）两类；
+3. 队列按 session 保证处理顺序；
+4. 结果写入内部存储，经 Conclusions API、Representations、Peer Cards 和 Chat Endpoint 对外暴露。
+
+deriver 还负责 peer cards 和「dreaming」任务（系统在空闲时对已有观察做二次整理）。推理本身要花 LLM 调用，所以 honcho 把模型按任务分工做了默认配置：Gemini 用于 deriver、摘要和 dialectic 低档位，Anthropic 用于 dialectic 中高档位与 dream，OpenAI 用于消息嵌入（设 `EMBED_MESSAGES=true` 时）。这些都能通过配置改——honcho 支持 TOML 文件加环境变量，优先级是环境变量 > `.env` > `config.toml` > 默认值。
+
+对使用方式影响最大的一点：**新写入的消息不会立刻反映到 chat 和表征查询里**。README 原话是「可能需要一点时间」。如果你的场景对延迟敏感，官方给的替代是用 representation 端点拿静态快照，或者用 `honcho.queue_status(...)` 看后台队列积压到哪了。
+
+## 查询面：四种取回结果的方式
+
+honcho 查出来的东西有四种形态，对应四种延迟和用途：
+
+| 产物 | 是什么 | 适合 |
+|------|--------|------|
+| Conclusions | 系统对某 peer 提炼的结论（演绎 + 归纳） | 精确取回已知维度的事实 |
+| Representations | 某 peer 认知的静态快照，可按 session 限定 | 低延迟注入，不想等 LLM 生成 |
+| Peer Cards | 紧凑的身份摘要 | 快速了解一个参与者 |
+| Session context | 消息 + 结论 + 摘要按 token 限额拼好的即用包 | 长对话续命，直接塞给模型 |
+
+落到 SDK 上，常用 API 是这张表（全部来自当前 README）：
+
+| 需求 | API |
+|------|-----|
+| 存交互历史 | `session.add_messages(...)` |
+| 问 honcho 对某 peer 的认识 | `peer.chat(...)` |
+| 整个工作区范围问答 | `honcho.chat(...)` / `honcho.chat_stream(...)` |
+| 拿即用上下文 | `session.context(...).to_openai(...)` / `.to_anthropic(...)` |
+| 混合检索（BM25 + 向量） | `peer.search(...)`、`session.search(...)`、`honcho.search(...)` |
+| 低延迟静态表征 | `peer.representation(...)`、`session.representation(...)` |
+| 导入文档 | `session.upload_file(...)` |
+| 查后台处理进度 | `honcho.queue_status(...)` |
+
+其中 chat 是旗舰接口（HTTP 层是 `POST /peers/{peer_id}/chat`）：收自然语言问题，返回带推理的回答。官方列的典型用法包括——问系统对某个 peer 的通用或具体认识、让系统为提示词补充该 peer 的行为数据、回答前找它要个「第二意见」。注意 chat 和 search 的分工：search 是字面与语义的混合检索，返回的是消息本身；chat 走的是推理，返回的是结论。
+
+## 一次完整流转：数学辅导 Agent
+
+把上面的机制串成一个官方 README 里的完整例子——一个能记住学生学习风格的辅导 Agent：
+
+```python
+import os
+from honcho import Honcho
+
+# 托管服务默认指向 api.honcho.dev；自托管传 base_url="http://localhost:8000"
+honcho = Honcho(
+    workspace_id="my-app-testing",
+    api_key=os.environ["HONCHO_API_KEY"],
+)
+
+# 1. Store：学生和辅导老师都是 peer，消息挂在 session 上
+alice = honcho.peer("alice")
+tutor = honcho.peer("tutor")
+session = honcho.session("session-1")
+session.add_messages([
+    alice.message("Hey there — can you help me with my math homework?"),
+    tutor.message("Absolutely. Send me your first problem!"),
+])
+
+# 2. Reason：异步发生，稍等片刻才会反映到下面的查询结果
+
+# 3. Query：问 honcho 这个学生的学习偏好；或直接拿即用上下文
+answer = alice.chat("What learning styles does the user respond to best?")
+context = session.context(summary=True, tokens=10_000)
+
+# 4. Inject：把上下文转成 OpenAI 消息格式，交给任意模型
+from openai import OpenAI
+client = OpenAI()
+completion = client.chat.completions.create(
+    model=os.environ.get("OPENAI_MODEL", "gpt-4o-mini"),
+    messages=context.to_openai(assistant=tutor),
+)
+```
+
+跟着数据走一遍：两条消息入库后立刻返回；deriver 从队列里取到这个 session 的派生任务，提炼出「alice 是谁、她怎么学习最好」这类结论；下次她再来时，`alice.chat(...)` 能答出「她对哪种讲解方式反应最好」——哪怕这些信息从没在任何一条消息里被明说过。`session.context(summary=True, tokens=10_000)` 则解决另一件事：会话拉长到上下文窗口装不下时，用它取一段限额内的消息、结论加摘要的组合，会话就能无限续下去。
+
+`to_openai(assistant=tutor)` 的 `assistant` 参数指定了注入后视角挂在哪个 peer 上；换成 `.to_anthropic(...)` 就是 Claude 的消息格式。SDK 侧不需要为不同模型改存储逻辑。
+
+## 快速上手：SDK 与真实代码
+
+Python 端：
 
 ```bash
-# 从 PyPI 安装
-pip install honcho
+pip install honcho-ai
+# 或 uv add honcho-ai / poetry add honcho-ai
+```
 
-# 或从源码安装
+TypeScript 端：
+
+```bash
+npm install @honcho-ai/sdk
+# 或 bun add @honcho-ai/sdk
+```
+
+再强调一次包名：是 `honcho-ai`，不是 `honcho`——后者在 PyPI 上是个同名的进程管理工具。SDK 版本与服务端版本独立演进，当前两边都是 2.5.1。
+
+Python SDK 支持 `peer()`、`session()`、`scope()`、`peers()`、`sessions()`、`scopes()` 等入口和 `chat()`、`chat_stream()`、`add_messages()`、`context()`、`search()` 等操作（以上签名核对自 `sdks/python/src/honcho/` 源码）。异步调用走 `.aio()` 访问器，例如 `await client.aio.peer("user-123")`。
+
+想直接看可运行示例，仓库里 `sdks/python/examples/` 有现成的一组：`chat.py`、`get_context.py`、`search.py`、`file_upload.py`、`multi_user_representations.py`、`pydantic_validation_example.py`。
+
+最省事的起步路径其实不写代码：去 [app.honcho.dev](https://app.honcho.dev) 注册拿 key（新组织有专属实例和 100 美元免费额度），用下面的集成方式十分钟内给现役 Agent 装上记忆，确认价值后再回来接 SDK。
+
+## 三种部署形态
+
+honcho 是服务端系统，最小部署 = API 服务 + deriver 工作进程 + PostgreSQL（带 pgvector）。三种跑法，按省事程度排：
+
+**托管服务**。指到 api.honcho.dev，零运维，注册即用。适合验证期和中小流量。
+
+**CLI 本地栈**。官方维护了 `honcho-cli`：
+
+```bash
+uv tool install honcho-cli
+honcho init                 # 认证：API key 或浏览器登录，写 ~/.honcho/config.json
+honcho start --setup basic  # 本地栈：填 LLM provider key + Docker
+honcho doctor               # 体检
+```
+
+`honcho start` 拉起的是 API + deriver + Postgres + Redis 四件套。适合个人本地使用——比如给只在自己机器上跑的 coding agent 配记忆。
+
+**源码自托管**。仓库带 Docker Compose 模板：
+
+```bash
 git clone https://github.com/plastic-labs/honcho.git
 cd honcho
-pip install -e .
+cp docker-compose.yml.example docker-compose.yml
+cp .env.template .env       # 至少填一个 LLM provider key
+docker compose up
 ```
 
-### 3.2 Node.js 安装
+不用 Docker 的源码开发路线要求 Python ≥ 3.10、uv ≥ 0.5.0，数据库连接串必须带 `postgresql+psycopg` 前缀（SQLAlchemy 的要求），跑 `alembic upgrade head` 建表，然后分别起 `fastapi dev src/main.py` 和 `python -m src.deriver`。适合要改代码、有合规要求或想把数据完全留在自己机房里的团队。
 
-```bash
-# npm
-npm install @plastic-labs/honcho
+许可在这里要当回事：AGPL-3.0 意味着如果你改造 honcho 后把它作为网络服务对外提供，按协议需要向网络用户开放修改版的源码。不想处理这件事，用托管服务；原样自托管、不做修改，一般不触发开放自己业务代码的义务——边界情形建议让法务确认你的具体用法。
 
-# yarn
-yarn add @plastic-labs/honcho
+## 集成：给现役 Agent 接上共享记忆
 
-# pnpm
-pnpm add @plastic-labs/honcho
-```
+honcho 给每个主流 coding agent 都做了第一方记忆插件，全部读同一份 `~/.honcho/config.json`——`honcho init` 写一次 key，所有集成一起生效；两个工具指向同一个 workspace，就共享同一份记忆。
 
-### 3.3 依赖要求
+| Agent | 安装 |
+|-------|------|
+| Claude Code | `/plugin marketplace add plastic-labs/claude-honcho` |
+| Codex | `npm install -g @honcho-ai/codex-honcho` 后执行 `codex-honcho install` |
+| Cursor | 官方安装脚本（install.sh / install.ps1） |
+| DeepSeek Harness | `dsh plugin --profile <name> add @honcho-ai/dsh-honcho` |
+| OpenCode | `opencode plugin "@honcho-ai/opencode-honcho" --global` |
+| OpenClaw | `openclaw plugins install @honcho-ai/openclaw-honcho` 后 `openclaw honcho setup` |
+| Hermes | 内置，`hermes memory setup` 选 honcho |
+| 任意 MCP 客户端 | `claude mcp add honcho --transport http --url https://mcp.honcho.dev ...` |
 
-| 语言 | 版本要求 | 关键依赖 |
-|------|----------|----------|
-| Python | 3.9+ | `numpy`, `scikit-learn`, `sqlite3` |
-| Node.js | 18+ | `better-sqlite3`, `@xenova/transformers` |
+几个值得知道的细节：DeepSeek Harness 插件给模型三个工具（`honcho_search`、`honcho_chat`、`honcho_remember`），用 `/honcho` 看状态；OpenClaw 安装时可以非破坏性地迁移已有的 `MEMORY.md` / `USER.md` / `IDENTITY.md` 进 honcho（原文件不删）；MCP 路线需要在请求头带 `Authorization: Bearer` 的 key 和 `X-Honcho-User-Name` 标识。
 
-### 3.4 可选依赖（向量数据库）
+给自己的应用代码接 SDK 也有辅助：`npx skills add plastic-labs/honcho` 装一套 agent skill（`/honcho-integration`），它会探索你的代码库、问集成偏好、生成 SDK 接入代码并验证。
 
-```bash
-# Pinecone
-pip install pinecone-client
+## 官方评测怎么读
 
-# Weaviate
-pip install weaviate-client
+honcho 的 evals 覆盖 LongMemEval、LoCoMo 等长对话记忆基准，官方在 evals 页面和博客（Benchmarking Honcho）公布了方法论与可复现结果，README 还以「定义了 Agent 记忆的 Pareto 前沿」自居。读这批数字时建议带着三个问题：
 
-# Qdrant
-pip install qdrant-client
-```
+一，**测的是什么**。长对话记忆基准测的是「多轮、跨会话之后还能不能想起该想起的事」，不是检索基准（召回率、MRR 那套），也不是推理基准。honcho 的推理型记忆在这一类任务上有结构性优势——结论已经提前提炼好了，不用现场从原文拼。
 
----
+二，**数字反映系统的哪部分**。表现好坏主要取决于后台推理的质量（结论提炼得准不准、全不全），其次才是检索层。这意味着换更强的 LLM provider 可能直接影响它的表现，也意味着成本结构里推理调用占大头。
 
-## 四，快速上手
+三，**不能推出什么**。这些是厂商自评，方法再透明也没有第三方复核；不同记忆方案各自挑了对自家有利的任务分布。具体分数本文不转引，以官方页面为准——重点是把它当作「值得自己跑一遍」的信号，而不是采购依据。
 
-### 4.1 Python 快速开始
+## 横向定位与选型边界
 
-```python
-from honcho import Memory, Store
+把 honcho 放进记忆赛道（star 数均为 2026-09-30 GitHub API 读数）：
 
-# 创建记忆库（默认使用 SQLite）
-store = Store(":memory:")  # 或使用文件路径 "memory.db"
+| 项目 | Stars | 一句话定位 |
+|------|-------|-----------|
+| [mem0](https://github.com/mem0ai/mem0) | 66,346 | Drop-in 记忆层，插进现有 LLM 调用链 |
+| [Letta](https://github.com/letta-ai/letta) | 24,981 | MemGPT 后继，记忆管理内嵌于 Agent 运行时 |
+| [honcho](https://github.com/plastic-labs/honcho) | 7,403 | 推理型记忆服务，peer 表征 + 多参与者建模 |
+| [Zep](https://github.com/getzep/zep) | 4,941 | 时序知识图谱路线 |
 
-# 创建用户记忆实例
-mem = Memory(store, user_id="user_123")
+四家都在做同一件事——把记忆从开发者手写的提示词拼接变成基础设施——但对「记忆是什么」的回答不同。mem0 把记忆操作做成 API；Letta 把记忆做进 Agent 循环本身；Zep 押注知识图谱；honcho 押注的是「对人（和 Agent）的可查询理解」。它最独特的两个点：peer 模型让人和 Agent 互相成为可建模的对象，以及推理先行的取回方式。star 数量在此只说明社区规模，不构成孰优孰劣的证据——这几个项目没有跑过同一份第三方基准。
 
-# 记住用户信息
-mem.remember("preference", "用户喜欢意式浓缩咖啡，不要加奶")
-mem.remember("schedule", "用户通常早上 8 点喝咖啡")
-mem.remember("health", "用户对乳糖不耐受")
+什么时候**不需要** honcho：
 
-# 检索相关记忆
-context = mem.retrieve("用户想喝咖啡，推荐什么？")
-print(context)
-# 输出：
-# "用户是咖啡爱好者，偏好意式浓缩，通常早上 8 点饮用。
-#  注意用户对乳糖不耐受，建议避免含奶咖啡。"
+- 会话短，上下文窗口装得下，框架自带的短期记忆就够——为一个循环依赖引入四个容器进程不划算；
+- 需求本质是文档 RAG——找文件、查手册，向量库加 BM25 是更直接的答案；honcho 的 `upload_file` 是把文档当作「关于某 peer 的观察」导入，重心在理解人，不在管理文档；
+- 场景是嵌入式或单二进制分发——honcho 没有进程内嵌入模式，最小面是 API + deriver + Postgres；
+- 数据模型里没有「人」——纯工具型、无状态任务的产品，记忆层没有附着点。
 
-# 融合多条记忆
-fused = mem.fuse(["preference", "schedule", "health"])
-print(fused)
-# 输出融合后的连贯上下文
-```
+什么时候**优先**考虑它：产品个性化和用户长期关系是核心竞争力（教育、陪伴、健康、私人助理），或者多 Agent 系统里 Agent 之间需要互相建模。这两类需求正好压在 peer 模型的能力上。
 
-### 4.2 Node.js 快速开始
+## 结语
 
-```javascript
-import { Memory, Store } from '@plastic-labs/honcho';
+honcho 的差异化赌注很清楚：记忆系统的竞争力不在检索精度，而在对人的理解深度——所以它把算力花在后台推理上，把接口做成「直接问它」而不是「帮它拼提示词」。这个赌注的代价同样清楚：异步延迟、持续的推理开销、一个必须养着的服务端。
 
-// 创建记忆库
-const store = new Store(':memory:');  // 或使用文件路径 "memory.db"
+给你的采用顺序：先用托管 key 跑通上面的数学辅导例子，亲手感受「问它一个从未明说的事实」这件事；觉得有价值，再设计 workspace/scope 的隔离结构；流量和数据主权要求上来之后，最后一步才是自托管。全程不必改你的模型调用代码——记忆是挂在旁边的服务，不是嵌进调用链的胶水。
 
-// 创建用户记忆实例
-const mem = new Memory(store, { userId: 'user_123' });
+## 资料口径
 
-// 记住用户信息
-await mem.remember('preference', '用户喜欢意式浓缩咖啡，不要加奶');
-await mem.remember('schedule', '用户通常早上 8 点喝咖啡');
-await mem.remember('health', '用户对乳糖不耐受');
+本文数据与结论核对于 2026-09-30：
 
-// 检索相关记忆
-const context = await mem.retrieve('用户想喝咖啡，推荐什么？');
-console.log(context);
+1. GitHub API：repos / languages / contributors / releases 接口（7,403★、914 forks、62 贡献者、v3.2.1 发布于 2026-09-24）；
+2. main 分支 README 与 `.env.template` 注释（架构、原语、SDK 用法、集成表、LLM 分工、部署要求，对应 Server 3.2.2）；
+3. SDK 源码抽查：`sdks/python/src/honcho/` 下 `client.py`、`peer.py`、`session.py`、`__init__.py` 的公开签名；
+4. PyPI `honcho-ai` 2.5.1、npm `@honcho-ai/sdk` 2.5.1；PyPI `honcho` 2.0.0（无关的 Foreman 克隆，仅用于包名警示）；
+5. 链接可达性：honcho.dev/docs、honcho.dev/evals、blog.plasticlabs.ai（Benchmarking Honcho）、discord.gg/honcho 均为 200；
+6. 对比项目（mem0、Letta、Zep）star 数来自各自 GitHub API 同日读数。
 
-// 融合多条记忆
-const fused = await mem.fuse(['preference', 'schedule', 'health']);
-console.log(fused);
-```
-
-### 4.3 使用向量检索
-
-```python
-from honcho import Memory, Store, EmbeddingModel
-
-# 使用自定义嵌入模型
-model = EmbeddingModel("text-embedding-3-small")
-
-store = Store("memory.db", embedding_model=model)
-mem = Memory(store, user_id="user_123")
-
-# 记住（自动生成嵌入）
-mem.remember("coffee_pref", "用户喜欢意式浓缩")
-
-# 检索（基于语义相似度）
-results = mem.retrieve("喝咖啡", top_k=3)
-for r in results:
-    print(f"记忆: {r['content']} (相似度: {r['score']:.3f})")
-```
-
----
-
-## 五，适用场景
-
-### 5.1 个人 AI 助手
-
-| 场景 | 记忆内容 | 价值 |
-|------|----------|------|
-| 日程管理 | 会议时间、地点、参与人 | 主动提醒，无需重复输入 |
-| 邮件撰写 | 写作风格、常用用语 | 自动匹配风格 |
-| 代码辅助 | 代码偏好、常用库 | 推荐合适的代码片段 |
-
-### 5.2 客服机器人
-
-| 场景 | 记忆内容 | 价值 |
-|------|----------|------|
-| 问题跟踪 | 历史问题、解决方案 | 快速定位重复问题 |
-| 用户偏好 | 沟通风格、时区 | 个性化服务 |
-| 工单历史 | 过往工单、处理记录 | 避免重复询问 |
-
-### 5.3 研究助手
-
-| 场景 | 记忆内容 | 价值 |
-|------|----------|------|
-| 文献笔记 | 论文摘要、关键发现 | 跨会话引用 |
-| 课题进展 | 实验记录、失败原因 | 避免重复错误 |
-| 合作者信息 | 研究方向、专长 | 推荐合作者 |
-
-### 5.4 教育 AI
-
-| 场景 | 记忆内容 | 价值 |
-|------|----------|------|
-| 学习进度 | 已学章节、掌握程度 | 个性化学习路径 |
-| 错误记录 | 常见错误、错误原因 | 针对性辅导 |
-| 兴趣点 | 感兴趣的主题 | 推荐相关内容 |
-
----
-
-## 六，对比同类
-
-### 6.1 记忆框架对比
-
-| 工具 | 记忆深度 | 隐私性 | Stars | 特点 |
-|------|---------|--------|-------|------|
-| **honcho** | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | 4K | 专为 Agent 设计，本地优先 |
-| MemGPT | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | 15K | 记忆层级管理，依赖 OpenAI |
-| LangChain-Memory | ⭐⭐⭐ | ⭐⭐⭐ | - | LangChain 生态，配置复杂 |
-| Superpowers | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | 203K | Agent 技能框架，内置记忆 |
-
-### 6.2 何时选择 honcho
-
-| 需求 | 推荐 |
-|------|------|
-| 需要本地部署 | ✅ honcho |
-| 需要多语言 SDK | ✅ honcho |
-| 已经是 LangChain 用户 | ❌ LangChain-Memory |
-| 需要完整的 Agent 框架 | ❌ Superpowers |
-| 需要依赖 OpenAI | ❌ MemGPT |
-
----
-
-## 七，注意事项
-
-### 7.1 记忆库管理
-
-- **定期清理低价值记忆**：避免记忆库膨胀，影响检索速度
-- **设置记忆过期策略**：临时信息（如「今天天气」）应设置过期时间
-- **备份记忆库**：SQLite 文件应定期备份（防止数据丢失）
-
-### 7.2 隐私与安全
-
-- **本地部署优先**：敏感数据不要上传云端
-- **加密存储**：如果必须云端同步，确保启用加密
-- **访问控制**：多用户场景下，确保用户只能访问自己的记忆
-
-### 7.3 性能优化
-
-- **选择合适的嵌入模型**：本地部署用 `all-MiniLM-L6-v2`（速度快），生产环境用 `text-embedding-3-large`（质量高）
-- **限制检索数量**：`top_k=3` 通常足够，避免过多无关记忆干扰
-- **定期重建索引**：向量数据库应定期重建索引（提升检索速度）
-
----
-
-## 八，API 详解
-
-### 8.1 `Memory` 类
-
-```python
-class Memory:
-    def __init__(self, store: Store, user_id: str):
-        """
-        Args:
-            store: Store 实例
-            user_id: 用户唯一标识
-        """
-        ...
-
-    def remember(self, key: str, value: str) -> None:
-        """
-        记住一条信息
-        
-        Args:
-            key: 记忆键（用于后续检索）
-            value: 记忆内容
-        """
-        ...
-
-    def retrieve(self, query: str, top_k: int = 3) -> List[Dict]:
-        """
-        检索相关记忆
-        
-        Args:
-            query: 查询文本
-            top_k: 返回 top-k 条相关记忆
-            
-        Returns:
-            列表，每项为 {"content": ..., "score": ...}
-        """
-        ...
-
-    def fuse(self, keys: List[str]) -> str:
-        """
-        融合多条记忆
-        
-        Args:
-            keys: 要融合的记忆键列表
-            
-        Returns:
-            融合后的连贯上下文
-        """
-        ...
-
-    def forget(self, key: str) -> None:
-        """
-        忘记一条记忆
-        
-        Args:
-            key: 要删除的记忆键
-        """
-        ...
-```
-
-### 8.2 `Store` 类
-
-```python
-class Store:
-    def __init__(self, path: str = ":memory:",
-                 embedding_model: Optional[EmbeddingModel] = None):
-        """
-        Args:
-            path: 数据库路径（:memory: 表示内存）
-            embedding_model: 嵌入模型（可选）
-        """
-        ...
-
-    def export(self, path: str) -> None:
-        """导出记忆库到文件"""
-        ...
-
-    def import_(self, path: str) -> None:
-        """从文件导入记忆库"""
-        ...
-
-    def clear(self) -> None:
-        """清空记忆库"""
-        ...
-```
-
----
-
-## 九，进阶用法
-
-### 9.1 使用 PostgreSQL 存储
-
-```python
-from honcho import Memory, Store
-from honcho.backends import PostgreSQLStore
-
-# 连接 PostgreSQL
-store = PostgreSQLStore(
-    host="localhost",
-    port=5432,
-    database="honcho",
-    user="postgres",
-    password="password"
-)
-
-mem = Memory(store, user_id="user_123")
-mem.remember("key", "value")
-```
-
-### 9.2 使用 Pinecone 向量数据库
-
-```python
-from honcho import Memory, Store
-from honcho.backends import PineconeStore
-
-# 连接 Pinecone
-store = PineconeStore(
-    api_key="your-api-key",
-    environment="us-west1-gcp",
-    index_name="honcho-memory"
-)
-
-mem = Memory(store, user_id="user_123")
-mem.remember("key", "value")
-
-# 检索（使用 Pinecone 的向量检索）
-results = mem.retrieve("查询文本", top_k=3)
-```
-
-### 9.3 自定义嵌入模型
-
-```python
-from honcho import EmbeddingModel
-
-# 使用本地模型（不依赖外部 API）
-class LocalEmbeddingModel(EmbeddingModel):
-    def __init__(self, model_name: str = "all-MiniLM-L6-v2"):
-        from sentence_transformers import SentenceTransformer
-        self.model = SentenceTransformer(model_name)
-
-    def embed(self, texts: List[str]) -> List[List[float]]:
-        return self.model.encode(texts).tolist()
-
-# 使用自定义模型
-model = LocalEmbeddingModel()
-store = Store("memory.db", embedding_model=model)
-```
-
----
-
-## 十，部署指南
-
-### 10.1 本地部署（推荐）
-
-```bash
-# 1. 安装 honcho
-pip install honcho
-
-# 2. 创建 SQLite 数据库
-touch memory.db
-
-# 3. 在代码中指定数据库路径
-python your_agent.py
-```
-
-### 10.2 生产环境部署
-
-| 组件 | 推荐方案 |
-|------|----------|
-| 数据库 | PostgreSQL + pgvector 扩展 |
-| 向量检索 | Pinecone / Weaviate |
-| 嵌入模型 | `text-embedding-3-large` (OpenAI API) |
-| 部署方式 | Docker +gunicorn |
-| 监控 | Prometheus + Grafana |
-
-### 10.3 Docker 部署
-
-```dockerfile
-FROM python:3.11-slim
-
-WORKDIR /app
-
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-COPY . .
-
-CMD ["gunicorn", "app:app", "-b", "0.0.0.0:8000", "-w", "4"]
-```
-
-```bash
-# 构建镜像
-docker build -t honcho-agent .
-
-# 运行容器
-docker run -d -p 8000:8000 \
-  -v $(pwd)/memory.db:/app/memory.db \
-  honcho-agent
-```
-
----
-
-## 十一，总结
-
-honcho 是**专为有状态 Agent 设计的记忆库**：
-
-| 维度 | 说明 |
-|------|------|
-| 🧠 **有状态 Agent** | 跨会话保持上下文连续性 |
-| 🔗 **记忆持久化** | 对话历史存储与检索 |
-| 🎯 **个性化 AI** | 记住用户偏好与习惯 |
-| 🔒 **隐私优先** | 本地优先，数据归用户所有 |
-| 🌐 **多语言 SDK** | Python/JavaScript/TypeScript |
-| 🔧 **灵活存储** | 内存/SQLite/PostgreSQL/向量数据库 |
-
-**核心优势**：
-
-1. **三层记忆架构**：短期/中期/长期，模拟人类记忆
-2. **向量检索**：基于语义相似度，精准召回
-3. **记忆融合**：自动整合多条记忆，生成连贯上下文
-4. **隐私优先**：本地优先，数据归用户所有
-5. **多语言支持**：Python/JavaScript/TypeScript SDK
-
----
-
-## 十二，进阶路径
-
-### 12.1 深入理解记忆系统
-
-- 阅读《Memory Systems in AI Agents》相关论文
-- 理解短期/中期/长期记忆的认知科学原理
-- 学习向量检索的工作原理（embeddings, cosine similarity）
-
-### 12.2 扩展存储后端
-
-- 实现自定义 `Store` 后端（如 MongoDB、Cassandra）
-- 优化向量检索性能（索引、分片、缓存）
-- 研究分布式记忆同步策略
-
-### 12.3 社区贡献
-
-- 在 [GitHub Discussions](https://github.com/plastic-labs/honcho/discussions) 分享你的使用案例
-- 提交 Pull Request 改进文档或添加新功能
-- 编写教程帮助更多人上手 Agent 记忆系统
-
-### 相关资源
-
-| 资源 | 链接 |
-|------|------|
-| 官方文档 | https://plasticlabs.ai/docs |
-| GitHub 仓库 | https://github.com/plastic-labs/honcho |
-| 示例项目 | https://github.com/plastic-labs/honcho/examples |
-| Discord 社区 | https://discord.gg/plasticlabs |
-
----
-
-## 十三，自测题
-
-### 题 1（基础概念）：honcho 的三层记忆架构是什么？各适合存储什么内容？
-
-<details>
-<summary>参考答案</summary>
-
-honcho 采用**三层记忆架构**：
-
-1. **短期记忆**：保留当前会话的对话上下文，实现方式是内存缓存，适合存储「用户刚才说了什么」。
-2. **中期记忆**：保留最近几次会话的关键决策点，实现方式是向量数据库，适合存储「用户上周讨论的项目方向」。
-3. **长期记忆**：永久存储用户偏好、背景信息，实现方式是持久化存储（SQLite/PostgreSQL），适合存储「用户喜欢意式浓缩咖啡」。
-
-</details>
-
-### 题 2（安装配置）：如何在 Python 中安装和使用 honcho？
-
-<details>
-<summary>参考答案</summary>
-
-**安装**：
-
-```bash
-pip install honcho
-```
-
-**使用**：
-
-```python
-from honcho import Memory, Store
-
-# 创建记忆库
-store = Store("memory.db")
-
-# 创建用户记忆实例
-mem = Memory(store, user_id="user_123")
-
-# 记住
-mem.remember("key", "value")
-
-# 检索
-context = mem.retrieve("查询文本")
-```
-
-</details>
-
-### 题 3（API 使用）：`remember` 和 `retrieve` 的区别是什么？
-
-<details>
-<summary>参考答案</summary>
-
-- **`remember(key, value)`**：**写入**记忆。将 `value` 存储到键 `key` 下，并生成嵌入向量。
-- **`retrieve(query, top_k=3)`**：**读取**记忆。根据 `query` 的语义相似度，返回 top-k 条相关记忆。
-
-**类比**：`remember` 是「记笔记」，`retrieve` 是「查笔记」。
-
-</details>
-
----
-
-## 十四，练习
-
-### 练习 1：创建第一个记忆系统
-
-为你的 Agent 创建记忆系统，要求：
-
-1. 使用 SQLite 作为存储后端
-2. 记住用户的 3 条偏好（如咖啡偏好、工作时间、时区）
-3. 检索与「早晨安排」相关的记忆
-
-### 练习 2：使用向量检索
-
-使用 `text-embedding-3-small` 模型，实现语义检索：
-
-1. 记住 10 条用户信息（混合主题：工作、生活、爱好）
-2. 使用不同的查询文本（如「工作安排」、「休闲活动」），观察检索结果
-3. 调整 `top_k` 参数，观察召回数量和质量的权衡
-
-### 练习 3：设计记忆过期策略
-
-为以下场景设计记忆过期策略：
-
-1. **天气信息**：应该过期吗？如果是，多久过期？
-2. **用户偏好**：应该过期吗？为什么？
-3. **临时任务**：应该过期吗？如果是，多久过期？
-
----
-
-## 十五，资料口径说明
-
-本文判断基于以下来源：
-
-1. **项目 README**：https://github.com/plastic-labs/honcho/blob/main/README.md（2026-05-23 版本）
-2. **官方文档**：https://plasticlabs.ai/docs（访问日期：2026-05-23）
-3. **API 文档**：https://plasticlabs.ai/docs/api（访问日期：2026-05-23）
-
-本文未实测所有向量数据库后端（Pinecone、Weaviate、Qdrant），相关判断来自项目文档和社区讨论。如果你的部署环境特殊，可能需要额外测试。
+文中代码示例取自官方 README 与 SDK 源码，服务端未在本机完整部署实测；benchmark 具体分数未转引，以官方 evals 页面为准。
 
 ---
 

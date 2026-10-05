@@ -1,7 +1,7 @@
 ---
 title: "把 AI 调成世界级设计师：Anshu Chimala 的三阶段七手法"
 date: "2026-09-05T15:13:36+08:00"
-lastmod: "2026-09-06T21:50:33+08:00"
+lastmod: "2026-09-29T18:00:00+08:00"
 draft: false
 categories: ["思考与随笔"]
 tags: ["AI 设计", "Anshu Chimala", "方法论", "essay", "Lenny's Newsletter"]
@@ -260,40 +260,13 @@ Technique 1-3 是三种"偏离"路径——从外部注入随机性、自己带�
 - 作者 Substack：[substack.com/@anshuc](https://substack.com/@anshuc)
 - 作者 LinkedIn：[linkedin.com/in/achimala](https://www.linkedin.com/in/achimala/)
 
-## 术语使用报告
+## 术语说明
 
-| 英文原文 | 中文翻译 | 出现次数 | 一致性 |
-|---------|---------|---------|--------|
-| Discover / Define / Deliver | 探索 / 定义 / 交付 | 各多次 | ✅ |
-| Double Diamond | 双钻模型 | 1 | ✅ |
-| String Seed of Thought | 字符串种子思维 | 1 | ✅ |
-| subagent | 子 agent | 多次 | ✅ |
-| design critic | 设计评论员 | 多次 | ✅ |
-| chromakey | 色键 | 1 | ✅ |
-| video matting | 视频抠像 | 1 | ✅ |
-| landing page | 落地页 / 产品落地页 | 多次 | ✅ |
-| next-token prediction | next-token 预测 | 1 | ✅ |
-| LLM / large language model | LLM（大语言模型） | 各多次 | ✅ |
-| seed string | 随机字符串 | 多次 | ✅ |
-| UGC ads | UGC 广告 | 1 | ✅ |
-| CTAs | CTA 按钮 | 1 | ✅ |
-| Codex CLI | Codex CLI | 多次 | ✅ |
-| fal.ai | fal.ai | 多次 | ✅（保留品牌名） |
-| Seedance 2.5 | Seedance 2.5 | 1 | ✅（保留版本号） |
-| Claude Opus 5 / Fable 5 / GPT-5.6 Sol | 保留原模型名 | 各 1-2 | ✅（保留版本号与品牌） |
-| Antigravity / Grok Build | 保留原工具名 | 各 1 | ✅（保留品牌） |
-| AGENTS.md / CLAUDE.md / .env.agents | 保留文件名 | 多次 | ✅ |
-| R&D | R&D（研发） | 1 | ✅ |
-| moodboard | moodboard（情绪板） | 1 | ✅ |
-| POC | POC（概念验证页） | 1 | ✅ |
-| design by committee | 委员会设计 | 1 | ✅ |
-
-总计 23 个主要术语，译法在全文范围内保持一致。
+模型名（Claude Opus 5 / Fable 5 / GPT-5.6 Sol / Seedance 2.5）、工具名（Codex CLI / Codex / Antigravity / Grok Build / fal.ai）、文件名（AGENTS.md / CLAUDE.md / .env.agents）与 API key 示例（sk-a1b2c3d4…）一律保留原文——技术名词的"具体性"本身是信息，翻译掉会削弱原文判断力。Discover / Define / Deliver 译为"探索 / 定义 / 交付"，Double Diamond 译为"双钻模型"，其余术语按中文阅读习惯统一译法，全文保持一致。
 
 ## 翻译说明
 
 1. **架构层重写，不是逐句对译**：原文是 Anshu 的第一人称叙述 + Lenny 的引子 + 7 个 Technique 的"判断→证据"模式。译文按中文 essay 节奏重组：开篇先抛"1% vs 99%"判断，再讲 LLM 的物理限制，再讲 Apple 12 年的来历，最后进三阶段——读者不需要一段段爬原文。
-2. **Technique 3 的工作流 prompt 没硬译成"步骤一/二/三"清单**：原文 prompt 是一条用户指令，译文中作为"原文 prompt 例子"以引用块保留原样。硬翻译会让那段指令读起来不像 prompt 而像教程步骤。
-3. **付费墙处理**：Technique 7"Remove AI tells"的正文位于 Lenny's Newsletter 付费墙之后，未对外公开。译文中以**【付费墙】**显式标注，未编造后续内容。
-4. **术语取舍**：模型名（Claude Opus 5 / Fable 5 / GPT-5.6 Sol / Seedance 2.5）、工具名（Codex CLI / fal.ai / Codex / Antigravity / Grok Build）、文件名（AGENTS.md / CLAUDE.md / .env.agents）、API key 占位（sk-a1b2c3d4…）全部保留原文。第一性原则：技术名词的"具体性"是信息的一部分，翻译掉会削弱原文判断力。
-5. **方法核心句保留**：Anshu 在 Technique 2 结尾那段"如果觉得'肯定没戏'就对了"和"存下没奏效的 prompt 等新模型再跑"是文章的方法论核心，不是装饰。译文原样保留引用，并在结尾复述收束。
+2. **Technique 的 prompt 保留原样**：原文 prompt 是一条用户指令，译文用引用块保留，不拆成步骤清单——硬翻译会读起来不像命令。
+3. **付费墙处理**：Technique 7"Remove AI tells"的正文位于付费墙之后，未对外公开。译文以**【付费墙】**显式标注，未编造后续内容。
+4. **方法核心句保留**：Technique 2 结尾"如果觉得'肯定没戏'就对了""存下没奏效的 prompt 等新模型再跑"是方法论核心，不是装饰。译文原样保留引用，并在结尾复述收束。

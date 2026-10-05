@@ -1,613 +1,303 @@
 ---
 title: "Browserbase Skills：让 Claude Code 拥有浏览器自动化能力"
 date: "2026-05-05T10:03:56+08:00"
+lastmod: "2026-09-30T12:00:00+08:00"
 slug: browserbase-skills-claude-code-browser-automation-guide
-github_repo: "browserbase/browserbase-skills"
-source_key: "gh:browserbase/browserbase-skills"
-description: "Browserbase Skills是为Claude Code打造的浏览器自动化技能框架，支持远程Browserbase会话、反爬虫Stealth模式、CAPTCHA解决和住宅代理轮换。本文详细解析其10个核心技能的架构、安装配置与实战用法。"
+github_repo: "browserbase/skills"
+source_key: "gh:browserbase/skills"
+band: "review"
+gates: ["事实性", "去AI味", "观点依据"]
+description: "Browserbase Skills 是 Browserbase 官方的 Agent 技能集，围绕 browse CLI 提供浏览器自动化、反爬与 CAPTCHA 处理、登录态同步、CDP 全量追踪和无服务器部署。本文按 2026 年 9 月的仓库状态拆解其运行模型、18 个技能的分工与采用边界。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI Agent", "Claude Code", "浏览器自动化", "开源"]
+tags: ["AI Agent", "Claude Code", "浏览器自动化", "Browserbase", "开源"]
 ---
 
 # Browserbase Skills：让 Claude Code 拥有浏览器自动化能力
+
+AI agent 操作浏览器，真正卡住任务的往往不是"会不会点按钮"，而是三类工程问题：目标站点有 bot 检测，自动化指纹一眼就被识别；任务需要登录态，而 agent 每次都从干净会话开始；跑挂之后没有证据可查，只能重试碰运气。[Browserbase Skills](https://github.com/browserbase/skills) 的解法是把这三件事交给平台侧——本仓库给 Claude Code 装上一组技能和统一 CLI（`browse`），简单站点走本地 Chrome，有防护的站点切 Browserbase 云端会话，反爬、CAPTCHA、住宅代理、会话持久化都是平台能力。仓库自我定位是 "Browserbase's official collection of agent skills to access the web"。
+
+它的价值取决于你是否需要"protected 站点"这层能力。如果你的目标页面用 `curl` 就能拿到，这套东西是杀鸡用牛刀；如果你要长期维护一批需要登录、有 Cloudflare 防护的自动化任务，它把"每次挂了从零调"变成"有层级地兜底"。
 
 ## 快速信息卡
 
 | 项目 | 信息 |
 |------|------|
-| **Stars** | 2,131+ |
-| **Forks** | 134+ |
-| **许可证** | 未指定（待确认） |
-| **语言** | JavaScript |
-| **仓库** | [browserbase/browserbase-skills](https://github.com/browserbase/browserbase-skills) |
-
-**Browserbase Skills** 是一个开源的 Claude Agent SDK，通过官方 `bb` CLI 和一组结构化技能，让 Claude Code 能够与浏览器进行深度交互。
-
-## 学习目标
-
-阅读本文后，你将能够：
-
-1. **理解 Browserbase Skills 的定位**，掌握其如何通过 Browserbase 云服务解决反爬虫、CAPTCHA、内存占用等问题
-2. **区分 10 个核心技能的用途与协作关系**，判断每个技能适合的场景
-3. **在 Claude Code 中安装和配置 Browserbase Skills**，包括本地模式与远程云端模式的切换
-4. **使用 site-debugger 和 browser-trace 进行调试**，掌握调试工作流
-5. **在实战场景中应用 cookie-sync 和 ui-test**，解决实际自动化需求
-6. **判断自己的场景该使用本地模式还是云端模式**，并给出决策依据
+| **Stars** | 3,730（2026-09-30 读数） |
+| **Forks** | 240 |
+| **许可证** | MIT（各 SKILL.md frontmatter 声明，仓库根无独立 LICENSE 文件） |
+| **语言** | JavaScript / TypeScript |
+| **仓库创建** | 2025-10-12 |
+| **安装** | `npx skills add browserbase/skills`，或 Claude Code 内 `/plugin install browse@browserbase` |
+| **仓库** | [browserbase/skills](https://github.com/browserbase/skills) |
 
 ## 目录
 
-- [项目概述](#项目概述)
-  - [核心数据](#核心数据)
-  - [解决的问题](#解决的问题)
-- [技术架构](#技术架构)
-  - [整体架构](#整体架构)
-  - [两种运行环境](#两种运行环境)
+- [半年三次变形：先对版本，再读功能](#半年三次变形先对版本再读功能)
+- [系统地图：18 个技能的六条主线](#系统地图18-个技能的六条主线)
+- [browse CLI 运行模型](#browse-cli-运行模型)
+- [反爬与登录态：平台能力与 cookie-sync](#反爬与登录态平台能力与-cookie-sync)
+- [任务流案例：被拦截的抓取怎么救回来](#任务流案例被拦截的抓取怎么救回来)
+- [functions：把重复任务搬出本地](#functions把重复任务搬出本地)
+- [ui-test 与 autobrowse：让 agent 自己测试、自己改进](#ui-test-与-autobrowse让-agent-自己测试自己改进)
 - [安装与配置](#安装与配置)
-  - [前置条件](#前置条件)
-  - [安装 Skills](#安装-skills)
-  - [Claude Code 专用安装](#claude-code-专用安装)
-  - [验证安装](#验证安装)
-- [10 个核心技能详解](#10-个核心技能详解)
-- [实战用例](#实战用例)
-- [调试与故障排除](#调试与故障排除)
+- [采用建议：从哪一层进，谁可以不用](#采用建议从哪一层进谁可以不用)
 - [常见问题](#常见问题)
-- [自测题](#自测题)
-- [进阶路径](#进阶路径)
-- [相关资源](#相关资源)
+- [资料口径说明](#资料口径说明)
 
----
+## 半年三次变形：先对版本，再读功能
 
-### 解决的问题
+这个仓库半年来结构变化很大，读任何二手资料（包括本文的旧版）之前先对版本。三次关键节点：
 
-AI Agent 处理网页操作时，常遇到以下障碍：
+| 时间 | 变化 |
+|------|------|
+| 2026-05-05 | 本文初版发布时，README 宣传 11 个技能，CLI 分两条线：`bb`（`@browserbasehq/cli`）管平台 API，`browse` 管浏览器交互 |
+| 2026-05-17 | [#111](https://github.com/browserbase/skills/pull/111) 把两套 CLI 引用统一为 `browse`，npm 包 [browse](https://www.npmjs.com/package/browse)（现为 0.11.0，自述 "Unified Browserbase CLI for browser automation and cloud APIs"） |
+| 2026-07-07 | [#142](https://github.com/browserbase/skills/pull/142) 移除已弃用的 browserbase-cli 技能，`bb` 时代结束 |
 
-- **反爬虫机制**：Cloudflare、Distil Networks 等平台的 Bot 检测
-- **需要登录态的操作**：Cookie、Session 维护
-- **复杂交互**：CAPTCHA、多步表单、无头浏览器无法渲染的内容
-- **性能与资源**：本地浏览器占用大量内存，远程云端浏览器按需调用
+此后技能集持续扩张：5 月底加入 agent-experience，6 月加入 competitor-analysis、webmcp-gen、browser-use-to-stagehand，8 月加入 optimize-agent-prompt，9 月加入 add-webmcp。到 2026-09-30，`skills/` 目录下共 18 个技能，marketplace 提供 6 个可安装插件（browse、functions、browser-trace、safe-browser、webmcp-gen、add-webmcp）。
 
-Browserbase Skills 通过 Browserbase 云端浏览器基础设施解决以上问题，同时保留本地开发的便捷性。
+还有一个值得单独说的教训：初版 README 表格里列过 `site-debugger` 和 `bb-usage` 两个技能，但对照当时的仓库文件树，`skills/` 目录下从来没有过这两个目录——README 宣传在前、实现从未落地，后来 README 也把这两行撤掉了。读这个仓库时，以 `skills/` 目录的实际内容为准，README 表格只是宣传层。
 
----
+## 系统地图：18 个技能的六条主线
 
-## 🏗️ 技术架构
+18 个技能不是平铺的清单，按职责可以分成六组：
 
-### 整体架构
+| 主线 | 技能 | 职责 |
+|------|------|------|
+| 驱动浏览器 | browser、autobrowse、safe-browser | 交互自动化、自改进循环、域名白名单受限运行时 |
+| 观测与调试 | browser-trace、optimize-agent-prompt | CDP 全量追踪、Agent 提示词迭代优化 |
+| 无会话轻量层 | fetch、search | REST API 直接取页面/搜索结果，不占浏览器会话 |
+| 平台化与登录态 | functions、cookie-sync | 无服务器部署、本地 Cookie 同步到云端上下文 |
+| 业务工作流 | company-research、competitor-analysis、event-prospecting、agent-experience | 用前几层拼装的销售线索研究、竞品分析、大会讲师挖掘、Agent 友好度审计 |
+| WebMCP 与迁移 | webmcp-gen、add-webmcp、browser-use-to-stagehand | 给站点生成 WebMCP 工具、从 browser-use 迁移到 Stagehand |
 
-```
-Browserbase Skills 架构图
-
-┌─────────────────────────────────────────────────────────┐
-│                    Claude Code                          │
-│              (通过自然语言操控浏览器)                     │
-└─────────────────────┬───────────────────────────────────┘
-                      │ Skill 调用
-┌─────────────────────▼───────────────────────────────────┐
-│              Browserbase Skills                          │
-│  ┌─────────────────────────────────────────────────┐    │
-│  │  skills/                                          │    │
-│  │  ├── browser        核心浏览器自动化                │    │
-│  │  ├── browserbase-cli  bb CLI 工具                │    │
-│  │  ├── functions     云端无服务器自动化              │    │
-│  │  ├── site-debugger 站点调试与 Bot 检测诊断        │    │
-│  │  ├── browser-trace  CDP 协议全量追踪              │    │
-│  │  ├── bb-usage      用量统计与成本预测             │    │
-│  │  ├── cookie-sync   Cookie 同步                    │    │
-│  │  ├── fetch         无浏览器静态抓取                │    │
-│  │  ├── search        网页搜索                       │    │
-│  │  └── ui-test       AI 对抗式 UI 测试             │    │
-│  └─────────────────────────────────────────────────┘    │
-└─────────────────────┬───────────────────────────────────┘
-                      │ bb CLI / API
-        ┌─────────────┴─────────────┐
-        ▼                           ▼
-┌───────────────┐         ┌──────────────────────┐
-│  本地浏览器    │         │  Browserbase 云端     │
-│  (Chrome)     │         │  (远程浏览器实例)       │
-└───────────────┘         │  - Stealth 模式       │
-                          │  - 住宅代理            │
-                          │  - CAPTCHA 解决       │
-                          │  - 无头/有头          │
-                          └──────────────────────┘
+```text
+                    Claude Code（自然语言驱动）
+                              │
+                    browse CLI（npm install -g browse）
+                              │
+        ┌─────────────────────┼─────────────────────┐
+        ▼                     ▼                     ▼
+   本地 Chrome           Browserbase 云端        直接 REST API
+ （--local /          （--remote：Identity、     （fetch / search，
+  --auto-connect）      CAPTCHA、住宅代理）       无浏览器会话）
+                              │
+                    browser-trace 只读观测
+                 （CDP firehose + 截图 + DOM）
 ```
 
-### 两种运行环境
+下面按主线拆开讲。
 
-Browserbase Skills 支持两种运行模式，Claude 会根据指令自动选择：
+## browse CLI 运行模型
 
-| 模式 | 触发方式 | 适用场景 |
-|------|---------|---------|
-| **本地模式** | `browse env local` | 开发调试、轻量任务、已有 Chrome 环境 |
-| **云端模式** | 默认/远程 | 反爬虫网站、需要代理、需要 Stealth 能力 |
+所有浏览器交互都经过 `browse` 命令（`npm install -g browse`）。理解它有三个要点：守护进程、snapshot 优先、环境用 flag 显式选。
 
-本地模式现在默认启动干净的隔离浏览器，不会复用已有的 Chrome 状态。如果需要复用本地登录态，使用 `browse env local --auto-connect`。
+**守护进程模型**。第一条浏览器命令会启动一个 daemon，后续命令复用同一个会话。`browse status` 查看当前状态和已解析的模式，`browse stop` 结束会话——它同时会清除环境覆盖，让下一条命令回到默认判定。
 
----
+**snapshot 优先于截图**。`browse snapshot` 返回页面的可访问性树，每个元素带 ref（如 `@0-5`），点击、输入都引用这些 ref：
 
-## 🔧 安装与配置
+```bash
+browse open https://example.com
+browse snapshot                        # 页面结构 + 元素 ref
+browse click @0-5                      # 按 ref 点击，不是按选择器
+browse get title
+browse stop
+```
 
-### 前置条件
+`browse screenshot --path <path>` 是慢路径，消耗视觉 token，官方建议只在需要视觉上下文（布局检查、图片、调试）时用。文本提取走 `browse get text <selector>` 或 `browse get markdown`。
 
-- Node.js 18+
-- Chrome 浏览器（本地模式必需）
-- Browserbase 账户（云端模式必需，免费额度有限）
+**环境选择**。四个 flag 控制浏览器跑在哪：
 
-### 安装 Skills
+| flag | 行为 |
+|------|------|
+| `--local` | 启动干净的隔离本地浏览器，不复用任何已有状态 |
+| `--auto-connect` | 附着到本机已在运行的调试态 Chrome，复用其登录态与 Cookie |
+| `--remote` | 开 Browserbase 云端会话 |
+| `--cdp <port\|url>` | 附着到任意 CDP 目标（本地端口或 WebSocket 地址） |
 
-通过 npm 安装到主流 Coding Agent：
+不显式传 flag 时，设置了 `BROWSERBASE_API_KEY` 就默认云端，否则默认本地。flag 只在会话启动时生效；`browse stop` 之后，下一条命令回落到环境变量自动判定。本地模式失败且症状是 bot 检测或拒绝访问时，官方建议直接切远程。
+
+交互命令还包括 `browse fill <selector> <value>`（需要回车加 `--press-enter`）、`browse type`、`browse select`、`browse upload`、`browse press`、`browse wait <load|selector|timeout>`、`browse tab list/switch/close`，以及独立于 daemon 的 `browse cdp <target>`——它把任意 CDP 目标的事件流以 NDJSON 输出，可按 `--domain Network` 过滤、可管道给 jq。
+
+## 反爬与登录态：平台能力与 cookie-sync
+
+`--remote` 背后是 Browserbase 平台的三层能力，全部在云端会话里生效：
+
+- **CAPTCHA 自动解决**：自动处理 reCAPTCHA 和 hCaptcha（browser 技能的 Mode Comparison 表明确列出本地模式没有这项）。
+- **住宅代理**：覆盖 201 个国家，支持地理定位。
+- **Browserbase Identity 与 Verified browser**：2026-05-18 引入的机制，用经过验证的浏览器指纹改善受保护站点（如 Google 这类强指纹检测站点）的访问成功率。
+
+什么时候该切远程，SKILL.md 给了明确的信号清单：页面出现 CAPTCHA（reCAPTCHA、hCaptcha、Turnstile）、"Checking your browser..." 拦截页、HTTP 403/429、或者本该有内容的页面渲染成空白。反之，文档站、维基、公开 API、localhost 这些简单目标不值得开远程会话——本地更快，云端稍慢且计费。
+
+**登录态**由 cookie-sync 技能解决。它是一个 Node 脚本（需要 Node.js 22+），从本地 Chrome 导出 Cookie 注入 Browserbase 持久化上下文（persistent context）：
+
+```bash
+# 前置：Chrome 需开启远程调试（chrome://flags/#allow-remote-debugging，
+# 或以 --remote-debugging-port=9222 启动并设 CDP_URL）
+node .claude/skills/cookie-sync/scripts/cookie-sync.mjs --domains x.com,twitter.com
+# 输出 Context ID: ctx_abc123
+
+# 用上下文开云端会话，--persist 让会话中的新状态回写上下文
+SESSION_JSON="$(browse cloud sessions create --context-id ctx_abc123 --persist --keep-alive)"
+CONNECT_URL="$(echo "$SESSION_JSON" | jq -r .connectUrl)"
+
+browse open https://x.com/messages --cdp "$CONNECT_URL"
+```
+
+`--domains` 只同步需要的站点（含子域），`--context ctx_xxx` 在 Cookie 过期后向已有上下文重注入而不新建，`--verified` 启用 Identity + Verified browser，`--proxy "San Francisco,CA,US"` 让出口 IP 地理位置贴近本地，避免登录态因 IP 突变被拒。Cookie 一次性同步、上下文跨会话持久，这让定时任务可以不带本地 Chrome 跑：脚本里 `browse cloud sessions create` 挂上下文即可。
+
+成本上这套体系有个天然的阶梯：`search` 和 `fetch` 走 REST API，不产生浏览器会话费用；本地浏览器免费；云端会话按时长与配置计费。官方给的经验法则就按这个阶梯排：能 search 不 fetch，能 fetch 不开浏览器，能本地不远程。
+
+## 任务流案例：被拦截的抓取怎么救回来
+
+把上面的机制串成一次真实排障。假设要让 Claude Code 从一个有 Cloudflare 防护的站点提取数据：
+
+```bash
+# 1. 先按默认走本地（未设 BROWSERBASE_API_KEY 时）
+browse open https://target-site.com --local
+browse snapshot
+# 现象：页面空白 / 出现 "Checking your browser..." / HTTP 403
+
+# 2. 命中切远程的官方信号，改走云端（CAPTCHA、住宅代理自动生效）
+browse open https://target-site.com --remote
+browse snapshot
+
+# 3. 站点还需要登录态：同步 Cookie 到上下文，再开带上下文的云端会话
+node .claude/skills/cookie-sync/scripts/cookie-sync.mjs --domains target-site.com
+SESSION_JSON="$(browse cloud sessions create --context-id ctx_xxx --persist --keep-alive)"
+CONNECT_URL="$(echo "$SESSION_JSON" | jq -r .connectUrl)"
+browse open https://target-site.com/dashboard --cdp "$CONNECT_URL"
+
+# 4. 仍然失败：挂只读追踪，复跑一次拿证据
+node .claude/skills/browser-trace/scripts/bb-capture.mjs --new my-run
+# 复现自动化操作……
+node .claude/skills/browser-trace/scripts/stop-capture.mjs my-run
+node .claude/skills/browser-trace/scripts/bisect-cdp.mjs my-run
+# 在 .o11y/my-run/ 下按 Network / Console / DOM 分桶排查：
+# 是 selector 时序问题，还是请求层就被 CAPTCHA 拦下
+
+# 5. 收尾
+browse stop
+node .claude/skills/browser-trace/scripts/bb-finalize.mjs my-run --release
+```
+
+browser-trace 的工作方式值得单独一提：它不给浏览器发任何指令，而是作为第二个只读 CDP 客户端附着到会话上，把完整 DevTools 事件流（firehose）写入 NDJSON，同时以默认 2 秒间隔轮询截图和 DOM dump，结束后按 CDP 方法和页面导航边界切分成可 grep 的分桶文件。用 Playwright、Stagehand 或裸 `browse` 驱动的会话都能挂。有个平台细节容易踩坑：Browserbase 会话在最后一个 CDP 客户端断开时立即结束，所以追踪远端会话要像上面那样用 `--keep-alive` 创建。
+
+## functions：把重复任务搬出本地
+
+browser 技能解决"现在这次怎么做"，functions 解决"以后每次自动做"。它把浏览器自动化部署成 Browserbase 云端的函数，官方描述的场景就是定时任务和 webhook 端点：
+
+```bash
+browse functions init my-function     # 生成 index.ts / package.json / .env
+cd my-function
+echo "BROWSERBASE_API_KEY=$BROWSERBASE_API_KEY" >> .env
+pnpm install
+
+browse functions dev index.ts         # 本地开发服务器，默认 127.0.0.1:14113，热重载
+```
+
+函数用 TypeScript 写，`defineFn` 定义入口，通过 Playwright 连接平台分配的会话：
+
+```typescript
+import { defineFn } from "@browserbasehq/sdk-functions";
+import { chromium } from "playwright-core";
+
+defineFn("my-function", async (context) => {
+  const { session, params } = context;
+  const browser = await chromium.connectOverCDP(session.connectUrl);
+  const page = browser.contexts()[0]!.pages()[0]!;
+  await page.goto(params.url || "https://example.com");
+  return { success: true, title: await page.title() };
+});
+```
+
+开发期用 curl 打本地服务器模拟调用（`POST http://127.0.0.1:14113/v1/functions/my-function/invoke`，body 传 `{"params": {...}}`），验证后 `browse functions publish index.ts` 部署，拿到 Function ID 用于后续调用。配合 cookie-sync 的持久化上下文，"每天登录态抓一次数据"这类任务可以完全脱离本地机器运行。
+
+## ui-test 与 autobrowse：让 agent 自己测试、自己改进
+
+这两个技能代表另一种思路：不是帮 agent 写自动化，而是让 agent 自己验证和迭代自动化。
+
+**ui-test**（v0.4.0，自 5 月以来基本未变）是对抗式 UI 测试技能，开场第一句就是立场："Your job is to try to break things, not confirm they work"。三种工作流：分析 git diff 只测改动（diff-driven）、全站自主探索找开发者没想到的 bug（exploratory）、把独立测试组分发到多个 Browserbase 浏览器并行跑（parallel）。
+
+它的编排结构是"主 agent 规划、子 agent 执行"：主 agent 先自己完成三轮规划（功能流 → 对抗视角：错误路径、空状态、竞态、边界输入 → 覆盖缺口：axe-core 无障碍、键盘导航、移动视口、console 错误），去重分组后一次性派发子 agent；每个子 agent 带显式步数预算（约 25/40/75 步三档起步），只执行分配到的测试清单，用 `STEP_PASS|<id>|<evidence>` / `STEP_FAIL|<id>|<expected> → <actual>` 结构化断言汇报，失败必须附截图。主 agent 合并成文本报告（如 `Tests: 20 | Passed: 14 | Failed: 4 | Skipped: 2 | Agents: 3 | Pass rate: 70%`）。
+
+要注意的边界：它是交互式技能，官方 SKILL.md 没有提供 CI/CD 集成——想进流水线需要自己封装。
+
+**autobrowse** 是自改进循环：内层 agent 反复执行目标站点的浏览任务（`evaluate.ts`），外层 agent 读 trace 和失败记录，修改导航策略（`strategy.md`），直到任务稳定通过，默认 5 轮迭代，可 `--iterations` 调整。用法形如：
+
+```bash
+/autobrowse --task google-flights --iterations 10 --env remote
+```
+
+`--browser-trace` 开关让每轮迭代附带 CDP 证据（仅限远程模式），`--env local|remote` 选环境。它和 safe-browser 的分工值得分清：autobrowse 负责"造出一个可靠的技能"，safe-browser 负责"造出一个受限的运行时"——后者生成 Claude Agent SDK 应用，唯一的浏览器工具是 `safe_browser`，通过 CDP Fetch 拦截强制域名白名单，白名单外一律 `Fetch.failRequest`，专门用来演示提示注入遏制和带域名策略的抓取。
+
+## 安装与配置
+
+主流 coding agent 用 npm 方式：
 
 ```bash
 npx skills add browserbase/skills
 ```
 
-### Claude Code 专用安装
+Claude Code 专用：
 
 ```bash
-# 添加 marketplace 源
-/plugin marketplace add browserbase/skills
-
-# 安装 browse 插件
-/plugin install browse@browserbase
-
-# 重启 Claude Code 使配置生效
-```
-
-### 手动安装
-
-如果偏好手动配置：
-
-1. 在 Claude Code 中输入 `/plugin`
-2. 选择选项 `3. Add marketplace`
-3. 输入 marketplace source：`browserbase/skills`
-4. 选择 `browse` 插件，回车安装
-5. 重启 Claude Code
-
-### 验证安装
-
-安装完成后，Claude Code 会自动识别 `browse` 相关指令。可以直接用自然语言测试：
-
-```
-"Go to Hacker News, get the top post comments, and summarize them"
-"QA test http://localhost:3000 and fix any bugs you encounter"
-"Use bb to list my Browserbase projects"
-```
-
----
-
-## 📦 10 个核心技能详解
-
-### 1. browser —— 核心浏览器自动化
-
-这是最核心的技能，封装了与浏览器交互的主要能力。
-
-**能力清单：**
-
-- 远程 Browserbase 会话，支持反 Bot 检测
-- Stealth 模式：隐藏自动化特征，模拟真实用户
-- CAPTCHA 自动解决（Browserbase 内置）
-- 住宅代理轮换（Residential Proxies）
-- 完整 CDP（Chrome DevTools Protocol）访问
-
-**常用命令：**
-
-```bash
-# 启动本地浏览器
-browse env local
-
-# 启动云端远程浏览器
-browse env remote
-
-# 打开指定 URL
-browse goto https://example.com
-
-# 截图
-browse screenshot
-
-# 点击元素
-browse click "#submit-button"
-
-# 填写表单
-browse fill "#username" "myuser"
-browse fill "#password" "mypass"
-
-# 提取页面内容
-browse extract "article h1"
-```
-
-**Stealth 配置示例：**
-
-Browserbase 云端浏览器默认启用 Stealth，用户也可以在 Browserbase 平台配置具体参数（代理类型、地理位置、浏览器指纹等）。
-
-### 2. browserbase-cli —— 官方 bb CLI
-
-调用 Browserbase 平台的完整 CLI 工具，覆盖以下功能：
-
-- **Sessions**：管理浏览器会话（创建、销毁、状态查询）
-- **Projects**：项目 CRUD 操作
-- **Contexts**：持久化上下文管理
-- **Extensions**：浏览器扩展管理
-- **Fetch**：无浏览器模式的 HTTP 请求（支持调试）
-- **Dashboard**：直接打开 Browserbase 管理面板
-
-**常用命令：**
-
-```bash
-# 查看当前使用情况
-bb usage
-
-# 列出项目
-bb projects list
-
-# 创建新会话
-bb sessions create
-
-# 查看会话详情
-bb sessions list --project-id <id>
-
-# 初始化 Browserbase Function
-bb functions init
-```
-
-### 3. functions —— 无服务器浏览器自动化
-
-将浏览器自动化函数部署到 Browserbase 云端，以无服务器方式运行。不需要维护长期运行的浏览器实例。
-
-**工作流程：**
-
-```bash
-# 初始化一个新 Function
-bb functions init
-
-# 部署 Function
-bb functions deploy
-
-# 调用 Function
-bb functions invoke <function-name>
-```
-
-适合将重复性的浏览器任务（如每日数据抓取、自动化测试）封装为 API 调用。
-
-### 4. site-debugger —— Bot 检测诊断
-
-这是 Browserbase Skills 中最值得单独讲的技能。给定一个 URL，site-debugger 会自动：
-
-1. 访问目标站点，分析 Bot 检测机制
-2. 检查 selectors（选择器）稳定性
-3. 分析时序问题（页面渲染时机）
-4. 检查认证和 Session 状态
-5. 检测 CAPTCHA 触发条件
-6. 生成针对性的 Site Playbook
-
-**输出示例：**
-
-site-debugger 会生成一个经过测试的配置文件，记录该站点的最佳自动化策略。之后 Claude 可以根据这个 Playbook 稳定地操作目标站点。
-
-### 5. browser-trace —— CDP 全量追踪
-
-捕获完整的 Chrome DevTools Protocol 追踪数据：
-
-- CDP firehose（全量事件流）
-- 每个页面的截图
-- DOM  dump
-- 将追踪数据分桶存储，支持事后分析
-
-**使用场景：**
-
-- 调试复杂的前端交互问题
-- 分析网站的网络请求行为
-- 排查浏览器自动化失败原因
-
-```bash
-# 启动追踪
-browse trace start
-
-# 执行操作
-browse click ".load-more"
-browse scroll
-
-# 停止追踪并分析
-browse trace stop
-```
-
-### 6. bb-usage —— 用量与成本统计
-
-在终端中展示 Browserbase 使用情况：
-
-- 当前项目的会话数
-- 已用额度 vs. 套餐限制
-- 成本预测（根据历史用量估算月度账单）
-
-```bash
-bb usage
-```
-
-适合在运行大量自动化任务前评估成本，避免意外超额度。
-
-### 7. cookie-sync —— Cookie 同步
-
-将本地 Chrome 的登录 Cookie 同步到 Browserbase 远程浏览器：
-
-1. 导出本地 Chrome 的 Cookie
-2. 注入到 Browserbase 持久化上下文
-3. 远程浏览器复用本地登录态
-
-**典型用途：**
-
-- 登录态复用：本地 Chrome 已经登录了某个网站，想在远程浏览器中复用
-- 跨设备同步：不同 Browserbase 实例之间的 Session 共享
-
-```bash
-# 从本地 Chrome 导出 Cookie
-browse cookie-export
-
-# 同步到远程会话
-browse cookie-sync --session-id <id>
-```
-
-### 8. fetch —— 无浏览器 HTTP 抓取
-
-不需要启动浏览器，直接发送 HTTP 请求获取静态页面内容：
-
-- 支持 HTML 和 JSON 响应
-- 自动处理重定向
-- 可查看状态码和响应头
-- 适合快速检查页面可用性，不占用浏览器会话配额
-
-```bash
-# 抓取 HTML
-browse fetch https://example.com
-
-# 以 JSON 格式返回
-browse fetch https://api.example.com/data --json
-```
-
-### 9. search —— 结构化网页搜索
-
-无需启动浏览器，直接进行网络搜索并返回结构化结果：
-
-- 返回标题、URL、元数据
-- 不产生浏览器会话费用
-- 适合信息搜集类任务
-
-```bash
-# 搜索关键词
-browse search "Claude Code browser automation"
-
-# 带结果数量限制
-browse search "site:github.com browser automation" --limit 10
-```
-
-### 10. ui-test —— AI 对抗式 UI 测试
-
-分析 Git diff 或探索性测试整个应用，发现 UI 变更引入的 Bug：
-
-1. **Diff 驱动**：接收 Git diff，输入变更分析可能导致的问题
-2. **全站探索**：AI 自主探索应用所有可交互元素，寻找异常
-
-**特点：**
-
-- 对抗式（Adversarial）：专门针对开发者可能忽略的边界情况
-- 自动生成测试报告
-- 可以与 CI/CD 集成
-
----
-
-## 💡 实战示例
-
-### 示例 1：抓取需要登录的页面
-
-```bash
-# 1. 先在本地 Chrome 登录目标网站
-# 2. 同步 Cookie 到 Browserbase
-browse cookie-sync --session-id <remote-session-id>
-
-# 3. 在远程浏览器中访问已登录的页面
-browse goto https://example.com/user/dashboard
-
-# 4. 提取数据
-browse extract ".dashboard-stat"
-```
-
-### 示例 2：调试被拦截的自动化脚本
-
-```bash
-# 使用 site-debugger 诊断目标站点
-browse site-debugger https://example.com
-
-# 查看诊断结果和建议
-# 根据 site-debugger 生成的 Playbook 调整自动化策略
-
-# 使用生成的配置重新访问
-browse goto https://example.com --stealth --proxy residential
-```
-
-### 示例 3：创建无服务器自动化任务
-
-```bash
-# 初始化 Function
-bb functions init
-
-# 编写自动化逻辑（保存为 function.js）
-# ...
-
-# 部署到 Browserbase 云端
-bb functions deploy
-
-# 定时触发（通过 Cron 或外部 API）
-bb functions invoke my-scheduled-task
-```
-
----
-
-## 🔍 适用场景与边界
-
-### 适合的场景
-
-- **数据采集**：需要从电商、社交媒体抓取数据，且目标站点有反爬虫机制
-- **自动化测试**：端到端 UI 测试，特别是跨浏览器/跨环境的一致性测试
-- **内容监控**：定期检查某网页内容变化并触发通知
-- **Agent 增强**：为 AI Agent 添加真实的浏览器操作能力，突破纯 API 调用的限制
-- **登录态管理**：跨会话复用复杂的多因素认证后状态
-
-### 不适合的场景
-
-- 纯 API 即可完成的数据获取（用 `fetch` 技能更省成本）
-- 需要极致抓取速度的实时流处理（云端浏览器的网络延迟是瓶颈）
-- 无需浏览器渲染的静态页面（直接 HTTP 请求更高效）
-- 高度定制化的指纹需求（需要 Browserbase Enterprise 套餐）
-
----
-
-## ⚙️ 环境变量与高级配置
-
-Browserbase CLI 支持通过环境变量配置默认行为：
-
-```bash
-# 设置默认项目
-export BROWSERBASE_PROJECT_ID=<project-id>
-
-# 设置 API Key
-export BROWSERBASE_API_KEY=<api-key>
-
-# 配置代理
-export BROWSERBASE_PROXY=<proxy-url>
-```
-
-在 Claude Code 中，这些环境变量可以通过 `.env` 文件或 Claude Code 的环境配置注入。
-
----
-
-## ❓ 常见问题
-
-### Q: 提示 "Chrome not found"
-
-本地模式需要安装 Chrome：
-
-- **macOS / Windows**：https://www.google.com/chrome/
-- **Linux**：`sudo apt install google-chrome-stable`
-
-### Q: 远程浏览器会话费用如何计算？
-
-Browserbase 按会话时长和浏览器类型计费。具体价格见 Browserbase 官网定价页。`bb-usage` 技能可以实时查看当前用量和成本预测。
-
-### Q: 如何刷新已过期的 Cookie？
-
-```bash
-rm -rf .chrome-profile
-# 重新在本地 Chrome 登录目标网站
-browse cookie-sync --session-id <id>
-```
-
-### Q: site-debugger 生成的 Playbook 可以自定义吗？
-
-可以。Playbook 本质上是 JSON/YAML 格式的配置文件，site-debugger 给出建议后，用户可以手动调整其中的参数（如 selectors、stealth 级别、代理设置）。
-
-### Q: ui-test 和普通单元测试的区别是什么？
-
-ui-test 是对抗式的、AI 驱动的端到端测试，不需要预先编写测试用例。普通单元测试需要开发者定义断言，ui-test 则由 AI 自主发现潜在问题，更适合探索性测试阶段。
-
----
-
-## 自测题
-
-### 基础概念
-
-**问题 1**：Browserbase Skills 与传统无头浏览器方案（如 Playwright）的核心差异是什么？
-
-<details>
-<summary>参考答案</summary>
-
-Browserbase Skills 构建在 Browserbase 云服务之上，提供了反爬虫规避、CAPTCHA 自动解决、住宅代理轮换等能力。传统无头浏览器方案在本地运行，遇到 Cloudflare、Distil Networks 等反爬虫平台时容易被拦截。
-
-</details>
-
-**问题 2**：Browserbase Skills 支持哪两种运行模式？各自的适用场景是什么？
-
-<details>
-<summary>参考答案</summary>
-
-| 模式 | 触发方式 | 适用场景 |
-|------|---------|---------|
-| **本地模式** | `browse env local` | 开发调试、轻量任务、已有 Chrome 环境 |
-| **云端模式** | 默认/远程 | 反爬虫网站、需要代理、需要 Stealth 能力 |
-
-</details>
-
-### 实践操作
-
-**问题 3**：你需要在 Claude Code 中安装 Browserbase Skills，应该执行什么命令？
-
-<details>
-<summary>参考答案</summary>
-
-```bash
-# 通过 npm 安装
-npx skills add browserbase/skills
-
-# 或通过 Claude Code 专用安装
 /plugin marketplace add browserbase/skills
 /plugin install browse@browserbase
+# 重启 Claude Code 生效
 ```
 
-</details>
+偏好图形界面的话：`/plugin` → 选 `3. Add marketplace` → 输入 `browserbase/skills` → 选中 `browse` 插件回车安装 → 再按一次回车确认 → 重启。
 
-**问题 4**：你正在调试一个被 Cloudflare 拦截的网站，应该使用哪个技能？这个技能能给你什么信息？
+前置条件按用途分三档：
 
-<details>
-<summary>参考答案</summary>
+- **本地模式**：`browse` CLI（`npm install -g browse`）+ 本机 Chrome/Chromium。
+- **云端模式**：另需 [BROWSERBASE_API_KEY](https://browserbase.com/settings)。
+- **cookie-sync**：Node.js 22+，Chrome 开远程调试。
 
-应该使用 `site-debugger` 技能。它能：
-1. 检测网站使用了哪些反爬虫机制（Cloudflare、Distil Networks 等）
-2. 生成 Playbook（配置文件），告诉你如何配置 Stealth 模式绕过检测
-3. 提供具体的 selectors、等待时间、请求头配置
+装完后用自然语言验证，README 给的样例：
 
-</details>
+> "Go to Hacker News, get the top post comments, and summarize them"
+> "QA test http://localhost:3000 and fix any bugs you encounter"
+> "Use `browse` to list my Browserbase projects and show the output as JSON"
 
-**问题 5**：你需要让 Claude Code 在多个测试用例中保持登录态，应该使用哪个技能？具体步骤是什么？
+第三条会走 browse 的平台 API 能力（会话、项目、上下文管理都已并入 browse CLI）。
 
-<details>
-<summary>参考答案</summary>
+## 采用建议：从哪一层进，谁可以不用
 
-应该使用 `cookie-sync` 技能。步骤：
-1. 在本地 Chrome 登录目标网站
-2. 运行 `browse cookie-sync --session-id <id>` 导出 Cookie
-3. 在远程 Browserbase 会话中加载 Cookie
-4. 后续任务自动使用登录态
+按任务形态选进入层，别从"全家桶"开始：
 
-</details>
+1. **只需要页面内容和搜索结果**：不装插件，直接用 Browserbase 的 Fetch/Search API（POST `https://api.browserbase.com/v1/fetch` 与 `/v1/search`，`X-BB-API-Key` 头带 key；fetch 的 `allowRedirects` 默认关闭需要显式开启，search 的 `numResults` 取值 1–25）。
+2. **Claude Code 里有反复出现的浏览/测试任务**：装 browse 插件，本地模式起步，遇到 bot 检测按信号清单切远程。
+3. **核心诉求是登录态自动化**：cookie-sync + 持久化上下文是这套仓库里最不可替代的部分，`--persist` 的状态回写和 `--context` 的重注入值得先吃透。
+4. **有定时抓取/QA 需求**：在 2、3 的基础上加 functions 和 ui-test。
 
----
+两类团队可以先等等：目标页面全是公开静态内容、纯 HTTP 就能搞定的（成本阶梯的最底层已经覆盖）；以及不允许页面数据经过第三方云端的合规敏感场景——远程模式的页面内容必然流经 Browserbase 会话，这是架构决定的边界，不是配置能绕开的。
 
-## 练习
+另外值得留意 WebMCP 这条支线（webmcp-gen、add-webmcp）：思路是给目标站点生成第一方 MCP 工具（基于站点的路由、表单、schema），让 agent 用结构化工具而不是视觉操作来干活。如果目标站点是自家产品，这可能比反爬对抗更治本。
 
-1. **完成 BrowserBase 初体验**：注册 BrowserBase 账号，获取 API Key，在 Claude Code 中配置 `BROWSERBASE_API_KEY`，运行一次 `browser https://example.com` 验证浏览器自动化可用。
-2. **写一个自定义自动化脚本**：用 `browser` 技能编写一个 3 步任务（打开 Hacker News → 提取首页前 5 条标题 → 存入本地 JSON 文件），加入错误处理和重试逻辑。
-3. **用 site-debugger 诊断反爬**：找一个带 Cloudflare 挑战的网站，运行 `site-debugger`，读取 Playbook，尝试按推荐步骤绕过。
-4. **集成到 Claude Code 工作流**：在 CLAUDE.md 中添加一条自定义 skill，将日常"检查官网是否更新"的任务自动化，每天运行一次。
+## 常见问题
 
----
+**Q：本地模式报 "Chrome not found"？**
 
-## 进阶路径
+安装 Chrome：macOS/Windows 从 [google.com/chrome](https://www.google.com/chrome/)，Linux 用 `sudo apt install google-chrome-stable`。如果本机已有调试态 Chrome，也可以直接 `browse open <url> --auto-connect` 附着。
 
-1. **深入 BrowserBase API**：阅读 [Stagehand 文档](https://github.com/browserbase/stagehand)，理解底层浏览器自动化库的架构设计，尝试直接调用 BrowserBase REST API 实现自定义控制逻辑。
-2. **构建垂直场景 Skill 包**：基于现有技能组合，封装一个针对特定场景（如电商价格监控、舆情分析、竞品跟踪）的技能包，包含专属的 Playbook 和诊断策略。
-3. **集成 CI/CD 无头浏览测试**：用 `ui-test` 技能替换传统 Playwright 测试套件，对比 AI 对抗式测试与传统断言式测试的覆盖率和维护成本。
-4. **BrowserBase Functions 生产部署**：研究 Functions 的无服务器部署模型，将高频自动化任务（如每日数据采集）迁移到云端定时执行，配置告警和失败重试。
+**Q：守护进程状态异常（"No active page"）？**
 
----
+SKILL.md 的处理：先 `browse stop` 再 `browse status`；若仍显示 running，`pkill -f "browse.*daemon"` 清掉僵尸进程后重试。
 
-## 📚 总结
+**Q：Cookie 过期了怎么刷新？**
 
-Browserbase Skills 为 Claude Code 提供浏览器自动化工具链：核心 browser 技能处理页面交互，site-debugger 诊断反爬机制，browser-trace 做 CDP 全量追踪，cookie-sync 同步登录态，fetch/search 做轻量抓取，ui-test 做 AI 对抗式测试，functions 支持无服务器部署。各技能可独立使用，也可组合成复杂工作流。
+两种情况：刷新本地配置用 README 的办法 `rm -rf .chrome-profile` 后重新登录；刷新云端上下文不用动本地，直接 `cookie-sync.mjs --context ctx_xxx` 向已有上下文重注入。
 
----
+**Q：用量和费用怎么盯？**
 
----
+会话用量在 [Browserbase 控制台](https://docs.browserbase.com)查看；控制用量最有效的手段是任务前的分层决策——search/fetch 能解决的不要开浏览器会话。
 
-**延伸阅读：**
+## 资料口径说明
 
-- [Stagehand 文档](https://github.com/browserbase/stagehand)（Browserbase 的底层浏览器自动化库）
-- [Claude Code Skills 官方文档](https://support.claude.com/en/articles/12512176-what-are-skills)
-- [Browserbase 官方文档](https://docs.browserbase.com)
-- [Browserbase Functions 部署指南](https://www.browserbase.com/docs/functions)
+- 本文按 2026-09-30 的 main 分支核实：18 个技能目录、marketplace 6 插件、npm `browse` 0.11.0；Stars/Forks 为当日 GitHub API 读数。
+- 文章初版写于 2026-05-05，当时 CLI 尚为 `bb` 与 `browse` 双轨、README 宣传 11 个技能；本版已按当前结构整体更新。命令形态变化较快（如早期的 `browse env local` 子命令已改为 per-command flag），若与你本机版本不符，以 `browse --help` 和所装技能目录内的 SKILL.md 为准。
+- 初版 README 表格中的 site-debugger 与 bb-usage 两个技能在仓库历史上从未有对应实现文件，README 现已撤下这两行，本版正文不再收录。
+- 文中命令、flag、端口、错误处理表均逐条对照 `skills/*/SKILL.md` 与仓库 README 原文；引用的外链当日全部可访问。

@@ -1,409 +1,242 @@
 ---
-title: "MoneyPrinterTurbo：AI 全自动短视频生成工具从入门到精通"
+title: "MoneyPrinterTurbo 上手：把一个主题变成一条可发布的短视频"
 date: "2026-03-28T16:40:00+08:00"
+lastmod: "2026-10-02T00:00:00+08:00"
 slug: "moneyprinterturbo-ai-video-generator"
 github_repo: "harry0703/MoneyPrinterTurbo"
 source_key: "gh:harry0703/MoneyPrinterTurbo"
-description: "深度解析 MoneyPrinterTurbo：AI 全自动短视频生成工具，一键生成文案+素材+配音+字幕+音乐，支持竖屏9:16和横屏16:9，53.7k stars，详解原理、安装、配置与常见问题。"
+description: "MoneyPrinterTurbo 上手指南：四种使用方式怎么选、三条安装路径各自的前置条件与验证方法、config.toml 必填项、API 异步任务的正确调用姿势，以及 FFmpeg、Whisper 模型等常见故障的排查。数据核对自 2026-10-02 的 GitHub API 与 main 分支。"
 draft: false
 categories: ["技术笔记"]
 tags: ["AI视频生成", "Python"]
 ---
 
-# MoneyPrinterTurbo：AI 全自动短视频生成工具
+[harry0703/MoneyPrinterTurbo](https://github.com/harry0703/MoneyPrinterTurbo) 做的事情一句话能说完：给它一个主题或一段现成文案，它把脚本生成、配音、素材匹配、字幕、配乐、合成整条链跑完，交给你一条 9:16、16:9 或 1:1 的高清短视频。它自己不训练任何视频模型，而是把成熟的云服务（大语言模型、语音合成（TTS）、素材库、可选的文生视频 API）和本地的 MoviePy/FFmpeg 串成一条流水线——理解这一点，后面所有配置项的用途都由此展开。
 
-> **目标读者**：想要快速生成短视频内容的创作者、自媒体从业者、电商卖家，以及对 AI 视频自动化感兴趣的技术开发者
-> **核心问题**：如何只需提供一个视频主题或关键词，就能全自动生成包含文案、配音、字幕、音乐和素材的高清短视频？
+本文是上手指南，回答四个问题：选哪个入口、怎么装、填什么配置、怎么跑通第一条视频，外加出错了去哪查。想看流水线内部结构（五个 stage 的边界、可插拔点），可以读本站另一篇[架构拆解](/posts/harry0703-moneyprinterturbo-short-video-automation-guide-2026/)。文中仓库数据在 2026-10-02 通过 GitHub API 核对：127,933 stars / 20,016 forks，MIT 协议，最新 release v1.3.7（2026-09-13），`main` 分支最近推送 2026-10-01。本文的命令与配置对照的正是这一天前后的 `main` 分支。
 
----
+## 一、四种使用方式，先选一条
 
-## 一、原理分析：为什么需要全自动短视频生成
+同一套生成能力暴露成四个入口，选哪个取决于你怎么用它：
 
-### 1.1 短视频创作的传统困境
+| 方式 | 适合谁 | 需要装什么 |
+|------|--------|-----------|
+| AI Agent | 不想碰安装配置，手头有支持 Skill 的编码智能体 | 无，把 Skill 文档链接发给 Agent |
+| WebUI | 大多数个人用户，边调参数边看效果 | 一键启动包，或 Docker，或 uv 本地部署 |
+| API | 要把生成能力接进自己的服务或自动化流程 | 同上，另起 8080 端口的 FastAPI 服务 |
+| CLI | 无浏览器环境（服务器、端口转发），或要批量跑任务 | 同上 |
 
-**耗时耗力**：一个高质量短视频需要：写文案→找素材→剪辑→配音→加字幕→配音乐，每个环节都要大量时间。
+WebUI、API、CLI 三端共享同一份配置和同一条流水线，在 WebUI 里验证过的参数可以直接搬进 API 请求或 CLI 参数。自动沿用只有一处：命令行下，配音与字幕样式按「显式参数 > `config.toml` 中 `[ui]` 保存的 WebUI 设置 > 内置默认值」的顺序取值，其余生成设置（背景音乐、视频数量、段落数量）不会自动沿用 WebUI 的保存值。
 
-**版权风险**：网上找素材稍不留神就侵权，商用风险大。
+AI Agent 方式是四条路里唯一免安装的：如果你的智能体支持读取 Skill 文档并操作本地终端，把 README 里那段 Skill 链接和主题一起发过去，Agent 会自己完成安装、配置和生成，只在缺 API Key 时来问你。目前支持 macOS 和 Windows。
 
-**技术门槛**：PR、AE、Final Cut 等专业软件学习成本高，普通用户难以快速上手。
+只想先试试效果、什么都不想装：录咖（reccloud.cn）基于本项目提供了免费的在线 AI 视频生成器，或者直接开 [Google Colab](https://colab.research.google.com/github/harry0703/MoneyPrinterTurbo/blob/main/docs/MoneyPrinterTurbo.ipynb) 在云端跑。
 
-**批量生产难**：做 10 个、100 个视频需要重复劳动，人力成本极高。
+## 二、安装：三条路径
 
-### 1.2 MoneyPrinterTurbo 的工作方式
+无论哪条路径，先记住两条共同的前置条件：
 
-MoneyPrinterTurbo 的核心流程：
+- Python 3.11 或更高版本（本地部署需要；Docker 和一键包不用管）
+- Windows 用户的项目路径不要包含中文、特殊字符或空格
 
-1. **极简输入**：只需提供一个视频主题、关键词，或直接写好文案
-2. **全自动流程**：AI 生成文案 → 高清无版权素材 → 配音合成 → 字幕生成 → 背景音乐 → 视频合成
-3. **零编辑技能**：不需要任何视频剪辑基础
-4. **批量生产**：一次生成多个视频，选择最满意的一个
+硬件不是门槛。GPU 非必需——主要依赖云端大模型、云端 TTS 和在线素材时，CPU 和内存比显卡更重要；只有当你启用本地 Whisper 转写或批量生成时，独立显卡（4 GB 显存起步）才明显提速。CPU 4 核、内存 4 GB 是底线，8 核 16 GB 属于舒适区。
 
-**工作流程图**：
+### 路径 A：Windows 一键启动包
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                      MoneyPrinterTurbo 工作流程                               │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│  用户输入：视频主题 / 关键词 / 文案                                            │
-│              │                                                               │
-│              ▼                                                               │
-│  ┌───────────────────┐                                                       │
-│  │   AI 文案生成     │  ← 大语言模型（支持 OpenAI/DeepSeek/Moonshot 等）        │
-│  └─────────┬─────────┘                                                       │
-│            │ AI生成的视频文案/或用户直接提供                                    │
-│            ▼                                                                 │
-│  ┌───────────────────┐                                                       │
-│  │   高清素材获取     │  ← Pexels 无版权高清素材                                │
-│  └─────────┬─────────┘                                                       │
-│            │ 多个视频片段                                                     │
-│            ▼                                                                 │
-│  ┌───────────────────┐                                                       │
-│  │   语音合成        │  ← 多种语音可选（Edge / Azure / Google Gemini）          │
-│  └─────────┬─────────┘                                                       │
-│            │ 配音音频 + 字幕                                                 │
-│            ▼                                                                 │
-│  ┌───────────────────┐                                                       │
-│  │   字幕生成        │  ← Edge（快）或 Whisper（准）                           │
-│  └─────────┬─────────┘                                                       │
-│            │ SRT 字幕文件                                                    │
-│            ▼                                                                 │
-│  ┌───────────────────┐                                                       │
-│  │   背景音乐        │  ← 随机或指定音乐文件                                    │
-│  └─────────┬─────────┘                                                       │
-│            │ MP3 音频                                                       │
-│            ▼                                                                 │
-│  ┌───────────────────┐                                                       │
-│  │   视频合成        │  ← MoviePy + FFmpeg                                    │
-│  └─────────┬─────────┘                                                       │
-│            │                                                                 │
-│            ▼                                                                 │
-│  ┌───────────────────┐                                                       │
-│  │   高清短视频输出   │  ← 竖屏 9:16 或 横屏 16:9                              │
-│  └───────────────────┘                                                       │
-│                                                                             │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
+适合 Windows 上想最快跑起来的用户。
 
----
+1. 到 [Releases 页面](https://github.com/harry0703/MoneyPrinterTurbo/releases/latest)下载 **Assets** 区域的 `.7z` 压缩包。注意别下成 `Source code (zip)`——那只是源码，解压后只有 `webui.bat`，没有 `start.bat` 和 `update.bat`。
+2. 解压到纯英文路径。
+3. 双击 `update.bat` 更新到最新代码，再双击 `start.bat` 启动。
 
-## 二、核心功能详解
+验证：浏览器自动打开 WebUI。如果页面空白，换 Chrome 或 Edge。
 
-### 2.1 AI 文案生成
+### 路径 B：Docker
 
-**支持模型**：
+适合想把运行环境隔离开的用户，推荐直接拉预构建镜像：
 
-| 提供商 | 说明 |
-|--------|------|
-| OpenAI | GPT-4/3.5 |
-| DeepSeek | 国内可用，无需 VPN |
-| Moonshot | 国内可用，注册送额度 |
-| Azure OpenAI | 企业用户 |
-| Google Gemini | 需配置 API Key |
-| 通义千问 | 阿里云 |
-| Ollama | 本地部署 |
-| Pollinations | 免费 |
-| ModelScope | 阿里魔搭 |
-
-**建议**：国内用户推荐使用 **DeepSeek** 或 **Moonshot**，无需 VPN，直接访问。
-
-### 2.2 视频素材
-
-**来源**：Pexels（高清无版权）
-
-**格式支持**：
-
-| 格式 | 分辨率 | 用途 |
-|------|--------|------|
-| 竖屏 9:16 | 1080×1920 | 抖音/快手/视频号 |
-| 横屏 16:9 | 1920×1080 | YouTube/B 站 |
-
-**特点**：
-- 高清无版权
-- 也可以使用自己的本地素材
-
-### 2.3 语音合成
-
-**支持的声音**：
-
-- **Edge TTS**：速度快，性能好，对电脑配置无要求
-- **Azure TTS**：更真实自然，需要 API Key
-
-**实时试听**：可以在生成前试听语音效果，选择最合适的声音。
-
-### 2.4 字幕生成
-
-**两种模式**：
-
-| 模式 | 速度 | 质量 | 配置要求 |
-|------|------|------|----------|
-| **Edge** | 快 | 一般 | 无 |
-| **Whisper** | 慢 | 可靠 | 需下载 ~3GB 模型 |
-
-**可调整项**：字体、位置、颜色、大小、字幕描边
-
-### 2.5 背景音乐
-
-- 位于项目 `resource/songs/` 目录
-- 来自 YouTube 视频，如有侵权请删除
-- 可随机播放或指定特定音乐
-- 可调节背景音乐音量
-
----
-
-## 三、安装与配置
-
-### 3.1 系统要求
-
-| 项目 | 最低要求 | 推荐配置 |
-|------|---------|----------|
-| CPU | 4 核 | 8 核+ |
-| 内存 | 4 GB | 8 GB+ |
-| 显卡 | 非必须 | 有则更好 |
-| 系统 | Windows 10+ / MacOS 11.0+ | - |
-
-### 3.2 安装方式一：Windows 一键启动包（最简单）
-
-**下载地址**：
-
-| 来源 | 版本 | 链接 |
-|------|------|------|
-| 百度网盘 | v1.2.6 | [百度网盘](https://pan.baidu.com/s/1wg0UaIyXpO3SqIpaq790SQ?pwd=sbqx)（提取码：sbqx） |
-| Google Drive | v1.2.6 | [Google Drive](https://drive.google.com/file/d/1HsbzfT7XunkrHw5ncUjFX8XX4zAuUh/view?usp=sharing) |
-
-**步骤**：
-
-1. 下载解压（**路径不要有中文、空格、特殊字符**）
-2. 双击执行 `update.bat` 更新到最新代码
-3. 双击 `start.bat` 启动
-4. 自动打开浏览器访问 Web 界面
-
-### 3.3 安装方式二：Docker 部署
-
-```bash
-# 克隆代码
+```shell
 git clone https://github.com/harry0703/MoneyPrinterTurbo.git
 cd MoneyPrinterTurbo
-
-# 启动
-docker-compose up
+docker compose -f docker-compose.release.yml up
 ```
 
-**访问地址**：
+`docker-compose.release.yml` 拉取的是 GitHub Container Registry 上的预构建镜像 `ghcr.io/harry0703/moneyprinterturbo:latest`，省去本地构建。想自己构建镜像再用普通的 `docker compose up`。
 
-- Web 界面：http://0.0.0.0:8501
-- API 文档：http://0.0.0.0:8080/docs
+Docker 部署有一个与本地部署不同的细节：首次启动前要手动执行 `cp config.example.toml config.toml`，供容器挂载；本地部署则会自动创建这个文件（见下一节）。
 
-### 3.4 安装方式三：Google Colab（免配置）
+验证：浏览器打开 http://127.0.0.1:8501 是 WebUI，http://127.0.0.1:8080/docs 是 API 文档。
 
-点击直接在 Google Colab 中运行，无需本地环境配置：
+### 路径 C：uv 本地部署（macOS / Linux / Windows）
 
-**Colab 链接**：https://colab.research.google.com/github/harry0703/MoneyPrinterTurbo/blob/main/docs/MoneyPrinterTurbo.ipynb
+官方现在推荐 [uv](https://docs.astral.sh/uv/) 管理环境：
 
-### 3.5 安装方式四：手动部署
-
-**① 克隆代码**：
-
-```bash
+```shell
 git clone https://github.com/harry0703/MoneyPrinterTurbo.git
 cd MoneyPrinterTurbo
+uv python install 3.11
+uv sync --frozen
 ```
 
-**② 创建虚拟环境**：
+依赖定义在 `pyproject.toml`，`uv.lock` 锁定版本，`requirements.txt` 只保留给旧的 pip 方式。不想用 uv 的话，`python3.11 -m venv .venv` 加 `pip install -r requirements.txt` 也仍然可行。
 
-```bash
-conda create -n MoneyPrinterTurbo python=3.11
-conda activate MoneyPrinterTurbo
-pip install -r requirements.txt
+启动两个服务（在项目根目录）：
+
+```shell
+sh webui.sh          # Windows 用 .\webui.bat，会自动找项目 .venv 或一键包内置 Python
+uv run python main.py   # API 服务；已手动激活虚拟环境则直接 python main.py
 ```
 
-**③ 安装 ImageMagick**：
+验证：WebUI 出现在 http://127.0.0.1:8501。想让局域网内其他设备访问，启动前设 `MPT_WEBUI_HOST=0.0.0.0`（Windows CMD 用 `set`）。
 
-| 系统 | 命令 |
-|------|------|
-| Windows | [下载 ImageMagick](https://imagemagick.org/script/download.php)（选择**静态库版本**） |
-| MacOS | `brew install imagemagick` |
-| Ubuntu | `sudo apt-get install imagemagick` |
+## 三、配置：填哪些 Key
 
-**④ 配置文件**：
+本地部署不需要手动建配置文件——首次启动时程序会照着 `config.example.toml` 自动生成 `config.toml`，Key 也可以直接在 WebUI 的基础设置面板里填，不必手改文件。Docker 部署按上一节手动复制后编辑 `config.toml`。
 
-```bash
-cp config.example.toml config.toml
-# 编辑 config.toml 配置 API Keys
-```
+最少要填两类凭据，缺一不可：
 
-**⑤ 启动**：
-
-```bash
-# Web 界面
-sh webui.sh   # MacOS/Linux
-webui.bat     # Windows
-
-# API 服务
-python main.py
-```
-
-### 3.6 配置 API Keys
-
-编辑 `config.toml`：
+**脚本生成用的大模型 Key。** 当前默认提供商是 `moonshot`，但完整列表长得多为：Kimi/Moonshot、OpenAI、Anthropic Claude、Google Gemini、DeepSeek、阿里云通义千问、Azure OpenAI、火山引擎方舟、xAI Grok、MiniMax、小米 MiMo，外加 Ollama（本地运行）、ModelScope、OpenRouter、Groq、OneAPI、LiteLLM、Pollinations 等一批网关与聚合平台。换提供商就是改 `[app]` 段的 `llm_provider` 并填对应 Key，例如：
 
 ```toml
-# LLM 提供商配置（选择一个）
-llm_provider = "deepseek"  # 推荐国内用户
-
-# DeepSeek 配置
+llm_provider = "deepseek"
 deepseek_api_key = "sk-xxxx"
+```
 
-# 或 Moonshot 配置
-moonshot_api_key = "sk-xxxx"
+**素材库的 Pexels Key。** 默认素材源是 Pexels，在 [pexels.com/api](https://www.pexels.com/api/) 免费申请，填进 `pexels_api_keys`（列表格式，支持多个 Key 轮换）：
 
-# Pexels API Keys（视频素材）
+```toml
 pexels_api_keys = ["your_pexels_api_key"]
 ```
 
-**获取 Pexels API Key**：https://www.pexels.com/api/
+素材源不止 Pexels 一个。`video_source` 可以在 `pexels`、`pixabay`、`coverr`（三家都是免费库存素材）、`local`（上传本地图片视频）之间切换，也可以接到 WaveSpeed、火山引擎 Seedance、OFox、秘塔 MiniMax H3、MuAPI 这些文生视频服务上——后者按次计费，生成的是原创画面而不是库存片段，适合素材库搜不到的画面。
 
-**获取 DeepSeek API Key**：https://platform.deepseek.com/
+其余常见项的位置，留作速查：
 
----
+| 想改什么 | 在哪里 |
+|----------|--------|
+| 手动指定 FFmpeg 路径 | `[app]` 段 `ffmpeg_path`（通常自动下载，无需设置） |
+| 字幕方式切换 | `[app]` 段 `subtitle_provider`，`"edge"`（默认）或 `"whisper"` |
+| Whisper 模型大小 | `[whisper]` 段 `model_size`，默认 `large-v3`，可选更小的 `large-v3-turbo` |
+| API 服务的 API 鉴权 | `[app]` 段 `api_key`，配置后客户端需带 `x-api-key` 请求头 |
+| 跨来源网页调用 API | 环境变量 `CORS_ALLOWED_ORIGINS`（默认仅允许同源） |
 
-## 四、使用指南
+## 四、生成第一条视频
 
-### 4.1 Web 界面使用
+### WebUI
 
-1. 打开浏览器访问 `http://localhost:8501`
-2. 输入视频主题或关键词
-3. 选择视频格式（竖屏/横屏）
-4. 点击生成
-5. 等待视频生成完成
+打开 http://127.0.0.1:8501，输入视频主题，选好画幅和配音，点生成。生成设置支持导入导出，可以备份或在多台机器间迁移；任务历史里能回看之前的成品。一条任务默认出 1 条视频，`video_count` 最多可一次生成 5 条供挑选。
 
-### 4.2 API 使用
+### CLI
 
-**API 文档**：`http://localhost:8080/docs` 或 `http://localhost:8080/redoc`
+最短的完整命令：
 
-**Python 示例**：
+```shell
+uv run python cli.py --video-subject "人工智能如何改变日常生活"
+```
+
+批量任务用 `--batch-file` 传一个 UTF-8 JSON 数组或 JSONL 清单，CLI 参数作为全局默认值，清单里每个对象可覆盖单个任务的参数。清单上限 100 个任务、1 MiB，所有条目会在第一个任务启动前完成预检，单个失败不阻断后续，最后输出统一的 JSON 汇总：
+
+```shell
+uv run python cli.py --batch-file ./tasks.json --stop-at video
+```
+
+完整参数看 `uv run python cli.py --help`。
+
+### API
+
+有一个容易踩的坑：**视频生成是异步任务**。`POST /api/v1/videos` 立刻返回的是 `task_id`，不是视频路径；要拿成片，得拿这个 ID 去轮询任务状态。
 
 ```python
+import time
 import requests
 
-response = requests.post(
-    "http://localhost:8080/api/generate_video",
-    json={
-        "subject": "如何增加生活的乐趣",
-        "style": "9:16",  # 或 "16:9"
-        "voice": "zh-CN-XiaoxiaoNeural"
-    }
-)
+base = "http://127.0.0.1:8080"
 
-video_path = response.json()["video_path"]
-print(f"视频生成完成: {video_path}")
+# 1. 创建任务，立即返回 task_id
+resp = requests.post(
+    f"{base}/api/v1/videos",
+    json={
+        "video_subject": "如何增加生活的乐趣",
+        "video_aspect": "9:16",        # 可选 "9:16" / "16:9" / "1:1"，默认竖屏
+        "voice_name": "zh-CN-XiaoxiaoNeural-Female",
+    },
+).json()
+task_id = resp["data"]["task_id"]
+
+# 2. 轮询任务状态：1 = 完成，4 = 处理中（progress 0~100），-1 = 失败
+while True:
+    task = requests.get(f"{base}/api/v1/tasks/{task_id}").json()["data"]
+    print(task["state"], task.get("progress"))
+    if task["state"] == 1:
+        break
+    if task["state"] == -1:
+        raise RuntimeError("任务失败，详情见服务端日志")
+    time.sleep(5)
+
+# 3. 任务成功后，videos 字段就是成片的下载地址
+for url in task.get("videos", []):
+    print(f"成片地址: {url if url.startswith('http') else base + url}")
 ```
 
-### 4.3 批量生成
+成片与中间产物（配音、字幕）的地址就挂在任务查询响应的 `videos`、`audio_file`、`subtitle_path` 字段上，文件本体在服务端 `tasks/{task_id}` 目录下；`GET /api/v1/tasks` 可以分页列出全部任务。若启用了 `[app]` 段的 `api_key` 鉴权，以上每个请求都要加 `x-api-key` 请求头。
 
-在 Web 界面中：
+API 还有两个单项端点：`POST /api/v1/subtitle` 只生成字幕，`POST /api/v1/audio` 只生成配音，适合只想复用某一环的场景。
 
-1. 一次输入多个主题
-2. 系统会生成多个视频
-3. 选择最满意的一个
+## 五、配音、字幕、配乐的选项
 
----
+**配音**有三种形态：自动配音、上传自己的音频、无配音。TTS 服务商给了 11 个：WebUI 里的 Azure TTS V1 底层是 Edge TTS，免费、无需 API Key，是默认选项；其余——Azure TTS V2、SiliconFlow、Google Gemini、小米 MiMo、MiniMax、ElevenLabs、自托管的 Chatterbox 和 Kokoro、Fish Audio、ModelBest VoxCPM——都需要对应平台的凭据。WebUI 里可以逐个试听音色再选。Edge TTS 的完整音色列表在仓库 `docs/voice-list.txt`。
 
-## 五、常见问题与解决
+**字幕**有两种生成方式，切换在 `subtitle_provider`：
 
-### 5.1 RuntimeError: No ffmpeg exe could be found
+- `edge`（默认）：直接用 TTS 返回的时间戳，快，不需要 GPU；
+- `whisper`：本地 `faster-whisper` 转写配音音频，时间轴更准，首次使用要下载模型——默认 `large-v3` 约 3 GB，对速度敏感可以改用约 1.6 GB 的 `large-v3-turbo`。
 
-**原因**：缺少 FFmpeg
+字幕样式（字体、位置、颜色、大小、描边、背景）都在 WebUI 里调；自定义字体放进 `resource/fonts` 即可被选用。
 
-**解决方法**：
+**配乐**三选一：随机用项目自带的（`resource/songs` 目录，来自 YouTube，版权敏感环境建议清空后放自己的）、指定本地音乐文件、或让 AI 生成。背景音乐音量独立可调。
 
-1. 下载 [FFmpeg](https://www.gyan.dev/ffmpeg/builds/)
-2. 解压后配置路径：
+## 六、常见问题
+
+**`RuntimeError: No ffmpeg exe could be found`**
+FFmpeg 通常会被自动下载并检测到，报这个错说明自动下载在你的环境里失败了。从 [gyan.dev](https://www.gyan.dev/ffmpeg/builds/) 手动下载，解压后在 `config.toml` 里设置：
 
 ```toml
-ffmpeg_path = "C:\\Users\\your_path\\ffmpeg.exe"
+[app]
+ffmpeg_path = "C:\\Users\\your_name\\Downloads\\ffmpeg.exe"
 ```
 
-### 5.2 ImageMagick 安全策略阻止操作
+**`OSError: [Errno 24] Too many open files`**
+系统打开文件数限制太低。`ulimit -n` 查看当前值，过低就调高，比如 `ulimit -n 10240`。
 
-**原因**：ImageMagick 默认安全策略禁止某些操作
+**Whisper 模型下载失败**
+首次使用 Whisper 时程序会从 Hugging Face 自动下载模型，网络不通时会报 `LocalEntryNotFoundError` 一类的错。解法是手动下载：从 [Systran/faster-whisper-large-v3](https://huggingface.co/Systran/faster-whisper-large-v3) 下载后解压，整个目录放到 `.\MoneyPrinterTurbo\models\` 下，最终路径形如 `models\whisper-large-v3\`（内含 `config.json`、`model.bin` 等文件）；如果配置了 `large-v3-turbo`，目录名对应改为 `whisper-large-v3-turbo`。
 
-**解决方法**：修改 ImageMagick 配置文件 `policy.xml`，将：
+**网页调用 API 被跨域拦截**
+API 默认只允许同源网页访问，这是安全默认而非故障。只有独立网页前端需要从其他来源直接调 API 时，才设置环境变量 `CORS_ALLOWED_ORIGINS`（如 `http://localhost:3000`）；curl、Postman、n8n 这类服务端调用不受影响。
 
-```xml
-<policy domain="path" rights="none" pattern="@"/>
-```
+**早先教程里的 ImageMagick 步骤**
+旧版合成基于 MoviePy 1.x，字幕渲染依赖 ImageMagick，老教程会让人先装 ImageMagick、再改它的 `policy.xml` 安全策略。当前版本基于 MoviePy 2.x，不再需要 ImageMagick，这两步整体跳过——照旧教程装不上的，先检查版本差异。
 
-改为：
+## 七、适用与不适用
 
-```xml
-<policy domain="path" rights="read|write" pattern="@"/>
-```
+它擅长的：批量生产「文案 + 库存素材 + 配音 + 字幕」结构的短视频——自媒体日更、知识科普、商品介绍这类对产能敏感、对画面独特性要求不高的内容。全流程可以零人工介入，提交主题后到出片之间只有等待；想逐环节把关时，每个环节也都留了替换入口（自带脚本、上传配音、本地素材）。
 
-### 5.3 OSError: [Errno 24] Too many open files
+它的边界同样清楚：素材以库存片段匹配为主（配了文生视频服务才能产原创画面），做不出需要逐帧设计的专业动效；没有直播能力；定位就是分钟级短视频，不是长视频工具。内容同质化是流水线工具的天然属性——所有条目共享同一套风格参数，想要「每条都不一样」的品牌化内容，它只能当半成品生产线用。
 
-**解决方法**：
+## 维护指引
 
-```bash
-# 查看限制
-ulimit -n
+本文所有随时间失效的点集中在以下几处，按此复查即可：
 
-# 调高限制
-ulimit -n 10240
-```
+- **仓库数据**（stars、forks、最新 release、最近推送）：`GET https://api.github.com/repos/harry0703/MoneyPrinterTurbo` 与 `/releases?per_page=1`。stars 与版本号是全文最容易过期的两处。
+- **功能清单与安装命令**：对照仓库 `README.md`（简体中文版）的「功能特性」「快速开始」「安装部署」三节。
+- **配置项与默认值**：对照 `config.example.toml`——`llm_provider` 默认值、`video_source` 可选值、`subtitle_provider`、`[whisper]` 段都可能随版本调整。
+- **API 端点与字段**：对照 `app/router.py`（前缀 `/api/v1`）、`app/controllers/v1/video.py`（端点清单）、`app/models/schema.py`（`TaskVideoRequest` 字段与默认值）。
+- **依赖版本**：对照 `pyproject.toml`。MoviePy 大版本升级（如 2.x → 3.x）通常意味着合成行为或依赖变化。
+- **失效条件**：README 里移除「AI Agent 使用方式」或「一键跨平台发布」任一小节时，本文第一、四节需重写；`subtitle_provider` 的可选值变化时，第五节需重写。
 
-### 5.4 Whisper 模型下载失败
+## 参考来源
 
-**原因**：国内无法访问 HuggingFace
-
-**解决方法**：手动下载模型
-
-| 来源 | 链接 |
-|------|------|
-| 百度网盘 | [下载](https://pan.baidu.com/s/11h3Q6tsDtjQKTjUu3sc5cA?pwd=xjs9) |
-| 夸克网盘 | [下载](https://pan.quark.cn/s/3ee3d991d64b) |
-
-下载后解压到：`.\MoneyPrinterTurbo\models\whisper-large-v3\`
-
----
-
-## 六、与同类项目对比
-
-| 项目 | Stars | 视频质量 | 配音 | 字幕 | 上手难度 | 国内可用 |
-|------|-------|---------|------|------|---------|---------|
-| **MoneyPrinterTurbo** | **53.7k** | ⭐⭐⭐⭐ | ✅ 多语音 | ✅ 可调 | 简单 | ✅ |
-| 其他竞品 | - | - | - | - | - | - |
-
----
-
-## 七、适用与不适用场景
-
-### 7.1 适用场景
-
-- **自媒体内容创作**：抖音/B 站/视频号批量内容生产
-- **电商产品介绍**：商品展示视频快速生成
-- **知识科普**：科普视频快速制作
-- **企业内部培训**：培训视频快速生成
-- **个人副业**：短视频变现
-
-### 7.2 不适用场景
-
-- **高要求专业视频**：需要专业剪辑的电影级效果
-- **实时直播**：当前版本不支持
-- **长视频**：当前主要用于 1-3 分钟短视频
-
----
-
-## 八、资源链接
-
-| 资源 | 链接 |
-|------|------|
-| GitHub | https://github.com/harry0703/MoneyPrinterTurbo |
-| 在线体验（录咖） | https://reccloud.cn（免费 AI 视频生成器） |
-| 视频教程 | 抖音教程链接在 README 中 |
-
----
-
-**文档信息**
-
-- 难度：⭐⭐ | 类型：入门到精通 | 更新日期：2026-03-28 | 预计阅读时间：30 分钟
+- 仓库：[harry0703/MoneyPrinterTurbo](https://github.com/harry0703/MoneyPrinterTurbo)，MIT License
+- README（简体中文）：功能特性、配置要求、快速开始、安装部署、配音字幕配乐、常见问题各节
+- 源码（main 分支，2026-10-02 核对）：`config.example.toml`、`pyproject.toml`、`cli.py`、`app/router.py`、`app/controllers/v1/video.py`、`app/models/schema.py`
+- GitHub API：仓库元数据与 release 列表，2026-10-02 读取

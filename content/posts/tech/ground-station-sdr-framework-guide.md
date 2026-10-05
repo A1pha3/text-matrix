@@ -1,743 +1,161 @@
 ---
-title: "Ground Station：1.2K Stars·软件无线电框架·SDR管道·模块化信号处理"
+title: "Ground Station：把整座卫星地面站装进浏览器"
 date: "2026-04-12T02:31:39+08:00"
 slug: ground-station-sdr-framework-guide
 github_repo: "sgoudelis/ground-station"
 source_key: "gh:sgoudelis/ground-station"
-description: "Ground Station 是一个开源的软件无线电框架，提供 SDR 管道和模块化信号处理功能，支持多种硬件设备。"
+description: "Ground Station 是开源的浏览器端卫星地面站套件：SGP4 轨道跟踪、天线与电台控制、多普勒校正、SDR 接收解码、SigMF 录制回放，外加 AOS/LOS 自动观测调度。本文拆解它的三层架构、IQ 广播机制与一次自动过境的完整流转。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Python"]
+tags: ["SDR", "业余无线电", "卫星跟踪", "开源"]
 ---
 
-# Ground Station：1.2K Stars·软件无线电框架·SDR 管道·模块化信号处理·社区共享
+# Ground Station：把整座卫星地面站装进浏览器
 
-## 一，项目概述
+先给判断：玩卫星接收的人手上通常摆着好几样工具——Gqrx 或 SDR# 负责收信号，Orbitron 之类负责算卫星什么时候过顶，dump1090 只解一种飞机信号，中间的空隙靠人肉衔接：盯着预报、掐着时间开软件、手动调频率。Ground Station（`sgoudelis/ground-station`）把这条链路整个搬进一个 Web 界面：轨道预报、天线指向、多普勒校正、SDR 接收、解码、录制归档，一次配好之后，「哪颗卫星几点过境」就从日历上的提醒变成自动执行的任务。
 
-### 1.1 Ground Station 是什么
+README 对它的自述是：一个开源、基于浏览器的应用，用于跟踪卫星和天体目标、控制地面站硬件、接收并解码录制 SDR 信号——面向业余无线电操作员、卫星爱好者和研究人员。
 
-**Ground Station** 是一个**软件无线电（SDR）框架**，用于探索、构建和分享无线电实用工具。
+它是一个 0.x 早期的项目，但已经长到 4,825 stars、841 forks（2026-10-05 取自 GitHub API），仓库创建于 2025 年 3 月。版本节奏很快：仅 2026 年 9 月就从 v0.8.7 发到 v0.8.16，十个版本。本文数据以当日的 README 与 GitHub API 为准。
 
-> "Software Radio Framework. Explore, build and share radio utilities with others."
+## 项目坐标
 
-### 1.2 核心数据
-
-| 指标 | 数值 |
+| 维度 | 信息 |
 |------|------|
-| Stars | **1.2k** ⭐ |
-| Forks | 65 |
-| 贡献者 | 8 |
-| 最新版本 | **v1.0.2** (2026-03-28) |
-| 许可证 | AGPL-3.0 |
-| 语言 | Python 100% |
+| 仓库 | [sgoudelis/ground-station](https://github.com/sgoudelis/ground-station) |
+| 定位 | 浏览器端地面站套件：卫星/天体跟踪 + SDR 接收解码 + 硬件控制 |
+| Stars / Forks | 4,825 / 841（2026-10-05，GitHub API） |
+| 许可证 | GPL-3.0 |
+| 技术构成 | JavaScript 约 60%（React 前端）、Python 约 40%（FastAPI 后端与 worker） |
+| 最新版本 | v0.8.16（2026-09-30） |
+| 贡献者 | 3 人（GitHub contributors 页） |
 
-### 1.3 核心定位
+一个人主导、LLM 编码代理协助开发的项目。README 有专门的 AI 辅助开发声明：编码代理承担实现、调试、测试、文档和代码评审，维护者负责架构决策并对所有合入变更做最终审稿。DSP 组件（解调器、广播器、解码器）部分由 Claude 协助完成，源码中有明确标记。9 个月做出这种迭代密度，跟这种开发方式有直接关系。
 
-| 维度 | 说明 |
-|------|------|
-| 📡 **SDR 框架** | 软件定义无线电 |
-| 🔧 **模块化** | 块式信号处理 |
-| 👥 **社区共享** | Station 分享平台 |
-| 📊 **可视化** | 实时信号显示 |
+## 系统地图：三层进程 + 硬件 + 外部数据
 
-### 1.4 核心特性
+整体是「浏览器 — 后端 — worker 进程群」三层，中间全部走 Socket.IO 和消息队列：
 
-| 特性 | 说明 |
-|------|------|
-| ✅ **模块管道** | 块式信号处理流水线 |
-| ✅ **实时可视化** | 瀑布图、频谱图 |
-| ✅ **社区 Station** | 预建无线电工具分享 |
-| ✅ **跨平台** | Linux/macOS/Windows |
-| ✅ **多硬件** | RTL-SDR、HackRF、USRP |
-| ✅ **文件 I/O** | 录制信号回放 |
-
-## 二，技术架构
-
-### 2.1 系统架构
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    Ground Station 架构                                  │
-├─────────────────────────────────────────────────────────────┤
-│                                                               │
-│   ┌─────────────────────────────────────────────────┐   │
-│   │                    用户界面层                                  │   │
-│   │   ┌─────────┐  ┌─────────┐  ┌─────────┐       │   │
-│   │   │   GUI   │  │   CLI   │  │ Python  │       │   │
-│   │   │ (Qt)   │  │ (命令行) │  │  API   │       │   │
-│   │   └────┬────┘  └────┬────┘  └────┬────┘       │   │
-│   │         └───────────┼───────────┘                    │   │
-│   │                     │                               │   │
-│   └─────────────────────┼───────────────────────────────┘   │
-│                         │                                   │
-│   ┌─────────────────────▼───────────────────────────────┐   │
-│   │                    Pipeline 引擎                           │   │
-│   │   ┌─────────┐  ┌─────────┐  ┌─────────┐              │   │
-│   │   │ Source  │→│ Block   │→│  Sink   │              │   │
-│   │   │  (源)   │  │  (块)   │  │  (汇)   │              │   │
-│   │   └─────────┘  └─────────┘  └─────────┘              │   │
-│   └─────────────────────┬───────────────────────────────┘   │
-│                         │                                   │
-│   ┌─────────────────────▼───────────────────────────────┐   │
-│   │                    硬件抽象层                              │   │
-│   │   ┌─────────┐  ┌─────────┐  ┌─────────┐              │   │
-│   │   │ RTL-SDR │  │ HackRF  │  │  USRP   │              │   │
-│   │   │         │  │         │  │         │              │   │
-│   │   └─────────┘  └─────────┘  └─────────┘              │   │
-│   └─────────────────────────────────────────────────────┘   │
-│                                                               │
-└─────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart LR
+    Browser["浏览器<br/>React + Redux Toolkit + MUI"] <-->|Socket.IO| Backend["FastAPI 后端<br/>REST API · 数据库 · 文件管理"]
+    Backend -->|消息队列| T["Tracker 进程<br/>每个旋转器一个实例"]
+    Backend -->|消息队列| SDR["SDR 采集进程"]
+    SDR -->|"IQ Broadcaster<br/>(pub/sub)"| DSP["FFT / 解调器<br/>录制器 / 解码器"]
+    T --> H1["天线旋转器 · 电台<br/>(Hamlib / CAT)"]
+    SDR --> H2["RTL-SDR / SoapySDR<br/>UHD/USRP"]
+    Backend --> E["CelesTrak · SatNOGS<br/>NASA JPL Horizons"]
 ```
 
-### 2.2 信号处理管道
+| 层 | 技术 | 职责 |
+|------|------|------|
+| 前端 | React + Redux Toolkit + Material-UI，Leaflet/MapLibre 地图 | 轨道地图、瀑布图、音频监听、解码输出展示、设备管理 |
+| 后端 | Python FastAPI + Socket.IO + SQLAlchemy | WebSocket 通信、worker 编排、TLE 拉取、录制与文件管理、解码器生命周期 |
+| Worker | Python 独立进程 | 轨道跟踪、IQ 采集、FFT、解调、解码、录制、本地/远程硬件探测 |
+| 硬件层 | Hamlib 旋转器、CAT 电台、各类 SDR | 物理收发与指向 |
+| 外部数据 | CelesTrak、SatNOGS DB、JPL Horizons | TLE 轨道根数、发射机信息、深空天体星历 |
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    信号处理管道 (Pipeline)                          │
-├─────────────────────────────────────────────────────────────┤
-│                                                               │
-│   Signal Source ──→ Block 1 ──→ Block 2 ──→ ... ──→ Signal Sink   │
-│                                                               │
-│   ┌─────────────────────────────────────────────────────┐   │
-│   │                    常用 Block 类型                           │   │
-│   │                                                       │   │
-│   │   📡 Source Blocks                                     │   │
-│   │   ├── RTL-SDR Source                                   │   │
-│   │   ├── File Source (IQ recording playback)               │   │
-│   │   ├── Network Source (TCP/UDP streaming)               │   │
-│   │                                                       │   │
-│   │   🔧 Processing Blocks                                 │   │
-│   │   ├── Frequency Xlating FIR Filter                    │   │
-│   │   ├── Low Pass Filter                                 │   │
-│   │   ├── FFT (Fast Fourier Transform)                    │   │
-│   │   ├── AM Demodulator                                 │   │
-│   │   ├── FM Demodulator                                 │   │
-│   │   ├── CW/SSB/CW Receiver                            │   │
-│   │   └── Noise Blanker                                  │   │
-│   │                                                       │   │
-│   │   📊 Sink Blocks                                    │   │
-│   │   ├── GUI Waterfall (实时瀑布图)                       │   │
-│   │   ├── GUI Scope (示波器)                              │   │
-│   │   ├── Audio Sink (扬声器输出)                          │   │
-│   │   └── File Sink (录制 IQ)                             │   │
-│   │                                                       │   │
-│   └─────────────────────────────────────────────────────┘   │
-│                                                               │
-└─────────────────────────────────────────────────────────────┘
-```
+轨道计算分两条线：近地卫星用 CelesTrak 拉取的 TLE 根数，本地跑 Skyfield/SGP4 传播；太阳系天体和深空任务目标走 NASA JPL Horizons 的星历向量，配了带降级回退的同步机制。前端地图除基础底图外还接了 NASA GIBS 图层（Blue Marble、地形、夜光、MODIS/VIIRS 逐日影像）。
 
-### 2.3 Station 概念
+## 关键机制
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    Station (无线电工具)                            │
-├─────────────────────────────────────────────────────────────┤
-│                                                               │
-│   Station = 预配置的 Pipeline + 配置参数                        │
-│                                                               │
-│   ┌─────────────────────────────────────────────────────┐   │
-│   │                    FM Radio Station                          │   │
-│   │   ┌───────────────────────────────────────────────┐   │   │
-│   │   │  RTL-SDR Source (gain=40, freq=100MHz)        │   │   │
-│   │   │       ↓                                        │   │   │
-│   │   │  Frequency Xlating FIR Filter                 │   │   │
-│   │   │       ↓                                        │   │   │
-│   │   │  FM Demodulator                              │   │   │
-│   │   │       ↓                                        │   │   │
-│   │   │  Audio Sink                                  │   │   │
-│   │   └───────────────────────────────────────────────┘   │   │
-│   └─────────────────────────────────────────────────────┘   │
-│                                                               │
-│   用户只需设置频率，点击播放，即可收听 FM 广播！                    │
-│                                                               │
-└─────────────────────────────────────────────────────────────┘
-```
+### IQ Broadcaster：一份数据喂四类消费者
 
-## 三，主要功能
+SDR 采集进程产出的原始 IQ 样本流是整个系统最贵的资源，Ground Station 用发布/订阅模式分发：IQ Broadcaster 给每个订阅者独立的队列和深拷贝样本，FFT 处理（瀑布图）、解调器、IQ 录制器、原始 IQ 解码器（BPSK/GMSK）可以同时消费同一路信号。慢消费者直接丢消息，不阻塞生产者——「边看瀑布、边录音、边解码」能并行不互相拖垮，靠的就是这个设计。
 
-### 3.1 信号源（Source）
+解调器分普通和内部两种模式：普通模式把音频送给用户播放；内部模式专为解码器服务，解调出的音频再经 Audio Broadcaster 分发，一路给解码器、一路给浏览器实时监听。README 给的 SSTV 链路是这条管线的完整示例：SDR → IQ Broadcaster → 内部 FM 解调器 → Audio Broadcaster → SSTV 解码器出图，同时浏览器里能听着声。
 
-| 源 | 说明 |
-|------|------|
-| **RTL-SDR** | 常见 USB 电视棒，支持 500kHz - 1766MHz |
-| **HackRF** | Great Scott Gadgets，支持 1MHz - 6GHz |
-| **USRP** | Ettus Research，专业级 SDR |
-| **File Source** | 播放录制的 IQ 文件 |
-| **Network Source** | TCP/UDP 网络流 |
+### 跟踪与硬件控制：从算出位置到指向天线
 
-### 3.2 信号处理块（Block）
+Tracker 进程用 SGP4 算出目标的方位角/仰角，驱动 Hamlib 兼容的旋转器连续转向，带限位检查和防抖动的重定向逻辑——每个旋转器对应一个独立 tracker 实例，多目标可以并行跟（`target-N` 槽位，各自有独立运行时状态）。电台侧走 rigctld/Hamlib，跟踪过程中对 RX/TX 频率做多普勒校正；对 L 波段以上的卫星信号，不做校正几秒钟就漂出接收带宽，这是能不能收到稳收好的关键一环。
 
-| 类型 | 块 | 说明 |
-|------|-----|------|
-| **滤波** | Frequency Xlating FIR | 频谱搬移 |
-| **滤波** | Low Pass Filter | 低通滤波 |
-| **解调** | AM Demodulator | 调幅解调 |
-| **解调** | FM Demodulator | 调频解调 |
-| **解调** | CW/SSB Receiver | 莫尔斯电码/单边带 |
-| **分析** | FFT | 快速傅里叶变换 |
-| **处理** | Noise Blanker | 降噪 |
+### 自动观测：把过境变成定时任务
 
-### 3.3 信号输出（Sink）
+这是项目里最「自动化」的部分，README 用了整整两节描述：
 
-| 输出 | 说明 |
-|------|------|
-| **Waterfall** | 实时瀑布图显示 |
-| **Scope** | 示波器波形显示 |
-| **Audio** | 音频输出到扬声器 |
-| **File** | 录制为 IQ 文件 |
+- **监控模板**：为关心的卫星定义硬件配置、信号参数和任务组合，系统自动为所有符合条件的过境生成观测任务。
+- **过境计算与调度**：按最低仰角、前瞻窗口算出未来过境，APScheduler 在 AOS（信号捕获）时刻自动启动、LOS（信号消失）时刻停止。
+- **任务组合**：一次观测可以并行挂 IQ 录制（SigMF）、WAV 录音、协议解码（AFSK/GMSK/SSTV）和 AI 转写。
+- **硬件编排**：观测期间自动控制 SDR、旋转器（含跟踪）和电台（含多普勒校正）。
+- **多 SDR 并行**：自动观测占一台 SDR，你可以用另一台在同一次过境上同时监听、解码，互不干扰；共用一台时可以旁听，但动中心频率会影响正在跑的观测。
+- **状态管理**：六态跟踪（scheduled / running / completed / failed / cancelled / missed），旧观测自动清理。自动观测跑在隔离的内部 VFO 会话里（命名空间 `internal:<observation_id>`）。
 
-### 3.4 社区 Station
+### SigMF 录制与回放：格式标准，链路复用
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    社区共享 Station                                │
-├─────────────────────────────────────────────────────────────┤
-│                                                               │
-│   📻 FM Radio          📡 ADS-B          📻 Airband          │
-│   ┌───────────────┐  ┌───────────────┐  ┌───────────────┐   │
-│   │ FM: 88-108MHz│  │ 1090MHz     │  │ 118-137MHz │   │
-│   │ RTL-SDR      │  │ 飞机追踪     │  │ 航空通信   │   │
-│   └───────────────┘  └───────────────┘  └───────────────┘   │
-│                                                               │
-│   📻 NOAA Weather   📡 RTL-SDR Scanner   📻 Local Police   │
-│   ┌───────────────┐  ┌───────────────┐  ┌───────────────┐   │
-│   │ 162MHz      │  │ 全频扫描     │  │ 手台/对讲   │   │
-│   │ 气象卫星    │  │ 主动搜索     │  │ 业余无线电 │   │
-│   └───────────────┘  └───────────────┘  └───────────────┘   │
-│                                                               │
-└─────────────────────────────────────────────────────────────┘
-```
+录制采用 SigMF 标准（`.sigmf-data` 数据文件 + `.sigmf-meta` 元数据），自动写入中心频率、采样率、时长和目标卫星的 NORAD 编号，附带瀑布图 PNG 快照；参数变化会切成独立的 capture segment。回放时录制文件以「SigMF Playback」虚拟 SDR 的身份出现在设备列表里，走和实时接收完全相同的解调、解码管线——录制的东西事后能重新解码，时间线上可以拖动定位。IQ 录制还可以交给 SatDump 做后处理，README 点名支持 METEOR LRPT/HRPT 气象管线。
 
-## 四，安装指南
+### 解码与转写：标注成熟度再看
 
-### 4.1 环境要求
+解码能力要分层看，README 自身的标注很诚实：
 
-| 要求 | 版本 |
-|------|------|
-| Python | 3.10+ |
-| pip | 22.0+ |
-| OS | Linux/macOS/Windows |
+- **已落地**：SSTV 图像解码；APRS 有专用 raw-IQ 解码路径（集成 NBFM/Bell 202 解调、AX.25 解析、批边界恢复）；FSK/GFSK/GMSK/BPSK/GNSS 有解码路径，包管线支持 AX.25/USP/GEOSCAN 帧。
+- **开发中**：架构图里 AFSK 包解码器、LoRa/GMSK 解码器标着 WIP。
+- **AI 转写**：解调音频可接 Gemini Live 或 Deepgram 做实时转写，支持翻译，产物落在 `backend/data/transcriptions/`。对着卫星下行链听不清的内容，转写出来的文本可搜可存。
 
-### 4.2 依赖安装
+## 一次自动过境的完整流转
+
+用 METEOR 气象卫星串一遍系统（机制全部来自 README，具体参数是示意）：
+
+1. **配模板**：在 Monitored Satellites 里给 METEOR-M2 建监控模板——RTL-SDR、最低仰角 30 度、任务勾选 IQ 录制 + SatDump 后处理。
+2. **等调度**：后端从 CelesTrak 同步 TLE，SGP4 算出明天上午有一次最高仰角 47 度的过境，自动生成一条 scheduled 观测。
+3. **AOS 启动**：到点后 APScheduler 触发——tracker 开始驱动旋转器转向卫星，SDR 采集进程起流，IQ Broadcaster 把样本分发给 FFT 和录制器，浏览器里能看到实时瀑布。
+4. **录制归档**：IQ 以 SigMF 格式落盘，元数据自动带上卫星名和 NORAD ID，瀑布快照一并保存。
+5. **LOS 收尾**：信号消失后自动停止，观测转入 completed，可选触发 SatDump 的 LRPT 管线出气象云图。
+6. **事后回放**：文件浏览器里找到这次录制，回放走同一条解码管线重新出图；时间线拖到任何位置都能重跑。
+
+全程没有人盯守。同类桌面软件里，接收归 Gqrx，预报归 Orbitron，气象解码归 SatDump 命令行——Ground Station 的差异恰恰是把这三段缝在一起。
+
+## 部署：两条 Docker 命令的事
+
+官方提供多架构预构建镜像（amd64/arm64），Web 界面在 7000 端口。桥接模式即可用本地 SDR：
 
 ```bash
-# Ubuntu/Debian
-sudo apt update
-sudo apt install python3-pip python3-pyqt5 librtlsdr-dev
+docker pull ghcr.io/sgoudelis/ground-station:<version>
 
-# macOS
-brew install python3 pyqt5
-brew install librtlsdr (via homebrew-core)
-
-# Windows
-# 安装 Python 3.10+ 后，使用 pip 安装
+docker run -d \
+  --platform linux/amd64 \
+  -p 7000:7000 \
+  --name ground-station \
+  --restart unless-stopped \
+  --device=/dev/bus/usb \
+  --privileged \
+  -v /path/to/data:/app/backend/data \
+  ghcr.io/sgoudelis/ground-station:<version>
 ```
 
-### 4.3 安装 Ground Station
+要用 mDNS 自动发现局域网里的 SoapySDR 远程服务，改用 host 网络模式（`--network host`，去掉端口映射），README 把这种标为推荐选项。其余要点：
 
-```bash
-# 从 PyPI 安装
-pip install groundstation
+- **USB 权限**：直插的 RTL-SDR 等设备需要主机侧 udev 规则，步骤见仓库 `docs/SDR_HOST_SETUP.md`。
+- **数据目录**： recordings、配置都在容器的 `/app/backend/data`，务必挂载到宿主机。
+- **树莓派**：官方只推荐 Raspberry Pi 5。
+- **SDRplay 用户注意**：镜像内置的是旧版 RSP API v3.15（专有软件），构建或分发镜像前需要确认其 EULA。
+- **配置**：运行时配置在 `backend/data/configs/app_config.json`，UI 里可改；优先级为 CLI 参数 > 配置文件 > 内置默认，UI 会标出哪些值被 CLI 覆盖、哪些改动要重启。
+- **公网暴露**：要上 TLS 反代，参考仓库 `deploy/nginx/README.md`。
 
-# 或从源码安装
-git clone https://github.com/sgoudelis/ground-station.git
-cd ground-station
-pip install -e .
-```
+从源码构建也只需 `docker build -t ground-station .`；开发环境搭建见 `DEVELOPMENT.md`。
 
-### 4.4 硬件驱动
+## SDR 硬件支持
 
-```bash
-# RTL-SDR (Linux)
-# 创建 udev 规则
-sudo bash -c 'echo "SUBSYSTEM==\"usb\", ATTRS{idVendor}==\"0bda\", ATTRS{idProduct}==\"2832\", MODE=\"0666\", GROUP=\"plugdev\", SYMLINK+=\"rtl_sdr\" " > /etc/udev/rules.d/rtl-sdr.rules'
-sudo udevadm control --reload-rules
+| 硬件 | 接入方式 | 备注 |
+|------|----------|------|
+| RTL-SDR | USB 或 rtl_tcp | 入门主力，$20 量级 |
+| Airspy / Airspy HF+ | 原生 worker | HF+ 官方标注未经测试 |
+| SoapySDR 系列 | 本地或 SoapyRemote | RTL-SDR、Airspy、HackRF、HydraSDR、LimeSDR、MiriSDR、PlutoSDR、UHD/USRP、SDRplay RSP |
+| UHD/USRP | UHD worker | 专业档 |
+| SigMF Playback | 虚拟设备 | 回放录制文件，走完整处理管线 |
 
-# HackRF
-sudo apt install hackrf libhackrf-dev
+缺哪款 SoapySDR 设备，README 的态度是开 issue 提需求。
 
-# USRP
-# 安装 UHD (USRP Hardware Driver)
-pip install uhd
-```
+## 适用边界与采用建议
 
-## 五，使用指南
+**适合现在就上**：手头有 RTL-SDR 或更好的接收设备、想无人值守记录卫星过境的业余无线电爱好者和研究者——它的自动化观测直接命中「过境总在半夜」这个痛点；想学地面站工程的人也值得读它的架构图和 DSP 管线，这套「后端 + worker + pub/sub」的组织方式本身就是好教材。
 
-### 5.1 GUI 使用
+**可以等等**：依赖特定解码器的人。SSTV 和 APRS 已落地，但 AFSK、LoRa 等还在 WIP，下结论前先对照当前 release notes；SDRplay 用户要先过 EULA 这一关。
 
-```bash
-# 启动 GUI
-groundstation --gui
+**不必硬上**：没有任何接收硬件的纯旁观者——虽然有 SigMF 回放，但你得先有录制；想把它直接暴露公网对外提供服务的团队也不合适，README 明确它的安全边界是「可信私网 + 可信管理员」的业余用途。
 
-# 或
-python -m groundstation.gui
-```
+**与邻居的分工**：Gqrx/SDR# 是纯接收软件，不带轨道预报和自动化；SatDump 专注解码本身（Ground Station 把它集成为后处理环节）；SatNOGS 走的是网络化分布式地面站的路线，Ground Station 的卫星发射机信息也来自 SatNOGS API。单点功能每样都有更成熟的工具，Ground Station 押注的是闭环：从「卫星几点过境」到「气象图躺进文件浏览器」，中间不需要人。就目前 4,800+ 星的走势和它几乎每两天一个版本的迭代速度，这个押注值得持续跟踪。
 
-**GUI 界面：**
-```
-┌─────────────────────────────────────────────────────────────┐
-│  Ground Station                              [_][□][X]   │
-├─────────────────────────────────────────────────────────────┤
-│  📻 Station: [FM Radio ▼]           [▶ Play] [⏹ Stop]   │
-│                                                               │
-│  ┌─────────────────────────────────────────────────────┐   │
-│  │           ~~~~~~~~ Waterfall Display ~~~~~~~~          │   │
-│  │  ▓▓▓░░▒▒▒▓▓░░▒▒░░▓▓▒▒▓░░▒▒▓▓░░          │   │
-│  │  ░░▒▒▓▓░░▒▒▒░░▓▓░░▒▒▓▓░░▒▒░░▓▓▒▒          │   │
-│  │  ▓▓▒▒░░▓▓▒▒▓░░▒▒▓▓░░▒▒▓▓▒▒░░▓▓          │   │
-│  └─────────────────────────────────────────────────────┘   │
-│                                                               │
-│  Frequency: [  98.5  ] MHz    Gain: [ 40 ▼] Auto          │
-│                                                               │
-│  ┌─────────────────────────────────────────────────────┐   │
-│  │                   Scope Display                        │   │
-│  │         ∿∿∿∿∿∿∿∿∿∿∿∿∿∿∿∿∿∿∿∿∿∿∿∿         │   │
-│  └─────────────────────────────────────────────────────┘   │
-│                                                               │
-│  Station: [Browse Community Stations]                         │
-└─────────────────────────────────────────────────────────────┘
-```
+## 数据口径
 
-### 5.2 CLI 使用
-
-```bash
-# 播放 FM 广播
-groundstation --station fm_radio --freq 98.5e6
-
-# 扫描频谱
-groundstation --station scanner --start 88e6 --end 108e6
-
-# 录制信号
-groundstation --source rtlsdr --gain 40 --freq 100e6 --output recording.iq
-```
-
-### 5.3 Python API 使用
-
-```python
-from groundstation import Station, Source, Sink, Block
-
-# 创建 FM 广播站
-station = Station("FM Radio")
-
-# 配置信号源
-station.source = Source("rtlsdr", gain=40, freq=98.5e6)
-
-# 添加处理块
-station.add_block("frequency_xlator", freq_offset=-250e3)
-station.add_block("fm_demod")
-
-# 添加输出
-station.sink = Sink("audio")
-
-# 播放
-station.play()
-```
-
-### 5.4 创建自定义 Station
-
-```python
-from groundstation import Station, Source, Sink, Block, register_station
-
-@register_station
-class ADSBAircraftTracker(Station):
-    name = "ADS-B Aircraft Tracker"
-    description = "Track aircraft using ADS-B signals at 1090MHz"
-    
-    def __init__(self):
-        super().__init__()
-        
-        # 1090 MHz ADS-B 信号
-        self.source = Source("rtlsdr", freq=1090e6, gain=40)
-        
-        # 信号处理链
-        self.blocks = [
-            Block("frequency_xlator", freq_offset=-1e6),
-            Block("low_pass", cutoff=2e6),
-            Block("adsb_decoder"),
-        ]
-        
-        # 可视化输出
-        self.sink = Sink("gui_waterfall")
-        
-# 使用
-tracker = ADSBAircraftTracker()
-tracker.play()
-```
-
-## 六，社区 Station
-
-### 6.1 内置 Station
-
-| Station | 频率 | 说明 |
-|---------|------|------|
-| **FM Radio** | 88-108 MHz | FM 广播接收 |
-| **NOAA Weather** | 137 MHz | 气象卫星云图 |
-| **ADS-B** | 1090 MHz | 飞机追踪 |
-| **Airband** | 118-137 MHz | 航空通信 |
-| **Scanner** | 自定义 | 全频扫描器 |
-| **RTL-SDR Test** | 100 MHz | 设备测试 |
-
-### 6.2 分享 Station
-
-```bash
-# 导出 Station 配置
-groundstation --export my_station.json
-
-# 从文件加载
-groundstation --import my_station.json
-
-# 分享到社区（需账号）
-groundstation --share my_station
-```
-
-## 七，信号处理原理
-
-### 7.1 SDR 信号流
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    SDR 信号处理流程                               │
-├─────────────────────────────────────────────────────────────┤
-│                                                               │
-│   天线接收                                                      │
-│       ↓                                                         │
-│   RF 信号 (MHz - GHz)                                           │
-│       ↓                                                         │
-│   混频器 (下变频)                                               │
-│       ↓                                                         │
-│   中频 (IF)                                                    │
-│       ↓                                                         │
-│   ADC (模数转换)                                                │
-│       ↓                                                         │
-│   数字 IQ 信号 (基带)                                            │
-│       ↓                                                         │
-│   DSP 处理                                                      │
-│       ├── 滤波                                                  │
-│       ├── 放大                                                  │
-│       ├── 同步                                                  │
-│       └── 解调                                                  │
-│       ↓                                                         │
-│   基带信号                                                     │
-│       ↓                                                         │
-│   输出                                                         │
-│   ├── 音频 (AM/FM)                                             │
-│   ├── 数据 (ADS-B, ACARS)                                       │
-│   └── 可视化 (瀑布图)                                           │
-│                                                               │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### 7.2 IQ 信号格式
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    IQ 信号格式                                   │
-├─────────────────────────────────────────────────────────────┤
-│                                                               │
-│   I (In-phase)      Q (Quadrature)                           │
-│   ┌───┐           ┌───┐                                      │
-│   │   │  复数样本  │   │                                     │
-│   └───┘           └───┘                                      │
-│                                                               │
-│   采样率: 通常 1-3 MSPS (百万样本/秒)                           │
-│                                                               │
-│   带宽计算:                                                    │
-│   Bandwidth = Sample Rate / 2                                 │
-│   2 MSPS → 1 MHz 带宽                                         │
-│                                                               │
-│   存储格式:                                                   │
-│   - 原始 IQ: complex64 (8 bytes/样本)                          │
-│   - 录制 1 分钟 @ 2 MSPS:                                     │
-│     2,000,000 samples/sec × 60 sec × 8 bytes = 960 MB        │
-│                                                               │
-└─────────────────────────────────────────────────────────────┘
-```
-
-## 八，应用场景
-
-### 8.1 常见应用
-
-| 应用 | 频率 | Station |
-|------|------|---------|
-| **FM 广播** | 88-108 MHz | FM Radio |
-| **气象卫星** | 137 MHz | NOAA Weather |
-| **飞机追踪** | 1090 MHz | ADS-B |
-| **航空通信** | 118-137 MHz | Airband |
-| **对讲机** | 400-470 MHz | 自定义 |
-| **遥控器** | 315/433 MHz | 自定义 |
-
-### 8.2 ADS-B 飞机追踪
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    ADS-B 飞机追踪系统                             │
-├─────────────────────────────────────────────────────────────┤
-│                                                               │
-│   飞机发送 ADS-B 信号                                           │
-│       ↓                                                         │
-│   1090 MHz 频段                                                │
-│       ↓                                                         │
-│   RTL-SDR 接收                                                  │
-│       ↓                                                         │
-│   Ground Station 解码                                            │
-│       ↓                                                         │
-│   提取信息:                                                     │
-│   ├── ICAO 地址 (飞机唯一标识码)                                  │
-│   ├── 航班号 (如 "CA1234")                                      │
-│   ├── 位置 (经纬度)                                             │
-│   ├── 高度 (英尺)                                               │
-│   ├── 速度 (节)                                                │
-│   └── 航向 (度数)                                              │
-│       ↓                                                         │
-│   显示飞机位置和轨迹                                              │
-│                                                               │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### 8.3 气象卫星云图
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    NOAA 气象卫星接收                             │
-├─────────────────────────────────────────────────────────────┤
-│                                                               │
-│   NOAA 15/18/19 卫星                                          │
-│       ↓                                                         │
-│   137 MHz HRPT 信号                                            │
-│       ↓                                                         │
-│   自动跟踪天线 (可选)                                            │
-│       ↓                                                         │
-│   RTL-SDR 接收 + Ground Station 解码                            │
-│       ↓                                                         │
-│   解码云图:                                                    │
-│   ├── 红外图像                                                  │
-│   ├── 可见光图像                                               │
-│   └── 热成像                                                   │
-│       ↓                                                         │
-│   气象分析                                                     │
-│                                                               │
-└─────────────────────────────────────────────────────────────┘
-```
-
-## 九，实践建议
-
-### 9.1 硬件设置
-
-```
-✅ 天线位置
-   - 高处开阔地带
-   - 远离干扰源
-   - 避免建筑物遮挡
-
-✅ 增益设置
-   - RTL-SDR: 30-40 dB
-   - 过高会导致过载
-   - 适中最佳
-
-✅ 采样率
-   - RTL-SDR: 1-2.4 MSPS
-   - 越高带宽越大
-   - 越高CPU负载越大
-```
-
-### 9.2 信号处理
-
-```
-✅ 滤波
-   - 使用合适的滤波器
-   - 避免噪声干扰
-
-✅ 解调参数
-   - 根据信号类型调整
-   - FM: 75kHz 偏差
-   - AM: 同步检波
-
-✅ 带宽选择
-   - 宽带宽：扫描
-   - 窄带宽：解调
-```
-
-### 9.3 录制技巧
-
-```bash
-# 高质量录制
-groundstation --source rtlsdr --sample-rate 2.048e6 \
-    --gain 40 --freq 1090e6 \
-    --output adsb_recording.iq
-
-# 录制后回放分析
-groundstation --source file --input adsb_recording.iq \
-    --playback-rate 1
-```
-
-## 十，资源链接
-
-### 10.1 官方资源
-
-| 资源 | 链接 |
-|------|------|
-| 🌐 **GitHub** | https://github.com/sgoudelis/ground-station |
-| 📖 **文档** | https://github.com/sgoudelis/ground-station#readme |
-| 🐛 **Issues** | https://github.com/sgoudelis/ground-station/issues |
-
-### 10.2 SDR 硬件
-
-| 硬件 | 价格 | 频率范围 | 适合场景 |
-|------|------|----------|----------|
-| **RTL-SDR** | ~$20 | 500kHz-1.7GHz | 入门、FM、ADS-B |
-| **HackRF** | ~$300 | 1MHz-6GHz | 进阶、实验 |
-| **USRP B210** | ~$1,100 | 70MHz-6GHz | 专业、研究 |
-
-### 10.3 学习资源
-
-| 资源 | 说明 |
-|------|------|
-| **RTL-SDR 博客** | rtl-sdr.com |
-| **SDR#** | Windows SDR 软件 |
-| **Gqrx** | Linux/macOS SDR 软件 |
-| **Dump1090** | ADS-B 解码工具 |
-
-## 十一，总结
-
-Ground Station 是**开源的软件无线电框架**：
-
-| 维度 | 说明 |
-|------|------|
-| 📡 **SDR 框架** | 软件定义无线电 |
-| 🔧 **模块化** | 块式信号处理流水线 |
-| 👥 **社区共享** | Station 分享平台 |
-| 📊 **可视化** | 实时瀑布图、频谱图 |
-| 🖥️ **跨平台** | Linux/macOS/Windows |
-| 🔓 **开源** | AGPL-3.0 许可证 |
-
----
-
-**🔗 相关资源：**
-
-| 资源 | 链接 |
-|------|------|
-| GitHub | https://github.com/sgoudelis/ground-station |
-| RTL-SDR | https://www.rtl-sdr.com |
-| HackRF | https://greatscottgadgets.com/hackrf/ |
-
----
-
-## 十二、进阶路径
-
-### 12.1 深入理解 SDR 原理
-
-- 学习《软件无线电原理》相关教材
-- 理解 IQ 信号、采样定理、奈奎斯特频率
-- 掌握 FFT 频谱分析、滤波器设计
-
-### 12.2 扩展硬件支持
-
-- 研究 HackRF 的高级功能（频谱扫描、包注入）
-- 探索 USRP 的多通道相位同步
-- 尝试 LimeSDR、BladeRF 等其他 SDR 硬件
-
-### 12.3 社区贡献
-
-- 在 [GitHub Discussions](https://github.com/sgoudelis/ground-station/discussions) 分享你的 Station 配置
-- 提交 Pull Request 改进 Ground Station 功能
-- 编写教程帮助更多人上手 SDR
-
-### 相关资源
-
-| 资源 | 链接 |
-|------|------|
-| Ground Station 文档 | https://github.com/sgoudelis/ground-station#readme |
-| RTL-SDR 博客 | https://www.rtl-sdr.com |
-| SDR 教程 | https://www.rtl-sdr.com/quick-start-guide/ |
-
----
-
-## 十三、自测题
-
-### 题 1（基础概念）：Ground Station 的核心架构是什么？
-
-<details>
-<summary>参考答案</summary>
-
-Ground Station 采用管道（Pipeline）架构：
-1. **信号源（Source）**：RTL-SDR、HackRF、USRP、文件、网络流
-2. **处理块（Block）**：滤波、解调、FFT、降噪等信号处理模块
-3. **信号汇（Sink）**：GUI 可视化、音频输出、文件录制
-
-信号从 Source → Block1 → Block2 → ... → Sink 流动，形成完整的信号处理链。
-
-</details>
-
-### 题 2（硬件选择）：如果你的预算是 $50，应该选什么 SDR 设备？
-
-<details>
-<summary>参考答案</summary>
-
-选择 **RTL-SDR**（$20-30）：
-- 支持 500kHz - 1766MHz 频率范围
-- 足够接收 FM 广播、ADS-B 飞机信号、NOAA 气象卫星
-- 性价比最高，适合入门
-
-如果预算 $300，选择 **HackRF**：
-- 支持 1MHz - 6GHz（更宽的频率范围）
-- 支持发射（TX），可以做更多实验
-- 适合进阶用户
-
-</details>
-
-### 题 3（信号处理）：为什么采样率 2.4 MSPS 只能接收 1 MHz 带宽的信号？
-
-<details>
-<summary>参考答案</summary>
-
-根据**奈奎斯特-香农采样定理**：
-- 采样率必须至少是信号带宽的 2 倍
-- 2.4 MSPS 采样率 → 最大可接收带宽 = 2.4 / 2 = 1.2 MHz（实际约 1 MHz）
-
-如果要接收更宽带的信号，需要：
-1. 提高采样率（换用 HackRF 支持更高采样率）
-2. 或使用更窄带的信号
-
-</details>
-
----
-
-## 十四、练习
-
-### 练习 1：创建 FM 广播 Station
-
-创建一个 Station 配置，接收本地 FM 广播：
-- 频率：88-108 MHz
-- 增益：40 dB
-- 解调：FM Demodulator
-- 输出：Audio Sink
-
-### 练习 2：录制 ADS-B 信号并离线分析
-
-使用 Ground Station 录制 1090 MHz 的 IQ 信号：
-1. 录制 5 分钟
-2. 计算文件大小（2 MSPS，8 bytes/sample）
-3. 使用 `dump1090` 工具离线解码
-
-### 练习 3：扩展 Ground Station 源码
-
-尝试为 Ground Station 添加一个新的 Block：
-- 功能：信号强度指示器（RSSI）
-- 输入：IQ 信号
-- 输出：dBm 数值
-
----
-
-## 十五、资料口径说明
-
-本文判断基于以下来源：
-
-1. **项目 README**：https://github.com/sgoudelis/ground-station/blob/main/README.md（2026-04-12 版本）
-2. **SDR 原理**：基于软件无线电标准教材和 RTL-SDR 社区文档
-3. **硬件规格**：来自各厂商官方文档（RTL-SDR、HackRF、USRP）
-
-本文未实测所有硬件设备，相关判断来自官方文档和社区评测。如果你的硬件配置特殊，可能需要额外调试。
-
----
-
-_🦞 本文由钳岳星君撰写，基于 Ground Station (1.2k Stars)_
+本文事实核查基于 2026-10-05 的 GitHub API（stars/forks/语言构成/许可证/贡献者）与仓库 main 分支 README（功能清单、架构图、Docker 部署、硬件支持、版本历史 v0.8.7–v0.8.16）。文中一次自动过境为按 README 机制串联的示意流程，参数为虚构示例；本文未实测任何硬件，部署细节以官方文档为准。

@@ -1,366 +1,225 @@
 ---
-title: "BuilderIO/agent-native 拆解：一个让 Agent 和 UI 共享状态的开放框架"
+title: "BuilderIO/agent-native 拆解：一次定义喂饱六个入口，Agent 与 UI 共用同一份状态"
 date: "2026-06-19T21:04:05+08:00"
+lastmod: "2026-09-29T12:00:00+08:00"
 slug: "builderio-agent-native-framework-architecture"
 github_repo: "BuilderIO/agent-native"
 source_key: "gh:BuilderIO/agent-native"
-description: "BuilderIO 发布的 agent-native 框架把 GUI 与 Agent 视为同等公民，用一条 defineAction 把 UI、HTTP、MCP、A2A、CLI、Scheduled Jobs、Agent Tool Call 七类调用入口打通。本文从核心抽象、三种产品形态、协议栈、决策边界四个角度做原理拆解。"
+description: "agent-native 是 Builder.io 开源的 agentic 应用框架：能力用 defineAction 定义一次，UI、Agent、HTTP、MCP、A2A、CLI 六个入口共用，状态收敛在同一个 SQL 数据库里。本文拆解它的动作抽象、产品形态谱系、协议整合与选型边界，数字、命令与模板清单均核对至 2026-09-29 的仓库现状。"
 draft: false
 categories: ["技术笔记"]
 tags: ["AI Agent", "MCP"]
 ---
 
-## 快速信息卡
+## 本文导读
 
-| 项目 | 信息 |
-|------|------|
-| **Stars** | 2,500+ |
-| **Forks** | 240+ |
-| **许可证** | MIT |
-| **语言** | TypeScript |
-| **仓库** | [BuilderIO/agent-native](https://github.com/BuilderIO/agent-native) |
+读完本文你将能够：
 
-agent-native 是 Builder.io 用来把自家 SaaS 改造成"Agent + UI 双形态"产品的底座。
+- 说清 `defineAction` 为什么能让一个动作同时被 UI、Agent、HTTP、MCP（Model Context Protocol，模型上下文协议）、A2A（Agent-to-Agent）、CLI 六类入口调用，以及它在运行时怎么路由
+- 区分 Rich chat / 内嵌 UI / 完整应用 / Automation-first 四档产品形态，并理解 6 月"三形态"说法到 9 月"表面谱系"的演变
+- 判断自己的产品该不该引入 agent-native，从哪一步开始，代价是什么
 
-## 学习目标
+适合读者：正在给现有 SaaS 加 Agent 入口的全栈工程师，评估"Agent + GUI 双形态"产品的技术选型者。文中 stars、命令、模板清单均核对至 2026-09-29 的仓库与文档。
 
-读完本文后你应当能够：
+## 一、先给判断
 
-1. 说清 `defineAction` 为什么能让一个工作单元被 7 类入口消费，以及框架在运行时如何选择执行路径
-2. 区分 Headless / Rich chat / Whole app 三种产品形态的边界与升级路径
-3. 列出框架默认携带的协议适配清单，并解释"协议随框架一起更新"对工程维护成本的影响
-4. 判断自己的产品是否适合引入 agent-native，并给出可量化的取舍依据
+Agent 应用做到产品级，瓶颈通常不在模型，而在 **Agent 与 UI 各写一套调用层、状态互不相通**。传统做法里，浏览器走一层 API；Agent 想要同样的能力，就得再接一遍，两套代码各自维护，状态还容易打架。
 
-## 目录
+agent-native 的回答是把两件事压成一份：
 
-- [核心判断](#核心判断)
-- [系统地图](#系统地图)
-- [三种产品形态](#三种产品形态)
-- [协议栈（关键差异化）](#协议栈关键差异化)
-- [协作与状态层](#协作与状态层)
-- [模板与脚手架](#模板与脚手架)
-- [visual-plan 与 visual-recap](#visual-plan-与-visual-recap)
-- [适用边界](#适用边界)
-- [任务流案例](#任务流案例)
-- [自测题](#自测题)
-- [进阶路径](#进阶路径)
-- [常见问题](#常见问题)
-- [写给读者的判断](#写给读者的判断)
+1. **一个动作层**：能力用 `defineAction` 定义一次，UI、Agent、HTTP、MCP、A2A、CLI 全部从这里调用。当前 README 里这句话值得原文引用："The agent does not click through the UI. It works through the same action layer as the UI."（Agent 不去点 UI，它和 UI 走同一个动作层。）
+2. **一份状态**：前后端落在同一个 SQL 数据库上，Agent 改了数据 UI 立刻可见，反过来也一样。
 
-## 核心判断
+关注度可以给一个可核实的信号：仓库 2026 年 3 月 12 日创建，到 2026 年 9 月 29 日拿到 6,890 stars、621 forks（GitHub API）。半年从一个新仓库涨到这个量级，在框架类项目里不算慢。更值得注意的是它的口径在半年里快速收敛：README 重写多轮，产品形态的说法从三档变成一条谱系，存储支持从"任意 SQL"收窄到 PostgreSQL——这个项目还在快速长，下文会标明关键口径是几月定下的。
 
-agent-native 是 Builder.io 用来把自家 SaaS 改造成"Agent + UI 双形态"产品的底座。它最关键的设计是**让一个 Action 同时被 7 类入口消费**：UI 点击、Agent 对话、HTTP API、MCP Server、A2A 调用、CLI 命令、Scheduled Jobs（定时任务）。
+## 二、系统地图
+
+```mermaid
+flowchart TB
+    UI["UI Hooks<br/>useActionQuery / useActionMutation / callAction"]
+    CHAT["Agent Tool<br/>chat 里直接要结果"]
+    HTTP["HTTP 路由<br/>自动挂载 /_agent-native/actions/*"]
+    MCP["MCP Tool<br/>Claude、Cursor 等宿主"]
+    A2A["A2A Tool<br/>工作区里的其他应用"]
+    CLI["CLI<br/>pnpm action ＜name＞"]
+    AUTO["Automations<br/>定时 / 事件触发"]
+    A["defineAction<br/>schema + run，只定义一次"]
+    subgraph R["Agent-Native Runtime"]
+        STATE["SQL 状态"]
+        AUTH["身份与权限"]
+        RES["Skills / Memory / Sub-agents"]
+        JOBS["Jobs"]
+        OBS["Observability"]
+    end
+    DB[("PostgreSQL（生产）/ PGlite（本地开发）")]
+    HOST["任意 Nitro 兼容宿主<br/>Cloudflare / Vercel / Node"]
+    UI --> A
+    CHAT --> A
+    HTTP --> A
+    MCP --> A
+    A2A --> A
+    CLI --> A
+    AUTO --> A
+    A --> R
+    R --> DB
+    R --> HOST
+```
+
+看懂这张图，就抓住了框架的主张：七个入口进、一个动作出。所有调用方走同一条路径，协议适配、权限、状态同步都收在框架自己身上。
+
+## 三、核心机制
+
+### 1. `defineAction`：契约写一次，入口框架搭
+
+当前 README 的完整示例，原样照录：
 
 ```ts
+import { defineAction } from "@agent-native/core/action";
+import { z } from "zod";
+
+// One action powers every app surface: UI, agent, HTTP, MCP, A2A, and CLI.
 export default defineAction({
+  description: "Return a friendly greeting.",
   schema: z.object({
-    emailId: z.string(),
-    body: z.string(),
+    name: z.string().default("world").describe("Name to greet"),
   }),
-  run: async ({ emailId, body }) => {
-    await db.insert(replies).values({ emailId, body });
+  http: { method: "GET" },
+  run: async ({ name }) => {
+    return { message: `Hello, ${name}!` };
   },
 });
 ```
 
-这段代码声明的是一个**与调用协议解耦的工作单元**：开发者只定义 schema 和 `run`，由框架根据上下文（请求来自 UI、HTTP、MCP 还是 A2A）决定执行路径。一个产品改一处 Action，UI 按钮、Agent 工具、外部 MCP Client、A2A 远端 agent 都能用上。这也是它和传统 server action 的本质差异——server action 绑定单一调用方，`defineAction` 绑定的是契约本身。
+开发者只写 schema 和 `run`。框架对这十几行代码做的事，文档《Actions Overview》逐条列了六种挂载：
 
-## 系统地图
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    Agent-Native Runtime                      │
-│                                                              │
-│   defineAction ─┬─> UI (实时同步、CRDT)                       │
-│                 ├─> HTTP API                                  │
-│                 ├─> MCP Server                                │
-│                 ├─> A2A                                       │
-│                 ├─> CLI                                       │
-│                 ├─> Scheduled Jobs                            │
-│                 └─> Agent Tool Call                           │
-│                                                              │
-│   共享：SQL 状态 + 身份 + Skills + Memory + Jobs + Observability │
-└─────────────────────────────────────────────────────────────┘
-                            │
-                ┌───────────┴───────────┐
-                │                       │
-        任意 SQL 数据库           任意 Nitro 兼容 Host
-       （Drizzle 支持的）      （Cloudflare / Vercel / Node）
-```
-
-## 三种产品形态
-
-agent-native 把"Agent 包装程度"切成 3 档，同一套底层 primitive 可以根据业务选择深度：
-
-| 形态 | 适用场景 | 关键 primitive |
+| 调用面 | 谁在调 | 框架做的事 |
 | --- | --- | --- |
-| **Headless** | 把 Agent 当成 API/MCP/A2A 服务对外提供，UI 是后加的 | `defineAction`、auth、skills、memory、jobs |
-| **Rich chat** | 独立或嵌入的 chat 界面，原生表格、图表、审批流 | 共享 chat runtime + BYO runtime adapter + action-declared native renderers |
-| **Whole app** | 完整 SaaS，Agent 居于中央但能"挪到侧边栏"，与 App 状态实时同步 | SQL state、actions、context awareness、live sync |
+| Agent Tool | chat 里的 agent | 读 description 和 schema，注册成可调用工具 |
+| UI Hooks | React 组件 | `useActionQuery()` / `useActionMutation()` / `callAction()` |
+| HTTP | 任意外部客户端 | 启动时自动挂到 `/_agent-native/actions/<name>` |
+| MCP Tool | Claude、Cursor 等 MCP 宿主 | 注册为 MCP 工具 |
+| A2A Tool | 工作区里的其他应用 | 跨应用发现与调用 |
+| CLI | 终端脚本 | `pnpm action <name>` |
 
-README 给出的"决策指南"建议先用 Headless 验证业务流程，再升到 Rich chat，最后才考虑 Whole app。
+React 侧调用同一个动作，README 给的写法是 `useActionQuery("hello", { name: "Alex" })`。点击按钮和发一句 chat，跑的是同一段 `run`，权限校验和实现也只有一份。这是它和传统 server action 的本质差异：server action 绑定单一调用方，`defineAction` 绑定的是契约本身。
 
-## 协议栈（关键差异化）
+六个入口之外，Automations 还能让同一个动作按定时或事件触发（README 的 Included 清单单列一项），构成第七类非交互入口。
 
-框架默认**自带一组协议适配**，而不是让每个 feature 单独接入：
+### 2. 产品形态：从三档到一条谱系
 
-- **A2A**（Agent-to-Agent）：Agent 之间相互发现并跨应用调用
-- **MCP** + **MCP Apps** + **远程 MCP OAuth** + **MCP Client**
-- **AG-UI**、**OpenAI**、**Claude Agent SDK**、**Vercel AI SDK** 聊天 runtime
-- **HTTP / CLI** Action 调用、**原生 chat widget**、**deep link**、**Scheduled Jobs**（同一个 `defineAction` 定时触发）
+6 月的 README 把"Agent 的 UI 包装程度"切成三档——Headless、Rich chat、Whole app。到 9 月，文档站把它重画成一条**表面谱系**（surface spectrum），按交互浓度从高到低排，底下的动作和 SQL 状态完全共享：
 
-把协议适配放进框架核心层，带来的工程收益是：当 MCP 规范更新或 A2A 新增能力时，升级一个依赖即可让所有 Action 同步获得新协议版本，避免了"先做 chat，再补 MCP，再补 A2A，每个新协议都改一遍核心层"的常见维护路径。代价是团队需要接受框架对协议实现深度的判断，无法自行替换底层 client。
+| 形态 | 什么时候用 | 起步方式 |
+| --- | --- | --- |
+| Rich chat | 用户和 agent 对话、看工具调用、留线程历史 | Chat 模板、`<AgentChatSurface>` |
+| 内嵌 UI | 动作结果要渲染成表格、图表、审批卡 | Native Chat UI、`chatUI.renderer` |
+| 完整应用 | 需要持久对象、导航、多人协作 | 模板 + actions + SQL state + context awareness |
+| Automation-first | 任务、脚本、外部 agent 直接调用，无浏览器 | `create --headless`、HTTP / CLI / MCP / A2A |
 
-## 协作与状态层
+谱系上还有两个混合位：给已有产品外挂一个 agent（Embedded sidecar，`createAgentNativeEmbeddedPlugin()`），以及用自己的 agent 配 agent-native 的聊天壳（`AgentChatRuntime` 加 `<AssistantChat runtime={runtime}>`）。
 
-- **CRDT 合并 + live presence**：人和 Agent 同时编辑同一份文档，光标 / 选区 / 谁在看哪一页都同步
-- **Per-user workspace**：每个用户一份 SQL 后端的 Skills、Memory、Instructions、Sub-agents、MCP Servers 配置
-- **Reusable integrations**：在 Dispatch 里"一次接入，授权给多个 app 共享凭证"，避免每个 Agent 重复 OAuth
+这段演进对选型的含义值得单独说：**形态不是三个或四个产品，是同一个动作层外面套多少 UI**。从 headless 起步验证业务流，随后加聊天壳、加内嵌卡片，动作定义一行不用改。
 
-## 模板与脚手架
+### 3. 协议随框架走
 
-框架提供 6 个完整可 clone 的 SaaS 模板（Calendar / Content / Plans / Slides / Analytics / Clips），全部是**真 SaaS**而不是"半成品 demo"：
+6 月 README 有一个明确的定位句："Protocols come with the framework instead of becoming separate integrations per feature."（协议跟框架一起到货，而不是每个 feature 各接一遍。）当时列出的清单：A2A、MCP、MCP Apps、标准远程 MCP OAuth、MCP 客户端、HTTP/CLI 动作调用、原生 chat widget、`AgentChatRuntime` 适配器、标准 OpenAI、AG-UI、Claude Agent SDK、Vercel AI SDK 聊天运行时连接器、deep link——全部挂在同一个动作面上。
+
+对照 9 月的文档站，这份清单没有缩水，还在加：集成目录里新增了 Dispatch Portal、WebMCP（浏览器工具）、外部 Agent 目录、跨应用 SSO 等条目；AG-UI、`AgentChatRuntime`、deep link 在最新的 Agent Surfaces 文档里都还在。
+
+收益是实打实的：MCP 规范更新或 A2A 加能力时，升级一个依赖，所有动作同步拿到新协议版本，不用把"先做 chat、再补 MCP、再补 A2A"的老路走一遍。代价也要说清：协议实现的深度由框架替你判断，底层 client 不留给团队随意替换。
+
+### 4. 协作与状态层
+
+三件事撑起"人和 agent 同屏工作"：
+
+- **CRDT（无冲突复制数据类型）合并 + live presence**：人和 Agent 同时编辑同一份文档，光标、选区、"谁在看哪一页"实时同步。agent 在这里是一等编辑者，不是隔着 API 的旁观者。
+- **Per-user workspace**：每个用户一份 SQL 后端的 Skills、Memory、Instructions、Sub-agents、MCP Servers 配置。README 的原话是"Claude-Code-level flexibility, SaaS-grade economics"。
+- **Dispatch 共享集成**：在 Dispatch 里接入一次 provider，密钥进 vault，再把凭证引用授权给 Mail、Analytics 等应用共用，避免每个 agent 重复走一遍 OAuth。
+
+## 四、模板与起步
+
+模板是这个项目最"重"的资产。CLI 模板注册表（`templates-meta.ts`）现在有 16 个官方模板——Calendar、Mail、Forms、Analytics、Slides、Clips、Design、CRM、Tasks 等，README 首页挑了 9 个作为开源应用展示。每个都是完整可 clone 的 SaaS，不是半成品 demo。
+
+当前 README 的快速开始：
 
 ```bash
-npx @agent-native/core@latest create my-platform
-cd my-platform
-pnpm install
-pnpm dev
+npx --yes @agent-native/core@latest create my-agent --standalone --template chat
 ```
 
-支持 monorepo 多 app（共享 auth、A2A 自动跨应用调用），也支持 `--standalone` 模式做单 app。
+三种起手式对应三种意图：
 
-## 一个杀手锏：`/visual-plan` / `/visual-recap`
+- **工作区（默认）**：CLI 一次让你多选几个模板，装进同一个 monorepo，共享登录态；后续加应用走 `add-app` 子命令。一条 `deploy` 能把所有应用挂到同一域名下——同源部署换来共享登录会话和零配置的跨应用 A2A，在日历的 agent chat 里 @mail 就能直接派活。
+- **单应用**：加 `--standalone`，跳过 monorepo。
+- **无界面**：`agent-native create my-app --headless`，纯动作加 agent，不带 UI 壳（headless 只支持 standalone，这是 CLI 源码里写死的约束）。
+
+还不想 scaffold 整个应用，可以先把技能装进 Claude Code、Codex、Cursor 里试试水：
 
 ```bash
 npx @agent-native/core@latest skills add visual-plan
 ```
 
-为 Claude Code / Codex / Cursor / GitHub Copilot / VS Code 等 coding agent 装两个 slash command：
+装完得到 `/visual-plan` 和 `/visual-recap` 两个 slash command（同一技能包里还附带 visualize-repo）：`/visual-plan` 在写代码前生成可批注的可视化规划——架构图、UI 线框、文件级实现地图；`/visual-recap` 在改动合入后把 PR 或 diff 变成高层复盘——schema、API、文件 before/after，带分享链接。计划、实现、复盘三段都挪到了可视化层，coding agent 动手前的盲区肉眼可见地变少。
 
-- `/visual-plan`：写代码前生成可视化的实现规划（架构图、UI 线框、文件级 map、可批注）
-- `/visual-recap`：PR 提交后生成高层次的视觉复盘（schema、API、文件 before/after、review 链接）
+## 五、一个任务流过系统
 
-等于把"计划 → 实现 → 复盘"三段切到可视化层，减少 coding agent 写代码前的盲区。
-
-## 适用边界
-
-- ✅ **适合**：
-  - 想做"Agent + GUI"双形态产品的团队（CRM、邮件、日历、文档等结构化领域）
-  - 已经在维护 SaaS，想给现有 UI 加 Agent 入口并保持状态同步
-  - 需要多协议暴露（A2A + MCP + HTTP）的中后台产品
-- ❌ **不适合**：
-  - 纯单页 LLM Chatbot 玩具（太重，用 Dify / Vercel AI SDK 即可）
-  - 不需要实时多人 / Agent 协作的离线工具
-  - 想完全控制前端框架（agent-native 强绑 CRDT + Drizzle + Nitro，迁移成本高）
-- ⚠️ **关注点**：
-  - "Agent 修改自己的 app" 是一个大胆的能力（README 强调"apps improve themselves"），生产环境必须配合审计与审批流
-  - `defineAction` 的 schema 用 Zod，团队需要接受 Zod 作为运行时契约
-  - 协议适配器覆盖度虽广，但每种协议的实现深度需要看 `agent-native.com/docs` 实际文档，本文以 README 为准
-
----
-
-## 任务流案例
-
-### 案例：用日历应用创建会议（UI + Agent 双入口）
-
-假设你有一个日历 SaaS，用 agent-native 构建了"创建会议"这个 Action：
+用日历应用的"创建会议"把框架走一遍。沿用第三节的 import，`db` 和 `events` 取自模板生成的 Drizzle schema：
 
 ```ts
 export default defineAction({
+  description: "Create a calendar event with attendees.",
   schema: z.object({
     title: z.string(),
     startTime: z.string(),
     attendees: z.array(z.string()),
   }),
   run: async ({ title, startTime, attendees }) => {
-    await db.insert(events).values({ title, startTime, attendees });
+    return db.insert(events).values({ title, startTime, attendees });
   },
 });
 ```
 
-**场景 1：用户通过 UI 创建会议**
+同一个动作，三种走法：
 
-1. 用户在日历 UI 点击"创建会议"按钮
-2. UI 调用 `defineAction` 生成的客户端方法
-3. 框架通过 CRDT 实时同步状态到其他在线用户
-4. 数据库写入会议记录
+1. **用户点 UI**：组件里 `useActionMutation("create-event")`，点击和聊天跑同一个 `run`，新事件经 CRDT 同步到所有在线用户的日历。
+2. **用户对 agent 说**："帮我约明天下午三点的团队会。"agent 读 schema 认出工具，填参调用，`run` 写库，UI 实时刷新——没有第二套"agent 专用 API"。
+3. **外部系统调 MCP**：一封会议邀请到了支持 MCP 的邮件客户端，它直接调用这个应用暴露的 MCP 工具，写库，日历页同步更新。
 
-**场景 2：用户通过 Agent 对话创建会议**
+三次调用，一份契约、一份实现、一份状态。"agent-native"这个词说的就是这件事。
 
-1. 用户在 chat 界面输入："帮我创建一个明天下午3点的团队会议"
-2. Agent 识别意图，调用"创建会议"工具（由 `defineAction` 自动生成）
-3. Agent 填充参数：`title: "团队会议"`, `startTime: "2026-06-27T15:00"`, `attendees: ["alice@example.com", "bob@example.com"]`
-4. 框架执行 `run` 方法，写入数据库
-5. UI 实时更新，显示新会议
+## 六、选型边界
 
-**场景 3：外部系统通过 MCP 创建会议**
+**适合**：
 
-1. 用户的邮件客户端（支持 MCP）检测到会议邀请
-2. 邮件客户端调用 agent-native 暴露的 MCP Server 的"创建会议"工具
-3. 框架执行 `run` 方法，写入数据库
-4. 用户的日历 UI 实时更新
+- 产品天然是"人和 agent 同时操作同一份数据"的形态：CRM、日历、邮件、文档、分析台
+- 已有 SaaS 想加 Agent 入口，又不想为 agent 另写一套接口和状态同步
+- 需要一次暴露多协议（MCP + A2A + HTTP）的中后台
 
-这个案例展示了 `defineAction` 的核心价值：**一个 Action 定义，七类调用方式，共享状态同步**。
+**别急着上**：
 
----
+- 单页 LLM chatbot——Dify 或 Vercel AI SDK 更轻
+- 离线单机工具，没有实时协作诉求
+- 团队要对前端和存储层有完全控制权：agent-native 绑 React、Zod、Nitro（Unjs 生态的服务器引擎）宿主，存储层 9 月起进一步收窄为 PostgreSQL（生产）/ PGlite（本地开发）——6 月时还是"任意 Drizzle（TypeScript ORM）支持的 SQL 数据库"，这个收紧对想用 MySQL 或 SQLite 的团队是硬约束
 
-## 自测题
+**两个需要盯住的点**：
 
-### 基础概念
+- **让 agent 改应用，必须配审计与审批**。6 月 README 把"Apps that improve themselves"（应用自我改进）当卖点，9 月改版后口径转向 agent-first，但"agent 修改自家应用"的能力方向没变。上生产前，审计日志（文档有专门章节）和审批流要先行。
+- **协议深度以文档为准**。适配清单覆盖面广，但每种协议实现到什么程度，用前对照 agent-native.com/docs 的对应页面验证，别只看 README。
 
-**问题 1**：`defineAction` 与传统 server action 的本质差异是什么？
+## 七、几个常见的坑
 
-<details>
-<summary>参考答案</summary>
+1. **把 PGlite 带进生产**。PGlite（WASM 化的嵌入式 Postgres）定位是本地开发，生产请换 PostgreSQL。文档给了 Neon、Supabase、RDS、Cloud SQL、Azure 一串 provider 清单，迁移本身不难，难的是中途换。
+2. **以为仓库页没许可证标识就是没许可证**。根目录确实还没有 LICENSE 文件，GitHub 因此不显示许可证标识，但 README 的 License 一节明确写着 MIT。合规上无碍，介意文件缺失的话向 Builder.io 确认一声即可。
+3. **动作堆多了不监控**。动作层是所有入口的必经之路，它慢了处处慢。执行耗时、并发、错误率至少要有基线——Observability 随框架自带，别闲置。
+4. **把形态当四个项目重写**。形态只是同一动作层外的 UI 壳，从 Rich chat 换成完整应用不需要推翻动作定义；真正推翻成本高的，是存储层和前端框架绑定。
 
-传统 server action 绑定单一调用方（通常是 UI），而 `defineAction` 绑定的是契约本身。一个 `defineAction` 定义的工作单元可以被 7 类入口消费：UI 点击、Agent 对话、HTTP API、MCP Server、A2A 调用、CLI 命令、Scheduled Jobs。
+## 八、采用顺序
 
-</details>
+确定要试，按这个顺序推进，每步验证后再走下一步：
 
-**问题 2**：agent-native 的三种产品形态是什么？它们的升级路径如何？
+1. **先装 skills 试水**：`skills add visual-plan` 成本最低，一天内足以判断这个团队的工程品味值不值得跟。
+2. **headless 起步验证业务流**：`create --headless` 起一个纯动作应用，把最核心的三五个能力写成 action，从 CLI 和 HTTP 调通。
+3. **加聊天壳**：套 Chat 模板或 `<AgentChatSurface>`，验证 agent 真实使用动作的体验，把 description 和 schema 打磨到"agent 一读就懂"。
+4. **再谈完整应用**：从 16 个模板里挑最接近业务的 clone 下来改，重点评估存储层落到 PostgreSQL 的成本。
+5. **生产前补治理**：审计日志、审批流、Observability 基线，外加许可证与协议深度的最终确认。
 
-<details>
-<summary>参考答案</summary>
-
-三种产品形态：
-1. **Headless**：把 Agent 当成 API/MCP/A2A 服务对外提供，UI 是后加的
-2. **Rich chat**：独立或嵌入的 chat 界面，原生表格、图表、审批流
-3. **Whole app**：完整 SaaS，Agent 居于中央但能"挪到侧边栏"，与 App 状态实时同步
-
-升级路径：README 建议先用 Headless 验证业务流程，再升到 Rich chat，最后才考虑 Whole app。
-
-</details>
-
-### 实践操作
-
-**问题 3**：你正在评估是否引入 agent-native 到你的 SaaS 产品，应该考虑哪些因素？
-
-<details>
-<summary>参考答案</summary>
-
-需要考虑：
-1. **产品形态**：是否需要"Agent + GUI"双形态？如果只需要单页 LLM Chatbot，用 Dify 或 Vercel AI SDK 更合适
-2. **实时协作需求**：是否需要人和 Agent 同时编辑同一份数据？如果需要，agent-native 的 CRDT 共享状态是核心优势
-3. **协议暴露需求**：是否需要多协议暴露（A2A + MCP + HTTP）？如果需要，框架自带的协议适配是优势
-4. **前端框架绑定**：是否能接受 CRDT + Drizzle + Nitro 绑定？如果团队想完全控制前端框架，迁移成本高
-5. **协议实现深度**：框架的协议适配是否足够深？需要看 `agent-native.com/docs` 实际文档
-
-</details>
-
-**问题 4**：agent-native 的协议栈包含哪些协议？把协议适配放进框架核心层有什么优缺点？
-
-<details>
-<summary>参考答案</summary>
-
-协议栈包含：
-- A2A（Agent-to-Agent）
-- MCP + MCP Apps + 远程 MCP OAuth + MCP Client
-- AG-UI、OpenAI、Claude Agent SDK、Vercel AI SDK 聊天 runtime
-- HTTP / CLI Action 调用、原生 chat widget、deep link
-
-优点：
-- 当 MCP 规范更新或 A2A 新增能力时，升级一个依赖即可让所有 Action 同步获得新协议版本
-- 避免了"先做 chat，再补 MCP，再补 A2A，每个新协议都改一遍核心层"的常见维护路径
-
-缺点：
-- 团队需要接受框架对协议实现深度的判断，无法自行替换底层 client
-
-</details>
-
-**问题 5**：你正在设计一个需要 Agent 协作的 SaaS 产品，agent-native 的哪些特性最有价值？
-
-<details>
-<summary>参考答案</summary>
-
-最有价值的特性：
-1. **CRDT 合并 + live presence**：人和 Agent 同时编辑同一份文档，光标 / 选区 / 谁在看哪一页都同步
-2. **Per-user workspace**：每个用户一份 SQL 后端的 Skills、Memory、Instructions、Sub-agents、MCP Servers 配置
-3. **Reusable integrations**：在 Dispatch 里"一次接入，授权给多个 app 共享凭证"，避免每个 Agent 重复 OAuth
-4. **`defineAction`**：一个 Action 定义，七类调用方式，共享状态同步
-
-</details>
-
----
-
-## 进阶路径
-
-### 1. 深入理解 agent-native 架构
-
-- 阅读 [agent-native 文档](https://agent-native.com/docs)
-- 理解 `defineAction` 的运行时选择逻辑：框架如何根据上下文（请求来自 UI、HTTP、MCP 还是 A2A）决定执行路径
-- 深入研究 CRDT 共享状态：如何实现的？性能如何？冲突解决策略是什么？
-- 对比其他框架：Vercel AI SDK、Claude Agent SDK、LangChain 的 Agent 协作方案
-
-### 2. 从模板入手实践
-
-- 运行 `npx @agent-native/core@latest create my-platform` 创建一个模板项目
-- 选择与你业务最接近的模板（Calendar / Content / Plans / Slides / Analytics / Clips）
-- 理解模板的代码结构：如何定义 Action、如何处理认证、如何配置 MCP Server
-- 修改模板，添加自己的 Action
-
-### 3. 集成到现有 SaaS 产品
-
-- 评估现有产品的状态管理层：是否能迁移到 CRDT + Drizzle？
-- 选择第一个集成点：通常是一个简单的 Action（如"创建会议"）
-- 逐步实现：先实现 UI 入口，再实现 Agent 入口，最后暴露 MCP Server
-- 测试实时同步：多个用户同时编辑，人 + Agent 同时操作
-
-### 4. 贡献到 agent-native 项目
-
-- 从 [GitHub 仓库](https://github.com/BuilderIO/agent-native) 克隆代码
-- 阅读贡献指南（如果有）
-- 从简单 issue 开始：修复文档错误、添加单元测试、优化错误处理
-- 理解代码结构：核心框架、协议适配器、模板、文档
-
-### 5. 探索高级功能
-
-- **A2A 跨应用调用**：配置多个 app 的 A2A 调用
-- **MCP Server 开发**：为自己的服务提供 MCP 接口
-- **自定义 chat runtime**：集成到自己的 chat UI
-- **性能优化**：当 Action 数量增多、并发调用增加时，如何优化性能？
-
----
-
-## 常见问题
-
-### agent-native 与 Vercel AI SDK 有什么区别？
-
-Vercel AI SDK 主要关注 chat runtime 和 LLM 调用，而 agent-native 关注的是"Agent 与 UI 共享状态"。如果你只需要一个 chat interface，用 Vercel AI SDK 更合适；如果你需要人和 Agent 同时操作同一份数据，agent-native 的 CRDT 共享状态是核心优势。
-
-### agent-native 的学习曲线如何？
-
-agent-native 的概念较多（`defineAction`、CRDT、协议适配等），学习曲线中等。建议先从模板入手，理解一个完整的 Action 如何被多种入口调用，然后逐步深入框架核心。
-
-### 生产环境使用 agent-native 需要注意什么？
-
-需要注意：
-1. **审计与审批流**：README 强调"apps improve themselves"，生产环境必须配合审计与审批流
-2. **Zod schema 管理**：`defineAction` 的 schema 用 Zod，团队需要接受 Zod 作为运行时契约
-3. **协议实现深度**：框架的协议适配是否足够深？需要看实际文档
-4. **性能监控**：需要监控 Action 执行时间、并发量、错误率
-
-### agent-native 的许可证是什么？
-
-仓库未指定许可证。在生产环境使用前，需要联系 Builder.io 团队确认许可证条款。
-
-### 如何获取 agent-native 的技术支持？
-
-- 阅读 [agent-native 文档](https://agent-native.com/docs)
-- 在 [GitHub 仓库](https://github.com/BuilderIO/agent-native) 提交 issue
-- 加入 Builder.io 社区（如果有）
-
----
-
-## 写给读者的判断
-
-agent-native 在 2026 年这个时间点切中的痛点很准：**真正阻碍 Agent 落地的不是模型能力，而是 UI 与 Agent 的状态脱节**。它用 CRDT 共享状态 + `defineAction` 协议无关层 + 协议伴随框架三招，把"Agent 协作应用"的工程量压到了模板级别。
-
-如果你的产品天然有"用户与 Agent 同时在操作同一份数据"的属性，这个框架值得认真评估；如果只是做一个"能聊天的内部工具"，它的复杂度远超必要。
-
----
-
-## 资料口径说明
-
-本文的判断和结论来自相关项目的官方文档和开源社区的技术讨论。具体技术细节和实现可能随项目版本变化而更新，使用时请参考官方最新文档。
-
+一句话收尾：agent-native 赌的不是"模型更强了"，而是"Agent 应用需要自己的操作系统层"——动作、状态、身份、协议都在这一层解决。如果你的产品里人和 agent 本来就该操作同一份数据，它把工程量压到了模板级别；如果只是给内部工具加个聊天框，它比你要的重得多。

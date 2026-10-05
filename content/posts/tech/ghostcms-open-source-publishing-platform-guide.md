@@ -20,13 +20,13 @@ cover: ""
 
 ## 前言
 
-Ghost 是一个专为专业内容创作者设计的开源 publishing 平台，由 John O'Nolan 与 Hannah Wolfe 于 2013 年联合创办，最初通过一场成功的 Kickstarter 众筹启动。John 曾是 WordPress 的早期核心贡献者，他做 Ghost 的出发点正是对 WordPress 日益臃肿的不满。与 WordPress 的全能型定位不同，Ghost 从一开始就走"小而美"路线——只做好一件事：让高质量内容的创作、订阅与发布体验做到极致。
+Ghost 是一个专为专业创作者设计的开源发布平台，由 John O'Nolan 与 Hannah Wolfe 于 2013 年联合创办，最初通过一场成功的 Kickstarter 众筹启动。John 曾是 WordPress 的早期核心贡献者，他做 Ghost 的出发点正是对 WordPress 日益臃肿的不满。与 WordPress 的全能型定位不同，Ghost 从一开始就走"小而美"路线——只做好一件事：把高质量内容的创作、订阅与发布体验做到极致。
 
 下面从架构、功能、安装、主题、API 到部署逐层拆解。
 
 ## 什么是 Ghost？
 
-Ghost 是一个**开源的、专业级的 publishing 平台**，基于 Node.js 构建，主要特点：
+Ghost 是一个**开源的、专业级的发布平台**，基于 Node.js 构建，主要特点：
 
 - **卡片式编辑器** — 沉浸式无干扰写作，支持富媒体卡片
 - **结构化内容管理** — 原生支持会员（Members）和订阅（Subscriptions）功能
@@ -40,7 +40,7 @@ Ghost 官方提供托管服务（ghost.org），同时代码完全开源，可�
 
 **官网：** https://ghost.org  
 **GitHub：** https://github.com/TryGhost/Ghost  
-**最新稳定版：** 6.x（截至 2026 年，如 v6.57）  
+**最新稳定版：** v6.65.0（2026 年 9 月发布）  
 **技术栈：** Node.js v22 + MySQL（生产环境；开发环境可用 SQLite）
 
 ## 技术架构
@@ -51,19 +51,19 @@ Ghost 官方提供托管服务（ghost.org），同时代码完全开源，可�
 |------|---------|
 | 运行时 | Node.js v22 |
 | 数据库 | MySQL 8（生产）/ SQLite3（开发） |
-| 缓存层 | Redis（可选，配合 cache adapter） |
+| 缓存层 | 默认进程内 MemoryCache，可切换 Redis 适配器 |
 | 前端渲染 | Handlebars 主题 |
-| 管理后台 | Ghost Admin（独立客户端应用，基于源码内框架构建） |
+| 管理后台 | Ghost Admin（Ember.js 应用，部分界面正逐步迁移到 React） |
 | API | RESTful Content API + Admin API |
 | 认证 | Admin API 采用签名 JWT / 会话认证 |
-| 文件存储 | 本地文件 / S3 / Google Cloud Storage / Azure，支持自定义 storage adapter |
-| 邮件 | Nodemailer（支持 SendGrid、Mailgun 等） |
+| 文件存储 | 本地文件为默认；内置 S3 兼容适配器（S3/MinIO/R2 等），支持自定义 adapter |
+| 邮件 | Nodemailer（支持 SendGrid、Mailgun、Amazon SES 等） |
 
 ### 架构设计哲学
 
 Ghost 采用了典型的**三层架构**：
 
-```
+```text
 ┌─────────────────────────────────────────┐
 │            Presentation Layer            │
 │  (Handlebars Themes / Admin UI / API)   │
@@ -76,12 +76,12 @@ Ghost 采用了典型的**三层架构**：
 └─────────────────────────────────────────┘
 ```
 
-**关键设计原则：**
+这套架构的四条设计取向贯穿全文：
 
 1. **内容与表现分离** — Content API 使 Ghost 可作为纯 Headless CMS 使用
 2. **解耦架构** — Core API、Admin 客户端、前端主题三部分彼此独立，便于定制
 3. **缓存友好** — Content API 响应可完整缓存，高频读取也能保持高性能
-4. **可扩展存储** — 存储层抽象，支持任意自定义 storage adapter 与 S3 兼容后端
+4. **可扩展存储** — 存储层抽象，内置 S3 兼容适配器之外也支持自定义 storage adapter
 
 ### 数据库设计概览
 
@@ -95,27 +95,17 @@ Ghost 使用 Bookshelf.js ORM，默认连接 MySQL，主要表结构：
 - `tags` / `posts_tags` — 标签系统
 - `settings` — 系统设置（KV 存储）
 
+把一次真实发布串起来看：作者在编辑器里点下发布，`posts.status` 写为 `published` 并落库；`post.published` 事件随即触发两件事——渲染管道把内容喂给 Handlebars 主题生成页面，同时向配置过的 Webhook 地址发出签名 POST；如果配置了 Newsletter，邮件任务也会入队。此后任何 Headless 前端用 Content API Key 请求 `/ghost/api/content/posts/`，就能拿到这篇带 `html`、`tags`、`authors` 的结构化 JSON。一条数据流贯穿了编辑器、数据库、主题渲染和 API 四层，这正是下一节逐个展开的内容。
+
 ## 主要功能详解
 
 ### 1. Ghost 编辑器
 
-Ghost 的编辑器采用**卡片式（Card）结构**，正文由一组可拖拽排序的卡片组成。支持：
+Ghost 的编辑器基于开源的 [Koenig](https://github.com/TryGhost/Koenig) 编辑器构建，采用**卡片式（Card）结构**，正文由一组可拖拽排序的卡片组成。支持：
 
-- 沉浸式写作，实时预览（分行 / 全屏 / 宽版视图）
 - 富媒体卡片（图片、图集、代码、视频、音频、嵌入、折叠块等）
-- 支持 Markdown 与简单的格式化快捷键
+- 行内 Markdown 快捷输入与格式化快捷键
 - 团队成员协作：通过邀请成员并分配角色（作者 / 编辑 / 管理员）管理内容
-
-```handlebars
-{{!-- 示例：Ghost 主题中的文章卡片 --}}
-{{#foreach posts}}
-<article class="post-card">
-  <h2><a href="{{url}}">{{title}}</a></h2>
-  <p>{{excerpt}}</p>
-  <time>{{date format="YYYY-MM-DD"}}</time>
-</article>
-{{/foreach}}
-```
 
 ### 2. 会员与订阅体系
 
@@ -128,13 +118,21 @@ Ghost 内置了完整的会员管理系统，无需第三方插件：
 
 ### 3. 结构化内容（Collections）
 
-Ghost 5.x 引入了 Collections 功能，允许创建不同类型的内容集合：
+Collections 是通过 `content/settings/routes.yaml` 定义的站点内容分区（可在后台 Settings → Labs 上传生效），决定一篇文章的 URL 结构和所用模板：
 
-- `/blog/` — 博客文章
-- `/newsletter/` — 邮件期刊
-- `/podcast/` — 播客节目
+```yaml
+routes:
 
-每个 Collection 可独立配置 SEO、订阅设置和内容模板。
+collections:
+  /blog/:
+    permalink: /blog/{slug}/
+    template: index
+  /podcast/:
+    permalink: /podcast/{slug}/
+    template: podcast
+```
+
+三条规则值得记住：每篇文章只能属于一个 collection（按 `filter` 归类，常用 `primary_tag`）；各 collection 的 `filter` 必须彼此唯一，否则会出现渲染和分页问题；URL 前缀、永久链接格式（`{slug}`、`{year}` 等）和模板都可以按集合单独指定。
 
 ### 4. 内置 SEO
 
@@ -152,12 +150,11 @@ Ghost 自动处理：
 
 | 依赖 | 版本要求 | 说明 |
 |------|---------|---------|
-| Node.js | 22.x | Ghost 6 仅兼容 v22 |
-| 数据库 | MySQL 8.0 | 生产环境推荐；开发可用内置 SQLite |
-| Redis | 可选 | 启用 cache adapter 时需要 |
+| Node.js | 22.x | Ghost 6 移除了 Node 18/20 支持（本地开发装 SQLite3 还需要 Python 3） |
+| 数据库 | MySQL 8.0 | 生产环境唯一官方支持的数据库；开发可用 SQLite |
 | Ghost CLI | 最新版 | `npm install -g ghost-cli` 安装 |
 
-> 注意：Ghost 6 起已不支持 Node.js v18/v20，仅支持 Node.js v22；官方生产环境仅支持 MySQL 8，PostgreSQL 已不再官方支持。
+> 注意：Ghost 6 官方支持口径是 Node.js 22 LTS（当前版本的 engines 字段亦声明兼容 Node 24）；生产环境仅支持 MySQL 8，PostgreSQL 已不再官方支持。另外 Ghost 6 移除了 API 的 `?limit=all`，单页最多返回 100 条数据，超出部分必须翻页获取。
 
 ### 方式一：本地快速安装（开发环境）
 
@@ -237,7 +234,6 @@ ghost install
 安装向导会自动检测并配置：
 - Nginx 与 SSL（可自动申请 Let's Encrypt 证书）
 - MySQL 连接信息
-- （可选）Redis 缓存连接
 - systemd 服务守护
 - SSL 与 HTTP→HTTPS 重定向
 
@@ -247,19 +243,17 @@ ghost install
 ghost start          # 启动 Ghost
 ghost stop           # 停止 Ghost
 ghost restart        # 重启 Ghost
-ghost status         # 查看运行状态
-ghost update         # 更新 Ghost
+ghost ls             # 列出实例及运行状态
+ghost update         # 更新 Ghost（出问题可 ghost update --rollback）
 ghost config         # 显示当前配置
-ghost ls             # 列出已安装的 Ghost 实例
-ghost logs           # 查看日志
+ghost log            # 查看日志
+ghost check-update   # 检查是否有可用更新
 ```
 
 ### 方式三：Docker 部署
 
 ```yaml
 # docker-compose.yml
-version: '3.8'
-
 services:
   ghost:
     image: ghost:6
@@ -274,12 +268,10 @@ services:
       database__connection__user: ghost
       database__connection__password: ghost_password
       database__connection__database: ghost
-      cache__connection__host: cache
     volumes:
       - ./content:/var/lib/ghost/content
     depends_on:
       - db
-      - cache
 
   db:
     image: mysql:8
@@ -291,12 +283,6 @@ services:
       MYSQL_PASSWORD: ghost_password
     volumes:
       - ./mysql:/var/lib/mysql
-
-  cache:
-    image: redis:7-alpine
-    restart: unless-stopped
-    volumes:
-      - ./redis:/data
 
   nginx:
     image: nginx:alpine
@@ -373,13 +359,6 @@ Ghost 的配置文件（`config.*.json`）控制所有运行参数：
       "database": "ghost_prod"
     }
   },
-  "cache": {
-    "redis": {
-      "host": "127.0.0.1",
-      "port": 6379,
-      "password": ""
-    }
-  },
   "mail": {
     "transport": "SMTP",
     "options": {
@@ -391,12 +370,16 @@ Ghost 的配置文件（`config.*.json`）控制所有运行参数：
     }
   },
   "storage": {
-    "active": "s3",
-    "s3": {
+    "active": "S3Storage",
+    "S3Storage": {
+      "bucket": "your-bucket-name",
+      "region": "ap-northeast-1",
       "accessKeyId": "your_access_key",
       "secretAccessKey": "your_secret_key",
-      "region": "ap-northeast-1",
-      "bucket": "your-bucket-name"
+      "cdnUrl": "https://cdn.yourblog.com",
+      "staticFileURLPrefix": "content/images",
+      "multipartUploadThresholdBytes": 52428800,
+      "multipartChunkSizeBytes": 10485760
     }
   },
   "members": {
@@ -406,8 +389,7 @@ Ghost 的配置文件（`config.*.json`）控制所有运行参数：
     }
   },
   "privacy": {
-    "useTinfoilHat": true,
-    "forceContentPublic": false
+    "useTinfoil": true
   }
 }
 ```
@@ -419,11 +401,11 @@ Ghost 的配置文件（`config.*.json`）控制所有运行参数：
 | `url` | 博客公开 URL（结尾不带 `/`） | http://localhost:2368 |
 | `server.port` | 监听端口 | 2368 |
 | `database.client` | 数据库客户端 | mysql |
-| `cache.redis` | Redis 缓存配置 | 内置内存缓存 |
+| `adapters.cache` | 缓存适配器（默认 MemoryCache，可切 Redis 并按 feature 设置 TTL） | MemoryCache |
 | `mail.transport` | 邮件发送方式 | Direct |
-| `storage.active` | 文件存储方式 | local |
+| `storage.active` | 文件存储适配器（内置 `local` 与 `S3Storage`） | local |
 | `members.stripe` | Stripe 密钥与 Webhook 配置 | - |
-| `privacy.useTinfoilHat` | 是否开启隐私模式 | false |
+| `privacy.useTinfoil` | 开启隐私模式，关闭 Gravatar 等外部请求 | false |
 
 ### 环境变量覆盖
 
@@ -440,7 +422,7 @@ export mail__from="noreply@yourblog.com"
 
 ### 主题结构
 
-```
+```text
 my-theme/
 ├── package.json            # 主题元数据
 ├── README.md
@@ -484,7 +466,8 @@ my-theme/
     "email": "you@example.com"
   },
   "engines": {
-    "ghost-api": "v5"
+    "ghost": ">=5.0.0",
+    "node": ">=22.12.0"
   },
   "keywords": [
     "ghost",
@@ -531,19 +514,24 @@ my-theme/
 {{pagination}}
 ```
 
-#### 自定义 Helper
+#### 复用模板片段（Partials）
 
-Ghost 主题可以在主题根目录的 `helpers/` 文件夹中放置自定义 Handlebars Helper，文件会自动被加载并命名。例如主题下的 `helpers/my-helper.js`：
+Ghost 主题使用的是内置 Helper 集合，主题本身不能注册自定义 Handlebars Helper。需要复用一段模板时，把它放进 `partials/` 目录，再用 `{{> "partial-name"}}` 引入：
 
-```javascript
-// helpers/my-helper.js（主题目录下）
-module.exports = function myHelper(htmlString) {
-  // 自定义 helper 逻辑
-  return htmlString.toUpperCase();
-};
+```handlebars
+{{!-- partials/post-card.hbs --}}
+<article class="post-card">
+  <h2><a href="{{url}}">{{title}}</a></h2>
+  <p>{{excerpt}}</p>
+</article>
+
+{{!-- 在任意模板中复用 --}}
+{{#foreach posts}}
+  {{> "post-card"}}
+{{/foreach}}
 ```
 
-在模板中即可直接使用 `{{myHelper}}`。
+更复杂的输出逻辑可以用 `{{#get}}` 取数据，配合 `{{#match}}`、`{{#has}}` 等内置 Helper 组合实现，参照官方 Helper 文档即可覆盖绝大多数场景。
 
 ### 主题兼容性检查（GScan）
 
@@ -573,7 +561,7 @@ Ghost 提供两套 API：
 #### 获取文章列表
 
 ```bash
-curl "https://yourblog.com/api/content/posts/?key=your_public_api_key"
+curl "https://yourblog.com/ghost/api/content/posts/?key=your_public_api_key"
 ```
 
 响应示例：
@@ -630,13 +618,13 @@ curl "https://yourblog.com/api/content/posts/?key=your_public_api_key"
 #### 按标签过滤
 
 ```bash
-curl "https://yourblog.com/api/content/posts/?key=xxx&filter=tag:tech"
+curl "https://yourblog.com/ghost/api/content/posts/?key=xxx&filter=tag:tech"
 ```
 
 #### 按作者过滤
 
 ```bash
-curl "https://yourblog.com/api/content/posts/?key=xxx&filter=author:john"
+curl "https://yourblog.com/ghost/api/content/posts/?key=xxx&filter=author:john"
 ```
 
 ### Admin API
@@ -669,7 +657,7 @@ echo "$TOKEN"
 #### 调用 Admin API
 
 ```bash
-curl -X POST "https://yourblog.com/api/admin/posts/" \
+curl -X POST "https://yourblog.com/ghost/api/admin/posts/" \
   -H "Authorization: Ghost $TOKEN" \
   -H "Accept-Version: v6.0" \
   -H "Content-Type: application/json" \
@@ -685,22 +673,25 @@ curl -X POST "https://yourblog.com/api/admin/posts/" \
 #### 更新文章
 
 ```bash
-curl -X PUT "https://yourblog.com/api/admin/posts/article-id/" \
+curl -X PUT "https://yourblog.com/ghost/api/admin/posts/article-id/" \
   -H "Authorization: Ghost $TOKEN" \
   -H "Accept-Version: v6.0" \
   -H "Content-Type: application/json" \
   -d '{
     "posts": [{
       "status": "published",
-      "published_at": "2024-01-15T08:00:00.000Z"
+      "published_at": "2024-01-15T08:00:00.000Z",
+      "updated_at": "2024-01-15T09:00:00.000Z"
     }]
   }'
 ```
 
+更新请求建议带上读取时返回的 `updated_at`，Ghost 用它检测并发修改冲突。
+
 #### 获取会员列表
 
 ```bash
-curl "https://yourblog.com/api/admin/members/?limit=100" \
+curl "https://yourblog.com/ghost/api/admin/members/?limit=100" \
   -H "Authorization: Ghost $TOKEN" \
   -H "Accept-Version: v6.0"
 ```
@@ -817,44 +808,54 @@ Ghost 支持 Webhook，可在特定事件触发时向外部系统发送 HTTP POS
 
 #### 验证 Webhook 签名
 
+配置了 Secret 的 Webhook，请求头 `X-Ghost-Signature` 的格式为 `sha256=<签名十六进制值>, t=<Unix 时间戳>`，签名内容是**原始请求体拼接时间戳**。验证时必须用未经框架解析的原始 body 计算 HMAC：
+
 ```javascript
 const crypto = require('crypto');
 
-function verifyWebhookSignature(req) {
-  const signature = req.headers['x-ghost-signature'];
+function verifyWebhookSignature(rawBody, headers) {
+  const signature = headers['x-ghost-signature'];
   const secret = 'your_webhook_secret';
-  
+
   if (!signature) return false;
-  
-  const [algo, hash] = signature.split('=');
+
+  // header 形如 "sha256=abc123..., t=1715982456"
+  const [shaPart, tPart] = signature.split(', ');
+  const receivedHash = shaPart.replace('sha256=', '');
+  const timestamp = tPart.replace('t=', '');
+
   const expectedHash = crypto
-    .createHmac(algo, secret)
-    .update(JSON.stringify(req.body))
+    .createHmac('sha256', secret)
+    .update(`${rawBody}${timestamp}`)
     .digest('hex');
-  
+
   return crypto.timingSafeEqual(
-    Buffer.from(hash),
+    Buffer.from(receivedHash),
     Buffer.from(expectedHash)
   );
 }
 ```
 
+在 Express 中可通过 `express.json({ verify: (req, res, buf) => { req.rawBody = buf; } })` 保留原始请求体再传入验证函数。
+
 ## 与主流替代方案对比
 
-| 特性 | Ghost | WordPress | Strapi | Netlify CMS |
-|------|-------|-----------|--------|-------------|
-| **定位** | Publishing 平台 | 全能型 CMS | Headless CMS | Git-based CMS |
-| **数据库** | MySQL(生产)/SQLite | MySQL | MongoDB/PostgreSQL | Git (Markdown) |
-| **Node.js** | ✅ 原生 | ❌ (PHP) | ✅ 原生 | ✅ (静态构建) |
+| 特性 | Ghost | WordPress | Strapi | Decap CMS（原 Netlify CMS） |
+|------|-------|-----------|--------|---------------------------|
+| **定位** | 发布平台 | 全能型 CMS | Headless CMS | Git-based CMS |
+| **数据库** | MySQL(生产)/SQLite | MySQL | PostgreSQL/MySQL/MariaDB/SQLite | Git (Markdown) |
+| **运行时** | Node.js | PHP | Node.js | 浏览器端应用，无独立运行时 |
 | **会员/变现** | ✅ 内置 | 需插件 | 需插件 | ❌ |
-| **原生 SEO** | ✅ | 需插件(Yoast) | 需配置 | ✅ |
-| **REST API** | ✅ | REST API 插件 | ✅ GraphQL+REST | ✅ |
-| **Headless 模式** | ✅ | ❌ 需插件 | ✅ 原生 | ✅ |
+| **原生 SEO** | ✅ | 需插件（Yoast） | 需配置 | 取决于所用静态生成器 |
+| **REST API** | ✅ | ✅ 内置 REST API | ✅ REST + GraphQL | 经 Git 平台 API 读写 |
+| **Headless 模式** | ✅ | △ 可作 Headless 用 | ✅ 原生 | ✅ 本身即无前端 |
 | **学习曲线** | 低 | 中等 | 中等 | 低 |
 | **开源许可** | MIT | GPL v2 | MIT | MIT |
-| **官方托管** | ✅ | ❌ | ❌ | ❌ |
+| **官方托管** | ✅ Ghost(Pro) | ✅ WordPress.com | ✅ Strapi Cloud | ❌ |
 | **生态插件** | 中等 | 极丰富 | 丰富 | 较少 |
-| **适合场景** | 专业博客/出版物 | 企业站/电商 | API-first 应用 | 技术文档 |
+| **适合场景** | 专业博客/出版物 | 企业站/电商 | API-first 应用 | 已有静态站点的编辑界面 |
+
+> 注：Strapi 自 v4 起不再支持 MongoDB；Decap CMS 是 Netlify CMS 于 2023 年 2 月更名后的社区版本。
 
 ### 选择建议
 
@@ -888,14 +889,13 @@ function verifyWebhookSignature(req) {
 ghost update
 
 # 查看日志
-ghost logs --server     # 查看服务器日志
-ghost logs --error      # 仅查看错误
+ghost log               # 查看运行日志（位于 content/logs/）
 
 # 数据库备份
 mysqldump -u ghostuser -p ghost_prod > backup_$(date +%Y%m%d).sql
 
-# 清理缓存
-redis-cli FLUSHALL
+# 同时备份 content 目录（图片、主题等）
+tar -czf content_$(date +%Y%m%d).tar.gz /var/www/ghost/content
 
 # 检查配置
 ghost config
@@ -918,8 +918,7 @@ ghost config
 ```json
 {
   "privacy": {
-    "useTinfoilHat": true,
-    "forceContentPublic": false
+    "useTinfoil": true
   }
 }
 ```
@@ -945,8 +944,11 @@ http {
 
 ```bash
 # 检查可用更新
-npm check -g ghost-cli
-ghost update --info
+ghost check-update
+
+# 执行更新；若新版本异常，回滚到上一个版本
+ghost update
+ghost update --rollback
 
 # 自动更新脚本（crontab）
 # 0 3 * * 0 /usr/local/bin/ghost update >> /var/log/ghost-update.log 2>&1
@@ -960,30 +962,24 @@ ghost update --info
 
 ### Q2: Ghost 支持多语言吗？
 
-官方主题可通过 i18n 文件实现多语言。也有社区多语言插件如 `ghost-i18n`。
+分两层看。主题界面文字可以通过 i18n 翻译文件（`locales/` 下的 JSON）配合 `{{t}}` Helper 输出多语言，官方文档有完整说明。但**文章内容本身**没有内置的多语言管理，一篇文章只有一个语言版本；需要内容级多语言的站点，通常用两个独立站点（如 `/en/` 子域）或借助第三方方案。
 
 ### Q3: 可以导入 WordPress 内容到 Ghost 吗？
 
-可以。使用官方迁移工具 [Ghost WordPress Plugin](https://github.com/TryGhost/WordPressPlugin)，或通过 Ghost Admin 手动导入 XML 文件。
+可以。官方提供了 [WordPress 迁移指南](https://docs.ghost.org/migration/wordpress/)，一般流程是从 WordPress 导出 XML（WXR）文件，再通过 Ghost Admin（Settings → Labs）导入。文章、页面、标签和作者会随迁移工具转换。
 
 ### Q4: Ghost 支持静态生成吗？
 
-Ghost 本身是动态服务器，但可以配合 [Static Site Generator](https://github.com/TryGhost/Ghost/tree/main/contentThemes#static-site-generation) 工具将内容导出为静态文件。
+Ghost 本身是动态 Node.js 服务器，不内置静态导出。但它的 Content API 让它可以充当 Headless CMS，用 Next.js、Gatsby、Eleventy、Hexo 等静态生成器或任意前端框架渲染，官方维护了[各技术栈的接入指南](https://docs.ghost.org/jamstack/)。
 
 ### Q5: 如何自定义 Admin 管理面板？
 
-Ghost Admin 是独立于 Core 的客户端应用，作为受支持的扩展端点可加载自定义插件（如基于 Admin API 的 workflow 扩展）。直接修改其源码属于高级用法，不推荐在生产环境使用。
+Ghost Admin 是独立的前端应用（Ember.js 构建，部分界面正迁移到 React），官方不提供 Admin 界面级的插件机制。想扩展后台能力，正确路径是通过 Admin API 做外部集成——Ghost Admin 自己也是这套 API 的客户端，API 能做的事与后台一致。
 
 ## 总结
 
-Ghost 是一个专注于内容发布的开源 CMS，技术选型务实（Node.js + MySQL，可选 Redis），对比 WordPress 更轻量，对比纯静态站点更动态，对比新兴 Headless CMS 多了完整的发布工作流和内置变现能力。
+Ghost 的定位可以用一句话说清：把"写、发、订阅、变现"装进一个维护负担很小的 Node.js 应用。它不追求 WordPress 那种什么都能做的生态，也不像纯 Headless CMS 那样把前端完全交给你——换来的是一条从写作到收费的完整闭环。
 
-**核心特点：**
-- 专为内容创作优化的编辑器与页面性能
-- 内置会员订阅变现体系（Stripe 集成）
-- 原生 SEO 支持，无需额外配置
-- 完整的 Content API + Admin API
-- 基于 Handlebars 的主题系统
-- MIT 开源许可，可完全自托管
+如果要给采用顺序：个人博客或独立出版物，Ghost 可以直接上，会员变现是它相对一切免费方案的最大筹码；需要电商、论坛或复杂企业站，留在 WordPress；做 API-first 的多端产品，选 Strapi，Ghost 只当内容源；已经在用 Hugo、Eleventy 等静态站点，接 Content API 即可，不必迁移。
 
 *本文基于 Ghost 6.x 版本编写，部分 API 或功能可能随版本迭代发生变化，建议参考 [官方文档](https://ghost.org/docs/) 获取最新信息。*

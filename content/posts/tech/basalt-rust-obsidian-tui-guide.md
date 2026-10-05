@@ -1,7 +1,7 @@
 ---
 title: "Basalt：终端里的 Obsidian 阅读层，一个 Elm 架构的 ratatui 实战样本"
 date: "2026-05-11T22:50:00+08:00"
-lastmod: "2026-09-20T06:20:00+08:00"
+lastmod: "2026-09-28T22:50:00+08:00"
 slug: "basalt-rust-obsidian-tui-notes"
 github_repo: "erikjuhani/basalt"
 source_key: "gh:erikjuhani/basalt"
@@ -26,7 +26,7 @@ Basalt 押的是「读」，不是「写」。
 
 这条放在最前面，因为它决定后面每张表能不能照着做。
 
-Basalt 的 README 和 `docs/` 目录跟随 `main` 分支，而 `main` 上 `basalt/Cargo.toml` 已经写成 `version = "0.13.0"`。这个版本还没有发布：GitHub Releases 里最新的稳定版是 `basalt/v0.12.7`，发布于 2026-08-14，crates.io 上 `basalt-tui` 的最新版本同样是 0.12.7。
+Basalt 的 README 和 `docs/` 目录跟随 `main` 分支，而 `main` 上 `basalt/Cargo.toml` 已经写成 `version = "0.13.0"`。这个版本还没有发布：GitHub Releases 里最新的稳定版是 `basalt/v0.12.7`，发布于 2026-08-14，crates.io 上 `basalt-tui` 的最新版本同样是 0.12.7（本节口径复核于 2026-09-28，0.13.0 届时仍未发布；nightly 标签跟着 `main` 持续出包，复核当日的构建就是当天出的）。
 
 两者的差别不是修辞问题。v0.12.7 的 `docs/Known Limitations.md` 里有两行：
 
@@ -94,7 +94,7 @@ README 的措辞是「Basalt spans three crates under two licenses」，这个�
 
 读下去之前先把这三组切开，它们各自都会造成误判。
 
-**解析能力不等于渲染能力。** `basalt-core/src/markdown.rs:438` 用 `pulldown_cmark::Parser::new_ext(text, Options::all())` 建解析器——所有扩展都开了。所以脚注、数学、删除线在 AST 里都存在，只是渲染层没有给它们画样式。这就是「bold/italic 解析但不加视觉样式」这句话的确切含义：不是解析失败，是渲染层主动不做。
+**解析能力不等于渲染能力。** `basalt-core/src/markdown.rs:439` 用 `pulldown_cmark::Parser::new_ext(text, Options::all())` 建解析器——所有扩展都开了。所以脚注、数学、删除线在 AST 里都存在，只是渲染层没有给它们画样式。这就是「bold/italic 解析但不加视觉样式」这句话的确切含义：不是解析失败，是渲染层主动不做。
 
 **你的配置与默认值合并，vim 预设与默认值替换。** 这两句话在文档里挨着放，语义相反。用户配置只覆盖你写出来的那些键，其余默认键位继续有效；而 `vim_mode = true` 加载的 `basalt/vim.toml` 预设，对它自己定义的每一节是整节替换掉默认键位，然后你的配置再叠在替换后的结果上。开 vim 模式之前你以为保留的东西，可能已经被换掉了。
 
@@ -104,14 +104,14 @@ README 的措辞是「Basalt spans three crates under two licenses」，这个�
 
 `docs/Basalt.md` 明确写了架构取向：Elm 风格，单向数据流加显式状态管理，一条环路是 `Event → Message → Update → State → Render → Event`。三个概念：
 
-- **Model**：应用状态用不可变数据结构表达，中心是 `AppState`（`basalt/src/app.rs:78`），每个 UI 组件持有自己的子状态，状态从不被就地修改。
+- **Model**：应用状态用不可变数据结构表达，中心是 `AppState`（`basalt/src/app.rs:79`），每个 UI 组件持有自己的子状态，状态从不被就地修改。
 - **Message**：用户动作表达成带类型的消息，各组件定义自己的枚举，例如 `explorer::Message::Select`、`note_editor::Message::CursorUp`。消息描述发生了什么，不描述怎么处理。
 - **Update**：更新函数吃当前状态和一条消息，返回新状态以及可选的新消息。消息可以级联——一个组件的 update 返回另一个组件的消息，环路继续转，直到不再产生新消息。
 
 级联那句在源码里能直接看到形状。`App::update` 的调用点是个 while 循环：
 
 ```rust
-// basalt/src/app.rs:550 附近
+// basalt/src/app.rs:571 附近
 let mut message = App::handle_event(&config, &mut state, event);
 while message.is_some() {
     message = App::update(self.terminal.get_mut(), &config, &mut state, message);
@@ -211,7 +211,7 @@ key_bindings = [
 
 `global` 节先于窗格节求值，所以全局绑定优先命中。
 
-预设语义就是前面切开的那组概念，落到实处要看 `basalt/vim.toml` 到底写了哪几节：`note_editor`、`explorer`、`outline`、`input_modal` 四节，仅此四节被整节替换，`global` 和各模态节不受影响。四节里 Explorer 与 Outline 的替换表是默认键位的超集，只在原表上多了 `gg` 与 `G`，原有键位一个没少；真正会改变手感的是 Note editor。那一节是一整套仿 vim 的动作面：`gg`、`G`、`gk`、`gj`、`w`/`b`/`e` 与大写变体、`0`、`^`、`$`、`{`、`}`、`%`、`f`/`F`/`t`/`T`/`;`/`,`，操作符 `d`、`c`、`x`、`D`、`C`、`s`、`p`、`P`，撤销重做 `u` 与 `Ctrl+r`，可视选择 `v` 与 `V`，以及 `i`、`a`、`r`。代价也在这里：默认那节里 `t` 是切换 Explorer 窗格，换上 vim 预设后 `t` 变成 till-forward，想切窗格得改用 `Ctrl+b`。在 Note editor 里，vim 模式还在 EDIT 之内再分 Normal 与 Insert 两个子模式——`i` 进 Insert 打字，`Esc` 回 Normal 导航，再按 `Esc` 退回 READ。
+预设语义就是前面切开的那组概念，落到实处要看 `basalt/vim.toml` 到底写了哪几节：`note_editor`、`explorer`、`outline`、`input_modal` 四节，仅此四节被整节替换，`global` 和各模态节不受影响。四节里 Explorer 与 Outline 的替换表是等量换血：键数与默认表一致（Explorer 22 条、Outline 13 条），差别是 `gg` 与 `G` 接管了默认表里 `ctrl+shift+up`、`ctrl+shift+down` 的活——滚到顶/底的动作还在，键换了，原来那两条组合键在 vim 模式下失效；真正会大改手感的是 Note editor。那一节是一整套仿 vim 的动作面：`gg`、`G`、`gk`、`gj`、`w`/`b`/`e` 与大写变体、`0`、`^`、`$`、`{`、`}`、`%`、`f`/`F`/`t`/`T`/`;`/`,`，操作符 `d`、`c`、`x`、`D`、`C`、`s`、`p`、`P`，撤销重做 `u` 与 `Ctrl+r`，可视选择 `v` 与 `V`，以及 `i`、`a`、`r`。代价也在这里：默认那节里 `t` 是切换 Explorer 窗格，换上 vim 预设后 `t` 变成 till-forward，想切窗格得改用 `Ctrl+b`。在 Note editor 里，vim 模式还在 EDIT 之内再分 Normal 与 Insert 两个子模式——`i` 进 Insert 打字，`Esc` 回 Normal 导航，再按 `Esc` 退回 READ。
 
 自定义命令有两种前缀，行为差别明确：`exec:` 在当前 shell 环境里运行并阻塞到结束，且**只有第一个参数被当作可执行文件**，其余按字面传参；`spawn:` 起新进程不阻塞，适合打开外部应用或 URL。上下文变量只有三个——`%vault`（当前库名）、`%note`（当前笔记名）、`%note_path`（当前笔记完整路径），没有 `%note_dir` 之类的目录变量。不做 shell 展开，管道、重定向、命令替换都不支持，复杂操作要自己包成脚本。变量还要求上下文齐备，比如 `%note` 得先有选中的笔记。平台 opener 各异：macOS 用 `open`，Linux 用 `xdg-open`，Windows 用 `start`。Obsidian 的 URL scheme 可以接 `open`、`new`、`daily`、`search` 几个动作。
 
@@ -243,7 +243,7 @@ Basalt 读 Obsidian 自己的配置文件来发现保险库，`docs/Files and Fo
 | Linux Snap | `~/snap/obsidian/current/.config/obsidian/obsidian.json` |
 | Windows | `%APPDATA%\Obsidian\obsidian.json` |
 
-Windows 那一行的目录名首字母大写，这不是笔误：`basalt-core/src/obsidian/config.rs:164` 用 `cfg!(windows)` 在两个常量之间切换，Windows 上是 `Obsidian`，其余平台是 `obsidian`。解析由 `dirs` crate 提供平台配置目录，再拼上这个目录名。
+Windows 那一行的目录名首字母大写，这不是笔误：`basalt-core/src/obsidian/config.rs:164` 用 `#[cfg(target_os = "windows")]` 在两个常量之间切换，Windows 上是 `Obsidian`，其余平台是 `obsidian`。解析由 `dirs` crate 提供平台配置目录，再拼上这个目录名。
 
 实现细节里还有两点。**取的是第一个存在的位置**（`existing_config_locations.first()`），不是全部合并；以及 `OBSIDIAN_CONFIG_DIR` 环境变量可以整段覆盖配置目录，路径里的开头 `~` 会展开。于是 Obsidian 客户端没装、或者那个配置文件压根不存在时，仍然有两条路可走。其一是上面那个环境变量，其二干脆绕过保险库：
 
@@ -404,12 +404,12 @@ cargo install --git https://github.com/erikjuhani/basalt --branch main basalt-tu
 
 ## 下一步读哪份代码
 
-想搞清架构与事件流，按这个顺序读 `main`：
+想搞清架构与事件流，按这个顺序读 `main`（行号以 2026-09-28 的 main 为准，该分支几乎每天在动，行号会漂，文件不会）：
 
-- `basalt/src/app.rs:78`，`AppState` 的全部字段
-- `basalt/src/app.rs:535` 起的 `run`，250 毫秒 tick、poll 加 read、消息级联和 watcher 分支
-- `basalt/src/app.rs:317`，`open_note` 与标签复用那条提前返回
-- `basalt/src/config/mod.rs:97`，`Config` 的节结构，以及 `ConfigSection` 的 `merge_key_bindings` 与 `replace_key_bindings`
+- `basalt/src/app.rs:79`，`AppState` 的全部字段
+- `basalt/src/app.rs:549` 起的 `run`，250 毫秒 tick、poll 加 read、消息级联和 watcher 分支
+- `basalt/src/app.rs:331`，`open_note` 与标签复用那条提前返回
+- `basalt/src/config/mod.rs:107`，`Config` 的节结构，以及 `ConfigSection` 的 `merge_key_bindings` 与 `replace_key_bindings`
 - `basalt/src/command.rs`，`exec:` 与 `spawn:` 的解析
 - `basalt/src/note_editor/highlight.rs:123`，语言别名表与六个着色角色
 - `basalt/src/config/symbol.rs:40` 与 `basalt/src/config/theme.rs`，符号字段和主题角色
@@ -421,7 +421,7 @@ cargo install --git https://github.com/erikjuhani/basalt --branch main basalt-tu
 
 ## 参考
 
-- 仓库：<https://github.com/erikjuhani/basalt>（2026-09-20 观测：1,357 stars、39 forks，Rust）
+- 仓库：<https://github.com/erikjuhani/basalt>（2026-09-28 观测：1,364 stars、37 forks，Rust）
 - 最新稳定发布：`basalt/v0.12.7`，2026-08-14；crates.io 上的 `basalt-tui` 同版本
 - `docs/Known Limitations.md`：渲染、文件操作、内置编辑器、配置、Obsidian 兼容五类边界的权威清单
 - `docs/Basalt.md`：Elm 架构三概念、三个 crate 的分工、作者自述动机

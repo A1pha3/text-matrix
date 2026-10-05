@@ -4,18 +4,18 @@ slug: malisper-pgrust-postgres-rust-rewrite
 github_repo: "malisper/pgrust"
 source_key: "gh:malisper/pgrust"
 date: 2026-07-13T03:03:14+08:00
-lastmod: 2026-09-19T00:00:00+08:00
+lastmod: 2026-10-02T00:00:00+08:00
 draft: false
 categories: ["技术笔记"]
 tags: ["Rust", "PostgreSQL", "数据库"]
-description: "按 2026-09-19 的 main（v0.3 快照）与三条归档分支拆解 pgrust：回归 oracle 的实际计数口径、Kani 双执行证明找出的 12 处分歧、四次重写路线的死因、benchmark 套件里三个口径不一致的 ClickHouse 领先幅度，以及一份对得上仓库现实的上手与排查路径。"
+description: "按 2026-10-02 复核的 main（v0.3 快照）与三条归档分支拆解 pgrust：回归 oracle 的实际计数口径、Kani 双执行证明找出的 12 处分歧、四次重写路线的死因、benchmark 套件里三个口径不一致的 ClickHouse 领先幅度，以及一份对得上仓库现实的上手与排查路径。"
 ---
 
 pgrust 把 PostgreSQL 的服务端整个换成了 Rust，然后声称行为没有变。真正值得读的并不是"用 Rust 重写"这件事本身，而是它为了让这句声称站得住搭起的四层证据，四层能说的话各不相同：跑上游回归套件并逐字节比对期望输出、用模型检验（model checking）对单个函数做等价性证明、对上游做差分模糊测试、按种子重放的崩溃与并发模拟。四层在仓库里都有实物——回归套件原样 vendor 了上游源码，证明层是一份 3,400 行的台账，模糊层有 98 个测试目标，模拟层有 18 条性质实现。基准测试是另一条线，它不证明行为，只把性能主张变成可复核的脚本、机型和权重。
 
 另一边，仓库对读者的呈现并不总是跟上仓库自己。`main` 分支上那份 README 引用了 `benchmarks/`、`Dockerfile` 和 `docs/conformance/README.md`，而这三条路径在 `main` 的提交树里都不存在；同一段性能叙述在 README、基准套件和打分脚本的注释里给出了 18.5%、~7%、8.6% 三个不同的"领先 ClickHouse"幅度；形式化证明的数量在根 README、`proofs/README.md` 和证明台账分别是约 1000、1,086 和 1,336。这些差异不影响 pgrust 的价值判断，但决定了你按文档走能不能走通。
 
-下面这些断言逐条对照 2026-09-19 的仓库实物（一次 `--filter=blob:none` 的克隆，`main` 提交 `79ad992`、`v0.3-beta` 提交 `20d63e2`、三条归档分支）与作者的四篇一手复盘，核到的写成事实，核不到的标 unresolved。
+下面这些断言逐条对照 2026-10-02 的仓库实物（一次 `--filter=blob:none` 的克隆，`main` 提交 `79ad992`、`v0.3-beta` 提交 `20d63e2`、三条归档分支）与作者的四篇一手复盘，核到的写成事实，核不到的标 unresolved。`main` 自 2026-09-19 首次核对以来没有新提交，本次复核改动的是计数口径与涨落的星标，正文已按复核结果更新。
 
 ## 先分清三条主线
 
@@ -24,19 +24,19 @@ pgrust 把 PostgreSQL 的服务端整个换成了 Rust，然后声称行为没�
 | 主线 | 要回答的问题 | 仓库里的实物 | 目前状态 |
 | --- | --- | --- | --- |
 | 行为保真 | 换一个实现，凭什么输出还和 C 版一样 | `crates/postgres-18.6-reference/`（7,284 个文件的上游源码）、`regress/` 三套期望输出覆盖层、`proofs/`（857 个文件）、`fuzz/`（约 39 万个文件） | 回归套件按 README 口径全过；证明与模糊在推进 |
-| 结构改造 | 哪些地方非改不可才能更快 | `crates/backend/` 下 26 个子系统、工作区里 888 个 crate | 向量化执行器、JIT、线程模型、调度器、内置 OOM 杀手已进 README 的实现清单 |
+| 结构改造 | 哪些地方非改不可才能更快 | `crates/backend/` 下 26 个子系统、工作区里 890 个 crate | 向量化执行器、JIT、线程模型、调度器、内置 OOM 杀手已进 README 的实现清单 |
 | 对外呈现 | 读者能不能复现 | `README.md`、归档分支上的 `benchmarks/` 与 `GOAL.md` | 与代码不同步的部分见下文逐条 |
 
 三条主线的节奏不一样。前两条还在往前走（仓库最近一次推送 2026-09-18），`main` 上的 README 却在描述一份比它自己更完整的仓库。看这个项目时，"文档说了什么"和"这棵树上有什么"必须当成两个问题分别查。
 
 ## 项目坐标
 
-| 维度 | 2026-09-19 的实测值 | 来源 |
+| 维度 | 2026-10-02 的实测值 | 来源 |
 | --- | --- | --- |
-| 星标 / 派生（fork） | 5,077 / 191 | GitHub 的 REST（表述性状态转移）接口，`repos/malisper/pgrust` |
+| 星标 / 派生（fork） | 5,214 / 198 | GitHub 的 REST（表述性状态转移）接口，`repos/malisper/pgrust` |
 | 许可证 | AGPL-3.0（`LICENSE`），派生自 PostgreSQL 的部分保留 PostgreSQL License（`NOTICE`） | 仓库根 |
 | 仓库创建 / 最近推送 | 2026-04-20 / 2026-09-18 | 同上 |
-| 发行版本 | v0.3，badge 三枚：Postgres 18.6、`regression_suite 46,066/46,066`、version v0.3 | `README.md` |
+| 发行版本 | v0.3，badge 四枚：Postgres 18.6、`regression_suite 46,066/46,066`、version v0.3、license AGPL-3.0 | `README.md` |
 | 语言构成 | Rust 94,570,767 字节（52.6%）、C 70,049,944 字节（39.0%） | `languages` 接口 |
 | `main` 提交树 | 403,826 个文件，其中 `fuzz/corpus` 独占 388,805 | `git ls-tree -r HEAD` |
 | 仓库体积 | GitHub API（应用程序接口）的 `size` 字段 639,095 KB，约 624 MB | 同第一行 |
@@ -53,7 +53,9 @@ pgrust 把 PostgreSQL 的服务端整个换成了 Rust，然后声称行为没�
 | `archive/pre-fabled-2026-06-25` | 2026-06-01 | 1,662 个文件 | `src/`、`tests/`、`plans/`、`optimizations/`、`antithesis/`、`AGENTS.md`、`CLAUDE.md`、`.claude/`、`.codex/`；该分支的 README 自称 `Status: V1 / experimental`、"约 96% 回归通过"，与复盘里第一代"四周推到 96%"对得上 |
 | `archive/v0.1-main-2026-07-29` | 2026-07-29 | 6,529 个文件 | 含 `vendor/`、`scripts/`、`docker/`；`scripts/` 下有 `run-regression`、`run-pg-regress`、`run-pg-isolation` 等 10 个脚本，`vendor/postgres-18.3` 是当时的上游源码落点 |
 | `archive/v0.2-main-2026-09-15` | 2026-09-07 | 4,819 个文件 | 新增 `benchmarks/`、`CATALOG.tsv`、`GOAL.md`、`RENAME-MAP.md`、`Dockerfile`、`docker/` |
-| `main` | 2026-09-15 | 403,826 个文件 | 去掉 `Dockerfile`、`docker/`、`benchmarks/`、`CATALOG.tsv`、`GOAL.md`；新增 `fuzz/`（+38.8 万）、`crates/`（+8,210）、`proofs/`（+383）、`docs/` |
+| `main` | 2026-09-15 | 403,826 个文件 | 去掉 `Dockerfile`、`docker/`、`benchmarks/`、`CATALOG.tsv`、`GOAL.md`；`fuzz/` 从 8 个文件涨到 38.8 万、`crates/` +8,139、`proofs/` +383；新增 `docs/` |
+
+`git ls-remote` 还能看到第五条分支 `malisper/portal-source-text-borrow-wasip1`，是作者的个人开发分支，不在归档序列里，读演进时可以忽略。
 
 顺手记一条：v0.1 的 README 有专门的 History 一节，说旧实现归档在 `archive/pre-fabled-2026-06-23`，而 `git ls-remote --heads` 里那条分支的真名是 `...-06-25`，差两天。按文档里的字符串去 `git checkout` 会失败，分支名以 `ls-remote` 为准。
 
@@ -76,7 +78,7 @@ README 的说法是"跑 PostgreSQL 自带的 `src/test/regress`，原封不动 v
 
 这几个数能在树里对上：`parallel_schedule` 有 28 行 `test:`，展开后是 **231** 个测试名；上游 `sql/` 目录下有 **233** 个 `.sql`；`expected/` 下有 **265** 个 `.out`。pgrust 自己另加了 `regress/`，分 `overlay`、`isolation-overlay`、`tap-overlay` 三块共 208 个文件——那是它对同一批测试写自己的期望输出时用的覆盖层，不是替代上游套件。
 
-**46,066 这个数是数什么的，我没有核到。** 它不是文件数（231 / 233 / 265 都不是），也不是期望输出的总行数（265 个 `.out` 合起来 277,159 行），还不是 `sql/` 里分号的个数（53,281 个）。README 明确说"这套 harness 到底数的是文件、行还是查询"写在 `docs/conformance/README.md`，而那份文件不在 `main` 上。这一条按 unresolved 处理：想知道确切口径，只能自己拉一份带文档的分支，或者直接看 `scripts/pg-regress-fast.sh`——它也不在 `main` 上。
+**46,066 这个数是数什么的，我没有核到。** 它不是文件数（231 / 233 / 265 都不是），也不是期望输出的总行数（265 个 `.out` 合起来 277,159 行），还不是 `sql/` 里分号的个数（53,281 个）。README 明确说"这套 harness 到底数的是文件、行还是查询"写在 `docs/conformance/README.md`（gate 契约另有一份 `docs/conformance/regress-gate.md`），而那份文件不在 `main` 上。这一条按 unresolved 处理：想知道确切口径，只能自己拉一份带文档的分支，或者直接看 `scripts/pg-regress-fast.sh`——它也不在 `main` 上。
 
 这里有个措辞变化值得留意：v0.1 时代的 README badge 是 `regression_queries 46k+`，正文写"跨 46,000 多条回归**查询**匹配 Postgres 期望输出"；v0.3 的 badge 改成 `regression_suite 46,066/46,066`，正文改成"通过全部 46,066 个回归**测试**"。数字从模糊变精确的同时，计量单位换了一次词。
 
@@ -88,7 +90,7 @@ README 的说法是"跑 PostgreSQL 自带的 `src/test/regress`，原封不动 v
 
 三份文档给的是三个数：根 README 说"3000 个用户可见函数里形式化验证了 1000 个"；`proofs/README.md` 说"1,086 个函数已证 + 26 个用穷举或大规模采样的原生差分覆盖"；同一提交上的台账按 `proved(` 聚合出来是 1,336。三个数指向同一件事（已证比例在三到四成之间），不一致的只是精确值——文档落后于台账是这里最合理的解释，但没有任何一份文件写明这一点。**别人问你"pgrust 形式化验证到什么程度"，能给的答案是"约三成，且以台账为准"，而不是三个数字里的某一个。**
 
-这条线最硬的结果是那 12 处分歧：8 处 pgrust 移植错误、4 处上游 PostgreSQL 的真实错误，另加一处（`money` 除法在 `MIN/-1`）同时贡献给两边。四个上游错误逐个都值得单独看：
+这条线最硬的结果是那 12 处分歧：8 处 pgrust 移植错误、4 处上游 PostgreSQL 的真实错误。注意 `money` 除法在 `MIN/-1` 这一处同时出现在两列里——是同一个位点给两边各记了一笔：pgrust 侧 panic，C 侧本身就缺溢出保护，三种观察到的行为互不相同，所以 12 个位点对应 12 + 1 个 bug。四个上游错误逐个都值得单独看：
 
 | 上游函数 | 问题 | 可观察后果 |
 | --- | --- | --- |
@@ -101,7 +103,7 @@ README 的说法是"跑 PostgreSQL 自带的 `src/test/regress`，原封不动 v
 
 ### 第三层：对上游做差分模糊测试
 
-`fuzz/` 下 98 个 `.rs` 测试目标，`fuzz/divergences/` 16 个文件、`fuzz/fleet-evidence/` 23 个文件、`fuzz/known-divergences/` 2 个，语料 38.8 万个文件。`proofs/COVERAGE.md` 点明跑在证明层之上的三个 cargo-fuzz 目标是 `float_in_diff`、`float_out_diff`、`geo_diff`，即浮点输入输出与几何类型——浮点和几何正是 C 与 Rust 最容易在舍入与规范化上分叉的地方。
+`fuzz/fuzz_targets/` 下 98 个 `.rs` 测试目标，`fuzz/divergences/` 16 个文件、`fuzz/fleet-evidence/` 23 个文件、`fuzz/known-divergences/` 2 个，语料 38.8 万个文件。`proofs/COVERAGE.md` 点明跑在证明层之上的三个 cargo-fuzz 目标是 `float_in_diff`、`float_out_diff`、`geo_diff`，即浮点输入输出与几何类型——浮点和几何正是 C 与 Rust 最容易在舍入与规范化上分叉的地方。
 
 ### 第四层：自带一套确定性崩溃模拟
 
@@ -164,6 +166,10 @@ SELECT SUM(col) FROM my_table;
 
 **JIT 编译从 ~50 ms 降到 ~5 µs。** 做法不是接 LLVM，也不是生成 C 再编译，而是 copy-and-patch：预备一批 ARM64 指令模板（stencil），运行时按算子填模板拼成函数。作者在专文里给了一个背景判断——今天没有任何一个生产级数据库自带即时编译器，大家要么用 LLVM 要么生成 C/C++，两者编译延迟都大到只能挑一部分查询来 JIT；µs 级之后可以对每条 SQL 都 JIT。代价写在 README 里：即时编译器目前只针对 neoverse-v2，也就是 Graviton4，别的平台能跑但拿不到同样的性能。
 
+README 的 Implementation 清单里还有三项本文不展开，但值得知道在哪：并行查询按 work stealing 重建，空闲线程动态分给在跑的查询；一个自适应策略的缓存优化哈希表（追求 L1/L2 命中），当前用在聚合上；可执行文件布局经过 PGO 优化——benchmark 一节的调优构建指的就是它。
+
+另一个常被问起的问题是"换成 Rust 是不是就没有 unsafe 了"。答案写在 README 的 Unsafe Code 一节：Postgres 把每个内部值表示成 Datum，一个无类型的 8 字节值，Rust 没有它的安全等价物，所以打包解包这类代码是 unsafe；必须和 Postgres 内存布局逐字节一致的地方同理。README 的态度是 unsafe 只留给必须的位置，欢迎报告可以安全化又不伤性能的点。
+
 ## 一条 SQL 走完全程
 
 上面那些机制得串成一次具体动作才知道怎么配合。下面这条路径按仓库实物与 README 声明画，每步标出依据强度，避免把它读成一份从 C 版抄来的教科书流程图：
@@ -190,7 +196,7 @@ DataRow + ReadyForQuery
 你看到：PostgreSQL 18.6 (pgrust 0.3)        依据：README 给出的预期输出
 ```
 
-图里唯一一条能直接跑通验证的就是最后那行版本字符串，README 明写。中间各框之间怎么交接（执行器如何向存储层取批、JIT 在计划期的哪个点介入），`main` 上没有对应文档能让我确认，就不画了。crate 的名字倒是可以确认一件事：`crates/backend/` 下 26 个子目录——`access`、`catalog`、`commands`、`executor`、`libpq`、`nodes`、`optimizer`、`parser`、`postmaster`、`regex`、`replication`、`storage`、`tcop`、`utils` 等——和上游 `src/backend/` 的分层逐字对应。归档分支上的 `CATALOG.tsv` 把这层对应关系写成了表：1,241 行数据，列是 `unit`、`c_sources`、`status`、`crate`、`bench_ratio`、`notes`，`c_sources` 里直接填 `src/backend/utils/mmgr/mcxt.c,src/backend/utils/mmgr/aset.c,...`。**要找一个 pgrust 单元对应上游哪些 C 文件，查这张表比读代码快**；`GOAL.md` 说这张表建的时候是"约 970 个单元"，现在 1,241 行，两边相差三个多月。
+图里唯一一条能直接跑通验证的就是最后那行版本字符串，README 明写。中间各框之间怎么交接（执行器如何向存储层取批、JIT 在计划期的哪个点介入），`main` 上没有对应文档能让我确认，就不画了。crate 的名字倒是可以确认一件事：`crates/backend/` 下 26 个子目录——`access`、`catalog`、`commands`、`executor`、`libpq`、`nodes`、`optimizer`、`parser`、`postmaster`、`regex`、`replication`、`storage`、`tcop`、`utils` 等——和上游 `src/backend/` 的分层逐字对应。归档分支上的 `CATALOG.tsv` 把这层对应关系写成了表：1,241 行（含表头，1,240 个单元），列是 `unit`、`c_sources`、`status`、`crate`、`bench_ratio`、`notes`，`c_sources` 里直接填 `src/backend/utils/mmgr/mcxt.c,src/backend/utils/mmgr/aset.c,...`。**要找一个 pgrust 单元对应上游哪些 C 文件，查这张表比读代码快**；`GOAL.md` 说这张表建的时候是"约 970 个单元"，现在 1,240 个，两边相差三个多月。
 
 ## benchmark 数字该怎么读
 
@@ -212,7 +218,7 @@ DataRow + ReadyForQuery
 | `benchmarks/README.md` 的 What to expect | combined 约 0.93，"约领先 ClickHouse 已发布的 c8g.4xlarge 那一行 7%"；只读 pgrust/C 比在 1.25–1.40×；读写约 1.03× |
 | `benchmarks/scorers/score-clickbench.py` 注释 | "combined 公式就是那句公开的'领先 ClickHouse 8.6%'背后的公式" |
 
-18.5% 与 7% 差了一倍多，8.6% 是第三个值。要判断该信哪个，得先看 combined 是什么：打分脚本里写着 `combined = hot_geo^0.6 * cold_geo^0.2 * load_ratio^0.1 * size_ratio^0.1`，并明确标注 `This is OUR weighting, not ClickBench's`——热/冷几何平均、加载耗时比、数据体积比的四项加权，权重是 pgrust 自选的，小于 1 表示领先。ClickBench 官网自己那套是逐查询 `(t+10ms)/(baseline+10ms)` 再取几何平均，10 ms 是上游给亚毫秒查询加的阻尼项。两个指标可以给出两个百分比，18.5% / 7% / 8.6% 更可能是不同子集、不同 bank（脚本里另有 `use-parquet-bank.sh`）与不同时点的产物，但我无法从仓库里断定它们各自的运行条件——README 说这些数字都来自同一套交给外部审计人的脚本，而脚本本身没随 `main` 发布。
+18.5% 与 7% 差了一倍多，8.6% 是第三个值。要判断该信哪个，得先看 combined 是什么：打分脚本里写着 `combined = hot_geo^0.6 * cold_geo^0.2 * load_ratio^0.1 * size_ratio^0.1`，并明确标注 `This is OUR weighting, not ClickBench's`——热/冷几何平均、加载耗时比、数据体积比的四项加权，权重是 pgrust 自选的，小于 1 表示领先。ClickBench 官网自己那套是逐查询 `(t+10ms)/(baseline+10ms)` 再取几何平均，10 ms 是上游给亚毫秒查询加的阻尼项。两个指标可以给出两个百分比，18.5% / 7% / 8.6% 更可能是不同子集、不同 bank（脚本里另有 `use-parquet-bank.sh`）与不同时点的产物，但我无法从仓库里断定它们各自的运行条件——审计线索分两层：根 README 说这批运行由 Greg Smith（《PostgreSQL 9.0 High Performance》的作者）独立审阅；归档分支上 `benchmarks/README.md` 的说法更进一步，说这套脚本就是当时交给外部审计人、由对方独占机器复现声明的原套脚本。而脚本本身没随 `main` 发布。
 
 从这套材料里**不能**推出的几件事：
 
@@ -225,7 +231,7 @@ DataRow + ReadyForQuery
 
 ## 四次尝试，三个死路
 
-行为保真和性能都不是第一版就有的。作者在 2026-07-16 的复盘里把这条路完整写了一遍（四次尝试、自述累计花费约 10 万美元、最终 180 万行惯用 Rust、峰值同时跑 40 个子智能体）。这段的价值不在故事，在于每一步死因对"要做大系统重写"的人都能复用：
+行为保真和性能都不是第一版就有的。作者在 2026-07-16 的复盘里把这条路完整写了一遍（四次尝试、自述到跑通回归套件累计花费约 10 万美元、最终 180 万行惯用 Rust，文末补记其后的 pgrust-fast 又投入约 20 万、峰值同时跑 40 个子智能体）。这段的价值不在故事，在于每一步死因对"要做大系统重写"的人都能复用：
 
 | 尝试 | 做法 | 推进到 | 死因 |
 | --- | --- | --- | --- |
@@ -246,7 +252,10 @@ DataRow + ReadyForQuery
 # 1) 浏览器，零安装：完整的 pgrust 服务端编译成 WebAssembly
 #    https://pgrust.com —— 输入 SQL，返回 psql 风格的表格
 
-# 2) 本机二进制（macOS Apple Silicon；另有 x86_64 与 universal）
+# 2) 本机二进制（macOS Apple Silicon；另有 x86_64 与 universal。
+#    Linux（Debian/Ubuntu）流程在 README 有完整版本：PGDG 源装
+#    postgresql-18，两个变量分别指向 /usr/share/postgresql/18 与
+#    /usr/share/zoneinfo，其余参数相同）
 brew install postgresql@18
 export PATH="$(brew --prefix postgresql@18)/bin:$PATH"
 curl -LO https://pgrust.com/downloads/v0.3/pgrust-0.3-macos-arm64
@@ -270,7 +279,7 @@ docker run -d --name pgrust -e POSTGRES_PASSWORD=secret -p 5432:5432 malisper/pg
 
 1. **`initdb` 和 `psql` 得用上游的。** README 明写 pgrust 目前不自带这两个工具，所以下面每条路径都先装 PostgreSQL 18 的客户端。有趣的是树里已经有 `crates/bin/psql`，`src/main.rs` 第一段注释写着"psql, ported to Rust for pgrust"，范围包括 v3 协议的 startup/auth/simple/extended/COPY、带 psql 提示规则的交互 REPL 和 `print.c` 保真的结果渲染。两句话不矛盾：一个说的是发行物里还没有，一个说的是工作区里已经在做。真要跑起来，按 README 装 `postgresql@18` 的客户端工具最省事。
 2. **平台只针对 Graviton4 调优。** 即时编译器只发射 neoverse-v2 指令；在别的机器上能跑，但别拿 README 的数字对照。
-3. **扩展 ABI 未稳定，现有扩展装不上。** 上游 contrib 的 57 个模块目录里有 41 个在 `crates/contrib/` 下有了同名 Rust crate，`auth_delay`、`dict_int`、`dict_xsyn`、`intagg`、`oid2name`、`sepgsql`、`vacuumlo`、`xml2` 以及 6 个 plperl/plpython 桥接模块还没有。`PL/Python`、`PL/Perl`、`PL/Tcl` 明确没有，`crates/pl/` 下只有 `plpgsql`。`pgvector` 和它的 HNSW 构建 crate 在 `crates/contrib/` 里——那是内置移植版，不是能 `CREATE EXTENSION` 加载的外部扩展。
+3. **扩展 ABI 未稳定，现有扩展装不上。** vendor 树里上游 contrib 有 58 个模块目录（另有 `Makefile`、`meson.build` 等非模块条目），其中 41 个在 `crates/contrib/` 下有了同名 Rust crate（`uuid-ossp` 折算成 `uuid_ossp`）；还没动的包括 `auth_delay`、`basic_archive`、`basebackup_to_shell`、`dict_int`、`dict_xsyn`、`intagg`、`oid2name`、`sepgsql`、`vacuumlo`、`xml2` 以及 6 个 plperl/plpython 桥接模块。`PL/Python`、`PL/Perl`、`PL/Tcl` 明确没有，`crates/pl/` 下只有 `plpgsql`。`pgvector` 和它的 HNSW 构建 crate 在 `crates/contrib/` 里——那是内置移植版，不是能 `CREATE EXTENSION` 加载的外部扩展。
 
 版本升级还有一条破坏性改动：v0.3 把 `cbstore` 整体改名 `pgrcolumnar`，`CREATE INDEX ... USING cbstore` 一类的旧 DDL 直接失效，README 要求改写。改名规则、保护清单和符号对照在归档分支的 `RENAME-MAP.md` 里，其中一条细节是格式血缘名（`cbstore8-v6`）、`PGRUST_CBSTORE_*` 环境变量与脚本文件名一律不改，因为那是历史标识。
 
@@ -304,7 +313,7 @@ docker run -d --name pgrust -e POSTGRES_PASSWORD=secret -p 5432:5432 malisper/pg
 
 - **生产 OLTP，以及任何装了你不敢丢的数据。** README 的措辞已经从 v0.3-beta 时期的 `pgrust is not production ready. Do not put data you care about in it.` 变成"暂不建议生产使用，但我们内部已在非关键环境成功运行，不可丢的数据仍以 Postgres 为准"。方向明确，强度也仍然有限——同段还写着"它仍然有很多 bug，当前第一优先级是测试与可靠性"。
 - **依赖扩展生态的系统。** 扩展 ABI 未稳定，plperl/plpython 桥接模块未移植。
-- **需要分布式的一体化方案。** pgrust 是单节点，路线图上的 Autoscaling 与 instant forking 都还没实现。
+- **需要分布式的一体化方案。** pgrust 是单节点，路线图上的 Autoscaling 与 instant forking 都还没实现；同一份清单里还有 JSON 计划器支持、面向 no-vacuum 设计的 undo log、防坏计划的 adaptive planner、一个面向测试与嵌入场景的 mini pgrust，都停留在路线图上。
 - **准备提 PR 的人。** README 写着目前不主动接收合并请求，但欢迎开 issue 报破坏、报安装困惑、报希望对齐的 Postgres 行为。
 
 和相邻路线的分工，只按公开定位陈述：
@@ -344,7 +353,7 @@ pgrust 押的是一条窄路：既不换语义也不换格式，所以继承整�
 3. 语义上等价，但不可演进：转译产物到处是指针与 `unsafe`，安全化一个函数会牵动数百个调用方与被调用方，改不动也没法增量收敛。它甚至 ABI 兼容、扩展能直接加载，可是"能跑"与"能持续改"是两件事。
 4. 都不该直接引用。它们指向同一类自定义口径：`combined = hot_geo^0.6 * cold_geo^0.2 * load_ratio^0.1 * size_ratio^0.1`，打分脚本注明"这是我们的权重，不是 ClickBench 的"。三个数各自对应哪次构建、哪种存储、哪个数据装载分支，仓库里没写明。要汇报就说"在 Graviton4 + gp2 参考存储 + PGO 构建下，按 pgrust 自定义 combined 口径领先约 7%–18.5%"，并补一句脚本不在 `main` 上、当前无法就地复现。
 5. 即时编译器只发射 neoverse-v2 指令，下载的二进制是通用架构构建。所以非 Graviton4 平台、或没有用 `-Ctarget-cpu=neoverse-v2` 与 PGO 自建时，测到的是另一个负载；再加上 `io_method=sync`、`max_stack_depth` 这类必需 GUC，以及 `fsync` 保持默认——关掉持久化之后的收益是另一回事。
-6. 不能。上游 contrib 的 57 个模块目录里有 41 个在 `crates/contrib/` 下有了同名 Rust crate，`auth_delay`、`dict_int`、`intagg`、`sepgsql`、`xml2`、`vacuumlo` 等还没有，扩展 ABI 也尚未稳定。`pgvector` 不在上游 contrib 里，它是被内置移植进来的第三方扩展，用法与加载外部 `.so` 完全不同。
+6. 不能。vendor 的上游 contrib 有 58 个模块目录，41 个在 `crates/contrib/` 下有了同名 Rust crate，`auth_delay`、`dict_int`、`intagg`、`sepgsql`、`xml2`、`vacuumlo` 等还没有，扩展 ABI 也尚未稳定。`pgvector` 不在上游 contrib 里，它是被内置移植进来的第三方扩展，用法与加载外部 `.so` 完全不同。
 
 </details>
 
@@ -352,7 +361,7 @@ pgrust 押的是一条窄路：既不换语义也不换格式，所以继承整�
 
 按问题选入口，都比从参数表读起划算：
 
-- 想知道一个单元对应哪些 C：归档分支上的 `CATALOG.tsv`（1,241 行），先看 `status` 与 `bench_ratio` 两列。
+- 想知道一个单元对应哪些 C：归档分支上的 `CATALOG.tsv`（1,240 个单元），先看 `status` 与 `bench_ratio` 两列。
 - 想知道哪些函数已经证明、证到什么界限：`proofs/USER_FACING_FUNCTIONS.tsv`，配合 `proofs/README.md` 的 12 条分歧与 `proofs/TRIAGE.md`。
 - 想知道"证了多少"是不是"跑了多少"：`proofs/COVERAGE.md`，它把 Kani、差分模糊、回归三条线的行级覆盖合并成一份产物，并且开篇就警告覆盖不等于验证。
 - 想知道崩溃与并发行为怎么测：`crash-simulator/src/bridge.rs` 的模块注释是全仓最集中的一份说明，再看 `src/oracle/props/` 与 `profiles/`。
@@ -362,16 +371,16 @@ pgrust 押的是一条窄路：既不换语义也不换格式，所以继承整�
 
 ## 参考资源
 
-以下链接均在 2026-09-19 逐条访问确认可达（HTTP 200）。
+以下链接均在 2026-10-02 逐条访问确认可达（HTTP 200）。
 
 - 仓库（`main` 为 v0.3 单提交快照 `79ad992`）：<https://github.com/malisper/pgrust>
 - 归档分支：`archive/pre-fabled-2026-06-25`、`archive/v0.1-main-2026-07-29`、`archive/v0.2-main-2026-09-15`，以及 `v0.3-beta`
 - 仓库内一手文档：`README.md`、`crash-simulator/Cargo.toml` 与 `src/bridge.rs`、`docs/fuzzing/rulings.toml`、`proofs/README.md`、`proofs/COVERAGE.md`、`wasm/README.md`；`benchmarks/README.md`、`GOAL.md`、`RENAME-MAP.md`、`CATALOG.tsv` 需切到 `archive/v0.2-main-2026-09-15` 才看得到
 - 浏览器演示：<https://pgrust.com>；更新订阅：<https://pgrust.com/#updates>；X：<https://x.com/pgrustdb>；Discord：<https://discord.gg/FZZ4dbdvwU>
-- 作者一手复盘：[pgrust: rebuilding Postgres in Rust with AI](https://malisper.me/pgrust-rebuilding-postgres-in-rust-with-ai/)、[Postgres in Rust: three dead ends before we passed 100% of the regression suite](https://malisper.me/postgres-in-rust-regression-suite/)（2026-07-16，07-22 更新）、[pgrust passes 100% of the Postgres regression tests](https://malisper.me/pgrust-passes-100-of-postgresqls-regression-tests/)（2026-06-25）、[The four horsemen behind thousands of Postgres outages](https://malisper.me/the-four-horsemen-behind-thousands-of-postgres-outages/)、[Rebuilding Postgres for 300x faster analytics](https://malisper.me/how-we-made-postgres-hundreds-of-times-faster-the-query-engine/)、[JIT Compiling Code in 5μs](https://malisper.me/how-ai-changes-the-economics-of-jit-compilers/)、[pgrust update: at 67% Postgres compatibility](https://malisper.me/pgrust-update-at-67-postgres-compatibility-and-accelerating/)
-- PlanetScale 演讲视频：<https://www.youtube.com/watch?v=7L_nG3EBjck>
+- 作者一手复盘：[pgrust: rebuilding Postgres in Rust with AI](https://malisper.me/pgrust-rebuilding-postgres-in-rust-with-ai/)、[Postgres in Rust: three dead ends before we passed 100% of the regression suite](https://malisper.me/postgres-in-rust-regression-suite/)（2026-07-16，07-22 更新）、[pgrust passes 100% of the Postgres regression tests](https://malisper.me/pgrust-passes-100-of-postgresqls-regression-tests/)（2026-06-25）、[The four horsemen behind thousands of Postgres outages](https://malisper.me/the-four-horsemen-behind-thousands-of-postgres-outages/)、[Rebuilding Postgres for 300x faster analytics](https://malisper.me/how-we-made-postgres-hundreds-of-times-faster-the-query-engine/)、[JIT Compiling Code in 5μs](https://malisper.me/how-ai-changes-the-economics-of-jit-compilers/)、[pgrust update: at 67% Postgres compatibility, and accelerating](https://malisper.me/pgrust-update-at-67-postgres-compatibility-and-accelerating/)
+- PlanetScale 演讲视频：<https://www.youtube.com/watch?v=7L_nG3EBjck>（[讲义](https://drive.google.com/file/d/1_wDk4HPE9-MuiPBo_X-QdJUmFtVV0p8p/view)）
 - 工具：[Kani](https://github.com/model-checking/kani)（Rust 模型检验，底层是 CBMC）、[Antithesis](https://antithesis.com)（确定性模拟测试）
 
 三处显式 unresolved，留给后续复核：46,066 的计量单位（依据文件不在 `main`）；ClickHouse 领先幅度三个值各自的运行条件；根 README 的"约 1000 已证"与 `proofs/README.md` 的"1,086"和台账实测 1,336 之间的换算规则。
 
-维护这份文稿时先做三件事：`git clone --filter=blob:none --no-checkout` 拿最新 `main`，比对 `git ls-tree --name-only HEAD` 与文中列出的顶层清单；重跑 `parallel_schedule` 与 `USER_FACING_FUNCTIONS.tsv` 的计数；再读一遍 `README.md` 的 Status 与 Performance 两节。文中所有"截至 2026-09-19"的判断在以下任一条件下失效：`main` 出现第二个提交（说明公开树回到增量历史）、出现 `docs/conformance/` 目录（46,066 口径可以定案）、或 README 的 badge 版本号不再是 v0.3。
+维护这份文稿时先做三件事：`git clone --filter=blob:none --no-checkout` 拿最新 `main`，比对 `git ls-tree --name-only HEAD` 与文中列出的顶层清单；重跑 `parallel_schedule` 与 `USER_FACING_FUNCTIONS.tsv` 的计数；再读一遍 `README.md` 的 Status 与 Performance 两节。文中所有"截至 2026-10-02"的判断在以下任一条件下失效：`main` 出现第二个提交（说明公开树回到增量历史）、出现 `docs/conformance/` 目录（46,066 口径可以定案）、或 README 的 badge 版本号不再是 v0.3。

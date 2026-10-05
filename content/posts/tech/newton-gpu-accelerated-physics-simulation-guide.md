@@ -1,7 +1,7 @@
 ---
 title: "Newton 拆解：它统一的是 State 数组而不是物理算法，能力表里的空格就是定价"
 date: "2026-04-09T12:35:00+08:00"
-lastmod: "2026-09-20T00:00:00+08:00"
+lastmod: "2026-09-29T00:00:00+08:00"
 slug: "newton-gpu-accelerated-physics-simulation-guide"
 github_repo: "newton-physics/newton"
 source_key: "gh:newton-physics/newton"
@@ -15,7 +15,7 @@ tags: ["GPU加速", "物理仿真", "机器人", "CUDA", "开源项目解读"]
 >
 > **读完后能做什么**：判断一次仿真任务的物理类型有没有 GPU 后端；说清 `--use-mujoco-contacts` 换掉的是哪一段接触计算；解释 `diffsim_*` 为什么清一色用 `SolverSemiImplicit`；把仓库里的 `real_time_factor` 读成「比实时快几倍」而不是「比 CPU 快几倍」；以及哪些场景应该直接用 MuJoCo、Isaac Lab 或者桌面级引擎。
 >
-> **依据**：[newton-physics/newton](https://github.com/newton-physics/newton) `main@4963486`（末次提交 2026-09-18，`pyproject.toml` 版本 `1.7.0.dev0`），最新 release `v1.6.0`（2026-09-10 发布，PyPI 同名包最新即 `1.6.0`，累计 34 个发行版本、仓库共 41 个 tag）。GitHub API（应用程序接口）在 2026-09-20 读到 5,655 stars / 687 forks / 106 位贡献者，仓库创建于 2025-04-22，代码 Apache-2.0、文档 CC-BY-4.0。定位与需求出自 `README.md`；分层与调用顺序出自 `docs/guide/overview.rst`、`docs/guide/installation.rst`；能力边界出自求解器指南 `docs/solvers/index.rst`（索引页）的三张对比表；命令与默认值按 `newton/examples/__init__.py` 逐条对照；示例统计来自 `newton/examples/` 目录本身；性能口径来自 `asv/`；版本策略出自 `docs/guide/compatibility.rst`、`docs/guide/release.rst` 与 `CHANGELOG.md`。
+> **依据**：[newton-physics/newton](https://github.com/newton-physics/newton) `main@4963486`（末次提交 2026-09-18，`pyproject.toml` 版本 `1.7.0.dev0`），最新 release `v1.6.0`（2026-09-10 发布，PyPI 同名包最新即 `1.6.0`，累计 34 个发行版本、仓库共 41 个 tag）。GitHub API（应用程序接口）在 2026-09-29 读到 5,697 stars / 702 forks / 107 位贡献者，仓库创建于 2025-04-22，代码 Apache-2.0、文档 CC-BY-4.0。定位与需求出自 `README.md`；分层与调用顺序出自 `docs/guide/overview.rst`、`docs/guide/installation.rst`；能力边界出自求解器指南 `docs/solvers/index.rst`（索引页）的三张对比表；命令与默认值按 `newton/examples/__init__.py` 逐条对照；示例统计来自 `newton/examples/` 目录本身；性能口径来自 `asv/`；版本策略出自 `docs/guide/compatibility.rst`、`docs/guide/release.rst` 与 `CHANGELOG.md`。
 
 ## 目录
 
@@ -54,7 +54,24 @@ README 里的定义只有一句：
 
 这三层里只有第二层是「物理算法」。第一层是 Newton 真正的公共契约：`State` 上 `body_q`（位置姿态）与 `body_qd`（速度）这些数组，加上 `joint_q` / `joint_qd` 的关节坐标布局，谁都得按它写。第三层与第二层之间还夹着一个可选环节：接触由 Newton 自己的 `CollisionPipeline` 算，还是交回 MuJoCo 的接触管线。这个开关会改变后面每一步的行为，§4 的脚注、§8 的示例代码和 §12 的排查都绕不开它。
 
-`newton/_src/` 下的包结构与这三层对得上：`sim/` 是数据模型层，`solvers/` 是八个后端加一个 `coupled/`，其余 `geometry/`、`sensors/`、`viewer/`、`actuators/`、`controllers/`、`usd/`、`utils/` 分别管几何表示、传感器、可视化、执行器、控制器、USD 读写和工具函数。对外只有 `newton`、`newton.geometry`、`newton.solvers`、`newton.utils` 这些无下划线符号算公共 API，`newton._src.*` 是私有的，官方明确要求文档示例不许 import（`docs/guide/compatibility.rst`）。
+三层职责加上最小数据流，合起来是这样的：
+
+```mermaid
+flowchart TB
+    MB["ModelBuilder<br/>add_urdf / add_mjcf / add_usd"] --> M["Model"]
+    M --> ST["State · Control"]
+    M --> CP["CollisionPipeline"] --> CT["Contacts"]
+    ST --> SOL["solver.step(state_in, state_out, control, contacts, dt)"]
+    CT --> SOL
+    SOL --> G["Featherstone · MuJoCo（广义坐标）"]
+    SOL --> X["XPBD · SemiImplicit · Kamino（最大坐标）"]
+    SOL --> DF["VBD · Style3D · ImplicitMPM（变形体与粒子）"]
+    G --> OBS["newton.sensors · newton.viewer"]
+    X --> OBS
+    DF --> OBS
+```
+
+`newton/_src/` 下的包结构与这三层对得上：`sim/` 是数据模型层，`solvers/` 是八个后端加一个 `coupled/`；`geometry/`、`sensors/`、`viewer/`、`actuators/`、`controllers/`、`usd/`、`utils/` 分别管几何表示、传感器、可视化、执行器、控制器、USD 读写和工具函数。对外只有 `newton`、`newton.geometry`、`newton.solvers`、`newton.utils` 这些无下划线符号算公共 API，`newton._src.*` 是私有的，官方明确要求文档示例不许 import（`docs/guide/compatibility.rst`）。
 
 ## §2 从 warp.sim 接手的是 API 约定，不是代码
 
@@ -139,16 +156,16 @@ for step in range(120):
 
 | 求解器 | 积分 | 刚体 | Articulation | 粒子 | 布料 | 软体 | 可微分 |
 |---|---|---|---|---|---|---|---|
-| `SolverFeatherstone` | 半隐式 | ✅ | ✅ 广义坐标 | ✅ | 🟨 无自碰撞 | ✅ | 🟨 basic¹ |
+| `SolverFeatherstone` | 半隐式 | ✅ | ✅ 广义坐标 | ✅ | 🟨 无自碰撞 | ✅ | 🟨 basic² |
 | `SolverImplicitMPM` | 隐式 | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ |
 | `SolverKamino` | 半隐式（Euler、Moreau-Jean） | ✅ 最大坐标 | ✅ 最大坐标 | ❌ | ❌ | ❌ | ❌ |
-| `SolverMuJoCo` | 显式 / 半隐式 / 速度隐式 | ✅² | ✅ 广义坐标 | ❌ | ❌ | ❌ | ❌ |
-| `SolverSemiImplicit` | 半隐式 | ✅ | ✅ 最大坐标 | ✅ | 🟨 无自碰撞 | ✅ | 🟨 basic¹ |
+| `SolverMuJoCo` | 显式 / 半隐式 / 速度隐式 | ✅¹ | ✅ 广义坐标 | ❌ | ❌ | ❌ | ❌ |
+| `SolverSemiImplicit` | 半隐式 | ✅ | ✅ 最大坐标 | ✅ | 🟨 无自碰撞 | ✅ | 🟨 basic² |
 | `SolverStyle3D` | 隐式 | ❌ | ❌ | ✅ | ✅ | ❌ | ❌ |
 | `SolverVBD` | 隐式 | ✅ | 🟨 limited joint support | ✅ | ✅ | ✅ | ❌ |
 | `SolverXPBD` | 隐式 | ✅ | ✅ 最大坐标 | ✅ | 🟨 无自碰撞 | 🟨 experimental | ❌ |
 
-表里两个上标是文档自带的脚注。¹ `basic` 表示 Newton 带了几个用该求解器跑 diffsim 工作流的示例，细节在 Differentiability 一节。² MuJoCo 默认使用它自己的接触管线，要用 Newton 的 `CollisionPipeline` 得设 `use_mujoco_contacts=False`。
+表里两个上标是文档自带的脚注。¹ MuJoCo 默认用它自己的接触管线，要用 Newton 的 `CollisionPipeline` 得设 `use_mujoco_contacts=False`。² `basic` 表示 Newton 为这几个求解器带了跑 diffsim 工作流的示例，细节在 Differentiability 一节。
 
 文档在表格之前先给了选择顺序：刚体机器人先决定坐标表示，`SolverMuJoCo` 与 `SolverFeatherstone` 用广义坐标，`SolverXPBD`、`SolverSemiImplicit`、`SolverKamino` 用最大坐标；可变形、粒子、可微分再回到这张表筛。表格之后的话更准。真正在操作 articulation（广义或约化坐标下的运动树）的只有 Featherstone 和 MuJoCo 两个，三个最大坐标求解器把关节当作成对刚体之间的约束施加，不建运动树；VBD 只支持一部分关节类型；Style3D 与 ImplicitMPM 完全不支持关节。
 
@@ -252,7 +269,7 @@ solver = newton.solvers.SolverMuJoCo(model)   # 一次 step 推进 1024 个世�
 
 `docs/concepts/` 里有三份调参文档（`simulation_tuning.rst` 加 MuJoCo 与 solvers 两份分册），说明这里有个不显眼的成本：同一套 `ke` / `kd` / `mu` 在不同后端上不是同一个物理量。
 
-还有一处是属性申请制。默认情况下 `State` 上没有派生量；要用刚体加速度（IMU 需要）、执行器力矩这类扩展属性，得在 `finalize()` 之前调 `ModelBuilder.request_state_attributes("body_qdd")`。可选清单在 `State.EXTENDED_ATTRIBUTES`，当前是 `body_qdd`、`body_parent_f`、`mujoco.qfrc_actuator`（`docs/concepts/extended_attributes.rst`）。这条设计的直接后果：`solver.step()` 的签名不用为每个传感器扩张，代价是属性忘了申请时会拿到空数组。
+还有一处是属性申请制。默认情况下 `State` 上没有派生量；要用刚体加速度（IMU 需要）、执行器力矩这类扩展属性，得在 `finalize()` 之前调 `ModelBuilder.request_state_attributes("body_qdd")`。可选清单在 `State.EXTENDED_ATTRIBUTES`，当前是 `body_qdd`、`body_parent_f`、`mujoco:qfrc_actuator`（`docs/concepts/extended_attributes.rst`）。这条设计的直接后果：`solver.step()` 的签名不用为每个传感器扩张，代价是属性忘了申请时会拿到空数组。
 
 ## §7 114 个示例的真实分布与命令行
 
@@ -277,7 +294,7 @@ solver = newton.solvers.SolverMuJoCo(model)   # 一次 step 推进 1024 个世�
 | `softbody` | 2 | 软体悬挂与机械臂交互 |
 | `mujoco` | 1 | MuJoCo Warp 的 sleeping islands |
 
-几个目录名的读法：`vbd` 那 14 个是 `SolverVBD` 的接触回归测试。VBD 全称 Vertex Block Descent。`newton/_src/solvers/vbd/solver_vbd.py` 的类文档给了出处：粒子用 2024 年的 Vertex Block Descent，刚体用 2025 年的 Augmented VBD（AVBD），两篇都发在 ACM Transactions on Graphics。这些示例测的口子往往很窄。`vbd_gripper_soft_grid` 用一个 1×1 软网格，四个角撑在夹爪之外，横跨钳口中点的只剩那一条对角边；旧的逐粒子路径在这条缝里找不到任何顶点，只有打开 `enable_rigid_soft_full_surface_contact` 走水密 soft-EDGE 那一趟才夹得起来。文件注释直接给了对照结果：这个开关关掉，网格滑出、落地。`kamino` 5 个示例直接对应它自己的 BETA 状态。`mujoco` 只剩 1 个，因为 MuJoCo 主线示例散在 `robot/`、`contacts/` 和 `multiphysics/` 里。
+几个目录名的读法：`vbd` 那 14 个是 `SolverVBD` 的接触回归测试。VBD 全称 Vertex Block Descent。`newton/_src/solvers/vbd/solver_vbd.py` 的类文档给了出处：粒子用 2024 年的 Vertex Block Descent，刚体用 2025 年的 Augmented VBD（AVBD），两篇都发在 ACM Transactions on Graphics。刚体现在有两条路径：`rigid_compliant_alm=True` 的 compliant ALM 是推荐档，`rigid_compliant_alm=False` 的 legacy AVBD 已标弃用、会随 legacy 路径一起移除——新代码直接用前者。这些示例测的口子往往很窄。`vbd_gripper_soft_grid` 用一个 1×1 软网格，四个角撑在夹爪之外，横跨钳口中点的只剩那一条对角边；旧的逐粒子路径在这条缝里找不到任何顶点，只有打开 `enable_rigid_soft_full_surface_contact` 走水密 soft-EDGE 那一趟才夹得起来。文件注释直接给了对照结果：这个开关关掉，网格滑出、落地。`kamino` 5 个示例直接对应它自己的 BETA 状态。`mujoco` 只剩 1 个，因为 MuJoCo 主线示例散在 `robot/`、`contacts/` 和 `multiphysics/` 里。
 
 命令行入口的行为按源码是这样的，几处容易想当然的地方一并标出：
 
@@ -288,7 +305,7 @@ python -m newton.examples robot_anymal_d --world-count 16 --viewer gl
 python -m newton.examples <name> --help      # 每个示例自己追加了哪些参数
 ```
 
-`create_parser()` 给出的公共参数与默认值：`--device`（默认 `None`，即交给 Warp）、`--viewer`（默认 `gl`，可选 `gl` / `usd` / `rtx` / `rerun` / `null` / `viser`）、`--output-path`（默认 `output.usd`）、`--num-frames`（默认 `100`）、`--render-fps`、`--headless`、`--test`、`--quiet`、`--paused`、`--benchmark [SECONDS]`、`--warp-config KEY=VALUE`（可重复）、`--realtime`。
+`create_parser()` 给出的公共参数与默认值：`--device`（默认 `None`，即交给 Warp）、`--viewer`（默认 `gl`，可选 `gl` / `usd` / `rtx` / `rerun` / `null` / `viser`）、`--rerun-address`（`--viewer rerun` 时连外部 Rerun 服务器）、`--output-path`（默认 `output.usd`）、`--num-frames`（默认 `100`）、`--render-fps`、`--headless`、`--test`、`--quiet`、`--paused`、`--benchmark [SECONDS]`、`--warp-config KEY=VALUE`（可重复）、`--realtime`。
 
 `--benchmark` 会把 viewer 强制切成 `null` 并提升进程优先级（`init()` 里 `_raise_benchmark_priority`），`--realtime` 再往上进到最激进的调度类。`--test` 会关掉交互式示例浏览器，改跑 `test_post_step` / `test_final`；一个示例若两者都没实现，`--test` 抛 `NotImplementedError`。可选追加的参数由各示例自己挂：`--broad-phase`（`nxn` / `sap` / `explicit`，默认 `explicit`）、`--world-count`（默认 `1`，`robot_anymal_d` 把它设成 `8`）、`--use-mujoco-contacts`（默认 `False`）、`--max-worlds`。
 
@@ -316,7 +333,7 @@ articulation_builder.default_shape_cfg.kf = 1.0e3
 articulation_builder.default_shape_cfg.mu = 0.75
 ```
 
-`register_custom_attributes` 这一行是扩展属性机制在用：告诉 `ModelBuilder`「MuJoCo 后端会需要 `mujoco.qfrc_actuator`」。资产从 `newton.utils.download_asset("anybotics_anymal_d")` 拿到 USD，再 `add_usd(..., collapse_fixed_joints=False, enable_self_collisions=False, hide_collision_shapes=True)`。之后直接写 `joint_q[:3] = [0, 0, 0.68]`、`joint_q[3:7] = [0, 0, 0, 1]`（四元数），给每个 DOF 设 `joint_target_ke=150`、`joint_target_kd=5`、`joint_target_mode=POSITION`——PD 位置控制在建模阶段就把增益写死了。
+`register_custom_attributes` 这一行是扩展属性机制在用：告诉 `ModelBuilder`「MuJoCo 后端会需要 `mujoco:qfrc_actuator`」。资产从 `newton.utils.download_asset("anybotics_anymal_d")` 拿到 USD，再 `add_usd(..., collapse_fixed_joints=False, enable_self_collisions=False, hide_collision_shapes=True)`。之后直接写 `joint_q[:3] = [0, 0, 0.68]`、`joint_q[3:7] = [0, 0, 0, 1]`（四元数），给每个 DOF 设 `joint_target_ke=150`、`joint_target_kd=5`、`joint_target_mode=POSITION`——PD 位置控制在建模阶段就把增益写死了。
 
 世界用第二个 `ModelBuilder` 拼，把模板按世界数装进去：
 
@@ -383,10 +400,10 @@ README、`docs/guide/overview.rst` 和 `docs/faq.rst` 里搜不到 faster、spee
 | extra | 用途 |
 |---|---|
 | `sim` | MuJoCo 仿真依赖（`mujoco-warp~=3.12.0` + `mujoco~=3.12.0`） |
-| `importers` | HTTP 下载与网格处理（`requests`、`scipy`、`trimesh`、`coacd`、`fast-simplification`、`alphashape`、`meshio`、`pycollada`），支撑 `ModelBuilder.approximate_meshes` |
+| `importers` | HTTP 下载与网格处理（`requests`、`scipy`、`trimesh`、`coacd`、`fast-simplification`、`alphashape`、`meshio`、`pycollada`），支撑 `ModelBuilder.approximate_meshes`；USD 读取相关的 `usd-core` / `usd-exchange` / `newton-usd-schemas` 与 `resolve-robotics-uri-py` 也挂在这里 |
 | `remesh` | `pyfqmr` 加 Open3D，给 `newton.utils.remesh_mesh` 用；Open3D 那一条带了标记条件，Python 3.13 与 Linux aarch64 上不会装 |
 | `onnx` | `warp-nn[onnx]==0.3.1`，神经执行器与 RL 策略推理，不需要 PyTorch |
-| `examples` | `sim` + `importers` + `onnx`，再加 `pyglet`（OpenGL 窗口）、`GitPython`（`download_asset()` 拉资产）、`imgui_bundle`（viewer 侧边栏）、`cbor2`（`.bin` 录制格式）。跑示例就装这个 |
+| `examples` | `sim` + `importers` + `onnx`，再加 `pyglet`（OpenGL 窗口）、`GitPython`（`download_asset()` 拉资产）、`imgui_bundle`（viewer 侧边栏）、`cbor2`（`.bin` 录制格式）、`pyyaml` 与 `Pillow`。跑示例就装这个 |
 | `torch-cu12` / `torch-cu13` | CUDA 12.8+ / 13 的 PyTorch 组合，各自带 examples |
 | `notebook` | Jupyter + Rerun，带 examples |
 | `rtx` | OVVRTX 实时光追 viewer（写在 `pyproject.toml`，但没进 installation.rst 的 extras 表，只在 `docs/guide/visualization.rst` 以 `uv sync --extra rtx` 出现） |
@@ -397,7 +414,7 @@ README、`docs/guide/overview.rst` 和 `docs/faq.rst` 里搜不到 faster、spee
 三条容易在选型时才撞到的：
 
 - 支持矩阵里的「经过测试的 GPU」只有 Ada Lovelace 和 Blackwell。Maxwell 是最低门槛，不是被验证过的档位；CI（持续集成）跑在 AWS 的 `g7e.2xlarge` 上。
-- ARM64 Linux 上装 `importers` 需要 GLIBC 2.35+，RHEL 9 的 2.34 不行。Jetson Thor 与 DGX Spark 装 `examples` 需要 X11 开发库。
+- ARM64 Linux 上装 `importers` 需要 GLIBC 2.35+，官方把原因归于 `usd-exchange` 只发 manylinux_2_35 的 ARM64 wheel，RHEL 9 的 2.34 因此装不了；Jetson Thor 与 DGX Spark 装 `examples` 还要 X11 开发库（编译 `imgui_bundle`）。Python 3.10 装 `imgui_bundle` 也可能出问题，官方建议升 Python 或改用 uv。
 - CUDA graph 需要 CUDA 12.3 起，12.4 才是推荐档位。§8 里那个 `capture()` 在无 CUDA 设备上会走 `simulate()` 直调分支。
 
 版本策略是 `major.minor.patch`，预发布形如 `1.1.0.dev0`（main 分支源码里的版本）与 `1.1.0rcN`。`docs/guide/compatibility.rst` 说 RC「通常不发到 PyPI」，但 PyPI 上 `newton` 的实际发行记录里躺着 `1.5.0rc1`、`1.5.0rc2`、`1.5.1rc1` 和 `1.6.0rc1`——政策与执行有出入，别拿这句话当排查依据。弃用组件至少保留一个完整 minor 周期（1.2.0 弃用 → 1.3.0 或更晚移除），破坏性变更只出现在 minor。micro 版本只给最新 minor 线，默认不向后移植。从 `CHANGELOG.md` 看发布节奏相当稳定：1.3.0（2026-06-11）、1.4.0（2026-07-16）、1.5.0（2026-08-11）、1.5.1（08-27）、1.5.2（09-09）、1.6.0（09-10）。

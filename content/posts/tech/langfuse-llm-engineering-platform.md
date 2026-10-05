@@ -1,7 +1,7 @@
 ---
 title: "Langfuse 的真正赌注：一张不做 join 的 observation 表"
 date: "2026-05-29T12:45:00+08:00"
-lastmod: "2026-09-20T00:00:00+08:00"
+lastmod: "2026-09-29T00:00:00+08:00"
 slug: "langfuse-llm-engineering-platform"
 github_repo: "langfuse/langfuse"
 source_key: "gh:langfuse/langfuse"
@@ -44,13 +44,13 @@ tags: ["可观测性", "Langfuse", "ClickHouse", "OpenTelemetry", "AI工程", "�
 
 ## 1. 仓库现状与本文口径
 
-本文所有陈述的核实时间是 2026-09-19 至 09-20，来源只有三类：GitHub 的 API（应用程序接口）与仓库内文件、langfuse.com 的文档与 changelog、以及我自己跑的命令。每个数都标了口径，凡口径不明的地方都直接写「没有公开口径」。
+本文所有陈述的核实时间是 2026-09-19 至 09-20（2026-09-29 复核并刷新了 stars、forks 与最新版本三个读数），来源只有三类：GitHub 的 API（应用程序接口）与仓库内文件、langfuse.com 的文档与 changelog、以及我自己跑的命令。每个数都标了口径，凡口径不明的地方都直接写「没有公开口径」。
 
 | 项 | 当前值 | 口径 |
 | --- | --- | --- |
-| Stars / Forks | 34,811 / 3,808 | GitHub API，2026-09-19 |
+| Stars / Forks | 35,168 / 3,871 | GitHub API，2026-09-29 |
 | 贡献者 | 约 208 | `contributors?per_page=1&anon=true` 的分页末页页号 |
-| 最新版本 | v4.38.0（2026-09-17） | GitHub Releases；同期 v3.225.8 仍在发版 |
+| 最新版本 | v4.46.0（2026-09-25） | GitHub Releases；同期 v3.225.11 仍在发版 |
 | 仓库建立 | 2023-05-18 | API `created_at` |
 | 许可证 | 开源核心 + 商业外围 | 见下 |
 | 归属 | ClickHouse 旗下 | 见下 |
@@ -360,7 +360,7 @@ Code evaluators 是 v4 的一揽子新能力之一，语义很具体：对线上
 
 | 位置 | 断言 | 失效触发 |
 | --- | --- | --- |
-| 第 1 节 | 34,811 stars / 3,808 forks / 约 208 贡献者 / v4.38.0 | 任一项随时间变化；重取只需 GitHub API，口径已写定 |
+| 第 1 节 | 35,168 stars / 3,871 forks / 约 208 贡献者 / v4.46.0 | 任一项随时间变化；重取只需 GitHub API，口径已写定 |
 | 第 1 节 | 核心 MIT、`ee/` 企业许可、版权归 ClickHouse, Inc. | `LICENSE` 或 `ee/LICENSE` 一旦改动需重写本段 |
 | 第 1 节 | 2026-01-16 被 ClickHouse 收购；W23 批次；2023-11-07 种子轮 | 历史事实，不失效；但引用页 URL 若重组需更新 |
 | 第 3 节 | observation 类型列表 | 新增类型（如后续 agent 相关）需补 |
@@ -377,7 +377,7 @@ Code evaluators 是 v4 的一揽子新能力之一，语义很具体：对线上
 
 ## 参考来源
 
-- 仓库与元数据：<https://github.com/langfuse/langfuse>（`main`，GitHub API 2026-09-19）
+- 仓库与元数据：<https://github.com/langfuse/langfuse>（`main`，GitHub API 2026-09-19，读数 2026-09-29 重取）
 - 许可证：`LICENSE`（MIT Expat + `ee/` 例外）、`ee/LICENSE`（open core 声明）
 - README：YC W23 badge、"since January 2026 we're part of ClickHouse"、各能力条目
 - 收购公告：<https://langfuse.com/blog/joining-clickhouse>（2026-01-16）

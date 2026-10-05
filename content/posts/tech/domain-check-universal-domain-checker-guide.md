@@ -1,180 +1,187 @@
-+++
-github_repo = "saidutt46/domain-check"
-source_key = "gh:saidutt46/domain-check"
-date = '2026-04-13T23:51:22+08:00'
-draft = false
-title = 'Domain Check：通用域名可用性检查引擎'
-slug = 'domain-check-universal-domain-checker-guide'
-description = 'Domain Check 是一个通用域名可用性检查引擎，支持 CLI、Rust 库和 MCP 服务器三种使用方式，覆盖 1200+ TLD。本文补充学习目标、目录、自测题、练习、进阶路径和常见问题排查，优化到 100 分。'
-categories = ['技术笔记']
-tags = ['工具', 'CLI', 'Rust', 'MCP']
-+++
-
-# Domain Check：通用域名可用性检查引擎
-
-> **目标读者**：域名投资者、创业团队、需要批量检查域名的开发者
-> **核心问题**：如何快速、准确地检查域名可用性，并集成到自动化工作流？
-> **预计时间**：约 18 分钟
-> **前置知识**：了解 DNS 基础、RDAP/WHOIS 协议、熟悉命令行操作
-
+---
+title: "Domain Check：RDAP 优先的域名可用性检查引擎，CLI、Rust 库与 MCP 服务器共用同一个内核"
+date: "2026-04-13T23:51:22+08:00"
+lastmod: "2026-10-02T00:00:00+08:00"
+slug: "domain-check-universal-domain-checker-guide"
+github_repo: "saidutt46/domain-check"
+source_key: "gh:saidutt46/domain-check"
+description: "Domain Check 是 Rust 编写的域名可用性检查引擎：RDAP 优先、WHOIS 自动回退，IANA bootstrap 开箱覆盖 1,200+ TLD。同一引擎提供 CLI、Rust 库与 MCP 服务器三种形态，本文拆解其双协议机制、11 个预设、配置体系与 v1.0.2 的准确性修复。"
+draft: false
+categories: ["技术笔记"]
+tags: ["工具", "CLI", "Rust", "MCP"]
 ---
 
-## §1 学习目标
+# Domain Check：RDAP 优先的域名可用性检查引擎
 
-完成本文档后，你将能够：
+查一个域名有没有被注册，看起来就是发一次 WHOIS 查询的事，但真要做成可靠的自动化能力，问题立刻变多：新 gTLD 大多没有统一的 WHOIS 格式，`.es`、`.jp` 这类 ccTLD 连 RDAP 端点都缺，批量查询会撞上注册表限流，脚本里解析半结构化的 WHOIS 文本更是常年出错的来源。
 
-- [ ] 理解 Domain Check 的核心定位与解决的问题
-- [ ] 掌握 RDAP 与 WHOIS 双协议引擎的工作原理
-- [ ] 熟练使用 CLI、Rust 库和 MCP 服务器三种方式
-- [ ] 配置 11 种精选预设和自定义 TLD 列表
-- [ ] 将 Domain Check 集成到 CI/CD 和 Agent 工作流
-- [ ] 判断何时使用 MCP 服务器，以及如何与 AI Coding Agent 集成
+[saidutt46/domain-check](https://github.com/saidutt46/domain-check) 的思路是把这件事重新拆一遍：以结构化的 RDAP 为主协议，WHOIS 只做回退；IANA 的 bootstrap 注册表在首次使用时自动加载，让 1,200 多个 TLD 开箱可用；再把同一个检查内核封装成 CLI、Rust 库和 MCP 服务器三种形态。它不是"又一个 whois 命令"，而是一个可以被脚本、Rust 程序和 AI Agent 共用的检查引擎。
 
----
+## 系统地图：一个内核，三个封装
 
-## §2 本文目录
+仓库是一个 Cargo workspace，三个 crate 共享同一套检查逻辑：
 
-- [核心特性](#核心特性)
-- [ performance：100 并发检查](#高性能100-并发检查)
-- [域名生成与模式扩展](#域名生成与模式扩展)
-- [四种输出格式](#四种输出格式)
-- [配置文件与环境变量](#配置文件与环境变量)
-- [CI/自动化友好](#ci自动化友好)
-- [三种使用方式](#三种使用方式)
-- [使用场景](#使用场景)
-- [可靠性说明](#可靠性说明)
-- [项目结构](#项目结构)
-- [常见问题排查](#常见问题排查)
-- [自测题](#自测题)
-- [练习](#练习)
-- [进阶路径](#进阶路径)
+| Crate | 形态 | 适合谁 |
+|---|---|---|
+| `domain-check` | CLI 二进制（约 2.7 MB） | 命令行、shell 脚本、CI |
+| `domain-check-lib` | Rust 库 | 嵌入 Rust 服务的开发者 |
+| `domain-check-mcp` | MCP 服务器（stdio） | Claude Code、Cursor 等 AI Agent |
 
----
+当前版本 v1.0.3（2026-09-28 发布，CLI、库、MCP 三个 crate 同步发版），MIT OR Apache-2.0 双许可，仓库约 308 stars（2026-10-02 读数）。预编译二进制覆盖 Linux（x86_64、musl）、macOS（x86_64、aarch64）和 Windows，MSRV 为 Rust 1.88。
 
-## 核心特性
+先说结论性的判断：这个项目解决的是"域名可用性检查"这一件小事，但把它做成了三层都好用的样子——人在终端用 CLI，服务端嵌库，Agent 走 MCP。如果你的需求只是偶尔查几个域名，系统自带的 `whois` 就够；它值得上场的是批量检查、CI 集成和 Agent 工作流。
 
-**Domain Check** 是一个通用域名可用性检查引擎，支持 CLI、Rust 库和 MCP 服务器三种使用方式。项目地址：[saidutt46/domain-check](https://github.com/saidutt46/domain-check)
+## 检查引擎怎么工作
 
-## 核心特性
+### 双协议：RDAP 优先，WHOIS 回退
 
-### 1,200+ TLDs 开箱即用
+RDAP（RFC 9082）返回结构化 JSON，是 WHOIS 的现代替代协议；WHOIS（RFC 3912）输出是半结构化文本，各注册表格式不一。Domain Check 的策略是 RDAP 优先，失败时自动回退 WHOIS。
 
-IANA 自动引导加载完整注册表，无需任何配置。32 个硬编码 TLD 可在离线环境下作为备用：
+IANA 的 bootstrap 注册表（`dns.json`）记录了每个 TLD 的 RDAP 端点。首次使用时工具会抓取这份文件，加载约 1,180 个 TLD 到端点的映射并缓存 24 小时——这就是"1,200+ TLD 开箱即用"的来源（README 的宣传口径是 1,200+，其中约 1,180 个走 RDAP）。32 个硬编码 TLD 作为离线兜底，`--no-bootstrap` 可以完全关闭联网引导。
+
+对于没有 RDAP 端点的约 189 个 ccTLD（如 `.es`、`.co`、`.eu`、`.jp`），工具通过 IANA 的 referral 机制自动发现权威 WHOIS 服务器再查询。也就是说 `.jp` 这类"难缠"的 TLD 不需要手动配置任何东西。
+
+JSON 结果里的 `method_used` 字段会标明实际走的是哪条路：`rdap`、`whois`、`bootstrap`（经 bootstrap 发现的 RDAP 端点）或 `unknown`（查询失败）。
+
+### v1.0.2 修掉了一个关键的准确性问题
+
+这是本文认为最值得知道的一条版本史。v1.0.2（2026-03-22，Issue #30）之前，RDAP 返回 404 会被直接判定为"域名可用"。但 `.moe` 等注册表会对**已注册**但未设置 NS 委派的域名也返回 404，这造成假阳性——脚本以为捡到宝，其实是误报。
+
+修复后的语义对齐了 RFC 7480 §5.3：
+
+- RDAP 404 视为"不确定"，先向 WHOIS 求证再下结论；
+- 双协议结论从"任一可用即可"改为"RDAP 和 WHOIS **都**独立指示可用才报 AVAILABLE"，单靠 RDAP 404 只报 UNKNOWN；
+- 若用 `--no-whois` 关掉了回退，RDAP 404 会返回 AVAILABLE 并附带警告，而不是静默给出结论。
+
+对写自动化脚本的人，这条修复的含义是：**AVAILABLE 是强结论，UNKNOWN 是"再试一次"的信号**。官方 FAQ 也建议在自动化里把 UNKNOWN 当可重试状态处理，而不是当成不可用。
+
+## CLI：一条命令的主线
+
+安装走 Homebrew（v1.0.3 起已在 homebrew-core，随发布自动更新）或 cargo：
 
 ```bash
-# 检查单个域名
+brew install domain-check
+# 或
+cargo install domain-check
+```
+
+基础用法围绕"一个基础名 + TLD 展开"：
+
+```bash
+# 查单个域名
 domain-check example.com
 
-# 跨多个TLD检查
+# 基础名跨多个 TLD 展开
 domain-check mystartup -t com,org,io,dev
+
+# 用预设查一圈
+domain-check myapp --preset startup --pretty
+
+# 查所有已知 TLD（1,200+，需 bootstrap）
+domain-check brand --all --batch
 ```
 
-### 双协议引擎：RDAP + WHOIS
+基础名自动展开成 `名字.TLD`，完整域名（FQDN）则原样检查不做展开——`domain-check startup test.com -t io` 查的是 `startup.io` 和 `test.com`。
 
-采用 RDAP 优先策略，自动回退到 WHOIS。覆盖约 189 个缺乏 RDAP 支持的 ccTLD（如`.es`、`.co`、`.eu`、`.jp`）：
+### 11 个内置预设
 
-| 协议 | 优先级 | 覆盖率 |
-|------|--------|--------|
-| RDAP | 首选 | ~85% TLDs |
-| WHOIS | 备用 | 覆盖 RDAP 缺失的 ccTLDs |
+预设是挑好的 TLD 组合，`--list-presets` 可查看完整清单：
 
-### 高性能：100 并发检查
+| 预设 | 数量 | TLD |
+|---|---|---|
+| `startup` | 8 | com, org, io, ai, tech, app, dev, xyz |
+| `popular` | 11 | com, net, org, io, ai, app, dev, tech, me, co, xyz |
+| `classic` | 5 | com, net, org, info, biz |
+| `enterprise` | 6 | com, org, net, info, biz, us |
+| `tech` | 12 | io, ai, app, dev, tech, cloud, software, digital, codes, systems, network, solutions |
+| `creative` | 10 | design, art, studio, media, photography, film, music, gallery, graphics, ink |
+| `ecommerce` | 8 | shop, store, market, sale, deals, shopping, buy, bargains |
+| `finance` | 9 | finance, capital, fund, money, investments, insurance, tax, exchange, trading |
+| `web` | 9 | web, site, website, online, blog, page, wiki, host, email |
+| `trendy` | 13 | xyz, online, site, top, icu, fun, space, click, website, life, world, live, today |
+| `country` | 9 | us, uk, de, fr, ca, au, br, in, nl |
 
-最多支持 100 个并发检查，流式输出结果，2.7MB 二进制文件：
+配置文件里定义的自定义预设优先于同名内置预设——想改 `startup` 的含义，直接在配置里定义一个同名预设即可。预设名大小写不敏感。
+
+### 域名生成：模式与前后缀
+
+`--pattern` 支持三种通配符（注意这不是完整正则）：`\d` 展开为 0-9，`\w` 展开为 a-z 加连字符（不出现在首尾），`?` 展开为数字加字母加连字符。`--prefix`/`--suffix` 做前后缀排列，裸名默认包含在组合里。
 
 ```bash
-# 高并发批量检查
-domain-check --file domains.txt --concurrency 100 --streaming
-```
-
-### 域名生成与模式扩展
-
-支持正则模式生成、前缀/后缀组合，dry-run 预览：
-
-```bash
-# 预览生成的域名（不执行检查）
+# 预览 test0.com 到 test9.com（不发任何网络请求）
 domain-check --pattern "app\d" -t com --dry-run
 
-# 带前缀后缀生成
-domain-check myapp --prefix get,try --suffix hub,ly -t com,io
+# get、try 前缀 × hub、ly 后缀 × com、io
+domain-check myapp --prefix get,try --suffix hub,ly -t com,io --dry-run
 ```
 
-## 11 个精选预设
+组合数量容易失控（`\w\w\w -t com` 就是近两万个域名），所以超过 5,000 个域名时交互终端会先请求确认，`--yes` 或 `--force` 跳过，非 TTY 环境（管道、CI）本来就不会提示。
 
-| 预设 | TLDs | 适用场景 |
-|------|------|----------|
-| startup | com, org, io, ai, tech, app, dev, xyz | 科技创业公司 |
-| popular | com, net, org, io, ai, app, dev, tech, me, co, xyz | 通用覆盖 |
-| classic | com, net, org, info, biz | 传统 gTLD |
-| enterprise | com, org, net, info, biz, us | 企业和政府 |
-| tech | io, ai, app, dev, tech, cloud, software +5 | 开发者工具 |
-| creative | design, art, studio, media, photography +5 | 创意和媒体 |
-| ecommerce | shop, store, market, sale, deals +3 | 电商零售 |
-| finance | finance, capital, fund, money, investments +4 | 金融科技 |
-| country | us, uk, de, fr, ca, au, br, in, nl | 国际市场 |
+## 五种输出格式
 
-```bash
-# 使用预设快速检查
-domain-check coolname --preset startup --pretty
+同一个结果有五种出口，按下游需求选：
 
-# 列出所有预设
-domain-check --list-presets
-```
+**默认**——每域名单行，彩色状态，适合终端：
 
-## 四种输出格式
-
-### 1. 默认输出（彩色单行）
-```
+```text
 myapp.com TAKEN
 myapp.io AVAILABLE
 myapp.dev TAKEN
 ```
 
-### 2. Pretty 格式（分组展示）
-```
-domain-check v0.9.1 — Checking 8 domains
+**Pretty（`--pretty`）**——按状态分组，带汇总栏，适合人工审查：
+
+```text
+domain-check v1.0.3 — Checking 8 domains
 Preset: startup | Concurrency: 20
-── Available (3) ──────────────────────────────
-rustcloud.org
-rustcloud.ai
-rustcloud.app
-── Taken (5) ──────────────────────────────────
-rustcloud.com
-rustcloud.io
-...
 
-8 domains in 0.8s | 3 available | 5 taken | 0 unknown
+── Available (3) ──────────────────────────────
+  rustcloud.org
+  rustcloud.ai
+  rustcloud.app
+
+── Taken (5) ──────────────────────────────────
+  rustcloud.com
+  rustcloud.io
+  ...
+
+8 domains in 0.8s  |  3 available  |  5 taken  |  0 unknown
 ```
 
-### 3. JSON 格式（供脚本处理）
+**JSON（`--json`）**——结构化输出，字段以 `types.rs` 的 serde 定义为准：`domain`、`available`（true/false/null 三态）、`method_used`（小写的 `rdap`/`whois`/`bootstrap`/`unknown`）、按需出现的 `check_duration`、`info` 和 `error_message`：
+
 ```json
 [
-  { "domain": "myapp.com", "available": false, "method": "RDAP" },
-  { "domain": "myapp.io", "available": true, "method": "RDAP" }
+  {
+    "domain": "example.com",
+    "available": false,
+    "method_used": "rdap",
+    "check_duration": { "secs": 0, "nanos": 234567890 }
+  }
 ]
 ```
 
-### 4. CSV 格式（导入数据库）
+**CSV（`--csv`）**——表头为 `domain,available,registrar,created,expires,method`，适合导入表格或数据库：
+
 ```csv
-domain,status,method
-myapp.com,TAKEN,RDAP
-myapp.io,AVAILABLE,RDAP
+domain,available,registrar,created,expires,method
+example.com,false,Example Inc.,1995-08-14,2025-08-13,rdap
+startup.org,true,-,-,-,rdap
 ```
 
-### 5. Info 格式（注册信息）
+**Info（`--info`）**——附带注册人、日期与状态码，买域名前的尽调用它：
+
 ```bash
-domain-check target.com --info
-# 输出：
-# myapp.com TAKEN
-# Registrar: Example Registrar, Inc.
-# Created: 2015-03-12
-# Expires: 2026-03-12
-# Status: clientTransferProhibited
+domain-check google.com --info
+# google.com TAKEN (Registrar: MarkMonitor Inc., Created: 1997-09-15, Expires: 2028-09-14)
 ```
 
-## 配置文件与环境变量
+要注意 README 里的 JSON/CSV 示例字段（`method`、`domain,status,method` 表头）已经滞后于源码，写脚本时以 `--json` 的实际输出为准。
 
-### TOML 配置
+## 配置系统：三层来源，一条优先级链
+
+TOML 配置文件的查找顺序是 `./domain-check.toml` → `~/.domain-check.toml` → `~/.config/domain-check/config.toml`：
+
 ```toml
 [defaults]
 concurrency = 25
@@ -189,61 +196,66 @@ my_startup = ["com", "io", "ai", "dev", "app"]
 [generation]
 prefixes = ["get", "my"]
 suffixes = ["hub", "ly"]
+
+[output]
+default_format = "pretty"
+csv_headers = true
 ```
 
-配置查找顺序：`./domain-check.toml` > `~/.domain-check.toml` > `~/.config/domain-check/config.toml`
+所有 CLI 选项几乎都有对应的 `DC_*` 环境变量（完整 14 个：`DC_CONCURRENCY`、`DC_PRESET`、`DC_TLD`、`DC_PRETTY`、`DC_TIMEOUT`、`DC_BOOTSTRAP`、`DC_WHOIS_FALLBACK`、`DC_DETAILED_INFO`、`DC_JSON`、`DC_CSV`、`DC_FILE`、`DC_CONFIG`、`DC_PREFIX`、`DC_SUFFIX`）。两点细节值得知道：`DC_TIMEOUT` 没有对应的 CLI flag——超时只能走配置文件或环境变量；`--pattern` 被刻意排除在配置之外，官方的理由是模式是每次探索性的输入，不适合做成持久默认值。
 
-### 环境变量
-```bash
-DC_CONCURRENCY=50
-DC_PRESET=startup
-DC_TLD=com,io,dev
-DC_PRETTY=true
-DC_TIMEOUT=10s
-DC_PREFIX=get,my
-DC_SUFFIX=hub,ly
-DC_FILE=domains.txt
-```
+生效优先级从高到低：CLI 参数 > 环境变量 > 项目配置 > 用户全局配置 > XDG 配置 > 内置默认。用 `--verbose` 可以看到实际加载了哪份配置文件。
 
-## CI/自动化友好
+## 自动化与 CI
+
+CI 场景的关键是"无提示、可解析、可复现"：
 
 ```bash
-# 非交互式结构化输出
+# 结构化输出
 domain-check --file required-domains.txt --json
 
-# 管道到jq过滤可用域名
+# 管道过滤可用域名
 domain-check --pattern "app\d" -t com --yes --json \
   | jq '.[] | select(.available==true)'
 
-# 大批量无提示运行
+# 大批量：高并发 + 流式 + 无提示
 domain-check --file huge-list.txt --all --force --yes --csv > results.csv
 ```
 
-**CI 友好特性：**
-- `--yes`/`--force` 跳过所有确认提示
-- 非 TTY 环境自动不弹出提示
-- `spinner`输出到 stderr，stdout 保持干净
+行为保证来自四条设计：`--yes`/`--force` 跳过一切确认；非 TTY 环境永不提示；进度 spinner 走 stderr，stdout 只留干净的结果数据；`--no-bootstrap` 可以关掉联网引导，让检查只针对 32 个硬编码 TLD，行为完全确定。
 
-## 三种使用方式
+并发默认 20，上限 100（`-c/--concurrency`）。大批量建议配合 `--streaming`（结果完成一个输出一个）或 `--batch`（收集完统一输出，spinner 等待），前者要实时反馈，后者要稳定排序。
 
-### 1. CLI (domain-check)
+## MCP 服务器：给 AI Agent 用的同一引擎
 
 ```bash
-# 安装
-brew install domain-check
-# 或
-cargo install domain-check
+cargo install domain-check-mcp
 
-# 基础用法
-domain-check example.com
-domain-check myapp --preset startup --pretty
+# 接入 Claude Code
+claude mcp add domain-check -- domain-check-mcp
 ```
 
-### 2. Rust 库 (domain-check-lib)
+接入后直接用自然语言问 Agent："Is coolstartup.com available?" 或 "Check mybrand across the startup preset"。官方验证过的客户端覆盖 Claude Code、Claude Desktop、VS Code Copilot、Cursor、Windsurf、JetBrains、OpenAI Codex CLI 与 Gemini CLI，任何支持 stdio 的 MCP 客户端都能接。
+
+6 个工具全部只读、幂等，错误以工具内容（而非协议错误）返回，Agent 能读到错误信息并自行调整：
+
+| 工具 | 作用 | 关键参数 |
+|---|---|---|
+| `check_domain` | 查单个完整域名 | `domain`（必填） |
+| `check_domains` | 并发批量查询 | `domains`（必填）、`concurrency`（默认 20，批上限 500） |
+| `check_with_preset` | 基础名按预设查一圈 | `base_name`、`preset`（均必填） |
+| `generate_names` | 按模式/前后缀生成候选 | `pattern`、`base_names`、`prefixes`/`suffixes`、`tlds` |
+| `list_presets` | 列出预设与完整 TLD 清单 | 无 |
+| `domain_info` | 注册人、日期、域名服务器、状态码 | `domain`（必填） |
+
+安全上限：批量最多 500 个域名，模式生成最多 100,000 个名字。调试用 `RUST_LOG=domain_check_mcp=debug`（日志走 stderr，stdout 留给 JSON-RPC），或用 MCP Inspector 交互测试：`npx @modelcontextprotocol/inspector domain-check-mcp`。GitHub release 还附带 `.mcpb` 安装包并自动发布到官方 MCP Registry。
+
+## Rust 库：直接嵌进服务
 
 ```toml
 [dependencies]
-domain-check-lib = "1.0.2"
+domain-check-lib = "1.0.3"
+tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
 ```
 
 ```rust
@@ -253,284 +265,81 @@ use domain_check_lib::DomainChecker;
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let checker = DomainChecker::new();
     let result = checker.check_domain("example.com").await?;
-    println!("{} -> {:?}", result.domain, result.available);
+
+    match result.available {
+        Some(true) => println!("{} is AVAILABLE", result.domain),
+        Some(false) => println!("{} is TAKEN", result.domain),
+        None => println!("{} status is UNKNOWN", result.domain),
+    }
+
     Ok(())
 }
 ```
 
-### 3. MCP 服务器 (domain-check-mcp)
+`available` 是 `Option<bool>`——`None` 就是 UNKNOWN，类型系统逼你处理三态，这对自动化代码是好事。批量走 `check_domains(&domains)`，流式走 `check_domains_stream(&domains)`（`futures_util::Stream`），配置通过 `CheckConfig::default().with_concurrency(20).with_detailed_info(true)` 注入。纯异步 Rust（tokio + reqwest），没有 OpenSSL 依赖，交叉编译省心。
 
-为 AI Coding Agent 提供域名检查工具，支持 Claude Code、Codex、Cursor、VS Code Copilot 等：
+## 任务流：一次创业命名的完整路径
 
-```bash
-# 安装
-cargo install domain-check-mcp
-
-# 添加到Claude Code
-claude mcp add domain-check -- domain-check-mcp
-```
-
-**6 个可用工具：**
-- `check_domain` - 检查单个域名
-- `check_domains` - 批量检查
-- `check_with_preset` - 使用预设检查
-- `generate_names` - 生成域名
-- `list_presets` - 列出所有预设
-- `domain_info` - 获取域名详细信息
-
-```
-"Is coolstartup.com available?"
-"Check mybrand across the startup preset"
-```
-
-## 使用场景
-
-### 创业公司命名
-```bash
-domain-check coolname --preset startup --pretty
-```
-
-### 品牌保护审计
-```bash
-domain-check mybrand --all --json > audit.json
-```
-
-### 购买前验证
-```bash
-domain-check target.com --info
-```
-
-### 批量流水线
-```bash
-domain-check --file ideas.txt --preset tech --csv > results.csv
-```
-
-## 可靠性说明
-
-域名状态依赖网络和注册表响应。临时错误可能导致`UNKNOWN`状态。
-
-- WHOIS 输出标准化程度不如 RDAP，解析质量因注册表而异
-- 建议 CI 工作流中使用明确标志固定行为：`--batch`、`--json`、`--no-bootstrap`、`--concurrency`
-
-## 项目结构
-
-```
-domain-check/
-├── .github/workflows/     # GitHub Actions
-├── assets/               # 资源文件
-├── docs/                 # 详细文档
-├── domain-check-lib/     # Rust库
-├── domain-check-mcp/     # MCP服务器
-├── domain-check/         # CLI主程序
-└── scripts/              # 工具脚本
-```
-
-## 小结
-
-Domain Check 的几个要点：
-
-| 特性 | 说明 |
-|------|------|
-| 覆盖率 | 1200+ TLDs，RDAP+WHOIS 双协议 |
-| 性能 | 100 并发，流式输出，2.7MB 二进制 |
-| 灵活性 | 预设+自定义，4 种输出格式 |
-| AI 原生 | MCP 服务器支持主流 AI Coding Agent |
-| 可靠性 | 离线备用 32 TLD，CI 友好 |
-
-手动命名研究、品牌保护审计、自动化流水线，Domain Check 都能覆盖。
-
----
-
-## §3 常见问题排查
-
-### 问题 1：检查结果出现 UNKNOWN 状态
-
-**原因**：网络临时错误，或 WHOIS 输出解析失败。
-
-**解决方法**：
+把上面的能力串成一个真实场景——为新产品 `rustcloud` 找名字：
 
 ```bash
-# 1. 增加超时时间
-domain-check example.com --timeout 15s
+# 1. 用生成模式扩展候选：rustcloud、getrustcloud、rustcloudhub……
+domain-check rustcloud --prefix get,try --suffix hub,app -t com,io,dev --dry-run
 
-# 2. 强制使用 RDAP（如果目标 TLD 支持）
-domain-check example.com --force-rdap
+# 2. 数量确认后真查（非交互可加 --yes），按 startup 预设的核心 TLD 查
+domain-check rustcloud --prefix get,try --suffix hub,app -t com,io,dev --yes --json
 
-# 3. 检查网络连接
-curl -I https://data.iana.org/rdap/
+# 3. 对可用候选查注册详情，确认不是"即将到期捡漏"的陷阱
+domain-check getrustcloud.io --info
 
-# 4. 对于 CI 环境，使用 --batch 模式减少不确定性
-domain-check --file domains.txt --batch --json
+# 4. 团队评审用的 CSV 报表
+domain-check rustcloud --preset startup --csv > name-options.csv
 ```
 
----
+第三步是容易省略但最不该省的一步：`--info` 的到期日期能区分"从未注册"和"上一次注册即将到期"，两者的抢注风险完全不同。
 
-### 问题 2：MCP 服务器无法连接
+品牌保护审计是同一套动作的另一个方向：`domain-check mybrand --all --batch --json > audit.json` 对全部 1,200+ TLD 做一遍扫描，放进 cron 定期跑，新出现的抢注会直接体现在 JSON diff 里。
 
-**原因**：AI Coding Agent 未正确配置 MCP 服务器，或 `domain-check-mcp` 未安装。
+## 可靠性边界
 
-**解决方法**：
+三类限制要在设计工作流时心里有数：
 
-```bash
-# 1. 确认 domain-check-mcp 已安装
-which domain-check-mcp
+- **UNKNOWN 是常态的一部分**。超时、临时网络故障、注册表响应异常都会产生 UNKNOWN。v1.0.2 之后协议语义趋于保守（存疑即 UNKNOWN），官方 FAQ 明确建议自动化里把 UNKNOWN 当可重试信号。
+- **WHOIS 回退的质量因注册表而异**。RDAP 结构化解析可靠，WHOIS 文本解析是尽力而为；`~189` 个无 RDAP 的 ccTLD 主要走这条路，结果可信度低于 RDAP 路径。重要决策前对照注册局官方查询复核。
+- **检查结果不等于可注册**。可用性是查询时刻的快照，注册局保留、溢价、商标争议都不在检查范围内；`--info` 的注册人信息能辅助判断，但不能替代注册流程本身。
 
-# 2. 如果没有，安装它
-cargo install domain-check-mcp
+协议级调试有专门开关：`--debug` 显示发现步骤与耗时，`DOMAIN_CHECK_DEBUG_RDAP=1` 环境变量输出 RDAP 请求细节（v1.0.2 起协议调试信息只走这个环境变量，`--debug` 不含）。
 
-# 3. 添加到 Claude Code
-claude mcp add domain-check -- domain-check-mcp
+## 常见问题排查
 
-# 4. 验证 MCP 工具是否可用
-claude --mcp-list
-```
+**结果大量 UNKNOWN**：先用 `--debug` 看卡在哪个协议；批量场景调大超时（`DC_TIMEOUT=15s` 或配置文件 `[defaults] timeout`）并降低并发；CI 里固定行为用 `--batch --json --yes`。注意没有 `--force-rdap` 这样的 flag——协议控制只有 `--no-whois`（关回退）和 `--no-bootstrap`（关引导）两个开关。
 
----
+**MCP 服务器连不上**：`which domain-check-mcp` 确认在 PATH 里；不在就 `cargo install domain-check-mcp` 重装；配置后用 MCP Inspector（`npx @modelcontextprotocol/inspector domain-check-mcp`）手动走一遍 initialize → tools/list，能列出 6 个工具说明服务本身正常，问题在客户端配置。
 
-### 问题 3：批量检查速度慢
+**批量检查慢**：先看并发是不是默认值 20（`-c 100` 拉满）；`--streaming` 让结果边查边出；用 `--preset` 或 `-t` 收窄 TLD 范围比全量 `--all` 快一个量级；超过 5,000 条的列表记得 `--yes`，否则交互终端会卡在确认提示。
 
-**原因**：并发数过低，或 TLD 列表过大。
+**自定义预设没生效**：确认配置文件在三个查找位置之一，`--list-presets` 看预设是否被加载；预设名大小写不敏感，但同名自定义预设会覆盖内置预设——如果 `--preset startup` 的结果和预期不符，先检查是不是配置里定义过同名预设。
 
-**解决方法**：
+## 采用建议
 
-```bash
-# 1. 增加并发数（最高 100）
-domain-check --file domains.txt --concurrency 100
+按需求从轻到重：
 
-# 2. 使用流式输出，实时查看结果
-domain-check --file domains.txt --streaming
+1. **偶尔查几个域名**：直接 `brew install domain-check`，预设加 `--pretty` 就够，不需要配置文件。
+2. **批量命名/品牌审计**：生成模式 + `--file` + JSON/CSV 输出，写进 cron 或 CI；把 UNKNOWN 按可重试处理。
+3. **产品里嵌域名检查**（注册引导页、SaaS 租户自定义域名）：用 `domain-check-lib`，三态返回值天然适配服务端逻辑。
+4. **AI Agent 工作流**：MCP 服务器一条命令接入，只读工具没有副作用风险，适合让 Agent 自主调用。
 
-# 3. 使用预设限制 TLD 范围
-domain-check mybrand --preset startup
+反之，如果你的场景是域名投资级的精确判断（竞价、续费、法律状态），任何基于 RDAP/WHOIS 的检查工具都只是初步过滤，最终都要落到注册局官方查询——这不是 Domain Check 的短板，是这类工具共同的边界。
 
-# 4. 对于超大列表，分批处理
-split -l 1000 huge-list.txt batch_
-for f in batch_*; do
-  domain-check --file $f --json >> results.json
-done
-```
-
----
-
-### 问题 4：自定义预设不生效
-
-**原因**：配置文件路径错误，或 TLD 格式不正确。
-
-**解决方法**：
-
-```bash
-# 1. 检查配置文件位置和格式
-cat ~/.domain-check.toml
-
-# 2. 确认自定义预设格式正确
-[custom_presets]
-my_startup = ["com", "io", "ai", "dev", "app"]
-
-# 3. 使用 --list-presets 验证预设是否加载
-domain-check --list-presets
-
-# 4. 使用自定义预设
-domain-check mybrand --preset my_startup
-```
-
----
-
-## §4 自测题
-
-可以先用 5 个问题检验自己是否已经吃透 Domain Check：
-
-1. **Domain Check 的双协议引擎（RDAP + WHOIS）如何工作？为什么 RDAP 是首选？**
-2. **11 种精选预设分别适合什么场景？如何创建自定义预设？**
-3. **MCP 服务器如何与 AI Coding Agent 集成？支持哪些工具？**
-4. **如何在 CI/CD 工作流中使用 Domain Check？需要注意什么？**
-5. **Domain Check 的四种输出格式分别适合什么场景？**
-
-**参考答案**：
-
-1. RDAP 是现代标准协议，覆盖约 85% 的 TLDs；WHOIS 作为备用，覆盖 RDAP 缺失的 ccTLDs（如 `.es`、`.co`）。RDAP 优先是因为它返回结构化 JSON，解析更可靠。
-2. `startup` 适合科技创业公司；`popular` 通用覆盖；`tech` 适合开发者工具；等等。自定义预设在 `domain-check.toml` 的 `[custom_presets]` 部分配置。
-3. 安装 `domain-check-mcp`，然后添加到 AI Coding Agent（如 Claude Code）。支持 6 个工具：`check_domain`、`check_domains`、`check_with_preset`、`generate_names`、`list_presets`、`domain_info`。
-4. 使用 `--yes`/`--force` 跳过确认提示，使用 `--json` 输出结构化结果，使用 `--batch` 固定行为。适合在域名注册工作流中自动检查可用性。
-5. 默认输出适合终端查看；`--pretty` 适合人工审查；`--json` 适合脚本处理；`--csv` 适合导入数据库；`--info` 适合查看注册信息。
-
----
-
-## §5 练习
-
-### 练习 1：基础检查实战
-
-使用 Domain Check 检查你的梦想域名在 `startup` 预设中的所有 TLD 可用性，并使用 `--pretty` 格式查看结果。
-
-**目标**：掌握 CLI 基础用法和预设使用。
-
-### 练习 2：批量检查脚本
-
-编写一个 Bash 脚本，从 `ideas.txt` 文件读取 100 个候选域名，使用 Domain Check 批量检查它们在 `tech` 预设中的可用性，并将可用域名保存到 `available.txt`。
-
-**目标**：掌握批量检查和结果处理。
-
-### 练习 3：MCP 服务器集成
-
-将 Domain Check MCP 服务器添加到 Claude Code，然后让 Claude Code 帮你检查 `mycoolstartup` 在 `startup` 预设中的可用性，并解释结果。
-
-**目标**：掌握 MCP 服务器与 AI Coding Agent 的集成。
-
-### 练习 4：CI/CD 集成
-
-在你的 GitHub Actions 工作流中集成 Domain Check，每次 PR 包含新域名时自动检查可用性，并将结果评论到 PR 中。
-
-**目标**：掌握 CI/CD 集成和自动化工作流。
-
-### 练习 5：自定义预设和配置
-
-创建自定义预设 `my_brand`，包含 5 个你最喜欢的 TLD。配置 `~/.domain-check.toml`，设置默认并发数为 50，默认使用 `my_brand` 预设。
-
-**目标**：掌握配置文件和自定义预设的使用。
-
----
-
-## §6 进阶路径
-
-### 6.1 基础阶段（第 1-2 天）
-
-- [ ] 安装 Domain Check 并验证基础功能
-- [ ] 掌握 11 种精选预设的适用场景
-- [ ] 完成练习 1 和练习 2
-- [ ] 配置 `~/.domain-check.toml`
-
----
-
-### 6.2 进阶阶段（第 3-5 天）
-
-- [ ] 集成 Domain Check MCP 服务器到 AI Coding Agent
-- [ ] 掌握四种输出格式的使用场景
-- [ ] 完成练习 3 和练习 4
-- [ ] 学习 RDAP 和 WHOIS 协议原理
-
----
-
-### 6.3 高级阶段（第 6-10 天）
-
-- [ ] 研究 Domain Check 源码（Rust 实现）
-- [ ] 贡献代码到上游（提交 PR）
-- [ ] 开发自定义 TLD 列表或预设
-- [ ] 在企业域名管理工作流中推广 Domain Check 最佳实践
-
----
-
-## §7 相关资源
+## 相关资源
 
 | 资源 | 链接 |
-|------|------|
-| **GitHub** | [github.com/saidutt46/domain-check](https://github.com/saidutt46/domain-check) |
-| **MCP 服务器** | [github.com/saidutt46/domain-check/tree/main/domain-check-mcp](https://github.com/saidutt46/domain-check/tree/main/domain-check-mcp) |
-| **Rust 库** | [github.com/saidutt46/domain-check/tree/main/domain-check-lib](https://github.com/saidutt46/domain-check/tree/main/domain-check-lib) |
-| **RDAP 协议** | [IETF RFC 9082](https://www.rfc-editor.org/rfc/rfc9082.html) |
-| **WHOIS 协议** | [IETF RFC 3912](https://www.rfc-editor.org/rfc/rfc3912.html) |
-
----
-
-**文档信息**
-
-类型：完全指南 | 更新日期：2026-04-13 | 难度：⭐⭐ | 预计阅读时间：18 分钟
-
+|---|---|
+| GitHub 仓库 | [github.com/saidutt46/domain-check](https://github.com/saidutt46/domain-check) |
+| CLI 完整参考 | [docs/CLI.md](https://github.com/saidutt46/domain-check/blob/main/docs/CLI.md) |
+| 自动化指南 | [docs/AUTOMATION.md](https://github.com/saidutt46/domain-check/blob/main/docs/AUTOMATION.md) |
+| FAQ | [docs/FAQ.md](https://github.com/saidutt46/domain-check/blob/main/docs/FAQ.md) |
+| MCP 服务器 | [domain-check-mcp/README.md](https://github.com/saidutt46/domain-check/blob/main/domain-check-mcp/README.md) |
+| Rust 库文档 | [docs.rs/domain-check-lib](https://docs.rs/domain-check-lib) |
+| RDAP 协议 | [IETF RFC 9082](https://www.rfc-editor.org/rfc/rfc9082.html) |
+| WHOIS 协议 | [IETF RFC 3912](https://www.rfc-editor.org/rfc/rfc3912.html) |

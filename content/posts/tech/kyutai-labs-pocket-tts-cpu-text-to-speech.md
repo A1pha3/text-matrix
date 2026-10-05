@@ -1,162 +1,188 @@
 ---
 title: "kyutai-labs/pocket-tts：把 100M 参数 TTS 装进 CPU 口袋"
 date: 2026-07-10T02:58:08+08:00
+lastmod: 2026-09-30
 slug: "kyutai-labs-pocket-tts-cpu-text-to-speech"
 github_repo: "kyutai-labs/pocket-tts"
 source_key: "gh:kyutai-labs/pocket-tts"
 tags: ["TTS", "PyTorch", "CPU 推理", "开源模型"]
 categories: ["技术笔记"]
-description: "拆解 Kyutai Pocket TTS 的核心机制——一个 100M 参数、纯 CPU 推理、首块延迟 ~200ms 的开源 TTS 框架，及其多语言、流式、声音克隆能力。"
+description: "拆解 Kyutai Pocket TTS：100M 参数、纯 CPU 推理、首块延迟约 200ms 的开源 TTS。技术路线来自 Continuous Audio Language Models 论文——放弃离散音频 token，用连续 VAE 帧换低算力下的高音质。本文核对安装、CLI、Python API、HTTP 服务与声音克隆的真实用法。"
 ---
 
-## 核心判断
+大多数"轻量 TTS"只做到了轻量：要么砍掉声音克隆，要么砍掉流式输出。Pocket TTS 的价值在于它把这几样通常要 GPU 才凑齐的能力——流式、零样本克隆、六种语言——同时压进了一个 100M 参数、两个 CPU 核就能跑的模型里。它来自 Kyutai（Moshi 背后的巴黎研究实验室），技术底子是他们的 CALM 论文：不做离散音频 token，直接生成连续帧。如果你正在为"本地、离线、不上云"的语音合成选型，这个项目值得读完本文再决定。
 
-Pocket TTS 不是“又一个开源 TTS”。它的赌注很明确：**让 TTS 回归本地、CPU、零网关**。100M 参数、首块 ~200ms、6× 实时率（M4 MacBook Air）、支持英语/法语/德语/葡萄牙语/意大利语/西班牙语、声音克隆、Python API + CLI + HTTP 服务三入口——这些数字合起来，对标的是商业 TTS API（ElevenLabs、Azure TTS、Google Cloud TTS），但**完全跑在用户的 CPU 上**。它的工程价值在于：把流式自回归 TTS 模型裁剪到了消费级笔记本能撑住的水位。
+本文所有事实以 2026-09-30 的仓库 main 分支、官方文档站与 arXiv 论文为准，仓库读数（star 数等）为当日 GitHub API 快照。
 
-## 基本盘
+## 仓库速览
 
-- GitHub：<https://github.com/kyutai-labs/pocket-tts>
-- 仓库描述：A TTS that fits in your CPU (and pocket)
-- 模型大小：100M 参数
-- 平台：CPU（PyTorch 2.5+，无需 GPU 版本 PyTorch）
-- Python：3.10 / 3.11 / 3.12 / 3.13 / 3.14
-- 训练机构：Kyutai（法国 Moshi 团队）
-- 配套产物：Demo、HF Model Card、技术报告、论文（arXiv 2509.06926）
-
-## 关键能力指标（README 自报）
-
-| 维度 | 数值 |
+| 项 | 值 |
 |---|---|
-| 模型大小 | 100M 参数 |
-| 首块延迟 | ~200ms |
-| 实时率 | ~6× 实时率（MacBook Air M4 CPU） |
-| CPU 占用 | 仅 2 核 |
-| 输入 | 文本流（无限长度，无切片需要） |
-| 多语言 | 英、法、德、葡、意、西 |
-| 声音克隆 | 支持，提供 voice 列表可调 |
-| 部署形态 | Python API + CLI + HTTP serve + 浏览器 WASM |
+| 仓库 | [kyutai-labs/pocket-tts](https://github.com/kyutai-labs/pocket-tts) |
+| 一句话 | A TTS that fits in your CPU (and pocket) |
+| 许可证 | MIT |
+| 语言 | Python（PyTorch 2.5+，无需 GPU 版；Python 3.10–3.14） |
+| 热度 | 9,694 star / 1,019 fork（2026-09-30 读数） |
+| 配套 | [论文](https://arxiv.org/abs/2509.06926)、[技术报告](https://kyutai.org/blog/2026-01-13-pocket-tts)、[Demo 页](https://kyutai.org/pocket-tts)、[文档站](https://kyutai-labs.github.io/pocket-tts/)、[HF 模型卡](https://huggingface.co/kyutai/pocket-tts) |
 
-## 系统地图
+README 自报的核心指标（也是本文反复引用的口径）：100M 参数；首块音频延迟约 200ms；MacBook Air M4 的 CPU 上约 6 倍实时；只占 2 个 CPU 核；支持无限长文本输入，不需要切片。声音克隆开箱即用。语言支持英语、法语、德语、葡萄牙语、意大利语、西班牙语六种，README 同时说明"后续可能增加更多语言"——实际上 CLI 的 `--language` 枚举里已经出现了荷兰语模型，只是尚未写进主打清单。
 
-Pocket TTS 的运行链路（结合其论文 + README 推断）：
+## 系统地图：连续帧，不是离散 token
 
-```
+理解这个项目的关键，是搞清它的生成方式和主流"audio LM"不同。原论文（arXiv 2509.06926《Continuous Audio Language Models》）的出发点是：常见做法把音频压成离散 codec token（如 Mimi、EnCodec 的 token 流），压缩有损，想要更高音质就得生成更多 token，算力成本随之上去了。CALM 换了一条路：
+
+```text
 文本输入
-    ↓
-[Tokenizer] SentencePiece / 自研 BPE
-    ↓
-[声学模型] ~100M 参数 Transformer（推测 Mimi codec + 文本条件）
-    ↓
-[Mimi Audio Token] → 离散 token 流
-    ↓
-[Codec 解码器] 流式生成 wav 帧
-    ↓
-输出 PCM（流式，可边生成边播）
+  ↓
+LUTConditioner        文本条件器（源码 pocket_tts/modules/text_conditioner.py）
+  ↓
+StreamingTransformer  100M 参数骨干，每个时间步产出上下文向量
+  ↓
+SimpleMLPAdaLN        生成头：由上下文向量条件化，直接回归 audio VAE 的下一帧（连续值）
+  ↓
+帧序列（每帧 80ms）
+  ↓
+Mimi 解码器           源码 models/mimi.py，把连续帧还原成音频
+  ↓
+PCM 流式输出
 ```
 
-几个关键设计信号：
+论文摘要对中间两步的原话是：模型实例化一个大型 Transformer 骨干，在每个时间步产生上下文嵌入；这些序列信息再条件化一个 MLP，通过一致性建模（consistency modeling）生成 audio VAE 的下一个连续帧。因为绕开了有损的离散化，CALM 在更低算力下拿到了比离散方案更高的保真度——这就是 100M 参数敢对标大模型的底气。
 
-1. **自回归 + 流式**：模型是自回归的，但通过流式 codec 解码保证首块延迟 ~200ms
-2. **音频 token 化**：复用 Kyutai 团队在 Moshi 里打磨过的 Mimi audio codec，所以模型可以用“文本 token + 音频 token”统一表征
-3. **CPU 优化**：核心解码路径用纯 PyTorch + 极少自定义 C++/CUDA 算子，所以 CPU 是首选目标
-4. **声音克隆**：voice 文件就是一个预录制的参考 wav + 文本 pair，推理时拼接
+生成头支持三种解码器（源码 `pocket_tts/models/flow_lm.py`），日常使用只需知道一个参数：
+
+- **LSD**（Lagrangian Self Distillation，默认）：1 步解码即出结果，对应 CLI 的 `--sampler-decode-steps`，默认 1，调到 5 可换更高音质；
+- **drifting**：单步、无条件时间的解码头，官方 2026-09 放出的 `english_drifting_26-09` 模型用的就是它；
+- **OT flow matching**：最优传输条件流的 Euler 积分，默认 16 步，研究用途为主。
+
+仓库里还有一个意味深长的文件：`modules/dummy_quantizer.py`。一个"占位量化器"恰恰说明离散量化在这条管线里是被绕开的环节，而非核心。
+
+声音克隆的机制也顺着这条线：给一段参考音频，模型先算出这段声音对应的 KV cache（官方叫 voice state），之后的合成都在这个状态上进行。`export-voice` 命令做的就是把 voice state 存成 safetensors 文件——加载它只是读盘，几乎不花时间；而每次从原始音频现算状态要慢得多。
 
 ## 三种使用方式
 
-### 1. CLI 一键试
+### CLI：一行命令出声音
 
 ```bash
 uvx pocket-tts generate
-# 或装到环境后
+# 或装好之后：
 pocket-tts generate
 ```
 
-默认会读内置默认文本 + 默认 voice，输出 `./tts_output.wav`，并打印速度统计。
-
-### 2. Python API
-
-```python
-from pocket_tts import generate_audio
-
-# 加载默认英文模型
-audio = generate_audio(text="Hello world.", voice="alba")
-# audio 是 numpy 数组，可直接写到 wav
-```
-
-### 3. HTTP 服务
+不带参数时，它用默认文本和默认音色生成 `./tts_output.wav`，并打印速度统计。常用的调整项：
 
 ```bash
-pocket-tts serve --port 8080
-# 然后
-curl -X POST http://localhost:8080/tts -d '{"text":"...","voice":"giovanni"}' --output out.wav
+pocket-tts generate \
+  --text "你好，这是一段测试。" \
+  --voice alba \
+  --language english
 ```
 
-这一层让“本地 TTS 服务 + 任何客户端”成为可能，消除了对 ElevenLabs 那种托管 API 的依赖。
+- `--voice` 接受内置音色名（`alba`、`giovanni`、`estelle` 等 26 个，完整清单在 README），也直接接受一个 wav 文件路径、一个 safetensors 文件、`https://` 或 `hf://` 地址——传 wav 就是即时克隆。
+- `--language` 选语言模型，默认 `english`。各非英语语言另有 24 层的大号变体（如 `italian_24l`），README 的说法是音质更高但更慢，文档站则标注它们"尚未蒸馏、仅作预览"。
+- 质量与采样参数：`--temperature`（默认 0.3）、`--sampler-decode-steps`（默认 1）、`--eos-threshold`（默认 -4.0）等；文本传 `-` 可从 stdin 读入。
 
-### 4. 浏览器 WASM
+### Python 库：TTSModel 类
 
-README 提到支持 in-browser 实现，配合 Pyodide + ONNX export 或原生 WASM build，等于把 TTS 部署到静态网站都不需要后端。
+README 给的最小示例原样如下——注意入口是 `TTSModel` 类，先取 voice state 再生成：
 
-## 任务流案例：构建一个不依赖云端的播客配音工具
+```python
+from pocket_tts import TTSModel
+import scipy.io.wavfile
 
-1. **安装**：`pip install pocket-tts`（或 `uvx pocket-tts ...`）
-2. **克隆主播声音**：准备一段 30 秒参考 wav，用 `pocket-tts export-voice --ref-wav xxx.wav --name myhost` 导出一个 voice
-3. **批处理**：写一个 50 行的 Python 脚本，按段落读 txt，调用 `generate_audio` 流式合成 wav
-4. **拼接**：用 `pydub` 或 `ffmpeg` 把 wav 拼起来，加静音
-5. **发布**：整套链路完全本地，文本不离开机器
+tts_model = TTSModel.load_model()
+voice_state = tts_model.get_state_for_audio_prompt(
+    "alba"  # 内置音色名，也可以是本地音频路径或 hf:// 地址
+)
+audio = tts_model.generate_audio(voice_state, "Hello world, this is a test.")
+# audio 是一维 torch tensor，内容为 PCM 数据
+scipy.io.wavfile.write("output.wav", tts_model.sample_rate, audio.numpy())
+```
 
-整个流程对标商用 ElevenLabs 的“Professional Voice Cloning”，但没有云端账单、没有隐私顾虑、没有 monthly quota 限制。
+`load_model()` 和 `get_state_for_audio_prompt()` 都比较慢，官方建议把它们的结果常驻内存；多个音色可以各持一份 voice state 并存。要做快速加载，用 `export_model_state` 把 voice state 存成 safetensors，之后读取接近零开销。
 
-## 与相似项目的对比
+### HTTP 服务：serve 命令
 
-| 项目 | 大小 | 平台 | 多语言 | 声音克隆 | 流式 |
-|---|---|---|---|---|---|
-| Pocket TTS | 100M | CPU | 6 种 | ✅ | ✅ ~200ms 首块 |
-| Coqui XTTSv2 | ~1.5B | GPU 优先 | 16 种 | ✅ | ❌（整段合成） |
-| Kokoro | 82M | CPU | 8 种 | ❌（固定 voice 列表） | ❌ |
-| MeloTTS | ~250M | CPU/GPU | 6 种 | ❌ | ❌ |
-| CosyVoice | ~300M | GPU | 中/英/日 | ✅ | ✅ |
-| ChatTTS | ~1B | GPU | 中/英 | 部分 | ✅ |
-| Piper | ~60M | CPU | 多 | 部分 | ❌ |
+```bash
+pocket-tts serve
+```
 
-Pocket TTS 在这张表里的位置是：**与 Piper 同档的轻量级 + 与 Kokoro 一样的 CPU 友好 + 与 XTTS/CosyVoice 一样的流式和声音克隆**。它的差异化是“参数小 + CPU + 流式 + 克隆”四个维度同时达成。
+这会起一个 FastAPI 服务，默认监听 `localhost:8000`，模型常驻内存，网页界面直接打开就能用，比每次冷启动的 CLI 快。程序化调用走 `POST /tts`，请求体是**表单字段**而非 JSON（源码 `main.py` 的端点定义如此）：
 
-## 适用边界
+```bash
+curl -X POST http://localhost:8000/tts \
+  -F "text=Hello, this is a test." \
+  -F "voice_url=alba" \
+  --output out.wav
+```
 
-适合：
+`voice_url` 可填内置音色名、`https://` 或 `hf://` 地址；要上传音频文件做克隆则用 `voice_wav` 字段（与 `voice_url` 互斥）。服务端参数里值得一提的是 `--default-voice`（替换默认音色，启动时即加载，配置错了服务直接起不来，而不是等到第一个请求才失败）和 `--quantize`（int8 量化，降内存提速度，官方称音质影响极小）。
 
-- 想做**离线 / 本地 TTS** 的产品（隐私、零云端账单）
-- 终端用户机器 CPU 够用、不想推用户装 GPU
-- 需要流式首块延迟的场景（对话式语音助手、字幕配音）
-- 多语言产品想用一个模型覆盖欧洲主流语言
+### 浏览器与替代运行时：社区驱动
 
-不适合：
+官网 [kyutai.org/pocket-tts](https://kyutai.org/pocket-tts) 可以不装任何东西直接在浏览器里试用。想自己部署到浏览器端，README 明确说**官方尚不支持**，列出的都是社区实现：Rust 移植（XN 与 Candle 两个版本）、ONNX 导出配 ONNX Runtime Web、以及 jax-js 版本。替代运行时同样活跃：MLX 后端针对 Apple Silicon，sherpa-onnx 把它带上了树莓派、Jetson 等嵌入式板子并绑定 12 种编程语言，还有单文件 C++ 运行时和 Android 端 LiteRT 图（Pixel 8a 上约 1 倍实时）。选这些意味着离开主仓库的支持范围，但也说明模型本身足够小、足够好移植。上层生态也已有雏形：README 的"Projects using Pocket TTS"列了 18 个项目，从 ComfyUI 与 Unity 插件、Home Assistant 的 Wyoming 容器、OpenAI 兼容 API 服务器，到免装 Python 的原生 macOS 应用。
 
-- 需要**情感控制、韵律细节、歌声合成**等高表现力场景（100M 模型的天花板）
-- 需要**SSML 精细控制**（重音、停顿、whisper 等）——目前 voice + text 是主接口
-- 想要企业级 SLA 保障（开源项目没有 SLA，参考论文 + 自行 benchmark）
+## 任务流案例：一条完全本地的播客配音流水线
 
-## 关键技术观察
+假设目标是把一份文稿转成固定主播音色的播客音频，全程不出本机：
 
-1. **CPU 优化关键**：Mimi codec 解码是用 SIMD 友好的实现，单核 6× 实时率意味着可以一边合成一边播放，不需要 buffer 等待
-2. **多语言统一**：6 种语言共享同一套声学模型，只是 tokenizer 不同——训练时多语料混合
-3. **声音克隆方法**：从 README 看是“reference wav + 文本”的 in-context learning 风格，而不是 fine-tuning 风格，所以克隆过程无需训练
-4. **无限长文本**：依赖流式 codec 解码的“自回归 + 缓存”机制，不强制分块
+1. **安装**。Linux 上注意：PyPI 默认拉的是 CUDA 版 PyTorch，torch 2.13 下大约多装 3GB 的 NVIDIA 运行库。CPU 环境应该用
+   ```bash
+   pip install pocket-tts --extra-index-url https://download.pytorch.org/whl/cpu
+   ```
+   macOS 和 Windows 的默认 wheel 本来就是 CPU 版，无此问题。
+2. **定音色**。录一段清晰的主播音频，先做降噪清洁——官方特别提醒样本的音质会被一并复现——然后导出成可快速加载的格式：
+   ```bash
+   pocket-tts export-voice host_sample.wav host.safetensors
+   ```
+   只处理前 30 秒，对本用途足够。
+3. **逐段合成**。Python 里加载一次模型和 `host.safetensors`，按段落循环调用 `generate_audio`，把返回的 tensor 逐段写盘。每帧 80ms、首块约 200ms 的流式特性意味着段落级边合成边播放也可行。
+4. **拼接发布**。用 ffmpeg 把各段 wav 连接、补静音、贴片头，输出成片。
 
-## 学习路径建议
+有一个限制要提前知道：目前不支持在文本里插入标记来控制停顿（官方列为待实现，见 issue #6），段落间的呼吸感只能靠拼接阶段的静音处理。
 
-1. **第 1 天**：`pip install pocket-tts` → `pocket-tts generate` → 听 wav
-2. **第 2 天**：用 Python API 写一个 30 行批量合成脚本，对比你自己的中文模型
-3. **第 4 天**：`pocket-tts serve` 起本地服务，做一个简单的 Web UI
-4. **第 7 天**：录制一段自己的声音，做 voice 克隆，验证质量
-5. **第 14 天**：读 Mimi codec 论文（同期 Moshi 论文），理解 audio tokenization 的设计选择
+## 与同类项目的定位对照
+
+原版这类对比表常在参数量上互相打架，这里只保留各方官方来源能直接证实的信息：
+
+| 项目 | 官方口径要点 | 克隆 | 流式 |
+|---|---|---|---|
+| Pocket TTS | 100M 参数，2 核 CPU 约 6 倍实时（M4），6 种语言，MIT | 零样本，参考音频即用 | 音频流式，首块约 200ms |
+| Kokoro-82M | 82M 参数（模型卡原话），Apache-2.0，HF 下载量千万级 | 无（固定音色库） | — |
+| XTTS-v2 | 17 种语言，6 秒音频克隆；CPML 许可（限制商用） | 零样本 | — |
+| MeloTTS | 官方自述"CPU real-time inference"，中英日韩法西 | 无 | — |
+| CosyVoice（Fun-CosyVoice 3.0） | 0.5B 模型，9 语言 + 18 种以上中文方言，指令控制 | 零样本 | 双向流式，官方称延迟低至 150ms |
+| Piper | 轻量本地 TTS；仓库已归档，停止维护 | 无 | — |
+
+表中"—"表示该项目官方文档未以流式为卖点宣传，不代表技术上做不到。两个容易读歪的地方：其一，CosyVoice 那个 150ms 和 Pocket TTS 的 200ms 不可直接比——前者是服务端 GPU 部署的流式延迟口径，后者是笔记本 CPU 的口径，部署前提差了一个数量级的算力；其二，"流式"本身的含义也不完全对齐，Pocket TTS 是模型原生的逐帧音频流，部分项目的"流式"指分句送入管线。选型时值得按自己的部署环境重算这笔账，而不是单看某个数字。
+
+## 性能口径与运行边界
+
+README 的 ~200ms/6 倍实时/2 核是官方自报，测机是 MacBook Air M4。GPU 部分，README 有一段实测数据很诚实：在单核性能强的机器（如 Apple Silicon）上，因为 batch size 为 1 且模型极小，上 GPU 没有观测到加速；但在 4 vCPU 的 x86 云主机配 Tesla T4 的组合上，GPU 带来约 2.6 倍一致加速（实时率从 CPU 的约 2.3–2.5 倍提到 GPU 的约 6.28 倍）。结论：GPU 值不值得上，完全取决于你的 CPU 有多弱。
+
+几个实操边界：
+
+- `--device` 选项只在 `generate` 命令上提供，`serve` 和 Docker 镜像固定跑 CPU；
+- int8 量化（`--quantize`）只能在 CPU 上用，挪到 CUDA 会抛 `NotImplementedError`；
+- 驱动与 CUDA 版本不匹配时 `torch.cuda.is_available()` 会静默返回 `False`，只有一条 UserWarning，不报错；
+- 2026 年 8 月项目发布了训练代码（`training/` 目录），社区已经用它训练出捷克语、印地语、韩语、波斯语、印尼语、爱沙尼亚语、威尔士语、波兰语八种语言的模型，通过 `--config hf://...` 直接加载。注意预置音色是随官方权重预计算的，社区模型用不了，此时 `--voice` 会回退到 alba 的原始音频文件。
+
+## 适用边界与采用建议
+
+**适合先上**：产品要离线/本地合成、对隐私或云成本敏感；用户侧是普通笔记本 CPU；需要欧洲主要语言加即时克隆；对话式场景吃首块延迟。
+
+**有一条合规红线要转述给所有商用读者**：README 的 Prohibited use 一节明确禁止未经明确合法同意的声音模拟或克隆，以及用生成内容冒充真实人物的录音。声音克隆工具的这类条款不是走过场，接入产品前应该把它写进自己的用户协议。
+
+**建议观望或绕行**：需要中文——官方六种语言不含中文，README 列出的八个社区模型里也没有中文，这个场景应看 CosyVoice 或 MeloTTS；需要 SSML 级的韵律控制、情感标签或歌声合成，100M 模型和当前接口都覆盖不了；需要停顿控制，得自己在拼接层做；生产环境要长期稳定供货，注意 Piper 归档的前车之鉴——小团队项目有维护风险，好在 MIT 许可和活跃的社区移植留了退路。
+
+**上手路径**：先在官网 Demo 听音质是否达标，再 `uvx pocket-tts generate` 本机验证速度，然后决定是 pip 装库还是 serve 起服务；对训练定制语言模型有兴趣，直接看 `training/` 的官方配方。
 
 ## 参考
 
-- 仓库：<https://github.com/kyutai-labs/pocket-tts>
-- 论文：<https://arxiv.org/abs/2509.06926>
+- 仓库：<https://github.com/kyutai-labs/pocket-tts>（本文口径：main 分支，2026-09-30）
+- 论文：Continuous Audio Language Models，<https://arxiv.org/abs/2509.06926>
 - 技术报告：<https://kyutai.org/blog/2026-01-13-pocket-tts>
-- Hugging Face Model：<https://huggingface.co/kyutai/pocket-tts>
-- Voice 列表：<https://huggingface.co/kyutai/tts-voices>
+- 文档站（generate / serve / export-voice 命令参考）：<https://kyutai-labs.github.io/pocket-tts/>
+- HF 模型卡：<https://huggingface.co/kyutai/pocket-tts>；音色库：<https://huggingface.co/kyutai/tts-voices>
 - Demo：<https://kyutai.org/pocket-tts>
-- 配套 Moshi 项目：<https://github.com/kyutai-labs/moshi>
+- 姊妹项目 Moshi：<https://github.com/kyutai-labs/moshi>

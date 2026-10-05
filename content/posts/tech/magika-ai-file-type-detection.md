@@ -1,702 +1,197 @@
 ---
-title: "Magika：Google 开源的 AI 文件类型检测方案"
+title: "Magika 解读：Google 用几 MB 的专用模型替代 50 年的 magic bytes"
 date: "2026-04-16T01:15:00+08:00"
+lastmod: "2026-10-01T12:00:00+08:00"
 slug: "magika-ai-file-type-detection"
 github_repo: "google/magika"
 source_key: "gh:google/magika"
-description: "Magika是Google开源的AI驱动文件类型检测工具，13.5K Stars，在100M样本上训练达到99%准确率，推理仅5ms/文件。支持200+文件类型(Git/JSON/Python/JS等)，已被VirusTotal和abuse.ch集成。"
+description: "Magika 是 Google 开源的文件内容类型检测工具：一个几 MB 的专用深度学习模型，200+ 内容类型约 99% 平均精确率/召回率，单文件毫秒级推理，Gmail、Drive、Safe Browsing 每周数千亿样本在用。本文拆解其输入切分、双层标签与按类型阈值机制，并给出 CLI 与 Python API 的采用建议。"
 draft: false
 categories: ["技术笔记"]
 tags: ["深度学习", "安全", "Google", "Python", "Rust", "开源"]
 ---
 
-# Magika：Google 开源的 AI 文件类型检测方案
+# Magika 解读：Google 用几 MB 的专用模型替代 50 年的 magic bytes
 
-> **目标读者**：安全工程师、后端开发者、文件系统维护者、AI 研究者
-> **预计阅读时间**：40-55 分钟
-> **前置知识**：Python 基础、了解机器学习分类任务、对文件类型有基本认识
-> **难度定位**：⭐⭐⭐⭐ 专家设计
+文件类型识别这活儿，`file` 命令背后的 libmagic 已经干了五十多年：拿文件开头几个字节去查魔数表。这套体系对 PNG、PDF 这类二进制格式一直够用，但在 text 文件上基本失灵——Python 脚本、JSON、YAML 的开头就是普通字符，没有魔数可查，把恶意脚本改个 `.jpg` 扩展名就能绕过大多数检查。
 
----
+Magika 是 Google 对这个问题的解法：把文件类型识别当成一个分类任务，用一个几 MB 的专用深度学习模型（当前默认 standard_v3_3，ONNX 格式 3.2 MB）替代魔数表。官方口径是约 1 亿样本、200+ 内容类型上训练，测试集平均精确率/召回率约 99%，模型加载后单文件推理约 5 毫秒（单 CPU）。它不是实验室项目——Gmail、Drive、Safe Browsing 用它把文件路由到对应的安全与内容策略扫描器，每周处理数千亿样本。
 
-## §1 本文覆盖内容
+2024 年 2 月开源，Apache-2.0 协议，截至 2026-10-01 有 18,687 个 star。仓库挂在 google 组织下，但 README 明确写着"这不是一个官方 Google 项目，不受 Google 支持"——评估依赖时值得知道这一句。
 
-1. **Magika 的核心原理**：为何深度学习比传统 magic bytes 更适合文件类型检测
-2. **200+ 文件类型的检测能力**：覆盖 binary 和 text 格式
-3. **CLI 和 Python API 用法**：批量检测、递归扫描、JSON 输出
-4. **预测分数和阈值机制**：high-confidence、medium-confidence、best-guess 模式
-5. **集成到自己的项目**：Python/JavaScript/Go/Rust 多语言绑定
-6. **生产级部署**：Google 内部的规模化应用经验
+## 三层交付：CLI、绑定和那个 3 MB 的模型
 
----
+Magika 的交付物分三层，先分清谁在哪个层，后面的机制才不会混：
 
-## §2 背景与动机：为何需要 Magika
+| 层 | 形态 | 状态 |
+| --- | --- | --- |
+| 命令行工具 | Rust 写的 `magika` 二进制 | 已发布 1.x，`brew install magika`、`cargo install magika-cli`，或经 Python 包转发 |
+| 语言绑定 | Python（PyPI `magika`）、JS/TS（npm `magika`）、Go（WIP） | Python 已稳定，npm 包官方标注实验性 |
+| 模型核心 | ONNX 模型 + 各自的推理引擎 | Rust 核心用自带的 tract-runtime 分支，Python 1.x 用 onnxruntime |
 
-### 2.1 传统文件类型检测的局限
+一个容易搞错的点：`pipx install magika` 装的 Python 包在 v1.x 里也自带 `magika` 命令，但那是个转发层——平台 wheel 里带 Rust 二进制时直接执行，纯 Python wheel 上退化为 click 写的 Python 版客户端（源码注释自称 fallback）。两种装法拿到的命令行选项不完全一样，后面细说。
 
-传统文件类型检测有两种主要方法：
+## 为什么 magic bytes 体系在 text 文件上失灵
 
-**方法一：扩展名检测**
-```
-example.pdf → "PDF文件"
-example.py → "Python文件"
-```
-问题：扩展名可以随意修改，无法信任。
+魔数检测的逻辑是"看开头几个字节像不像已知格式"：`\x89PNG` 开头是 PNG，`\xff\xd8` 开头是 JPEG。二进制格式的魔数是规范强制的，所以准。
 
-**方法二：Magic Bytes 检测**
-```
-\x89PNG\r\n\x1a\n → PNG 图片
-\xffd8ffe → JPEG 图片
-```
-问题：对于 text 文件（Python/JavaScript/JSON 等），magic bytes 检测效果很差，因为这些文件开头通常是普通字符。
+text 文件没有这个待遇。下面三种文件在字节层面都是 ASCII，魔数表无从下手：
 
-### 2.2 Text 文件检测的痛点
-
-Text 文件在文件开头通常没有独特的二进制签名：
-
-```python
-# Python 文件
-def hello():
-    print("world")
-
-# JavaScript 文件
-function greet() {
-    console.log("hi");
-}
-
-# JSON 文件
-{"name": "value"}
-
-# 扩展名被改后都长得一样：
-# script.txt vs script.py vs script.js
+```text
+def hello():          # Python
+{"name": "value"}     # JSON
+function greet() {}   # JavaScript
 ```
 
-传统基于 magic bytes 的工具在这些情况下几乎无法区分。
+于是扩展名成了唯一线索，而扩展名恰恰是最容易伪造的东西。Google 在官宣博文里的表述是：内部换用 Magika 后，对比被替换的旧手工规则系统准确率提升 50%，在 100 万文件、100+ 类型的基准上比现有工具好约 20%，文本类文件提升最明显。这些是 Google 自报的内部数字，论文发表在 ICSE 2025（Fratantonio 等 12 人），想追细节可以读论文 PDF。
 
-### 2.3 Magika 的解决方案
+不用大模型的原因很实际：Magika 要嵌入 Gmail 的附件扫描管线，每周数千亿样本意味着每一毫秒和每一 MB 内存都要算账。专用小模型在这个任务上反而更准——通用大模型没在这个数据分布上专门训过。这是个"小而专打败大而全"的典型场景。
 
-Magika 使用**深度学习**来检测文件类型，核心思路：
+## 一次检测的完整路径
 
-1. **不是检测文件开头**，而是分析文件的**整体内容模式**
-2. **不是查表**，而是让模型**学习每种文件类型的特征**
-3. **不是固定规则**，而是**自适应**的统计模型
+用一个具体文件走一遍：攻击者把一个 Python 脚本改名为 `invoice.jpg` 上传。
 
-**结果**：在 text 文件类型检测上，准确率从传统方法的 60-70% 提升到 ~99%。
+**第一步，切字节。** Magika 不读整个文件。以当前默认模型 standard_v3_3 为例，Python 包内置的模型配置写死了输入切分：取文件开头 1024 字节和结尾 1024 字节（中段不读，`mid_size=0`），这决定了它的推理时间与文件大小基本无关——50 MB 的文件和 5 KB 的文件耗时几乎一样。
 
-### 2.4 项目概览
+**第二步，特判。** 有些输入轮不到模型：空文件直接返回 `empty`；目录返回 `directory`；不开符号链接跟随（`--no-dereference`）时符号链接返回 `symlink`；小于 8 字节的文件（`min_file_size_for_dl=8`）用简单启发式判定为 `txt` 或 `unknown`。官网文档把这些归为"模型内部标签设为 undefined"的情形——Python API 里对应 `MagikaResult` 的 `dl` 与 `output` 双层标签，此时 `dl` 是 `undefined`。
 
-| 属性 | 值 |
-|------|------|
-| **Stars** | 13,574 ⭐ |
-| **组织** | Google |
-| **语言** | Python (核心) + Rust (CLI) + JavaScript/TypeScript + Go |
-| **许可证** | Apache 2.0 |
-| **创建时间** | 2023-08-22 |
-| **官网** | https://securityresearch.google/magika/ |
+**第三步，模型推理。** 开头结尾两段字节提特征后送入 ONNX 模型，输出在 215 个类型上的概率分布（模型原始输出空间，其中 `randombytes`/`randomtxt`/`undefined` 三个训练用标签不会对外出现）；工具层的可能输出是 216 项——模型的 212 个有效标签，加上 `empty`/`directory`/`symlink`/`unknown` 四个非模型判定。`invoice.jpg` 的两段字节全是 Python 语法，模型给出 `python` 标签、置信度 0.99。
 
-### 2.5 Google 内部规模应用
+**第四步，按类型阈值裁决。** 模型分数高不等于直接采纳。Magika 为每个内容类型单独设阈值——PDF 的预测置信度天然常年 99% 以上，一个 80% 的 PDF 预测就可疑；而 JavaScript 的预测经常就在 80% 出入，80% 反而很可靠。所以阈值不搞全局一刀切，而是随模型一起发布、在大验证集上调优。`python` 的分数过了阈值，最终输出就是 `python`；若没过，则降级为泛型标签——文本给 `txt`，二进制给 `unknown`。
 
-Magika 在 Google 内部大规模使用：
+这就是为什么结果对象里同时有 `dl` 和 `output` 两层：`dl` 是模型原始预测，`output` 是阈值裁决后的最终输出，二者不一致时 `overwrite_reason` 会说明覆盖原因。想看被覆盖的原始判断，CLI 的 `--format` 占位符里有个专门的 `%b`（model output if overruled）。
 
-| 产品 | 用途 | 规模 |
-|------|------|------|
-| **Gmail** | 附件类型检测 | 每周千亿级文件 |
-| **Google Drive** | 文件类型识别 | 百万级用户 |
-| **Safe Browsing** | 恶意文件检测 | 亿级 URL 检测 |
+## 分数怎么用：三种预测模式
 
----
+容忍度可以调。Magika 提供三种预测模式：
 
-## §3 核心原理：深度学习如何检测文件类型
+| 模式 | 行为 | 适用 |
+| --- | --- | --- |
+| `high-confidence` | 精确率优先，分数不过阈值就给泛型标签 | 上传过滤、安全场景，宁可误伤不可放过 |
+| `medium-confidence` | 介于两者之间 | 一般用途 |
+| `best-guess` | 无视分数直接返回模型最优预测 | 已知类型集合内的批量整理，召回优先 |
 
-### 3.1 模型架构
+默认是 `high-confidence`——这是从源码核实的：Python API 的 `Magika.__init__` 与 Python 版 CLI 的 `--prediction-mode` 都默认 `HIGH_CONFIDENCE`（官方预测模式文档页只列了三种模式，没写默认值）。另有一个容易踩的坑：Rust 版 CLI 压根不暴露预测模式选项（v1.1.0 的选项表里没有），想在命令行换 `best-guess` 只能用 Python 包的 fallback 客户端（`-m/--prediction-mode`，另有 `--batch-size`）或直接走 Python API。
 
-Magika 使用一个**轻量级的深度学习模型**：
+## CLI 与 Python API 实操
 
-| 特性 | 值 |
-|------|------|
-| **模型大小** | ~1 MB |
-| **推理时间** | ~5ms/文件（单 CPU） |
-| **训练数据** | ~100M 文件样本 |
-| **支持类型** | 200+ content types |
-
-**架构推测**（基于公开信息）：
-- 很可能是基于 Transformer 或 CNN 的序列分类模型
-- 输入：文件内容的 tokenized representation
-- 输出：200+ 类别上的概率分布
-
-### 3.2 为什么不使用 LLM 或大模型？
-
-Magika 特意选择**小型专用模型**而非通用大模型：
-
-| 对比维度 | Magika | 通用大模型 |
-|----------|--------|------------|
-| **模型大小** | ~1 MB | 数百 MB 到 GB |
-| **推理速度** | 5ms | 数百 ms 到秒 |
-| **资源消耗** | 极低 | 高 |
-| **专用准确率** | ~99% | 较低（通用任务） |
-| **部署难度** | 简单 | 复杂 |
-
-### 3.3 为什么不使用文件扩展名？
-
-Magika **完全忽略文件扩展名**，仅基于内容检测：
-
-```python
-# 扩展名 vs 内容
-"malware.exe" (扩展名是 .exe)
-→ 内容是 Python 脚本 → Magika 识别为: python
-
-"document.pdf" (扩展名是 .pdf)
-→ 内容是文本 → Magika 识别为: generic text
-```
-
-这使得 Magika 能够：
-- **检测伪装文件**：恶意软件常伪装扩展名
-- **纠正错误扩展名**：用户可能搞混 .py/.pyi/.pyw
-- **无信任输入**：在任何场景下都可靠
-
-### 3.4 训练数据与评估
-
-**训练数据集**：
-- ~100M 文件样本
-- 涵盖 200+ 文件类型
-- 二进制格式（PNG/JPEG/PDF）和文本格式（Python/JS/JSON）混合
-
-**测试集性能**：
-- **Average Precision & Recall**: ~99%
-- **Text 类型检测**：大幅领先传统方法
-- **Binary 类型检测**：保持高准确率
-
----
-
-## §4 核心功能详解
-
-### 4.1 支持的文件类型
-
-Magika 支持 200+ 文件类型，主要分类：
-
-**代码类（Code）**：
-
-| 类型 | Label | MIME Type | 扩展名 |
-|------|-------|-----------|--------|
-| Python | `python` | text/x-python | .py, .pyi |
-| JavaScript | `javascript` | text/javascript | .js, .mjs |
-| TypeScript | `typescript` | text/typescript | .ts, .tsx |
-| C | `c` | text/x-c | .c, .h |
-| C++ | `cpp` | text/x-c++ | .cpp, .hpp |
-| Java | `java` | text/x-java | .java |
-| Rust | `rust` | text/x-rust | .rs |
-| Go | `go` | text/x-go | .go |
-| Ruby | `ruby` | text/x-ruby | .rb |
-| PHP | `php` | text/x-php | .php |
-| HTML | `html` | text/html | .html, .htm |
-| CSS | `css` | text/css | .css |
-| SQL | `sql` | text/x-sql | .sql |
-| Shell/Bash | `shell` | text/x-shellscript | .sh, .bash |
-
-**配置文件类（Config）**：
-
-| 类型 | Label | 扩展名 |
-|------|-------|--------|
-| JSON | `json` | .json |
-| YAML | `yaml` | .yml, .yaml |
-| XML | `xml` | .xml |
-| TOML | `toml` | .toml |
-| INI | `ini` | .ini |
-| Dockerfile | `dockerfile` | Dockerfile |
-| Git Config | `git config` | .git/config |
-
-**文档类（Document）**：
-
-| 类型 | Label | MIME Type |
-|------|-------|-----------|
-| PDF | `pdf` | application/pdf |
-| Microsoft Word | `docx` | application/vnd.openxmlformats-officedocument.wordprocessingml.document |
-| Markdown | `markdown` | text/markdown |
-| Plain Text | `text` | text/plain |
-
-**二进制类（Binary）**：
-
-| 类型 | Label | MIME Type |
-|------|-------|-----------|
-| PNG | `png` | image/png |
-| JPEG | `jpeg` | image/jpeg |
-| GIF | `gif` | image/gif |
-| ELF | `elf` | application/x-elf |
-| PE/EXE | `pe` | application/x-executable |
-| SQLite | `sqlite` | application/vnd.sqlite3 |
-
-### 4.2 CLI 核心用法
-
-**基本检测**：
+安装五条路（README 原文照录，均验活可用）：
 
 ```bash
-# 检测单个文件
-magika ./script.py
-
-# 检测多个文件
-magika file1.py file2.js file3.json
-
-# 从标准输入读取
-cat script.py | magika -
-```
-
-**递归扫描**：
-
-```bash
-# 递归检测目录
-magika -r ./my_project/
-
-# 不跟随符号链接
-magika -r --no-dereference ./my_project/
-```
-
-**输出格式**：
-
-```bash
-# JSON 输出
-magika ./script.py --json
-
-# JSONL 输出（适合批量处理）
-magika -r ./files/ --jsonl > results.jsonl
-
-# 仅输出标签
-magika ./script.py --label
-# 输出: python
-
-# 仅输出 MIME 类型
-magika ./script.py --mime-type
-# 输出: text/x-python
-
-# 输出预测分数
-magika ./script.py --output-score
-# 输出: Python source (score: 0.997)
-```
-
-**自定义格式**：
-
-```bash
-# 使用占位符自定义输出
-magika ./script.py --format "%l: %d (score: %S%)"
-
-# 支持的占位符：
-# %p - 文件路径
-# %l - 标签 (python)
-# %d - 描述 (Python source)
-# %g - 分组 (code)
-# %m - MIME type
-# %e - 扩展名
-# %s - 分数 (小数)
-# %S - 分数 (百分比)
-# %% - 字面 %
-```
-
-### 4.3 Python API
-
-**基础用法**：
-
-```python
-from magika import Magika
-
-# 初始化（模型加载，一次性开销）
-m = Magika()
-
-# 检测字节内容
-res = m.identify_bytes(b'function log(msg) {console.log(msg);}')
-print(res.output.label)  # javascript
-
-# 检测文件路径
-res = m.identify_path('./config.json')
-print(res.output.label)  # json
-
-# 检测流（大型文件推荐）
-with open('./large_file.py', 'rb') as f:
-    res = m.identify_stream(f)
-print(res.output.label)  # python
-```
-
-**获取详细信息**：
-
-```python
-res = m.identify_path('./script.py')
-
-# 获取所有信息
-info = res.output
-print(info.label)       # python
-print(info.description)  # Python source
-print(info.mime_type)    # text/x-python
-print(info.extensions)   # ['py', 'pyi']
-print(info.group)        # code
-print(info.is_text)      # True
-
-# 获取预测分数
-print(res.score)  # 0.996999979019165
-```
-
-**批量检测**：
-
-```python
-from pathlib import Path
-
-# 批量检测多个文件
-files = [
-    './script.py',
-    './config.json',
-    './data.csv',
-    './image.png'
-]
-
-for file_path in files:
-    res = m.identify_path(file_path)
-    print(f"{file_path}: {res.output.label}")
-```
-
-### 4.4 预测分数与阈值机制
-
-Magika 使用**per-content-type threshold 系统**：
-
-**三种预测模式**：
-
-| 模式 | 描述 | 适用场景 |
-|------|------|----------|
-| `high-confidence` | 只返回高置信度预测，否则返回 `unknown` | 安全关键场景，宁缺毋滥 |
-| `medium-confidence` | 中等置信度，允许一定不确定性 | 一般用途（默认） |
-| `best-guess` | 总是返回最可能的预测 | 性能优先、已知类型 |
-
-**分数解释**：
-
-```python
-res = m.identify_path('./script.py')
-print(res.score)  # 0.997
-
-# 分数 > 阈值 → 返回具体类型
-# 分数 < 阈值 → 返回泛型标签
-#   - "Generic text document"
-#   - "Unknown binary data"
-```
-
-### 4.5 与其他工具的集成
-
-**VirusTotal 集成**：
-Magika 已被 VirusTotal 采用，用于增强文件类型识别能力。VirusTotal 分析可疑文件时会返回 Magika 的检测结果。
-
-**abuse.ch 集成**：
-恶意软件追踪平台 abuse.ch 也集成了 Magika，用于准确识别恶意文件的真实类型。
-
----
-
-## §5 技术架构深度解析
-
-### 5.1 多语言架构
-
-Magika 提供多种语言的绑定：
-
-```
-┌─────────────────────────────────────────┐
-│              Magika Core                │
-│         (Python + TensorFlow)           │
-├─────────────────────────────────────────┤
-│  Python API  │  Rust CLI  │  JS/TS     │
-│  (pip)       │  (cargo)  │  (npm)     │
-├──────────────┴───────────┴─────────────┤
-│              Go bindings (WIP)          │
-└─────────────────────────────────────────┘
-```
-
-### 5.2 模型格式
-
-Magika 使用自定义模型格式（`.magika`），约 1MB：
-
-```
-model.magika/
-├── model.json       # 模型结构定义
-├── weights.bin      # 量化权重
-├── vocab.json       # 词表
-└── config.json      # 阈值配置
-```
-
-### 5.3 推理优化
-
-**轻量化设计**：
-- 模型量化（quantization）
-- CPU 优化（无 GPU 也很快）
-- 内存映射（memory-mapped I/O）
-
-**近常量推理时间**：
-无论文件大小，推理时间都约 5ms，因为 Magika 只读取文件的一部分内容。
-
-### 5.4 依赖项
-
-**Python 依赖**：
-```python
-# 核心依赖
-tensorflow>=2.10  # 或 tensorflow-cpu
-tensorflow-hub>=0.12
-
-# 工具依赖
-tqdm  # 进度条
-rich  # 格式化输出
-```
-
-**Rust CLI 依赖**（cargo 安装时）：
-- tokio（异步运行时）
-- serde（序列化）
-- clap（CLI 解析）
-
----
-
-## §6 安装与配置
-
-### 6.1 CLI 安装
-
-**pipx（推荐）**：
-```bash
-pipx install magika
-```
-
-**Homebrew（macOS/Linux）**：
-```bash
-brew install magika
-```
-
-**安装脚本**：
-```bash
-# Linux/macOS
+pipx install magika                          # Python 包（内含/转发 Rust 二进制）
+brew install magika                          # macOS / Linux
+cargo install --locked magika-cli            # Rust 包
 curl -LsSf https://securityresearch.google/magika/install.sh | sh
-
-# Windows PowerShell
-powershell -ExecutionPolicy Bypass -c "irm https://securityresearch.google/magika/install.ps1 | iex"
+npm install magika                           # JS/TS 绑定（实验性）
 ```
 
-**Rust 版本**：
-```bash
-cargo install --locked magika-cli
-```
-
-### 6.2 Python 包安装
+CLI 的日常形态：
 
 ```bash
-pip install magika
-
-# 或使用 uv（更快）
-uv pip install magika
+% magika -r ./tests_data/basic | head
+asm/code.asm: Assembly (code)
+batch/simple.bat: DOS batch file (code)
+c/code.c: C source (code)
+csv/magika_test.csv: CSV document (code)
+dockerfile/Dockerfile: Dockerfile (code)
+docx/doc.docx: Microsoft Word 2007+ document (document)
+eml/sample.eml: RFC 822 mail (text)
+empty/empty_file: Empty file (inode)
 ```
 
-### 6.3 JavaScript/TypeScript 安装
+完整选项：`-r` 递归目录、`--no-dereference` 不跟随符号链接、`-s/--output-score` 附带分数、`-i/--mime-type`、`-l/--label`、`--json`/`--jsonl`、`--format` 自定义格式（占位符 `%p` 路径、`%l` 标签、`%d` 描述、`%g` 分组、`%m` MIME、`%e` 扩展名、`%s`/`%S` 分数（小数/百分比）、`%b` 被覆盖时的模型原始输出、`%%` 字面百分号）。
 
-```bash
-npm install magika
+`--json` 的输出结构值得看一眼，双层标签在这里是显式的：
+
+```json
+[
+  {
+    "path": "code.py",
+    "result": {
+      "status": "ok",
+      "value": {
+        "dl":     { "label": "python", "mime_type": "text/x-python", "group": "code", "is_text": true, "description": "Python source", "extensions": ["py", "pyi"] },
+        "output": { "label": "python", "mime_type": "text/x-python", "group": "code", "is_text": true, "description": "Python source", "extensions": ["py", "pyi"] },
+        "score": 0.996999979019165
+      }
+    }
+  }
+]
 ```
 
-### 6.4 验证安装
-
-```bash
-# 检查版本
-magika --version
-
-# 快速测试
-echo 'print("hello")' | magika -
-# 输出: Python source
-```
-
----
-
-## §7 实际应用场景
-
-### 7.1 安全扫描
+Python API 三件套：`identify_bytes` 检测内存字节，`identify_path`/`identify_paths` 检测文件（后者批量），`identify_stream` 检测已打开的二进制流（要求可 seek，Magika 会在流里前后跳，用完帮你跳回原位）：
 
 ```python
 from magika import Magika
-from pathlib import Path
 
-def scan_directory(path: str) -> dict:
-    """扫描目录，标记异常文件类型"""
-    m = Magika()
-    results = {}
-
-    for file_path in Path(path).rglob('*'):
-        if file_path.is_file():
-            res = m.identify_path(str(file_path))
-            results[str(file_path)] = {
-                'type': res.output.label,
-                'score': res.score,
-                'is_text': res.output.is_text
-            }
-
-    return results
-
-# 检测可疑的 "图片" 文件
-results = scan_directory('./uploads')
-for path, info in results.items():
-    if 'image' in info['type'] and not info['is_text']:
-        print(f"⚠️ 可能的伪装文件: {path}")
+m = Magika()
+res = m.identify_bytes(b'function log(msg) {console.log(msg);}')
+print(res.output.label)   # javascript
+print(res.score)          # 0-1 之间的置信分数
 ```
 
-### 7.2 文件整理自动化
+错误处理与直觉不同：`identify_path` 遇到不存在的文件**不抛异常**，返回一个 `status=FILE_NOT_FOUND_ERROR` 的结果对象，用 `res.ok` 或 `res.status` 判断（源码里注释明说这是 StatusOr 风格，`identify_bytes` 甚至不存在返回错误的代码路径）。正确的防御写法是：
 
 ```python
-from magika import Magika
-from pathlib import Path
-import shutil
-
-def organize_by_type(source_dir: str, target_dir: str):
-    """按文件类型自动整理"""
-    m = Magika()
-    source = Path(source_dir)
-    target = Path(target_dir)
-
-    for file_path in source.rglob('*'):
-        if not file_path.is_file():
-            continue
-
-        res = m.identify_path(str(file_path))
-        file_type = res.output.group or 'unknown'
-
-        # 创建类型目录
-        type_dir = target / file_type
-        type_dir.mkdir(parents=True, exist_ok=True)
-
-        # 移动文件
-        dest = type_dir / file_path.name
-        shutil.copy2(file_path, dest)
-        print(f"✓ {file_path.name} → {file_type}/")
+res = m.identify_path(path)
+if not res.ok:
+    print(res.status)     # FILE_NOT_FOUND_ERROR / PERMISSION_ERROR
+else:
+    print(res.output.label)
 ```
 
-### 7.3 CI/CD 集成
+对依赖细节敏感的读者：Python 1.x 包的运行时依赖只有 `click` 和 `onnxruntime`（按 Python 版本钉了最低版）；Rust CLI 依赖 clap、colored、crossbeam-channel、serde、anyhow。仓库 main 分支正在开发 Python 2.0：改用 PyO3 直接绑定 Rust 核心，`pyproject.toml` 的 `dependencies` 已清空，即未来 Python 包不再拉 onnxruntime——截至本文复核（2026-10-01）尚未发布，生产环境仍按 1.x 口径评估。
 
-```yaml
-# .github/workflows/security-scan.yml
-name: File Type Check
+## 模型演进与那些数字该怎么读
 
-on: [push, pull_request]
+Magika 的模型以 `standard_vN` 系列迭代，资产仓库里的 CHANGELOG 记得很清楚：
 
-jobs:
-  check:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+| 模型 | 时间 | 类型数 | 平均准确率 | 单次推理 |
+| --- | --- | --- | --- | --- |
+| standard_v1 | 2024 开源时 | ~100 | 99%+ | ~2.6ms |
+| standard_v2_1 | 2024 | 200+ | ~99% | ~6.2ms（另有 fast_v2_1：快约 4 倍，98.5%） |
+| standard_v3_0 | — | 216 | ~99% | ~2ms |
+| standard_v3_1 | — | 216 | ~99% | ~2ms |
+| standard_v3_2 | 2025-03 | 216 | ~99% | ~2ms |
+| standard_v3_3（当前默认） | 2025-04-11 | 216 | ~99% | ~2ms |
 
-      - name: Install Magika
-        run: pipx install magika
+读这批数字有三个前提。
 
-      - name: Scan uploads directory
-        run: |
-          magika -r --jsonl ./uploads/ > scan-results.jsonl
+**测的是什么。** "~99%"是 Google 自己测试集上的平均精确率与召回率，自报口径、无独立复现。推理速度是官方在 AMD Ryzen 9 7950X 上"单次调用内 100 次推理取平均"的口径；README 里那个"约 5ms"是更保守的表述（且注明是模型加载后的开销）。两个数字都对，基准不同。
 
-      - name: Check for executable files
-        run: |
-          cat scan-results.jsonl | jq -r 'select(.result.value.output.label == "pe" or .result.value.output.label == "elf")' | wc -l
-          # 如果 > 0 则失败
-```
+**数字变化反映什么。** v2_1 把类型数翻倍但推理慢了一倍多，v3_0 又拉回 2ms——这是模型结构优化，不是数据问题。v3_1 引入 CutMix 和"随机片段选择"增广，专攻短文本；v3_2 用合成 CSV 数据集修一个具体回归（issue #983）；v3_3 最有意思的增量是理顺了 JavaScript 和 TypeScript 的数据配比后，TypeScript 准确率从 85% 提到 95%——易混淆的同类类型才是这类模型的真正短板。
 
-### 7.4 内容过滤系统
+**不能推出什么。** 99% 是全体类型平均，不代表每个类型都 99%；v3_3 之前 TypeScript 就只有 85%。也不能拿"比现有工具好 20%"直接当成对某个具体工具的胜率——那是 1M 文件基准上的总体口径，且是 v1 时代的数据。选型时最稳的做法还是拿自己的样本集跑一遍：CLI 一条 `magika -r ./samples --jsonl` 就能出全量结果。
 
-```python
-from magika import Magika
-from typing import List
+## 生产环境里的 Magika
 
-ALLOWED_TYPES = {'python', 'javascript', 'typescript', 'json', 'yaml', 'markdown'}
-BLOCKED_TYPES = {'exe', 'elf', 'pe', 'dll', 'shell'}
+Google 内部的用法是把 Gmail、Drive、Safe Browsing 的文件按类型路由到对应的安全与内容策略扫描器，README 的口径是每周处理数千亿样本。官宣博文补充了两个效果数字：接入后恶意文档扫描器多覆盖 11% 的文件，未识别文件占比降到 3%。
 
-def validate_upload(file_path: str) -> tuple[bool, str]:
-    """验证上传文件类型"""
-    m = Magika()
-    res = m.identify_path(file_path)
+外部集成有两家可查证：VirusTotal 把 Magika 用作 Code Insight 的预过滤器（扫描结果里会带 Magika 的类型判断），恶意软件情报平台 abuse.ch 的样本库同样在用。
 
-    file_type = res.output.label
+多语言绑定的成熟度差异很大，选型前对齐一下：Python（PyPI `magika`，最新 1.0.3，2026-05 发布）最稳；Rust CLI（crates.io `magika-cli`，最新 1.1.0，2026-04）与 Homebrew 分发同步；npm 包 1.0.0 官方自述实验性——官网那个纯浏览器本地推理的 web demo 就是它驱动的，能力够用但 API 可能变；Go 绑定 WIP，还没到能用的时候。
 
-    if file_type in BLOCKED_TYPES:
-        return False, f"不允许的文件类型: {file_type}"
+## 采用建议
 
-    if file_type not in ALLOWED_TYPES:
-        return False, f"未授权的文件类型: {file_type}"
+**适合先上的场景**：上传过滤与网关扫描（text 文件伪装是 libmagic 的盲区，这正是 Magika 增益最大的地方）、CI 里拦截不该出现的可执行文件、数据管道里按真实类型分拣文件。检查可执行文件时注意 label 空间：Windows PE 是 `pebin`、Linux 是 `elf`、macOS 是 `macho`——label 集合以所用模型的 README 为准（216 项全列在 `assets/models/standard_v3_3/README.md`），别凭直觉写 `exe`、`dll` 这类不存在的标签。
 
-    return True, f"通过: {file_type}"
-```
+**装法怎么选**：CI 和服务器上直接装 Rust 二进制（brew/cargo/安装脚本），无运行时依赖；Python 程序内嵌用 `pip install magika`，代价是拉 onnxruntime（约几十 MB）；前端或浏览器场景用 npm 包并接受实验性标注；等 Python 2.0（PyO3 零依赖）发布后再评估一次 Python 侧的依赖成本。
 
----
+**别指望它做的事**：输出空间固定 216 类，认不出就老老实实返回 `txt` 或 `unknown`，没有开放集能力；模型训练代码未开源（README 只承诺"客户端与绑定已开源，更多即将到来"），想加自定义类型只能等官方发新模型——好在节奏不慢，standard 系列从 2024 年开源时的 v1 到 2025 年 4 月的 v3_3 已迭代六代。另外再强调一次仓库 README 的自我定位：这不是官方 Google 项目，没有 Google 的支持承诺，生产依赖前把这条计入风险。
 
-## §8 规模化部署：Google 内部经验
-
-### 8.1 处理规模
-
-Magika 在 Google 内部的处理规模：
-
-| 场景 | 每周处理量 | 用途 |
-|------|-----------|------|
-| Gmail 附件 | ~1000 亿 | 安全扫描 |
-| Drive 文件 | 数亿 | 类型识别 |
-| Safe Browsing | ~100 亿 | 恶意软件检测 |
-
-### 8.2 性能优化
-
-**模型加载优化**：
-- 模型只加载一次到内存
-- 跨请求共享（单例模式）
-
-**推理优化**：
-- 批处理支持（同时检测多个文件）
-- 异步 I/O（Python asyncio）
-
-**资源管理**：
-- 按需加载模型（首次检测时）
-- 模型缓存（避免重复加载）
-
-### 8.3 可靠性保证
-
-**错误处理**：
-```python
-try:
-    res = m.identify_path(file_path)
-except FileNotFoundError:
-    return None  # 文件不存在
-except PermissionError:
-    return None  # 权限不足
-```
-
-**降级策略**：
-当模型不可用时，返回 `unknown` 而非崩溃。
-
----
-
-## §9 常见问题 FAQ
-
-**Q1: Magika 和 file 命令有什么区别？**
-
-A：`file` 命令基于 magic bytes，对 text 文件检测效果差。Magika 使用深度学习，在 text 类型检测上准确率 ~99% vs `file` 的 ~60-70%。
-
-**Q2: 模型在哪里？如何更新？**
-
-A：模型在首次使用时自动下载（约 1MB），存储在 `~/.cache/magika/`。Python 包更新时会一并更新模型。
-
-**Q3: 支持离线使用吗？**
-
-A：支持。模型下载后无需网络。离线场景下，Magika 完全在本地运行。
-
-**Q4: 如何处理超大文件？**
-
-A：Magika 只读取文件的一部分内容（约前几 KB），因此处理速度与文件大小无关。50MB 文件和 5KB 文件的推理时间几乎相同。
-
-**Q5: 如何添加新的文件类型？**
-
-A：需要重新训练模型。Magika 的模型训练代码未开源，需要 Google 团队协作。
-
-**Q6: Windows 上能用吗？**
-
-A：可以。通过 `pip install magika` 或 PowerShell 安装脚本安装。
-
----
-
-## §10 相关资源
+## 相关资源
 
 | 资源 | 链接 |
-|------|------|
-| GitHub | https://github.com/google/magika |
-| 官网 | https://securityresearch.google/magika/ |
-| 论文（ICSE 2025） | https://securityresearch.google/magika/... |
-| Web Demo | https://securityresearch.google/magika/demo/magika-demo/ |
-| PyPI | https://pypi.org/project/magika/ |
-| npm | https://npmjs.com/package/magika |
-| Cargo | https://crates.io/crates/magika-cli |
+| --- | --- |
+| GitHub 仓库 | <https://github.com/google/magika> |
+| 官网（Core Concepts 文档） | <https://securityresearch.google/magika/> |
+| 研究论文与引用（ICSE 2025） | <https://securityresearch.google/magika/additional-resources/research-papers-and-citation/> |
+| 论文 PDF 直链 | <https://securityresearch.google/magika/2025_icse_magika.pdf> |
+| 官方开源官宣博文（2024-02） | <https://opensource.googleblog.com/2024/02/magika-ai-powered-fast-and-efficient-file-type-identification.html> |
+| 浏览器内 Web Demo | <https://securityresearch.google/magika/demo/magika-demo/> |
+| PyPI | <https://pypi.org/project/magika/> |
+| npm | <https://www.npmjs.com/package/magika> |
+| crates.io | <https://crates.io/crates/magika-cli> |
 
 ---
 

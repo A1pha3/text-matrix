@@ -1,43 +1,33 @@
 ---
-title: "iptv-org/iptv 架构拆解：一个 12 万星仓库如何用 GitHub Issues + Actions 当 CMS"
+title: "iptv-org/iptv 架构拆解：14 万星仓库把 GitHub 当成带审批流的频道数据库"
 date: "2026-06-13T18:07:17+08:00"
+lastmod: "2026-09-30T00:00:00+08:00"
 slug: "iptv-org-iptv-public-channel-playlist-architecture"
 github_repo: "iptv-org/iptv"
 source_key: "gh:iptv-org/iptv"
-description: "拆解 iptv-org/iptv 的数据流水线：用 GitHub Issues 当 CMS、Actions 当 ETL 引擎，每日生成 600+ 个公开 m3u 播放列表。"
+description: "拆解 iptv-org/iptv 的数据流水线：Issue 表单加审批标签构成输入轨道，Actions 每日跑带回滚的 ETL，12 个生成器切出约 1277 个公开 m3u 播放列表。"
 draft: false
 categories: ["技术笔记"]
 tags: ["GitHub", "TypeScript", "GitHub Actions", "开源"]
 ---
 
-# iptv-org/iptv 架构拆解：一个 12 万星仓库如何用 GitHub Issues + Actions 当 CMS
+# iptv-org/iptv 架构拆解：14 万星仓库把 GitHub 当成带审批流的频道数据库
 
-> 一句话核心判断：**iptv-org/iptv 把 GitHub Issues 当作无服务器 CMS，用 GitHub Actions 当 ETL（Extract-Transform-Load）引擎，每天自动生成 600+ 个公开 m3u 播放列表，整个仓库不存任何视频文件，只存频道链接元数据**。这是一个用 Git 原生能力拼出"自动化内容运营"的典型案例，比传统 CMS 方案轻量得多，但代价是把"数据完整性"和"链接存活率"全部押注在社区贡献者的提交习惯上。
-
-## 学习目标
-
-通过本文，你将掌握以下核心能力：
-
-- 理解 iptv-org/iptv 的整体架构和数据流水线
-- 掌握「Issue 作为 CMS」的核心抽象设计
-- 理解 9 个维度生成器如何切出 600+ 个播放列表
-- 能够复现「一个频道从 Issue 到播放列表」的完整生命周期
-- 理解 GitHub App Token 的权限边界设计
-- 能够判断这种「Git 原生 ETL」架构是否适合你的场景
+> 一句话核心判断：**iptv-org/iptv 把 GitHub 当成一个带审批流的数据库——Issue 是工单，标签是状态机，维护者的 `approved` 标签是审批章，GitHub Actions 是每日定时执行的 ETL 引擎，Git 提交历史就是审计日志**。它不存任何视频文件，只存频道流链接的元数据；整个系统没有一台自己的服务器，却支撑着约 1,277 个每日更新的公开播放列表。这个案例真正值得学的，不是"用 Issues 当数据库"这个点子，而是它给这个点子配齐的三件基础设施：提交时的即时校验、入库前的审批门禁、写入时的失败回滚。
 
 ## 目录
 
 1. [项目坐标](#一项目坐标)
-2. [系统地图：从 Issue 到播放列表](#二系统地图从-issue-到播放列表)
-3. [Issue 作为 CMS：核心抽象](#三issue-作为-cms核心抽象)
-4. [生成器矩阵：从一份源数据切出 600+ 个播放列表](#四生成器矩阵从一份源数据切出-600-个播放列表)
-5. [一个频道从 Issue 到播放列表的完整生命周期](#五一个频道从-issue-到播放列表的完整生命周期)
-6. [Bot 与权限边界](#六bot-与权限边界)
-7. [为什么不存视频文件，以及法律边界](#七为什么不存视频文件以及法律边界)
-8. [采用建议与边界](#八采用建议与边界)
-9. [自测题](#自测题)
-10. [练习](#练习)
-11. [进阶路径](#进阶路径)
+2. [系统地图：两条输入轨道，一条日更流水线](#二系统地图两条输入轨道一条日更流水线)
+3. [输入轨道：表单与 Stream ID](#三输入轨道表单与-stream-id)
+4. [日更流水线：update 工作流的七步](#四日更流水线update-工作流的七步)
+5. [update 脚本：三类请求与回滚机制](#五update-脚本三类请求与回滚机制)
+6. [生成器矩阵与排序去重](#六生成器矩阵与排序去重)
+7. [一条流的完整旅程](#七一条流的完整旅程)
+8. [Bot 与权限边界](#八bot-与权限边界)
+9. [法律、许可与内容治理](#九法律许可与内容治理)
+10. [采用建议与边界](#十采用建议与边界)
+11. [总结](#十一总结)
 
 ---
 
@@ -46,328 +36,305 @@ tags: ["GitHub", "TypeScript", "GitHub Actions", "开源"]
 | 字段 | 值 |
 |------|------|
 | 仓库 | [iptv-org/iptv](https://github.com/iptv-org/iptv) |
-| 主语言 | TypeScript |
-| Stars / Forks | 约 118k / 6.3k（截至 2026-06） |
-| License | 代码 MIT，频道元数据 CC0 |
-| 协议 | Unlicense（GitHub API 显示），与 README 一致 |
+| 主语言 | TypeScript（Node 22 运行） |
+| Stars / Forks | 139,865 / 8,158（截至 2026-09-30，GitHub API） |
+| 创建时间 | 2018-11-14 |
+| License | [Unlicense](https://github.com/iptv-org/iptv/blob/master/LICENSE)（公有领域奉献；README 挂 CC0 徽章指向同一文件） |
+| 仓库体积 | 约 1.38 GB（八年流水线积累的 Git 历史） |
 | 维护形态 | 社区驱动 + iptv-bot 自动提交 |
 | 调度频率 | 每天 UTC 0 点（北京时间 8 点）一次完整 ETL |
 
-和它形成完整生态的姊妹仓库有三个：
+iptv-org 是一个组织，`iptv` 只是其中面向终端用户的一个仓库。完整的生态有四个环节：
 
-- **[iptv-org/database](https://github.com/iptv-org/database)**（1.4k ★，JavaScript）：可用户编辑的频道元数据库（频道名、国家、Logo、官网、分类），核心数据源。
-- **[iptv-org/epg](https://github.com/iptv-org/epg)**（3k ★，HTML）：从数百个来源下载 EPG（电子节目指南）。
-- **[iptv-org/api](https://github.com/iptv-org/api)**（735 ★）：给第三方提供的 GraphQL / REST API。
+- **[iptv-org/database](https://github.com/iptv-org/database)**（1.7k ★，JavaScript）：频道元数据库——频道名、国家、logo、分类、feed（同一频道的不同信号源）、屏蔽名单。这是整个体系的"主数据"，iptv 仓库自己不定义任何频道信息。
+- **[iptv-org/iptv](https://github.com/iptv-org/iptv)**（本文主角）：流链接仓库，管"哪个 URL 播哪个频道"。
+- **[iptv-org/epg](https://github.com/iptv-org/epg)**（3.3k ★）：从数百个来源抓取 EPG（电子节目指南）。
+- **[iptv-org/api](https://github.com/iptv-org/api)**（823 ★）：没有自己的代码逻辑，`gh-pages` 分支由 iptv 仓库每日部署的 `streams.json` 填充，给第三方提供现成的 JSON 数据。
 
-这四个仓库加起来构成了一个完整的开源电视指南基础设施，而 `iptv` 是其中**面向终端用户**的那个（直接给 VLC、Kodi、IPTV 播放器用）。
+分工很清晰：database 管频道"是什么"，iptv 管"去哪播"，epg 管"播什么节目"，api 管把前两者打包给机器读。
 
-## 二、系统地图：从 Issue 到播放列表
+## 二、系统地图：两条输入轨道，一条日更流水线
 
-整个流水线可以分成 5 段，每一段都有清晰的代码边界：
+整个系统在任何一个时刻都在做两类事情：接收新的流链接（输入），以及把已批准的变更落到播放列表里（日更）。输入有两条轨道：
 
+```mermaid
+flowchart LR
+  subgraph 输入轨道
+    A[Issue 表单<br>add / edit / remove] --> B[validate_issue<br>提交时即时校验]
+    B -->|通过 check:passed| C[维护者审核<br>打 approved 标签]
+    P[直接改 streams/ 的 PR] --> Q[check 工作流<br>lint + validate 阻断合并]
+  end
+  C --> D
+  Q -->|合并| D[每日 00:00 UTC<br>update 工作流]
+  D --> E[playlist:update<br>处理 approved Issue]
+  E --> F[lint + validate]
+  F --> G[playlist:generate<br>12 个生成器]
+  G --> H[约 1277 个公开播放列表]
+  D --> I[playlist:export<br>.api/streams.json]
+  H --> J[部署到 gh-pages 分支<br>GitHub Pages]
+  I --> K[部署到 iptv-org/api<br>gh-pages 分支]
 ```
-┌─────────────────┐   ┌──────────────────┐   ┌─────────────────┐
-│ 1. 数据加载       │ → │ 2. Issue 解析     │ → │ 3. 流合并与校验  │
-│ (api:load)       │   │ (playlist:update) │   │ (内置在 update) │
-└─────────────────┘   └──────────────────┘   └─────────────────┘
-                                                      ↓
-┌─────────────────┐   ┌──────────────────┐   ┌─────────────────┐
-│ 6. README 同步    │ ← │ 5. 公开播放列表生成 │ ← │ 4. lint+validate│
-│ (readme:update)  │   │ (playlist:generate)│   │  (preflight)    │
-└─────────────────┘   └──────────────────┘   └─────────────────┘
-```
 
-对应到 `package.json` 的 npm scripts：
+两条轨道的质检方式完全不同：Issue 轨道靠 `validate_issue` 工作流在提交瞬间校验表单字段，错误会由 bot 直接评论在 Issue 下面；PR 轨道靠 `check` 工作流在每次 PR 时跑 `api:load → playlist:lint → playlist:validate`，有错误就阻断合并。两条轨道最终汇入同一条日更流水线。
+
+对应到 `package.json`，流水线的每一步都是一个 npm script：
 
 | 脚本 | 阶段 | 说明 |
 |------|------|------|
-| `api:load` | 1 | 拉取 `iptv-org/api` 的 GraphQL 数据到本地 `.api/` 目录 |
-| `playlist:update` | 2 + 3 | 加载 Issues、合并流、保存到 `streams/{country}.m3u` |
-| `playlist:lint` | 4 | 用 `m3u-linter` 校验内部分片 m3u 的格式 |
-| `playlist:validate` | 4 | 跑测试验证更新逻辑本身没回退 |
-| `playlist:generate` | 5 | 生成 600+ 个公开播放列表（按国家/语言/分类/地区/城市/源） |
-| `playlist:export` | 5 | 输出 `.api/streams.json` 给 API 仓库用 |
-| `readme:update` | 6 | 自动更新 `README.md` 和 `PLAYLISTS.md` 中的频道计数表 |
+| `api:load` | 1 | 用 `@iptv-org/sdk` 的 DataManager 下载 13 个 JSON 数据文件到 `.api/` |
+| `playlist:update` | 2 | 处理带 `approved` 标签的 Issue，增删改 `streams/*.m3u` |
+| `playlist:lint` | 3 | 用 `m3u-linter` 校验 m3u 格式 |
+| `playlist:validate` | 3 | 校验每条流的描述与 database 一致（频道 ID、feed ID 存在性等） |
+| `playlist:generate` | 4 | 12 个生成器切出全部公开播放列表到 `.gh-pages/` |
+| `playlist:export` | 5 | 输出 `.api/streams.json` |
+| `readme:update` | 6 | 依据生成日志更新 `PLAYLISTS.md` 的播放列表索引 |
 
-`scripts/commands/playlist/update.ts` 是整个流水线最核心的入口，下面是它的高层流程（删减了日志和异常处理）：
+还有几个不在日更主线上的脚本值得一提：`issue:validate` 服务于 Issue 即时校验，`playlist:format` 统一格式（CRLF 行尾、UTF-8 无 BOM），`playlist:test` 检测链接存活，`playlist:edit` 提供交互式编辑。测试框架是 vitest，`tests/commands/` 下的用例覆盖了上面每一个命令，且配有一整套 `tests/__data__/expected/` 快照——这是这个仓库敢于让 bot 每天自动写 master 分支的底气。
+
+## 三、输入轨道：表单与 Stream ID
+
+iptv-org 没有后台，"添加频道"的入口就是 6 个 Issue 表单：`1_streams_add`（加流）、`2_streams_edit`（改描述）、`3_streams_report`（报死链）、`5_bug-report`、`6_copyright-claim`（版权方移除请求）。表单里最关键的字段不是流 URL，而是 **Stream ID**：
+
+```
+ExampleTV.us@HD
+```
+
+一个 Stream ID 由频道 ID 和 feed ID 用 `@` 拼成。频道 ID 是"频道名去掉空格和特殊字符 + `.` + 国家码"；feed ID 标识同一频道的不同信号——画质版本（HD）、时移版本（Plus1）、来源版本（Pluto）、地区版本（East、MENA）。全部 ID 的权威清单挂在 [iptv-org.github.io](https://iptv-org.github.io/)，频道或 feed 缺失时要先去 database 仓库补录，再回来提流。
+
+这个设计把"内容元数据"和"链接数据"彻底分开了：iptv 仓库里的每条链接都通过 Stream ID 指向 database 里的一条频道记录，频道改名、换 logo、调分类，都不需要动 iptv 仓库——播放列表生成时实时从 database 拉取。
+
+提交流程走的是一个标签状态机：
+
+1. 用户提交表单，`validate_issue` 工作流立即触发（`issues: [opened, edited]`），用 `issue:validate` 脚本校验：Stream ID 格式是否合法、频道和 feed 是否存在于 database、URL 是否有效、是否与现有播放列表重复、频道是否在屏蔽名单里。
+2. 校验通过，bot 打 `check:passed` 标签；失败则 bot 把全部错误一次性评论在 Issue 里，打 `check:failed`。缺 Stream ID 或链接无效的请求会被直接关闭——这是 CONTRIBUTING.md 里加粗的规则。
+3. 维护者人工审核链接质量（能不能播、是否地理限制、是否稳定），批准后打 `approved` 标签。`validate_label` 工作流盯着每次打标签的动作，标签用错了会被 bot 撤掉并留言。
+4. 下一次日更时，`playlist:update` 只处理带 `approved` 标签的 Issue。
+
+审核权在维护者手里，bot 只负责把不合格的挡在门外。这套"机器即时校验 + 人工审批"的分层，是社区项目控制数据质量的标准解法，iptv-org 的特别之处在于全部用 GitHub 原生功能实现：校验用 Actions，状态用标签，审批记录就是标签的添加时间。
+
+还有一份硬约束在 database 侧：**blocklist（屏蔽名单）**。频道因版权投诉（`dmca`）或 NSFW 内容（`nsfw`）被记入 `blocklist.csv` 后，脚本在入库前会再查一遍，命中直接拒绝。2024 年 1 月起，项目已停止分发 NSFW 频道（官方 Issue #15723）。
+
+## 四、日更流水线：update 工作流的七步
+
+`.github/workflows/update.yml` 由 `cron: '0 0 * * *'` 触发（也支持手动 `workflow_dispatch`），干七件事：
+
+**第 1 步，`api:load`**。通过 `@iptv-org/sdk` 的 DataManager 下载 13 个 JSON 文件：channels、feeds、streams、categories、countries、subdivisions、cities、regions、languages、guides、logos、blocklist、timezones。下载后建内存索引——`channelsKeyById`、`feedsKeyByStreamId`、`blocklistRecordsGroupedByChannel`、`guidesGroupedByStreamId`——都是 O(1) 查询的 Dictionary。早期的 GraphQL 拉取方案已经换掉了，现在数据面是纯 JSON。
+
+**第 2 步，`playlist:update`**。处理审批完的 Issue，下一节细讲。这一步结束后会把处理结果写入 `temp/logs/playlist_update.log`，内容是 `closes #123, closes #456` 这样的清单。
+
+**第 3 步，`playlist:lint` + `playlist:validate`**。lint 查格式（`#EXTINF` 行、属性拼写），validate 查语义——每条流的 tvg-id 必须能在 database 里找到对应频道和 feed。注意这一步查的是内部播放列表，也就是上一步刚写过的文件。
+
+**第 4 步，`playlist:generate`**。生成全部公开播放列表，见"生成器矩阵"一节。
+
+**第 5 步，`playlist:export`**。把流数据导出成 `.api/streams.json`。
+
+**第 6 步，`readme:update`**。读第 4 步留下的 `generators.log`（每行一个 JSON，记录每个文件的类型、路径、条数），重写 `PLAYLISTS.md` 里的播放列表索引和频道计数表。
+
+**第 7 步，提交与部署**。git 作者配置为 `iptv-bot[bot]`，然后分两笔提交：`streams/` 的变更一笔，`PLAYLISTS.md` 一笔——后者用 `--allow-empty`，即使没有变更也提交，让"每天跑过"这件事本身可见。最后 push 到 master，再用 `JamesIves/github-pages-deploy-action` 把 `.gh-pages/` 推到本仓库的 `gh-pages` 分支（GitHub Pages 从这里发布），把 `.api/` 推到 iptv-org/api 的 `gh-pages` 分支。
+
+两个部署动作用的都是 App Token——这引出权限设计，第八节展开。
+
+## 五、update 脚本：三类请求与回滚机制
+
+`scripts/commands/playlist/update.ts` 是整个仓库的核心文件，主干只有五步：
 
 ```typescript
 async function main() {
-  logger.info('loading data from api...');        // ① 加载频道元数据
-  await loadData()
-
-  logger.info('loading issues...');                // ② 加载未处理的 PR/Issue
-  const issues = await loadIssues()
-
-  logger.info('loading streams...');               // ③ 读已有的 streams/*.m3u
-  await loadStreams()
-
-  logger.info('processing issues...');             // ④ 解析、新增、关闭 Issue
-  await processIssues(issues)
-
-  logger.info('saving streams...');                // ⑤ 按 country 写回 m3u
-  await saveStreams()
+  logger.info('loading data from api...')
+  await loadData()                       // ① 载入 database 的 13 类元数据
+  logger.info('loading issues...')
+  const issues = await loadIssues()      // ② 分页拉取全部 open Issue
+  logger.info('loading streams...')
+  await loadStreams()                    // ③ 解析 streams/ 下所有 m3u
+  logger.info('processing issues...')
+  await processIssues(issues)            // ④ 只处理带 approved 标签的
+  logger.info('saving streams...')
+  await saveStreams()                    // ⑤ 按各自 filepath 写回
 }
 ```
 
-> 关键点：**仓库里 600+ 个 m3u 文件全部是 ETL 产物，源码里完全没有手工维护的播放列表**。这是它能保持日更的关键——README 里那个频道计数表（比如 `Animation: 85 channels`）是 `readme:update` 跑完生成的，不是谁手敲的。
+`processIssues` 按标签把请求分成三类：
 
-## 三、Issue 作为 CMS：核心抽象
+- **`streams:add`**：校验 Stream ID（频道存在、feed 存在、不在 blocklist），查 URL 重复；表单没填分辨率时，用 `getStreamInfo()` 实际探测一次流的分辨率（HLS/DASH 解析），自动补上 `720p` 这样的画质标注；表单还支持 `http_user_agent`、`http_referrer`（某些源必须带 UA 才给播）和 `geo_blocked`、`live_247` 两个标志位。
+- **`streams:edit`**：按 URL 找到已有流，用表单字段更新描述。
+- **`streams:remove`**：支持一次提交多个 URL，逐个标记移除。
 
-iptv-org 没有用任何传统的数据库或后台，整个"添加频道"的流程就是：
-
-1. 用户在 [iptv-org/database](https://github.com/iptv-org/database) 里改 `channels.csv`（PR）。
-2. 用户在 [iptv-org/iptv](https://github.com/iptv-org/iptv) 提一个 Issue，标题里贴上频道流链接。
-3. Actions 每天跑一次：
-   - `playlist:update` 找到所有 `state:open` 且标签为频道添加的 Issue
-   - 用流链接去查 `iptv-org/api` 的频道元数据（频道名、国家、Logo）
-   - 把流追加进 `streams/{country_code}.m3u`
-   - Issue 自动关闭 + 留言
-
-这意味着 **GitHub Issues 就是 ETL 的"输入队列"**，而 `iptv-bot[bot]`（`84861620+iptv-bot[bot]@users.noreply.github.com`）就是后端 worker。代码里负责读取 Issue 的工具函数是 `scripts/utils.ts` 里的 `loadIssues()`，背后是 `@octokit/plugin-paginate-rest`。
-
-这种设计的代价：
-
-- **链接失效是常态**：`m3u` 文件里的链接第三方能随便下架，所以仓库只能尽力去重和去死链，没法承诺 SLA。
-- **Issue 噪音会污染评论**：项目 FAQ 第一条就是"我喜欢的频道不在列表里"，侧面说明很多用户把 Issue 当成贴吧用。
-- **不能批量操作**：每次贡献只能加一个频道，要加 50 个频道得提 50 个 Issue 或一个 PR（但 PR 不在主流程里，走的是 data 仓库的 CSV）。
-
-但反过来，它也有几个 Git 原生方案独有优势：
-
-- **零运维成本**：不需要数据库、不需要后台进程、不需要缓存服务。
-- **完全审计可追溯**：每条流的加入都对应一个 Issue，可点击查看。
-- **贡献门槛极低**：用户只要会提 Issue 就能贡献，10 秒上手。
-- **Bot 触发可控**：用 `permissions: contents: read` + GitHub App Token 限定 bot 只能推 `streams/`，不能碰其他文件。
-
-## 四、生成器矩阵：从一份源数据切出 600+ 个播放列表
-
-`playlist:generate` 阶段是仓库最有工程亮点的地方。它把同一份原始 `streams/*.m3u` 数据，按 **9 个维度**分别切出独立的 m3u 文件：
-
-| 维度 | 示例 URL | 生成器 |
-|------|---------|--------|
-| 全量 | `index.m3u` | `IndexGenerator` |
-| 全量（含每条频道的 EPG） | `index.m3u` | `IndexGenerator` + `@iptv-org/sdk` |
-| 按国家 | `countries/cn.m3u` | `CountriesGenerator` |
-| 按国家子区域（如省/州） | `subdivisions/us-ca.m3u` | `SubdivisionsGenerator` |
-| 按城市 | `cities/berlin.m3u` | `CitiesGenerator` |
-| 按地区（洲） | `regions/europe.m3u` | `RegionsGenerator` |
-| 按语言 | `languages/zho.m3u` | `LanguagesGenerator` |
-| 按分类 | `categories/news.m3u` | `CategoriesGenerator` |
-| 按源头域名 | `sources/youtube.com.m3u` | `SourcesGenerator` |
-| 按类别聚合索引 | `index.category.m3u` | `IndexCategoryGenerator` |
-
-每个 generator 的实现风格都很像：
+每类操作完成后都会跑 `stream.validate()`，任何校验失败就整体回滚：
 
 ```typescript
-// scripts/generators/categories.ts（伪代码示意）
-async function generate() {
-  const groupedStreams = streams.groupBy(s => s.category)
-  for (const [category, streamList] of groupedStreams) {
-    const playlist = new Playlist(streamList)
-    await storage.save(`categories/${category}.m3u`, playlist.toString())
-  }
-}
+cacheData()                    // 改动前快照
+stream.updateTitle().updateFilepath()
+// ...校验失败时：
+resetData()                    // 恢复快照
+log.info('All changes have been reverted')
 ```
 
-核心数据模型是 `Stream` 类（在 `scripts/models/stream.ts` 里），它承担了所有维度字段（国家、城市、语言、分类、EPG ID、垂直分辨率）。`generate.ts` 还会先做一次排序去重：
+一个 Issue 的字段错误不会污染别的流——同一批处理的每个请求相互隔离。被处理的 Issue 记进日志（`closes #123` 格式），在提交时作为 commit message 一部分，Issue 会随流水线自动关闭。
+
+写回时按 `stream.getFilepath()` 分组。文件名的规则值得注意：新流默认落进 `{国家码小写}.m3u`（如 `cn.m3u`），但已存在的文件名会被保留——`streams/` 下能看到 `at_pluto.m3u`、`au_samsung.m3u` 这类"国家_服务"命名。官方文档（docs/playlists.md）的解释是：内部播放列表按国家和来源服务分组，"纯粹为了方便人工审核链接"。也就是说内部分片是给审核员看的目录结构，不是公开数据的组织方式——公开的组织方式由生成阶段决定。
+
+## 六、生成器矩阵与排序去重
+
+`playlist:generate` 是这个仓库工程上最讲究的部分。先看真实数据长什么样，这是 `streams/cn.m3u` 里的两行：
+
+```
+#EXTINF:-1 tvg-id="AndoTV.cn@SD",Ando TV (1080p)
+http://play.kankanlive.com/live/1711956137852982.m3u8
+#EXTINF:-1 tvg-id="",Beijing Traffic Radio TV [Geo-blocked]
+http://123.56.24.28:1935/live/fm1039/96K/tzwj_video.m3u8
+```
+
+`tvg-id` 就是 Stream ID，标题后缀是分辨率，`[Geo-blocked]` 是地理限制标记。内部播放列表是这些行的集合，而公开播放列表要把同一个集合按 12 个生成器切成不同视图：
+
+| 生成器 | 输出 | 维度 |
+|--------|------|------|
+| `RawGenerator` | `raw/*.m3u` | 未过滤的原始流（唯一不过滤 `hasChannel/hasFeed` 的视图） |
+| `IndexGenerator` | `index.m3u` | 全量去重主列表（实测 2.5 MB） |
+| `CountriesGenerator` | `countries/cn.m3u` | 按国家 |
+| `SubdivisionsGenerator` | `subdivisions/us-ca.m3u` | 按国家一级行政区 |
+| `CitiesGenerator` | `cities/*.m3u` | 按城市 |
+| `RegionsGenerator` | `regions/emea.m3u` | 按大区（emea、amer、ww 等） |
+| `LanguagesGenerator` | `languages/zho.m3u` | 按语言 |
+| `CategoriesGenerator` | `categories/news.m3u` | 按分类（无分类的进 `undefined.m3u`） |
+| `SourcesGenerator` | `sources/*.m3u` | 按流来源域名 |
+| `IndexCategoryGenerator` | `index.category.m3u` | 分类索引（列表里嵌套子列表链接） |
+| `IndexCountryGenerator` | `index.country.m3u` | 国家索引 |
+| `IndexLanguageGenerator` | `index.language.m3u` | 语言索引 |
+
+全部输出约 1,277 个文件（`PLAYLISTS.md` 2026-09-30 的链接计数），统一写到 `.gh-pages/` 目录。
+
+生成前的两步处理决定了所有视图的质量。第一步排序，`generate.ts` 里的排序链是六级的：
 
 ```typescript
-// 先按 id 升序，再按垂直分辨率降序，最后按 label 降序
 streams = streams.sortBy(
-  [s => s.getId(), s => s.getVerticalResolution(), s => s.label],
-  ['asc', 'desc', 'desc']
+  [
+    (stream: Stream) => stream.channelUniqueName,       // 频道名升序
+    (stream: Stream) => (stream.hasMainFeed ? 1 : 0),   // 主 feed 优先
+    (stream: Stream) => stream.feedName,                // feed 名升序
+    (stream: Stream) => (stream.isGeoBlocked ? -1 : 0), // 非地理限制优先
+    (stream: Stream) => (stream.isNot247 ? -1 : 0),     // 全天候频道优先
+    (stream: Stream) => stream.getVerticalResolution()  // 分辨率降序
+  ],
+  ['asc', 'desc', 'asc', 'desc', 'desc', 'desc']
 )
-// 同 id 只保留一条
-streams = streams.uniqBy(s => s.getId() || uniqueId())
 ```
 
-这就是为什么同一个频道在按国家分片里出现 100 次（每个国家都收录），但在按频道去重的全量播放列表里只出现一次。
+第二步过滤去重：没有频道或没有 feed 的流被丢弃，剩下的按 Stream ID 去重——同一个频道有多条链接时，每个视图只保留排序最靠前的一条。这就是为什么 `raw/` 目录和 `index.m3u` 的条数会对不上：raw 保留全部，index 只要每个 Stream ID 的一条。
 
-## 五、一个频道从 Issue 到播放列表的完整生命周期
+还有一个容易被忽略的细节：每个频道的 `group-title`（播放器里的分组名）是它的全部分类名排序后用分号连接的，且分类信息完全来自 database——iptv 仓库自己不存分类。频道在 database 里改了分类，第二天所有视图自动跟着变。
 
-为了让上面的抽象有体感，下面用一个**虚构的频道流提交**走一遍全流程：
+## 七、一条流的完整旅程
 
+把上面的机制串起来，跟一条虚构的流走一遍全程（频道与 URL 均为演示）：
+
+```text
+T+0    用户打开 Add 表单，填入 Stream ID「ExampleTV.us@HD」
+       和流 URL「https://example.com/playlist.m3u8」，提交 Issue
+T+1m   validate_issue 工作流触发：频道 ExampleTV.us 存在 ✓
+       feed HD 存在 ✓ URL 格式合法 ✓ 不与现有播放列表重复 ✓
+       → bot 打上 check:passed
+T+2d   维护者实测链接可播，打 approved 标签
+T+3d   UTC 0 点，update 工作流启动：
+       ① api:load        下载 13 个 JSON，频道、feed、屏蔽名单进内存索引
+       ② playlist:update
+         loadIssues()    分页拉取 open Issue，ExampleTV 这条带 approved
+         addStream()     查 URL 无重复 → 查 blocklist 未命中 →
+                         表单未填分辨率，getStreamInfo() 探测返回 720 →
+                         new Stream({ channel: 'ExampleTV.us', feed: 'HD',
+                                      title: 'Example TV', url: '...', quality: '720p' })
+                         updateTitle().updateFilepath() → 落入 us.m3u
+         validate()      通过，无回滚
+         日志写入 closes #12345
+       ③ lint + validate    新行格式与语义检查通过
+       ④ playlist:generate  Example TV (720p) 进入 index.m3u、
+                            countries/us.m3u、categories/...、languages/...、raw/us.m3u
+       ⑤ playlist:export    streams.json 带上这条流
+       ⑥ readme:update      PLAYLISTS.md 的 United States 计数 +1
+       ⑦ commit + push      「[Bot] Update /streams」，message 引用 closes #12345
+T+3d+2h  iptv-bot 部署 gh-pages，用户刷新
+         https://iptv-org.github.io/iptv/countries/us.m3u 看到这条流
+         Issue #12345 已被自动关闭
 ```
-T+0  用户提交 Issue: "https://example.com/live/stream.m3u8 这是 CCTV-1 的流"
-T+8h GitHub Actions 定时触发（cron '0 0 * * *' UTC）
-     ↓
-     ① api:load    → 拉取 iptv-org/api 的 GraphQL 频道元数据
-                      查到 CCTV-1 的 channel_id, country='CN', languages=['zho'],
-                      categories=['news'], logo='https://...'
-     ↓
-     ② playlist:update → loadIssues() 拿到上面这个 Issue
-                          从 Issue body 解析出 URL
-                          调用 getStreamInfo() 拿到流元数据（分辨率、HLS/DASH）
-                          new Stream({ channel: 'CCTV-1', url: 'https://...', country: 'CN', ... })
-                          写入 streams/cn.m3u
-                          关闭 Issue 并留言
-     ↓
-     ③ playlist:lint   → m3u-linter 检查格式（必须包含 #EXTINF 行）
-     ④ playlist:validate → 跑 jest 测试，确认 update 逻辑没回退
-     ↓
-     ⑤ playlist:generate → 9 个 generator 并行（实际上是 await 串行）输出
-                            countries/cn.m3u（+1 条 CCTV-1）
-                            categories/news.m3u（+1 条）
-                            languages/zho.m3u（+1 条）
-                            index.m3u（+1 条，已去重）
-     ↓
-     ⑥ playlist:export  → 写 .api/streams.json 给 iptv-org/api
-     ⑦ readme:update    → 更新 README.md 和 PLAYLISTS.md 里的计数表
-     ↓
-     ⑧ iptv-bot commit + push (用 GitHub App Token)
-T+10h 用户刷新 https://iptv-org.github.io/iptv/countries/cn.m3u
-       看到 CCTV-1 已就位
-```
 
-整条链路不依赖任何外部服务，只有 GitHub 本身的 API（Octokit）+ GitHub Actions（runner）+ 一个可选的 SOCKS 代理（`socks-proxy-agent`，用于绕过某些地区的网络限制）。
+从用户点提交到全球可下载，中间只有两处人工介入：维护者审核，以及（如果流很快死掉）某个用户提交 `streams:report` 再走一遍同样的循环。整条链路的外部依赖只有 GitHub 自己——API（Octokit）、Actions（runner）、Pages（发布），外加一个可选的 `socks-proxy-agent`（维护者在探测某些地区的流时走代理）。
 
-## 六、Bot 与权限边界
+## 八、Bot 与权限边界
 
-`.github/workflows/update.yml` 里有一段很关键的权限设计：
+`update.yml` 的权限设计是这个仓库对 GitHub Actions 安全实践的一个干净示范：
 
 ```yaml
 permissions:
-  contents: read  # 默认仅读
+  contents: read          # workflow 默认 token 只有读权限
 
 jobs:
   main:
     steps:
-      - uses: tibdex/github-app-token@v1.8.2   # 创建 App Token
+      - uses: actions/checkout@v6
+      - uses: tibdex/github-app-token@v1.8.2   # 用 App 换一个短时 token
+        if: ${{ !env.ACT }}
         with:
           app_id: ${{ secrets.APP_ID }}
           private_key: ${{ secrets.APP_PRIVATE_KEY }}
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v6              # 用 App Token 重新 checkout
+        if: ${{ !env.ACT }}
         with:
-          token: ${{ steps.create-app-token.outputs.token }}   # 用 App Token 重新 checkout
-      # ...
-      - name: Commit changes to /streams
-        if: steps.playlist-update.outputs.processed_issues != 0
-        run: |
-          git add streams/
-          git commit -m "updates channels"
-          git push
+          token: ${{ steps.create-app-token.outputs.token }}
 ```
 
-关键点：
+四个要点：
 
-1. **默认 workflow token 只有 read 权限**，需要写入时切换到 **GitHub App Token**（`tibdex/github-app-token`），Token 的 scope 由 App 本身决定，最小化授权。
-2. **`gh act` 本地调试路径**：所有 step 都加了 `if: ${{ !env.ACT }}`，意味着用 [ PROTECTED_69 ](https://github.com/nektos/act) 在本地跑 workflow 时会自动跳过 token 切换，方便开发者本地复现。
-3. **commit 作者固定为 `iptv-bot[bot]`**：保证审计一致性，不会出现"是谁提交了这一批流"的多人歧义。
-4. **只在有变更时才 commit**：`if: steps.playlist-update.outputs.processed_issues != 0` 避免每天空 commit。
+1. **读写分离**。默认的 `GITHUB_TOKEN` 只有 `contents: read`；写操作全部走 GitHub App Token，App 本身能碰哪些仓库、哪些权限，在 App 配置里一次性定死，workflow 里拿到的只是短时凭证。
+2. **`env.ACT` 是本地调试开关**。token 签发、二次 checkout、push、Pages 部署这几步都挂着 `if: ${{ !env.ACT }}`——用 [act](https://github.com/nektos/act) 在本地跑 workflow 时自动跳过这些需要真实密钥的步骤。仓库的 `package.json` 里还备好了 `act:update`、`act:check` 等命令，本地复现一条龙。
+3. **提交作者固定为 `iptv-bot[bot]`**。所有自动提交的作者和邮箱都是同一个 bot 身份，git 历史里人机分明；每条 commit message 带着触发它的 workflow run 链接，审计可以一路点到具体的 Actions 日志。
+4. **提交粒度有讲究**。`streams/` 的提交挂在 `processed_issues != 0` 条件上（这个值取自第 2 步写下的处理清单）；`PLAYLISTS.md` 则无条件 `--allow-empty` 提交，保证"日更跑过"在提交历史里留痕。
 
-这是 GitHub Actions 安全实践里一个非常干净的范例：**用 App Token 替代默认 GITHUB_TOKEN，把"权限边界"和"逻辑边界"绑在一起**。
+一个值得注意的边界：这套权限模型防的是 workflow 意外和凭证滥用，不防恶意贡献——内容层面的防线在 validate 脚本、人工审批和 blocklist，权限和内容治理各管一段。
 
-## 七、为什么不存视频文件，以及法律边界
+## 九、法律、许可与内容治理
 
-这是项目 FAQ 里被反复问的问题，README 的 "Legal" 段说得最清楚：
+README 的 Legal 一节把边界划得很直白：仓库不存任何视频文件，只存用户提交的公开流链接；链接指向的内容不受项目控制，从播放列表里删掉链接也不会让内容从互联网上消失；链接本身不直接侵犯版权（提供链接的一方没有复制任何内容），因此这不是向 GitHub 发 DMCA 通知的有效理由——要下架内容应该去找真正托管它的主机商。
 
-> **No video files are stored in this repository.** The repository simply contains user-submitted links to publicly available video stream URLs...
+与之配套的是一个只对版权方开放的移除通道：`6_copyright-claim` 表单只接受频道所有者及官方代表的请求，通常一个工作日内审核，批准后链接立即移除，且该频道会被写进 database 仓库的 `blocklist.csv`——不只删一次，而是永久拦在入库环节。NSFW 内容同样走 blocklist 机制管理，2024 年 1 月底起整个项目停止分发 NSFW 频道。
 
-翻译成人话：
+许可证方面，仓库的 [LICENSE](https://github.com/iptv-org/iptv/blob/master/LICENSE) 文件是 Unlicense——作者放弃全部版权，把代码和数据一并奉献给公有领域；README 挂的是 CC0 徽章，指向的也是这份 Unlicense 文件。两者都是"无权利保留"的公有领域奉献，第三方 fork、修改、分发没有额外条件。这解释了为什么大量 IPTV 播放器和应用敢于直接内置 iptv-org 的播放列表。
 
-- 仓库只存**流媒体链接**（m3u8、ts、mpd 等），不存视频本身。
-- 链接是用户提交的，由维护者社区人工/自动验证。
-- 如果某个链接侵犯版权，可以开 Issue 申请移除（`6_copyright-claim.yml` 模板），但 GitHub DMCA 流程不适用于此场景。
-- 仓库本身用 **CC0 / Unlicense** 声明元数据放弃所有权利（CC0 for data, MIT for code），这也是为什么第三方可以自由 fork 和分发。
+这种"链接集合 + 不存储内容"的模式让项目运行了八年没有遇到整体下架，但边界不是永久安全的：链接服务的法律定性在各法域并不一致，项目自己的 README 也承认对链接目标毫无控制力。对使用方来说，稳妥的假设是"任何一条链接随时可能消失"——FAQ 里不收录 Xtream Codes 链接的理由（太不稳定、死链太快）同样适用于对整个数据集的预期管理。
 
-这种"链接集合 + 不存储内容"的模式在版权法里属于链接服务（linking service），和 YouTube、Reddit 这种 UGC 平台性质类似——平台不承担内容责任，但需要响应移除请求。iptv-org 把这个边界划得很清楚，是它能运行 10+ 年不被 GitHub 整体下架的根本原因。
+## 十、采用建议与边界
 
-## 八、采用建议与边界
+谁适合直接用：
 
-适合引入的团队：
+- **播放器与聚合类应用**：把 `index.country.m3u` 或分类切片当数据源，配合自己的心跳检测。不要 fork 整个仓库做镜像——上游每小时都在变，镜像只会腐烂。
+- **想搭"GitHub 原生内容流水线"的团队**：iptv-org 是这套模式最完整的公开参考实现——表单、标签状态机、即时校验、审批门禁、定时 ETL、条件提交、Pages 发布，每一环都有可抄的细节。数据录入、链接审核、工单分拣类场景都可以平移。
 
-- **媒体聚合类应用**（直播电视、IPTV、OTT 盒子）需要一个高质量、可维护的频道源。
-- **研究/教学场景**：需要真实的"链接即服务"数据集做流媒体协议（HLS、DASH）实验。
-- **企业内部知识库**：想用 Issue 当 CMS 又不想自建后台的小团队（10–100 人规模），这个仓库是绝佳的参考实现。
+谁不该用这套模式：
 
-不适合的：
+- **需要 SLA 的场景**。流链接没有存活承诺，GitHub Actions 和 Pages 也没有可用性承诺，关键业务别把链路建在别人家的免费层上。
+- **单条数据需要强一致的事务**。这里的"回滚"只是内存快照，粒度是单个 Issue、周期是一天一次；需要秒级一致性的系统要找别的方案。
 
-- **需要 SLA 的商业播放**：流链接随时可能死，必须有自己的心跳检测和容错。
-- **需要付费内容**：iptv-org 只收录公开免费流，付费频道不在范围。
-- **大并发拉取**：`iptv-org.github.io/iptv/index.m3u` 这个文件本身就 50+ MB，加载所有频道需要稳定网络。
+二次开发的三条捷径：
 
-二次开发建议：
+1. **数据接入用 `@iptv-org/sdk`**。iptv 仓库自己就是用它下载数据、建索引的，`DataManager` 和模型定义开箱即用。
+2. **EPG 关联认 `tvg-id`**。它就是 Stream ID，`iptv-org/epg` 的节目单按同一个 ID 体系对齐，自己解析时不用另做映射。
+3. **贡献遵守 Stream Description Scheme**。国家用 ISO 3166-1 二位码、行尾 CRLF、UTF-8 无 BOM，lint 和 validate 会把不合格的提交挡在门外——这也是 `check` 工作流存在的意义。
 
-1. **不要 fork 整个仓库做镜像**，直接用它的 `index.country.m3u` 等切片文件作为数据源即可。
-2. **如果要写 EPG 解析器**，用 `@iptv-org/sdk`（已被 iptv 自身用），里面封装了 stream-id → EPG-id 的映射。
-3. **如果要贡献**，必须遵守 CONTRIBUTING.md 的字段规范（比如国家用 ISO 3166-1 alpha-2 代码 `cn` 而非 `CN` 或 `China`），否则 lint 阶段会被拒绝。
+## 十一、总结
 
-## 自测题
+回到开头的判断：iptv-org/iptv 的架构价值不在"用 GitHub 当数据库"这个点子本身——任何人都想得到——而在它围绕这个点子补齐的工程配套：
 
-1. **iptv-org/iptv 仓库里存储的是什么？**
-   <details>
-   <summary>查看答案</summary>
-   答案：不存任何视频文件，只存频道链接元数据（m3u 播放列表）。所有 600+ 个 m3u 文件都是 ETL 产物，不是手工维护的。
-   </details>
+- **输入侧**：表单约束字段，Stream ID 锁定数据模型，validate_issue 在提交瞬间完成机器校验，approved 标签保留人工审批权，blocklist 把不可接受的内容永久挡在门外。
+- **处理侧**：每日一次的幂等 ETL，单请求粒度的失败回滚，vitest 快照测试锁住每个命令的行为。
+- **输出侧**：12 个生成器把同一份数据切成约 1,277 个视图，App Token 划清权限边界，commit 历史天然就是审计日志。
 
-2. **iptv-org/iptv 的「CMS」是什么？**
-   <details>
-   <summary>查看答案</summary>
-   答案：GitHub Issues。用户在 Issue 里贴上频道流链接，Actions 每天跑一次，解析 Issue、合并流、写入 m3u 文件、自动关闭 Issue。
-   </details>
-
-3. **`iptv-bot` 的权限是如何最小化的？**
-   <details>
-   <summary>查看答案</summary>
-   答案：workflow 默认 token 只有 `contents: read` 权限；需要写入时切换到 GitHub App Token（通过 `tibdex/github-app-token`），Token 的 scope 由 App 本身决定，且 bot 只能推 `streams/` 目录。
-   </details>
-
-4. **9 个生成器分别是按什么维度切分播放列表的？**
-   <details>
-   <summary>查看答案</summary>
-   答案：全量、国家、国家子区域（省/州）、城市、地区（洲）、语言、分类、源头域名、类别聚合索引。
-   </details>
-
-5. **为什么 iptv-org 能运行 10+ 年不被 GitHub 下架？**
-   <details>
-   <summary>查看答案</summary>
-   答案：仓库只存流媒体链接（linking service），不存视频本身；且明确声明响应版权移除请求（DMCA takedown process）。这种「链接集合 + 不存储内容」模式在版权法里属于链接服务，平台不承担内容责任。
-   </details>
+它的代价同样清晰：数据质量受限于志愿者的实测意愿（死链是常态）、吞吐受限于每天一次的调度节奏、存续依赖于 GitHub 平台本身。对一个由社区驱动、链接本身就是易变资产的电视指南项目来说，这套取舍是划算的；换成别的领域之前，先想清楚你的数据是否也能容忍"日更 + 尽力而为"的节奏。
 
 ---
 
-## 练习
-
-1. **本地运行 ETL 流水线**：用 `gh act` 或本地安装依赖后运行 `npm run api:load` 和 `npm run playlist:update`，观察 `streams/` 目录的变化。
-2. **写一个简单的 Generator**：参考 `scripts/generators/categories.ts`，写一个新生成器按「分辨率」维度切分播放列表（比如 1080p 以上、720p、480p 以下）。
-3. **分析链接存活率**：写一个简单的脚本，随机抽查 100 个 m3u 链接，用 `curl -I` 检查 HTTP 状态码，统计存活率并分析原因。
-
----
-
-## 进阶路径
-
-1. **深入 ETL 引擎**：阅读 `scripts/commands/playlist/update.ts` 和 `scripts/utils.ts`，理解 Issue 解析、流合并、去重排序的完整逻辑。
-2. **研究 GitHub Actions 安全实践**：分析 `.github/workflows/update.yml`，理解 GitHub App Token、权限最小化、本地调试路径（`gh act`）的设计思路。
-3. **二次开发**：基于 iptv-org 的架构，为己用或企业内部知识库设计「Issue 当 CMS」的方案（比如 Bug 跟踪、文档审核、数据录入等）。
-4. **EPG 解析**：研究 `iptv-org/epg` 仓库，理解如何从数百个来源下载并解析 EPG（电子节目指南）。
-5. **法律边界研究**：深入研究版权法中「链接服务」vs「内容托管」的边界，理解为什么 iptv-org 能长期运营而类似项目可能被下架。
-
----
+> **来源**：GitHub [iptv-org/iptv](https://github.com/iptv-org/iptv)，139,865 ★ / Unlicense / 数据口径 2026-09-30（GitHub API、master 分支源码与文档、iptv-org.github.io 实测）
 
 ## 资料口径说明
 
-1. **信息来源**：本文基于 iptv-org/iptv 仓库的 README、源码结构（`package.json` scripts、`scripts/` 目录）和 GitHub Actions workflow 编写，所有技术细节均来自可验证的代码和文档。
-2. **数据时效性**：文中提到的 Stars 数（约 118k）、调度频率（每天 UTC 0 点）来自 2026-06 的观察，实际数据请参考仓库最新状态。
-3. **架构分析边界**：本文的架构拆解基于静态代码分析，未实际运行完整 ETL 流水线。实际运行时可能存在本文未覆盖的边界情况或最新代码变更。
-4. **法律判断边界**：本文关于「链接服务」的法律边界分析基于一般原理，不构成法律建议。实际运营此类项目请咨询法律专业人士。
-5. **链接存活率**：本文未对 m3u 链接的存活率做实际测试，链接失效是常态，使用方需自行做心跳检测。
-6. **适用场景判断**：本文给出的「采用建议与边界」基于技术架构分析，实际决策需结合团队规模、法律环境、技术栈综合判断。
-
----
-
-## 九、总结
-
-iptv-org/iptv 是一个**用 Git 原生能力做 ETL** 的典型案例：
-
-- **GitHub Issues** = 内容输入队列（CMS）
-- **GitHub Actions** = ETL 调度器（cron + 容器）
-- **GitHub App Token** = 安全边界（最小权限写入）
-- **`/streams/*.m3u`** = 数据湖（按国家分片的原始层）
-- **9 个 Generator** = 数据加工（按维度切片的派生层）
-- **`iptv-org.github.io`** = 数据发布（GitHub Pages 静态托管）
-
-这种架构的优势是**零运维、完全可审计、社区友好**，代价是**强依赖贡献者质量和 GitHub 平台稳定性**。对于一个面向公众、链接存活率本身就是变量的电视指南项目来说，这个 trade-off 是值得的。
-
----
-
-> **来源**：GitHub [iptv-org/iptv](https://github.com/iptv-org/iptv)，约 118k ★ / MIT (代码) + CC0 (数据) / 2026-06-13
+1. **信息来源**：本文基于 2026-09-30 的 GitHub API（仓库元数据、文件树）、master 分支源码（`package.json`、`scripts/` 下全部命令与生成器、`.github/workflows/` 下 5 个 workflow）与文档（README、CONTRIBUTING、FAQ、docs/ 下 9 篇）编写，公开播放列表数量来自 `PLAYLISTS.md` 链接计数，`index.m3u` 体积来自 iptv-org.github.io 当日响应头。
+2. **架构分析边界**：拆解基于静态代码分析与官方文档，未实际运行完整流水线；文中标注"演示"的流与 URL 均为虚构，其余代码片段摘自仓库源码。
+3. **法律判断边界**：关于链接服务与公有领域许可的说明来自 README 与 LICENSE 原文，不构成法律建议。
+4. **数据时效**：Stars、播放列表数量、文件清单均为 2026-09-30 快照，仓库日更频繁，阅读时请以最新状态为准。

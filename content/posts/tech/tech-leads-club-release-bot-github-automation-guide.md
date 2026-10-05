@@ -1,62 +1,56 @@
 ---
-title: "tech-leads-club-release-bot：Tech Leads Club 的自动化发布机器人深度解读"
+title: "tech-leads-club-release-bot：一个闭源 GitHub App 背后的开源发布流水线"
 date: 2026-05-17T20:25:00+08:00
+lastmod: 2026-10-03
 slug: "tech-leads-club-release-bot-github-automation-guide"
-github_repo: "apps/tech-leads-club-release-bot"
-source_key: "gh:apps/tech-leads-club-release-bot"
-description: "全面解析 tech-leads-club-release-bot GitHub App 的架构设计、安装配置及在 agent-skills 项目中的实战应用"
+github_repo: "tech-leads-club/agent-skills"
+source_key: "gh:tech-leads-club/agent-skills"
+description: "tech-leads-club-release-bot 本体闭源，但它驱动的 agent-skills 发布流水线完全开源：GitHub App 身份层、Nx Release 分组发布、Snyk Agent Scan 前置门禁与防自触发设计，本文逐层拆解"
 draft: false
 categories: ["技术笔记"]
-tags: ["CI/CD", "GitHub Actions", "TypeScript"]
+tags: ["CI/CD", "GitHub Actions", "Nx", "TypeScript"]
 ---
 
-# tech-leads-club-release-bot：Tech Leads Club 的自动化发布机器人深度解读
+# tech-leads-club-release-bot：一个闭源 GitHub App 背后的开源发布流水线
 
-## 项目概览
+先说结论：**tech-leads-club-release-bot** 这个 GitHub App 本体并不开源（Tech Leads Club 组织下的公开仓库里找不到它的源码），它值得解读的地方在于用法——它所驱动的 [agent-skills](https://github.com/tech-leads-club/agent-skills) 发布流水线完全开源，完整展示了多包 monorepo 如何做到**权限精控、安全扫描前置、防自触发**这三件事。任何维护多包 npm 项目、又要往发布链路里塞安全门禁的团队，都能直接从这套 workflow 里抄作业。
 
-**tech-leads-club-release-bot**（[github.com/apps/tech-leads-club-release-bot](https://github.com/apps/tech-leads-club-release-bot)）是 [Tech Leads Club](https://techleads.club/) 社区开发者 [Felipe Rodrigues](https://github.com/felipfr) 开发的 GitHub App，核心职责是**为 agent-skills 仓库自动化处理版本号管理、Tag 创建和 Changelog 更新**，深度集成 Nx Release 与 semantic-release 生态。
+本文机制描述以文章发表时点的 workflow 快照为基准（commit `81e7e0dd`，2026-04-28），仓库读数与演进状态截至 2026-10-03 刷新。
 
-| 维度 | 数据 |
-|------|------|
-| GitHub App slug | `tech-leads-club-release-bot` |
-| 开发者 | Felipe Rodrigues（[felipfr](https://github.com/felipfr)，巴西）|
-| 关联仓库 | [tech-leads-club/agent-skills](https://github.com/tech-leads-club/agent-skills) |
-| 主要语言 | TypeScript |
-| 目标生态 | Nx Monorepo, npm (@tech-leads-club), GitHub Pages |
-| 许可证 | MIT |
+## 系统地图：谁在干什么
 
----
+这套体系里容易混为一谈的角色，实际分工是：
 
-## 它解决了什么问题
+| 层 | 承担者 | 职责 |
+|------|------|------|
+| 身份层 | tech-leads-club-release-bot（GitHub App） | 在 workflow 内换取短期 token，提供 git 提交身份与推送权限 |
+| 触发层 | GitHub Actions（release.yml 的 `on` 段） | 监听 push / pull_request / merge_group 三类事件 |
+| 发布引擎 | Nx Release（`npx nx release`） | 版本计算、changelog、tag、npm publish，按分组执行 |
+| 安全门禁 | 自研编排器 scan-skills.ts + Snyk Agent Scan | 逐技能扫描，critical/high 阻断发布 |
+| 审批层 | GitHub Environments（`publish` 环境） | 发布前人工审批 |
+| 旁路 | snapshot job | PR 打 label 即发测试版本，不进正式发布链 |
 
-[agent-skills](https://github.com/tech-leads-club/agent-skills) 是一个面向专业 AI 编程 Agent（Claude Code、Cursor、Copilot、Windsurf 等）的安全技能库，采用 Nx Monorepo 架构，包含 CLI、skills-catalog 和 MCP Server 三个发布单元。
+注意一个关键澄清：**App 不订阅任何 webhook**。workflow 的触发靠 GitHub Actions 自身的事件机制，App 的全部作用发生在 workflow 运行期间——被 `actions/create-github-app-token` 换成一个一小时有效的 token。原文常见"bot 订阅 push 事件"的说法，是把 workflow 触发器和 App webhook 混为一谈了。
 
-这类多包项目的发布痛点在于：
+## 它服务的仓库：agent-skills
 
-- **多包联动发布**：CLI、skills-catalog、MCP Server 三个包版本必须同步关联
-- **安全扫描前置**：每次发布前必须通过 Snyk 安全扫描，阻断有漏洞的版本
-- **快照发布需求**：PR 场景下需要发布 snapshot 版本供测试
-- **防自触发死循环**：bot 自己 push 的 release commit 不应再次触发发布
+agent-skills 是一个面向专业 AI 编程 Agent 的技能库（README 自我定位是 "The secure, validated skill registry for professional AI coding agents"），支持 Claude Code、Cursor、Copilot、Windsurf 等约 20 个代理工具。仓库 2026-01-19 创建，截至 2026-10-03 有 7,024★、558 forks，MIT 许可，TypeScript 为主，累计发出 81 个 release。
 
-tech-leads-club-release-bot 的设计目标正是解决这一整套发布流程的自动化。
+`packages/` 下有四个包：`cli`、`skills-catalog`、`mcp`、`marketplace`（部署到 GitHub Pages 的技能市场站点），外加共享库 `libs/core`。其中三个走 npm 发布，在 `nx.json` 里注册为三个 release 分组，tag 模式各不相同：
 
----
+| 分组 | npm 包 | tag 模式 | 触发路径 |
+|------|------|------|------|
+| cli | @tech-leads-club/agent-skills | `v{version}` | packages/cli/ 或 libs/core/ 变更 |
+| skills-catalog | @tech-leads-club/skills-catalog | `skills-catalog-v{version}` | packages/skills-catalog/ 变更 |
+| mcp | @tech-leads-club/agent-skills-mcp | `mcp-v{version}` | packages/mcp/ 或 libs/core/ 变更 |
 
-## 核心架构
+marketplace 不发布 npm，由单独的 deploy-marketplace.yml 部署。截至 2026-10-03，三个包在 npm 上的最新版本分别是 1.4.10、0.17.8、0.1.6——三个版本号完全独立，这正是分组发布的结果。
 
-### 作为 GitHub App 的角色
+多包项目的发布痛点在这里具体化为四条：三个包的版本联动但又不必同步发版（CLI 和 MCP 都依赖 libs/core，改一次核心库可能两个都要发）；发布前必须过安全扫描（技能库是提示词供应链，被投毒的技能会直接进入用户的 agent 上下文）；PR 阶段需要可安装的测试版本；bot 自己 push 的 release commit 不能再次触发发布。后面逐一对应到机制。
 
-该 Bot 以 GitHub App 身份运行，相比 Personal Access Token 具有以下优势：
+## 身份层：GitHub App 干的三件事
 
-```
-Bot 身份优势：
-├── 基于 GitHub App JWT 认证，权限精控
-├── 操作记录归属清晰（app[bot] 而非个人账号）
-├── 可安装到指定仓库，权限边界明确
-└── 不受个人 Token 过期影响
-```
-
-Bot 在 workflow 中的典型使用模式：
+用 GitHub App 而不是 Personal Access Token，收益是通用的：权限按仓库粒度授予、操作归属显示为 `app[bot]` 而非个人账号、token 由 JWT 换取且一小时自动过期。这套 workflow 里 App 的作用集中在三处：
 
 ```yaml
 - name: Generate App Token
@@ -65,297 +59,135 @@ Bot 在 workflow 中的典型使用模式：
   with:
     app-id: ${{ secrets.RELEASE_APP_ID }}
     private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
-
-- name: Checkout Code
-  uses: actions/checkout@v4
-  with:
-    token: ${{ steps.app-token.outputs.token }}
-    fetch-depth: 0
-    filter: tree:0
 ```
 
-### 发布工作流设计
+其一，token 生成。release 和 snapshot 两个 job 都先换取 App token，再把它同时用在 checkout（拉代码）和 `GITHUB_TOKEN` 环境变量（nx release 调 GitHub API 建 release）上。
 
-Bot 驱动的发布体系包含四个核心 Job：
+其二，git 身份。提交者信息不在 workflow 里逐条配置，而是封装在 `.github/actions/setup` 这个 composite action 中，由 `git-config: true` 输入触发：`user.name` 设为 `<app-slug>[bot]`，email 用 GitHub 官方的 noreply 域名，remote 换成 `x-access-token:<token>` 形式。这也是一处容易误读的地方——你在 agent-skills 的 release.yml 里找不到 `git config` 命令，它在 composite action 里。
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    Push to main                             │
-└──────────┬──────────────────┬──────────────────┬────────────┘
-           ▼                  ▼                  ▼
-   ┌───────────────┐  ┌───────────────┐  ┌───────────────────┐
-   │ approve-release│  │ security-scan  │  │  (other jobs...)  │
-   │ (Environment)   │  │  (Snyk scan)   │  └───────────────────┘
-   └───────┬───────┘  └───────┬───────┘
-           │                  │
-           └──────────┬───────┘
-                      ▼
-              ┌───────────────┐
-              │    release    │
-              │ (needs both)  │
-              └───────┬───────┘
-                      │
-        ┌─────────────┼─────────────┐
-        ▼             ▼             ▼
-   ┌──────────┐ ┌──────────┐ ┌──────────┐
-   │ Release  │ │ Release  │ │ Release  │
-   │   CLI    │ │  Catalog │ │   MCP    │
-   └──────────┘ └──────────┘ └──────────┘
-```
+其三，防自触发的主体。这层设计值得单独展开。
 
-### 多包分组发布机制
+## 防自触发：为什么需要，怎么做的
 
-Nx Release 支持 `--groups` 参数，Bot 所触发的发布流程通过检测变更自动判断需要发布的包组：
+问题的根源恰恰来自 App 的优势本身。GitHub Actions 的默认 `GITHUB_TOKEN` push 的 commit 不会触发新 workflow，这是平台层保护；但 App token 或 PAT push 的 commit **会**触发。一旦用上 App token，"bot 发布 → push release commit → 又触发发布"的死循环就打开了，必须自己关上。
 
-```bash
-# 检查各包组的变更情况
-GROUPS_TO_RELEASE=""
-
-# 检查 CLI 包组（packages/cli/ + libs/core/）
-CLI_CHANGES=$(git diff --name-only "$CLI_TAG"..HEAD -- packages/cli/ libs/core/)
-if [ -n "$CLI_CHANGES" ]; then
-  GROUPS_TO_RELEASE="${GROUPS_TO_RELEASE:+$GROUPS_TO_RELEASE,}cli"
-fi
-
-# 检查 skills-catalog 包组
-CATALOG_CHANGES=$(git diff --name-only "$CATALOG_TAG"..HEAD -- packages/skills-catalog/)
-if [ -n "$CATALOG_CHANGES" ]; then
-  GROUPS_TO_RELEASE="${GROUPS_TO_RELEASE:+$GROUPS_TO_RELEASE,}skills-catalog"
-fi
-
-# 检查 MCP 包组
-MCP_CHANGES=$(git diff --name-only "$MCP_TAG"..HEAD -- packages/mcp/ libs/core/)
-if [ -n "$MCP_CHANGES" ]; then
-  GROUPS_TO_RELEASE="${GROUPS_TO_RELEASE:+$GROUPS_TO_RELEASE,}mcp"
-fi
-
-# 执行分组发布
-npx nx release --yes --groups=$GROUPS_TO_RELEASE
-```
-
-### 快照发布（Snapshot Release）
-
-当 PR 被标记 `action: snapshot` 时，Bot 触发独立的 snapshot 发布流程：
+关闭方式是两个过滤条件的组合，出现在 approve-release 和 security-scan 两个 job 的 `if` 里，workflow 原文共四行：
 
 ```yaml
-snapshot:
-  name: Snapshot Release
-  if: |
-    github.event_name == 'pull_request' &&
-    github.event.action == 'labeled' &&
-    github.event.label.name == 'action: snapshot'
-  steps:
-    - name: Publish Snapshot
-      run: |
-        SHORT_SHA=$(git rev-parse --short HEAD)
-        npx nx release version 0.0.0-pr${{ github.event.number }}.${SHORT_SHA} \
-          --git-tag=false --git-commit=false --stage-changes=false && \
-        npx nx release publish --tag snapshot --provenance
-```
-
-版本号格式：`0.0.0-pr123.abc1234`（PR 编号 + 短 SHA），发布到 npm 的 `snapshot` tag。
-
----
-
-## 防自触发机制：关键设计
-
-Bot 面临的核心问题是：**Bot 自己 push 的 release commit（包含 `chore(release):` 消息）不应再次触发发布**。
-
-解决方案通过两个 filter 组合实现：
-
-```yaml
-# approve-release 和 security-scan 的触发条件
 if: |
   github.event_name == 'push' &&
   github.ref == 'refs/heads/main' &&
-  github.actor != 'tech-leads-club-release-bot[bot]' &&   # ← Bot 不是触发者
-  !startsWith(github.event.head_commit.message, 'chore(release):')  # ← 非 release commit
+  github.actor != 'tech-leads-club-release-bot[bot]' &&
+  !startsWith(github.event.head_commit.message, 'chore(release):')
 ```
 
-具体效果：
-- 人工 push 到 main → 触发 approve-release + security-scan
-- Bot push release commit → 两个 job 都不触发，release job 的 `needs` 得不到满足，自然不会发布
-- PR labeled with `action: snapshot` → 走独立的 snapshot job，不走 main 分支流程
+双重保险各有分工：actor 检查防住 bot 账号发起的一切事件，commit message 前缀检查防住"人以 bot 的提交消息格式手动 push"的漏网情况——bot 的发布提交统一用 `chore(release):` 前缀（包括自动提交的技能数据更新 `chore(release): update generated skills data`），消息不符合前缀才算人工改动。release job 本身没有 `if`，它靠 `needs: [approve-release, security-scan]` 依赖传导：上游两个 job 被 skip，下游自然不运行。
 
----
+这里还有一个容易忽略的细节：release job 的 checkout 用了 `filter: tree:0`（部分克隆，只取提交与目录树、不取文件内容）配合 `fetch-depth: 0`（完整历史）。前者省流量，后者是硬需求——Nx 的变更检测和 release 的 tag 比较都要读完整 git 历史。
 
-## 安装与配置
+## 发布引擎：分组检测与 Nx Release
 
-### 前提条件
-
-1. **拥有 GitHub App**：在 GitHub Settings → Developer settings → GitHub Apps 创建新 App
-2. **仓库权限**：App 需要对目标仓库具有 `contents: write`（写 tag 和 commit）、`pull-requests: write`（写 PR comment）
-3. **Secrets 配置**：
-
-```yaml
-# GitHub Actions Secrets
-RELEASE_APP_ID          # GitHub App 的 APP ID
-RELEASE_APP_PRIVATE_KEY # App 的私钥（.pem 文件内容）
-SNYK_TOKEN              # Snyk 账户 token（用于安全扫描）
-NX_CLOUD_ACCESS_TOKEN   # Nx Cloud token（可选，本地模式可绕过）
-```
-
-### 私钥生成与注册
+`npx nx release` 是整个体系里唯一管版本的工具（README 挂着 semantic-release 的徽章，但仓库依赖里没有 semantic-release——徽章表达的是"遵循 Conventional Commits 语义化发布"的理念，引擎是 Nx Release）。workflow 在调用它之前，先自己算清楚"这次该发哪几组"：
 
 ```bash
-# 1. 生成私钥（在 GitHub App 页面下载）
-# 2. 本地读取并处理（注意换行符）
-cat app-private-key.pem | pbcrypt  # macOS
-# 3. 将输出结果存入 Actions Secret: RELEASE_APP_PRIVATE_KEY
+# 每组找到自己前缀的最新 tag，再 diff 判断有无源码变更
+CLI_TAG=$(git tag --sort=-creatordate --list 'v[0-9]*' | head -1)
+CLI_CHANGES=$(git diff --name-only "$CLI_TAG"..HEAD -- packages/cli/ libs/core/ | head -1)
+[ -n "$CLI_CHANGES" ] && GROUPS_TO_RELEASE="cli"
+# skills-catalog 与 mcp 同理，路径列表拼接进 GROUPS_TO_RELEASE
+
+# 最终一次调用，只发有变更的组
+npx nx release --yes --groups=$GROUPS_TO_RELEASE
 ```
 
-### App 权限配置（最低要求）
+三组各自独立判断，`libs/core` 同时挂在 cli 和 mcp 的检测路径里——核心库一动，两个下游组都进入候选。没有任何组有变更时，整个发布静默跳过。publish 阶段带 `NPM_CONFIG_PROVENANCE: true`（npm provenance 出处证明，这也是 workflow `permissions` 段里 `id-token: write` 的用途），并有一条贯穿全 workflow 的回退：每条 `npx nx` 命令失败时用 `|| NX_NO_CLOUD=true ...` 重跑一遍，让 Nx Cloud 不可用的环境照样能发。
 
-| Permission | Access |
-|------------|--------|
-| Contents | Read and write |
-| Pull requests | Read and write |
-| Actions | Read |
-| Environments | Read（若使用 environment gate） |
+整个 main 分支发布链的编排：
 
-### Webhook 配置
-
-Bot 订阅以下事件：
-- `push`（检测 main 分支推送）
-- `pull_request`（检测 label 和 PR 同步）
-- `merge_group`（Merge Queue 场景）
-
----
-
-## 与同级工具的差异化定位
-
-| 特性 | tech-leads-club-release-bot | autofix.ci | release-please | semantic-release |
-|------|---------------------------|------------|----------------|------------------|
-| 核心定位 | Nx Monorepo 多包联动发布 + 安全扫描前置 | PR 格式自动修复 | 单一仓库 changelog 驱动发布 | 通用 semantic versioning |
-| 触发方式 | GitHub App + Actions hybrid | GitHub Action | GitHub Action / App | GitHub Action / CLI |
-| 多包分组 | ✅ Nx groups 原生支持 | ❌ | ❌ | ⚠️ 需要手动配置 |
-| 安全扫描前置 | ✅ Snyk scan in CI | ❌ | ❌ | ⚠️ 需自行集成 |
-| Snapshot 发布 | ✅ PR label 触发 | ❌ | ✅ (通过 config) | ✅ |
-| 防自触发 | ✅ explicit actor check | N/A | ❌ | ❌ |
-| 适用场景 | Nx Monorepo，@tech-leads-club 体系 | 格式化修复 | 开源库 changelog 管理 | 通用单/多包项目 |
-
----
-
-## agent-skills 实战参考
-
-agent-skills 是 Bot 所服务的目标仓库，其 workflow 完整展示了 Bot 的集成方式：
-
-### 完整 release.yml 关键片段
-
-```yaml
-# 生成 App Token（供 Git 操作使用）
-- name: Generate App Token
-  uses: actions/create-github-app-token@v1
-  id: app-token
-  with:
-    app-id: ${{ secrets.RELEASE_APP_ID }}
-    private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
-
-# 使用 Bot Token 检出代码（filter: tree:0 跳过未追踪文件）
-- name: Checkout Code
-  uses: actions/checkout@v4
-  with:
-    fetch-depth: 0
-    filter: tree:0
-    token: ${{ steps.app-token.outputs.token }}
-
-# Git 配置 Bot 用户信息
-- name: Git Config
-  run: |
-    git config user.name "tech-leads-club-release-bot[bot]"
-    git config user.email "tech-leads-club-release-bot[bot]@users.noreply.github.com"
-    git remote set-url origin "https://x-access-token:${{ steps.app-token.outputs.token }}@github.com/${{ github.repository }}.git"
-
-# 生成 skills 数据文件（skills-registry.json, skills.json）
-- name: Generate Skills Data
-  run: npm run generate:data || NX_NO_CLOUD=true npm run generate:data
-
-# 有变更则提交（Bot 身份的自动化数据更新）
-- name: Commit Data if Changed
-  run: |
-    git add packages/skills-catalog/skills-registry.json \
-          packages/marketplace/src/data/skills.json \
-          packages/skills-catalog/skills
-    if ! git diff --cached --quiet; then
-      git commit -m "chore(release): update generated skills data"
-    fi
-
-# 检查并发布
-- name: Release Version and Publish
-  run: |
-    npx nx release --yes --groups=$GROUPS_TO_RELEASE || \
-    NX_NO_CLOUD=true npx nx release --yes --groups=$GROUPS_TO_RELEASE
-  env:
-    GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
-    NODE_AUTH_TOKEN: ''
-    NPM_CONFIG_PROVENANCE: true
-    NX_NO_CLOUD: true
+```text
+push to main（非 bot、非 release commit）
+        │
+        ├─► approve-release   environment: publish，人工审批
+        ├─► security-scan     Snyk Agent Scan，critical/high 即失败
+        │
+        └── needs 两者全部成功 ──► release
+                                     ├─ generate:data（重新生成注册表数据）
+                                     ├─ 有变更则 bot 身份提交
+                                     ├─ 分组检测
+                                     └─ nx release --groups=...
 ```
 
-### 环境 Gate
+merge_group 事件有独立的 security-scan-merge-queue job：走 Merge Queue 的 fork PR 能用上基础仓库的 secrets 完成合并前扫描——fork PR 默认拿不到 secrets，这是官方给的解法。
 
-approve-release job 使用 `environment: publish` 配置，需要在 GitHub Repository Settings 中创建 `publish` 环境并指定所需的审批人员：
+## 安全门禁：比"Snyk 扫描"更具体的机制
 
-```yaml
-approve-release:
-  name: Approve Release
-  runs-on: ubuntu-latest
-  environment: publish  # ← 需要环境审批
-  timeout-minutes: 60
-  if: |
-    github.event_name == 'push' &&
-    github.ref == 'refs/heads/main' &&
-    github.actor != 'tech-leads-club-release-bot[bot]' &&
-    !startsWith(github.event.head_commit.message, 'chore(release):')
-  steps:
-    - name: Approval Gate
-      run: echo "✅ Release approved for publish"
+把 security-scan job 展开看，扫描不是简单调一次 Snyk CLI。实际结构是三层：
+
+**编排器**是仓库自研的 `packages/skills-catalog/src/scan-skills.ts`（Nx target `security-scan`），逐个技能调用底层扫描器：`uvx snyk-agent-scan@latest --skills <dir> --json`。底层工具即 Snyk Agent Scan，源码注释标注它的前身是 mcp-scan——一个专为 MCP/Agent 生态做提示词注入与恶意行为分析的开源扫描器，所以扫描结果的结构里保留着 `risk_score`、`thought_process` 这类 LLM 分析痕迹。`SNYK_TOKEN` 是硬依赖，缺失直接报错退出。
+
+**增量缓存**按技能内容哈希工作：内容没变的技能直接读缓存，变了的才重新扫。有一处反直觉的设计：扫描器自身的基础设施错误（`SCANNER_PROCESS_FAILED`、`SCANNER_MISSING_OUTPUT` 等五种 `SCANNER_*` 错误码）不会被写入缓存，下次运行自动重试——扫描失败和"扫出问题"是两回事，前者不该被记住。
+
+**豁免机制**走 `security-scan-allowlist.yaml`：误报的第一方集成可以登记豁免，条目要求写明 `allowedBy`、`allowedAt`，可选 `expiresAt`。本地跑 `npm run scan -- --update-allowlist` 可以交互式添加。
+
+阻断线设在 critical/high：workspace 根目录的 `.security-scan-results.json` 被读出来、按严重度打印、`exit 1` 失败整个 job。CI 里并行度 `PARALLEL_JOBS: 8`，本地默认 `min(CPU 核数, 10)`。
+
+对于"技能库"这个特定场景，这套门禁的存在理由写在 README 里：引用 Snyk Agent Scan 团队的报告，公开市场上 13.4% 的技能含有严重问题。扫描前置于发布，意味着每个 npm 版本里的技能都过了同一道闸。
+
+## 旁路：label 触发的 snapshot 发布
+
+正式发布链之外还有一条测试版通道。给 PR 打上 `action: snapshot` label，独立的 snapshot job 就会：
+
+1. 用 `check-ci-status` action 确认该 PR 的 CI 已通过；
+2. checkout PR 分支本身（不是 main）；
+3. 计算版本号 `0.0.0-pr<PR号>.<短SHA>`，例如 `0.0.0-pr123.abc1234`，用 `nx release version` 写入但不建 tag 不提交（`--git-tag=false --git-commit=false --stage-changes=false`）；
+4. `nx release publish --tag snapshot --provenance` 发布到 npm 的 `snapshot` dist-tag；
+5. 回到 PR 评论安装命令，并移除 label 防止重复触发：
+
+```text
+🚀 Snapshot Published!
+npm install @tech-leads-club/agent-skills@0.0.0-pr123.abc1234
 ```
 
----
+`0.0.0-` 前缀保证 semver 上永远低于任何正式版，测试者显式指定 `@snapshot` 或完整版本号才装得到。
 
-## 安全扫描集成
+## 一次合并的完整旅程
 
-Bot 驱动的 workflow 将 Snyk 安全扫描作为强制门禁：
+把机制串起来：贡献者向 agent-skills 提交一个新技能，PR 触发 ci job（lint、test、build、技能结构校验、安全扫描），维护者审查后打上 `action: snapshot` label——CI 已过，job 检出 PR 分支，发布 `0.0.0-pr124.xxxx` 到 npm snapshot tag，PR 下出现安装命令，label 自动移除。维护者实测没问题，合并进 main。
 
-```yaml
-security-scan:
-  name: Security Scan
-  if: |
-    github.event_name == 'push' &&
-    github.ref == 'refs/heads/main' &&
-    github.actor != 'tech-leads-club-release-bot[bot]'
-  steps:
-    - name: Security Scan
-      id: security-scan
-      uses: ./.github/actions/security-scan
-      with:
-        snyk_token: ${{ secrets.SNYK_TOKEN }}
-        artifact-name: security-scan-results
+main 上的 push 同时点亮 approve-release（publish 环境等审批）和 security-scan（全量技能增量扫描）两个 job。审批人确认、扫描通过后，release job 启动：重新生成技能注册表数据，若数据有变则以 bot 身份提交；随后分组检测发现 `packages/skills-catalog/` 相对 `skills-catalog-v0.17.8` 有变更、其余两组无变化，于是执行 `npx nx release --yes --groups=skills-catalog`——算版本、写 changelog、打 `skills-catalog-v0.17.9` tag、发布 npm，全部以 bot 身份完成。
 
-    - name: Notify on failure
-      if: steps.security-scan.outputs.scan-outcome == 'failure'
-      uses: ./.github/actions/security-scan-notify
+最后这个 push 带着干净的 `chore(release):` 前缀回到 main，workflow 再次被触发，但 actor 检查和消息前缀检查双双拦截，approve-release 与 security-scan 被跳过，release 因 needs 不满足而终止。循环闭合。
 
-    - name: Fail job if scan failed
-      if: steps.security-scan.outputs.scan-outcome == 'failure'
-      run: exit 1
-```
+## 复用这套架构需要准备什么
 
-扫描结果汇总输出：
+照着搭建一个同款，准备清单如下：
 
-```
-Critical: 0 | High: 2 | Medium: 3
-- playwright-skill: prototype-pollution (high) - user-controlled items in for-in loop
-- figma: code-injection (high) - unsafe eval usage
-```
+**Secrets**（仓库或组织级）：`RELEASE_APP_ID` 与 `RELEASE_APP_PRIVATE_KEY`（GitHub App 的 ID 和私钥，私钥在 App 设置页生成后下载 `.pem` 文件，**文件内容原样存入 secret 即可**，不需要任何预处理）；`SNYK_TOKEN`（Snyk 账户 token，扫描必需）；`NX_CLOUD_ACCESS_TOKEN`（可选，没有它 workflow 会走 `NX_NO_CLOUD=true` 回退路径）。
 
----
+**App 权限**：从 workflow 的 `permissions` 段反推最低需求——`contents: write`（推 tag 与提交）、`pull-requests: write`（snapshot 评论）、`issues: write`（评论走 issues API）、`actions: read`（读 CI 状态）、`id-token: write`（npm provenance 签名）。`publish` 环境的审批人是 GitHub 环境配置，不是 App 权限。
 
-## 总结
+**workflow 触发器**：`push`（限 main）、`pull_request`（含 labeled 事件）、`merge_group` 三项，与 release.yml 的 `on` 段一致。
 
-tech-leads-club-release-bot 是一个**高度定位于 Nx Monorepo 生态的发布自动化解决方案**，它通过 GitHub App 身份精控权限、Nx Release 分组发布、Snyk 安全扫描前置和环境审批 Gate，构建了一套适合多包 AI 工具库（CLI + Skills Catalog + MCP Server）的安全发布流水线。
+**前置约束**：仓库须用 Nx（`nx.json` 里注册 release 分组），发布目标是 npm。Nx 之外的 monorepo 工具（Turborepo、pnpm workspace 等）没有等价的 `nx release --groups`，照搬前先确认这一层有替代。
 
-其中最值得留意的设计细节是**防自触发机制**——通过 `github.actor` 和 commit message 双重检查，确保 Bot push 的 release commit 不会触发二次发布，形成了一个可靠的死循环防护。这对于任何以 bot 身份操作 git 的自动化系统都有借鉴意义。
+## 定位：它不是 semantic-release 的替代品
 
-如果你的项目使用 Nx 管理多包发布、对安全性有高要求、且需要在发布前强制通过安全扫描，可以参考这套架构。
+| 特性 | 这套流水线 | release-please | semantic-release |
+|------|------|------|------|
+| 驱动方式 | GitHub App 身份 + Actions 编排 | GitHub Action / App | GitHub Action / CLI |
+| 多包分组 | Nx groups，按 tag 前缀独立版本 | 单一版本流为主 | 支持 fixed/independent 模式，需配置 |
+| 安全扫描前置 | Snyk Agent Scan 内建 | 无，自行集成 | 无，自行集成 |
+| PR 快照版本 | label 触发，npm dist-tag | 无此概念 | 无内建等价物 |
+| 防自触发 | actor + commit 前缀双重检查 | 依赖默认 token 的平台保护 | 同左 |
+
+与两个老牌工具相比，这套设计的差异化不在版本计算（Nx Release 已经做了），而在把**身份、审批、扫描、快照**四件事压进同一条 workflow。release-please 和 semantic-release 处理"怎么发版本"是成熟的，但"发之前必须过什么"要自己往上叠。
+
+## 采用建议
+
+三类团队适合直接参考：Nx + npm 的多包 monorepo（机制可整体照搬）；技能/提示词/插件类供应链项目（安全扫描前置几乎是必选项，Snyk Agent Scan 的技能扫描方向恰好对口）；高频发版且发布需要人工审批的团队（environment gate 加 bot 身份是现成范式）。
+
+两类团队不必急：单包项目（四个 job 的编排收益撑不起复杂度，semantic-release 更省事）；发版频率低、信任边界简单的内部项目（environment gate 之外的三层防护多数用不上）。
+
+两点风险要如实说明：bot 本体闭源，你无法审计 App 自身的行为，能审计的只有它在 workflow 里的用法——对安全敏感场景，建议自建一个功能等价的 GitHub App（配置文件照 workflow 的引用关系抄即可）；agent-skills 仓库最后一次 push 是 2026-09-20，两个 release 组的 npm 包停在 8 月底，项目仍活跃但节奏放缓，抄作业时以当时最新的 workflow 为准。
+
+这套流水线最值得带走的不是某个具体命令，而是一个判断：**当自动化系统持有写权限时，它自己的输出必须被自己的触发条件排除**。一个 `github.actor` 检查加一个 commit message 前缀，两组各四行的条件表达式，换来的是发布循环可以放心地全自动运转。

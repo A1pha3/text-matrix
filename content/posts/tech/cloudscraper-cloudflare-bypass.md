@@ -1,7 +1,7 @@
 ---
 title: "cloudscraper 解读：真正执行 JavaScript 的只有 v1，另外三条路在提交表单"
 date: "2026-04-14T22:00:00+08:00"
-lastmod: "2026-09-21T00:00:00+08:00"
+lastmod: "2026-10-02T00:00:00+08:00"
 slug: "cloudscraper-cloudflare-bypass"
 github_repo: "VeNoMouS/cloudscraper"
 source_key: "gh:VeNoMouS/cloudscraper"
@@ -13,7 +13,7 @@ tags: ["Python", "爬虫", "Cloudflare", "JavaScript"]
 
 > **目标读者**：手上已有 `requests` 代码、遇到 Cloudflare 拦截页在挑工具的人；以及已经用了 cloudscraper、需要判断它为什么在某些站点失效的维护者。
 > **核心问题**：这个库到底解掉了什么，没解掉的部分靠什么补，以及默认配置替你做了哪些决定。
-> **事实边界**：本文核对的是 `VeNoMouS/cloudscraper` 默认分支 `master` 的提交 `9ea528a`（版本号 3.0.0）、PyPI 上 `cloudscraper` 1.2.71 的 wheel 内容，以及 2026-09-21 通过 GitHub 应用程序接口（API）读到的仓库数据。机制描述尽量指到仓库内的文件与行号；官方未给出的通过率、耗时数字，本文只写测试脚本实际测到的东西。
+> **事实边界**：本文核对的是 `VeNoMouS/cloudscraper` 默认分支 `master` 的提交 `9ea528a`（版本号 3.0.0）、PyPI 上 `cloudscraper` 1.2.71 的 wheel 内容，以及 2026-10-02 通过 GitHub 应用程序接口（API）读到的仓库数据。机制描述尽量指到仓库内的文件与行号；官方未给出的通过率、耗时数字，本文只写测试脚本实际测到的东西。
 
 ## 一句话判断
 
@@ -21,19 +21,19 @@ cloudscraper 值得看的不是「能不能绕过 Cloudflare」，而是它把�
 
 三条路径的完成度差得很远，README 却把它们并列成四个「✅ NEW / ✅ FIXED」。把它当成 v1 时代的专用钥匙，它的改造成本几乎为零；把它当成现代 Cloudflare 的通用钥匙，你会把时间花在调参数上，而问题在页面上。
 
-还有一点必须先进视野：仓库最后一次提交是 2025-06-10，README 里那句「Cloudflare 会定期换手法，因此本仓库会频繁更新」所承诺的事，此后没有再发生。对一个与远端算法赛跑的项目，15 个月的空档本身就是结论的一部分。
+还有一点必须先进视野：仓库最后一次提交是 2025-06-10，README 里那句「Cloudflare 会定期换手法，因此本仓库会频繁更新」所承诺的事，此后没有再发生。对一个与远端算法赛跑的项目，16 个月的空档本身就是结论的一部分。
 
-## 项目坐标（2026-09-21 核对）
+## 项目坐标（2026-10-02 核对）
 
 | 字段 | 值 |
 |------|------|
 | 仓库 | [VeNoMouS/cloudscraper](https://github.com/VeNoMouS/cloudscraper)，默认分支 `master`，建仓 2019-04-16，最近推送 2025-06-10 |
-| Stars / Forks | 6,751 / 640（GitHub API 当日读数） |
+| Stars / Forks | 6,774 / 641（GitHub API 当日读数） |
 | 开放议题与合并请求 | 36（该字段是两者之和） |
 | 协议 | MIT。`LICENSE` 里有三行版权：`copyright (c) 2025 Zied Boughdir`、`Copyright (c) 2019 VeNoMouS`、`Copyright (c) 2015 Anorov`，最后一行是这条血缘的起点 |
 | 代码版本 | `cloudscraper/__init__.py:44` 写 `__version__ = '3.0.0'`，`pyproject.toml` 同步为 3.0.0，标签 `3.0.0` 与 GitHub Release 均在 2025-06-10 |
 | 发布版本 | PyPI 最新仍是 1.2.71（上传于 2023-04-25，历史共 78 个发行版） |
-| 语言构成 | 纯 Python，`cloudscraper/` 下 26 个 `.py` 文件、约 5,160 行 |
+| 语言构成 | 纯 Python，`cloudscraper/` 下 26 个 `.py` 文件、约 5,130 行 |
 | 增强版作者 | `pyproject.toml` 的 authors 为 VeNoMouS 与 Zied Boughdir 两人，README 顶部署名「Enhanced by Zied Boughdir」 |
 
 CHANGELOG 顶部把 3.0.0 标为 2025-01-09，而标签和 Release 记录都是 2025-06-10，中间隔着 2.5.2、2.7.0 等若干只出现在提交信息里的版本号，却没有对应标签。读提交史比读 CHANGELOG 更可靠。
@@ -65,7 +65,7 @@ cloudscraper 内部有四个互不复用的处理器，外面再套一个负责�
 | 遇到 v2 页面 | 抛 `CloudflareChallengeError`，文案为「This feature is not available in the opensource (free) version.」 | 进 `cloudflare_v2.py` 的处理分支 |
 | 节流 / 403 恢复 | 无 | 有，且默认开启 |
 
-所以「装哪个」不是口味问题：`pip install cloudscraper` 拿到的是 2023 年的 1.2.71，它对 v2 之后的页面只会抛错；而 `master` 的 3.0.0 从未上传到 PyPI，尽管 `pyproject.toml` 里的包名就叫 `cloudscraper`、CI 里也确实写了 `twine upload dist/*`（只在 publish release 时触发）。仓库有 30 个 GitHub Release 记录，最新一个是 3.0.0，说明发布通道走通了 GitHub 那一半。
+所以「装哪个」不是口味问题：`pip install cloudscraper` 拿到的是 2023 年的 1.2.71，它对 v2 之后的页面只会抛错；而 `master` 的 3.0.0 从未上传到 PyPI，尽管 `pyproject.toml` 里的包名就叫 `cloudscraper`、CI 里也确实写了 `twine upload dist/*`（只在 publish release 时触发）。仓库有 41 个 GitHub Release 记录，最新一个是 3.0.0，说明发布通道走通了 GitHub 那一半。
 
 要用增强能力，从版本控制装：
 
@@ -151,7 +151,7 @@ js2py 那一行还藏着一个兼容补丁：先用一段 JSFuck 探针判断版
 
 `is_V2_Captcha_Challenge`（第 70 行）那条线是完整的：提取 `data-sitekey`，调 `Captcha.dynamicImport(provider).solveCaptcha('hCaptcha', …)`，把服务商返回的令牌写进 `payload['h-captcha-response']`（第 249 行）。它不猜，只是花钱。
 
-`is_V2_Challenge` 那条线则没有解算步骤。`handle_V2_Challenge`（第 161 行）依次做四件事：用正则找 `window._cf_chl_opt=({…});`、`time.sleep(self.delay)`、调 `generate_challenge_payload`、POST 到表单 action。中间没有任何一行碰解释器。而它提交的载荷长这样（第 127 至 141 行）：
+`is_V2_Challenge` 那条线则没有解算步骤。`handle_V2_Challenge`（第 161 行）依次做四件事：用正则找 `window._cf_chl_opt=({…});`、`time.sleep(self.delay)`、调 `generate_challenge_payload`、POST 到表单 action。中间没有任何一行碰解释器。而它提交的载荷长这样（第 136 至 143 行）：
 
 ```python
 payload = {

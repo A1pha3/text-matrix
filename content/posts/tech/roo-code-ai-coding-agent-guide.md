@@ -1,225 +1,148 @@
 ---
-title: "Roo Code：VS Code 中的 AI 编程团队，让编码效率提升 10 倍"
+title: "Roo Code 关停之后：VS Code 里的 AI 编程团队，和它的三条后路"
 date: "2026-04-26T11:36:00+08:00"
-lastmod: 2026-04-26T11:36:00+08:00
+lastmod: 2026-09-29T12:00:00+08:00
 slug: roo-code-ai-coding-agent-guide
 github_repo: "RooCodeInc/Roo-Code"
 source_key: "gh:RooCodeInc/Roo-Code"
-description: "Roo Code 是 VS Code 上的 AI 编程助手，将多个专用 AI Agent（Code、Architect、Ask、Debug、Custom Mode）集成到编辑器中，支持 OpenAI GPT、Anthropic Claude 等主流模型，以及 MCP Server 连接外部工具。"
+description: "Roo Code 这款装机量超 200 万的 VS Code 多模式 AI 编程扩展已于 2026 年 5 月 15 日关停。本文梳理它从 Cline 分叉到关停的全过程、五大模式的设计遗产，以及存量用户现在可走的三条路：Zoo Code、Cline、Roomote。"
 draft: false
 categories: ["技术笔记"]
-tags: ["VS Code", "AI Agent", "编程助手", "Claude", "GPT", "MCP"]
+tags: ["VS Code", "AI Agent", "编程助手", "MCP", "ZooCode", "Roomote"]
 hiddenFromHomePage: false
 ---
 
-## 学习目标
+# Roo Code 关停之后：VS Code 里的 AI 编程团队，和它的三条后路
 
-通过本文，你应该能够：
+Roo Code 已经关停。2026 年 5 月 15 日，官方在仓库 README 里留下一句免责声明："The Roo Code Extension was shut down on May 15th"，仓库停更在 v3.54.0。距它发布 v3.53.0、承诺"插件不会消失"，只过了 22 天。
 
-- 说清 Roo Code 的核心定位：它不是什么、它是什么、适合什么场景
-- 理解五大模式（Code、Architect、Ask、Debug、Custom）各自适合什么任务
-- 完成 Roo Code 的安装和基本配置，接入你自己的 LLM API
-- 理解 MCP Server 的作用，并能配置一个外部工具
-- 使用 Checkpoints 机制管理对话历史，避免重复劳动
-- 判断 Roo Code 是否适合你的工作流，还是其他工具更合适
+这篇文章写给两类人：还装着 Roo Code 的，和听说它好用正打算装的。前者需要知道接下来迁去哪；后者需要知道这段历史里哪些东西还活着——五大模式的设计被社区 fork Zoo Code 延续，原团队的精力转向了云代理 Roomote，而这条线的源头 Cline 仍在活跃开发。
 
----
+## 先看现状
 
-# Roo Code：VS Code 中的 AI 编程团队
+| 维度 | 数据（截至 2026-09-29）|
+|------|------|
+| 仓库 | RooCodeInc/Roo-Code |
+| Stars / Forks | 24.3k / 3.4k |
+| 主语言 | TypeScript |
+| 许可证 | Apache-2.0 |
+| 最终版本 | v3.54.0（2026-05-15 发布，同日宣布关停）|
+| Marketplace 安装量 | 约 204 万 |
+| Marketplace ID | `RooVeterinaryInc.roo-cline`（前身 Roo Cline 的名字留在了 ID 里）|
+| 当前状态 | 已关停，仓库自 2026-05-15 起无新提交 |
 
-> **划重点**：Roo Code 是一款 VS Code 扩展，它不是简单的代码补全工具，而是一个**多模式 AI Agent 团队**：你可以在 Code Mode 写代码、在 Architect Mode 做架构设计、在 Ask Mode 提问、在 Debug Mode 追踪问题，还支持自定义模式。2026 年 4 月，Roo Code 原始团队宣布专注新产品 **Roomote**，**社区团队已接手维护**，插件不会消失。
+README 里的免责声明只有两句话，却把整个谱系说完了：
 
-## 1. Roo Code 是什么
+> The Roo Code Extension was shut down on May 15th. If you're looking for an alternative, check out [ZooCode](https://github.com/Zoo-Code-Org/Zoo-Code/) (a fork started by the Roo Code community) and [Cline](https://cline.bot/) (from where Roo Code originated).
 
-Roo Code（前身可能是 Cline 或 Roo Vet）是一款 AI 驱动的 VS Code 编程助手，定位是「**你的整个开发团队，就在编辑器里**」。它通过多个专用 Agent Mode，让 AI 能够：
+往上数是 Cline，往下数是 Zoo Code。中间这个曾经热闹的项目，现在只剩一个冻结的仓库。
 
-- 生成和修改代码（Code Mode）
-- 做系统架构和迁移规划（Architect Mode）
-- 快速回答问题（Ask Mode）
-- 追踪和定位 bug（Debug Mode）
-- 自定义专属工作流（Custom Modes）
+## 谱系：从 Cline 分出来，又分出两条线
 
-Roo Code 支持 **MCP Servers**（Model Context Protocol），可以连接外部工具和数据源，让 AI Agent 具备更强的工具调用能力。
-
-## 2. 核心能力一览
-
-### 2.1 五大模式
-
-| 模式 | 用途 | 典型场景 |
-|------|------|----------|
-| **Code Mode** | 日常编码、文件操作 | 写新功能、重构代码、批量修改 |
-| **Architect Mode** | 系统规划、架构设计 | 设计微服务结构、制定迁移方案 |
-| **Ask Mode** | 快速问答 | 解释代码、回答技术问题 |
-| **Debug Mode** | 问题追踪 | 添加日志、隔离根因、检查变量 |
-| **Custom Modes** | 自定义工作流 | 团队定制专属模式 |
-
-### 2.2 模型支持
-
-Roo Code 支持通过可配置的 provider 连接主流 LLM，包括 OpenAI GPT 系列、Anthropic Claude 系列，以及其他兼容 OpenAI API 的模型服务。具体支持的模型版本取决于你所配置的 provider 和 API key。
-
-**配置方式**：
-- OpenAI：在设置中填入 OpenAI API key，选择模型（如 GPT-4o、GPT-4 Turbo 等）
-- Anthropic：填入 Anthropic API key，选择 Claude 模型（如 Claude 3.5 Sonnet、Claude 3 Opus 等）
-- 其他 provider：通过自定义 API 端点接入（如 OpenRouter、Azure OpenAI 等）
-
-### 2.3 MCP Server 支持
-
-Roo Code 支持连接 MCP Servers，这意味着 AI Agent 可以调用外部工具（如数据库查询、API 调用、文件处理等），而不只是「写代码」。MCP（Model Context Protocol）是一种让 AI 与外部工具交互的标准协议。
-
-### 2.4 Checkpoints 机制
-
-Roo Code 支持**检查点导航**：你可以在 AI 对话过程中创建检查点，事后回溯到之前的对话状态。这个功能对于需要尝试多种方案、又不想丢失历史的场景非常有用。
-
-## 3. 安装与快速开始
-
-### 3.1 安装方式
-
-**方式一：VS Code Marketplace（推荐）**
-
-在 VS Code 中搜索「Roo Code」或访问 [VS Code Marketplace 链接](https://marketplace.visualstudio.com/items?itemName=RooVeterinaryInc.roo-cline)，点击 Install。
-
-**方式二：VSIX 手动安装**
-
-```sh
-# 下载最新 VSIX 文件
-# 然后在 VS Code 中选择 Extensions -> Install from VSIX
-
-# 或者通过命令行
-code --install-extension /path/to/roo-cline-<version>.vsix
+```mermaid
+graph LR
+  Cline["Cline"] -->|"2024 年 fork"| RC["Roo Cline → Roo Code"]
+  RC -->|"2026-04 团队转向"| RM["Roomote（云代理）"]
+  RC -->|"2026-04 社区分叉"| ZC["Zoo Code"]
+  RC -->|"2026-05-15"| X["扩展关停<br/>v3.54.0 成终版"]
 ```
 
-### 3.2 本地开发
+Roo Code 2024 年从 Cline 分叉而来（GitHub 上 RooCodeInc/Roo-Code 建于 2024-10-31），最初叫 Roo Cline，后来改名 Roo Code。Marketplace 的 publisher ID 至今还是 `roo-cline`，是这个名字存在过的最直接物证。
 
-如果你想参与开发或自定义 Roo Code：
+关键节点按时间排开：
 
-```sh
-# 克隆仓库
-git clone https://github.com/RooCodeInc/Roo-Code.git
+| 时间 | 事件 |
+|------|------|
+| 2024-10 | RooCodeInc/Roo-Code 建库，项目当时叫 Roo Cline |
+| 2025 年 | 改名 Roo Code，模式体系逐步成型 |
+| 2026-04-23 | 发布 v3.53.0：公告称安装量达 300 万、原团队 all-in Roomote、承诺"社区团队已接手，插件会继续维护"；同版 CHANGELOG 里已出现"sunsetting Roo Code 博客文章"的条目。同日，社区在 Zoo-Code-Org/Zoo-Code 建库分叉 |
+| 2026-05-15 | v3.54.0 发布；同日 README 挂出关停声明，承诺的交接以关停告终 |
+| 2026-09 | Zoo Code 仍在活跃开发（已到 v3.84.0）；roocode.com 整站重定向到 Roomote |
 
-# 安装依赖（需要 pnpm）
-pnpm install
+"Roo 团队转向 Roomote"这个说法的直接出处是 Zoo Code README 的自述："Zoo Code continues development of this project after the Roo team wound down active Roo Code work to focus on Roomote"。打开 roocode.com 验证，首页已经是 Roomote 的产品页——"your own cloud coding agent"，署名 "By the creators of"。
 
-# 启动开发模式（F5）
-# 这会在新的 VS Code 窗口中打开 Roo Code 扩展
-```
+## 它是个什么工具
 
-### 3.3 构建 VSIX
+Roo Code 的定位写在自己仓库的 description 里："a whole dev team of AI agents in your code editor"。它不是一个代码补全插件，而是把多个分工不同的智能体塞进 VS Code，核心是五个模式：
 
-```sh
-# 构建并安装 VSIX（自动卸载旧版本）
-pnpm install:vsix
+| 模式 | 职责（README 原述）| 典型场景 |
+|------|------|------|
+| Code Mode | 日常编码、编辑、文件操作 | 写新功能、改代码、批量调整 |
+| Architect Mode | 规划系统、规格与迁移方案 | 设计服务结构、定迁移路径 |
+| Ask Mode | 快速解答、解释与文档 | 弄懂一段代码、答疑 |
+| Debug Mode | 追踪问题、加日志、隔离根因 | 排查 bug、定位故障 |
+| Custom Modes | 为团队或工作流定制专属模式 | 把团队规范固化成可复用的模式 |
 
-# 跳过确认
-pnpm install:vsix -y
+这套设计的意图是：把"一个智能体什么都干"改成"一组专职智能体各干一段"。规划、实现、排查、解释分属不同模式，切换模式就是切换任务阶段，避免长会话里一个上下文从头背到尾。
 
-# 指定编辑器
-pnpm install:vsix -y --editor=code-insiders
-```
+除模式之外，它还有两块能力。一是 MCP（Model Context Protocol，模型上下文协议）服务器支持，让智能体调用外部工具和数据源，README 列在能力清单里（"Utilize MCP Servers"）。二是检查点（Checkpoints）机制，在对话关键节点存档、随时回溯——这个功能的官方文档页已随关停下线，现在访问会得到 404，这也是"死项目"处境的一个缩影：扩展还能装，但周边文档正在一点点失效。
 
-## 4. 使用技巧
+## 一次任务怎么在五个模式间流转
 
-### 4.1 模式选择策略
+用一个具体任务看模式分工的价值。假设要给一个 Express 后端加接口限流：
 
-**先用 Code Mode 解决简单任务**：日常 CRUD、bug 修复、代码生成，先用 Code Mode 处理。
+1. **Architect 模式出方案**。先不写代码，让它规划：限流算法选固定窗口还是令牌桶、中间件放在哪一层、计数存内存还是 Redis。产出一份简短规格。
+2. **切到 Code 模式实现**。按规格改路由文件、装依赖、跑通。实现阶段不再讨论方案，方案已经在规格里定死。
+3. **压测出问题，Debug 模式介入**。限流偶发失效，让它加日志、追踪变量，最后定位到并发计数上的竞态，修掉。
+4. **Ask 模式收尾**。让它解释修复后的代码，把限流策略写成文档留给团队。
 
-**遇到架构问题切换到 Architect Mode**：当你需要设计新系统、做技术选型、规划迁移路径时，切换到 Architect Mode，AI 会提供更结构化的分析。
+全程可以在动手前和改完后各打一个检查点，方案不对就回退重来。
 
-**调试问题用 Debug Mode**：Debug Mode 专门针对追踪问题设计，会帮你添加日志、追踪变量、定位根因。
+这个流程里每个模式的动作，都落在 README 描述的职责范围内。模式切换真正约束的是人的习惯——先规划再动手、排查和实现分开、解释单独做，这比单一大上下文会话更容易保持任务清晰。后来 Zoo Code 的演进方向也印证了这条路的延续：它把模式间的委派做成了 Orchestrator 父子任务结构，把"分工"推到了"编排"。
 
-### 4.2 Checkpoints 的正确用法
+## 为什么会走到关停
 
-在以下场景创建检查点：
+能核实的事实是一条清晰、且带有反转的时间线：
 
-- 开始一个重要的重构前
-- 尝试一个不确定的方案前
-- 需要对比多个方案的结果时
+- 2026-04-23，v3.53.0 发布。CHANGELOG 顶部写着："The Roo Code plugin is not going away"——公告说 Roo Code 达到 300 万安装，原团队 all-in Roomote，同时承诺"社区团队已挺身接手，我们正在和他们做官方交接，你依赖的这个插件会继续得到维护和改进"。同一版本的 CHANGELOG 里，还有一条"添加 sunsetting Roo Code 博客文章"的记录。
+- 2026-05-15，v3.54.0 发布，同日 README 挂出关停声明。22 天前承诺的"官方交接"，以扩展关停收场。社区实际走的是另一条路：Zoo Code 在 v3.53.0 发布当天就已建库，其 README 自述核心团队是"previously contributed to Roo"的开发者。
+- roocode.com 如今整站重定向到 roomote.dev——Roomote 是一个支持自托管或云端的编码智能体，主打异步执行、多模型混搭（BYOK，Bring Your Own Key，自带密钥）、自动化任务，官网标注 "Source available"。
+- 那篇 sunsetting 博客文章随 roocode.com 改版下线，现在访问该站任何路径都会跳到 Roomote 首页。官方解释关停原因的公开文本，实际上已经找不到了；README 只剩免责声明和一个账单联系邮箱（billing@roocode.com）。
 
-### 4.3 MCP Server 配置
+官方没说的部分只能推测：商业上，免费开源的编辑器扩展难以直接变现，而 Roomote 走云端或自托管、按任务编排的路子，更接近一个可持续收费的产品形态。这个推断的依据是两个产品形态的公开差异，不含任何内部信息——关停的真实原因，官方到今天没有公开说明。
 
-如果你有特定的外部工具需求（如连接数据库、调用内部 API），可以通过 MCP Server 扩展 Roo Code 的能力。具体配置请参考 [官方 MCP 文档](https://docs.roocode.com/mcp)。
+## 现在的三条路
 
-## 5. 与同类工具对比
+| 选项 | 是什么 | 现状（2026-09-29）| 适合谁 |
+|------|--------|------|--------|
+| **Zoo Code** | 社区分叉，原样继承 Roo Code 的模式体系 | 1.9k stars，主仓库当天仍有提交，已迭代到 v3.84.0；新增 Semble 语义代码检索、Orchestrator 编排强化、危险命令拦截（DCG）| 想保留 Roo Code 使用体验和现有配置的存量用户 |
+| **Cline** | Roo Code 的上游本尊 | 69.5k stars，持续活跃；定位已扩展为 SDK、IDE 扩展、CLI 多形态 | 不依赖 Roo 的模式体系、想要最大生态与活跃维护的用户 |
+| **Roomote** | 原 Roo 团队的新产品 | 云端或自托管的编码智能体，BYOK、多 provider、支持 Slack/Teams/Discord/Telegram 触发，source available | 想要异步云代理、自动化编排的团队，且不介意产品形态从"编辑器内"变成"云端接活" |
 
-| 工具 | 定位 | 亮点 | 不足 |
-|------|------|------|------|
-| **Roo Code** | 多模式 AI Agent 团队 | 5 种专用模式、MCP 支持、检查点 | 相对较新 |
-| **GitHub Copilot** | 代码补全 | 集成度高、生态完善 | 模式单一 |
-| **Cursor** | AI 代码编辑器 | 专注 AI 编辑体验 | 相对封闭 |
-| **Claude Code** | 命令行 Agent | 纯命令行、更极客 | 学习曲线陡 |
+迁移时的几件实事：
 
-## 6. 适用场景
+- Roo → Zoo 有官方迁移指南：[docs.zoocode.dev/roo-to-zoo-migration](https://docs.zoocode.dev/roo-to-zoo-migration)，Zoo Code 的 Marketplace ID 是 `ZooCodeOrganization.zoo-code`。
+- Roo Code 扩展不会再有更新。模型 API 一旦变更，旧版本可能直接失效，不该再当活跃工具使用。
+- 曾付费的用户，账单问题按 README 指引写信至 billing@roocode.com。
 
-✅ **适合使用 Roo Code 的场景**：
+## 结尾判断
 
-- 需要 AI 辅助编程，但希望有更强的模式化能力
-- 团队需要定制化的 AI 编程工作流
-- 需要 AI 能调用外部工具（MCP Server）
-- 希望在编辑器内就能完成架构设计和代码实现
+Roo Code 停在 v3.54.0，但它留下两样东西。
 
-❌ **不适合使用 Roo Code 的场景**：
+一是模式化分工的智能体设计。Architect、Code、Debug、Ask 各管一段任务的做法，被 Zoo Code 原样继承并往编排方向推进；在"单一全能 agent"和"多智能体流水线"之间，这条路证明了中间态是可行的。
 
-- 只需要简单的代码补全（用 Copilot 就够了）
-- 习惯完全手写代码、不希望 AI 介入
-- 需要完整的代码审查流程（需要配合其他工具）
+二是一个值得记住的教训：开源项目的维护权悬在团队手里。团队转向新产品，204 万装机量的工具说停就停，自定义模式、配置这些用户资产只能自己迁。选编辑器里的 AI 工具时，维护方的存续意愿和社区分叉的活跃度，和功能清单一样重要。
 
-## 7. 常见问题
+对今天的新用户，结论很简单：不要再装 Roo Code。想要它的体验就装 Zoo Code，想要上游生态就用 Cline，想要原团队的后续就看 Roomote。
 
-### Q: Roo Code 会替代我的工作吗？
+## 数据口径
 
-不会。Roo Code 是**辅助工具**，不是替代工具。它的目标是让你从重复性编码中解放出来，专注于更有价值的架构设计和问题解决。
+- Roo-Code 仓库数据（Stars、Forks、语言、许可证、最终版本、关停日期）来自 GitHub API 与仓库 README，截至 2026-09-29。
+- Marketplace 安装量、版本号与 publisher ID 来自 VS Code Marketplace 页面，2026-09-29 查询。
+- Zoo Code 数据（Stars、建库时间、最新版本、新增特性）来自 GitHub API 与其 README，截至 2026-09-29；"Roo 团队转向 Roomote"的表述出自 Zoo Code README 自述。
+- Cline 数据来自 GitHub API，截至 2026-09-29。
+- Roomote 产品信息来自 roocode.com，2026-09-29 访问。
+- 五大模式职责的描述引自 Roo Code 仓库 README。
+- 关停的官方原因未公布，文中相关推断已显式标注为推测。
 
-### Q: Roo Code 和 Cline 是什么关系？
+## 参考
 
-Roo Code 可能是基于 Cline 或类似技术构建的，但现在已经发展为独立的 VS Code 扩展，有自己的品牌和社区。
-
-### Q: 社区团队维护靠谱吗？
-
-从官方公告来看，社区团队已经与原始团队完成了官方交接，并且 v3.53.0 是由社区团队维护的版本。Apache 2.0 许可证也保证了项目的开源性和持久性。
-
-## 自测题
-
-完成阅读后，试着回答以下问题：
-
-1. Roo Code 的五大模式分别适合什么任务？什么时候应该用 Architect Mode 而不是 Code Mode？
-2. Roo Code 和 GitHub Copilot 的核心区别是什么？什么场景下 Copilot 更合适？
-3. MCP Server 的作用是什么？你能举一个在实际开发中会用到的 MCP 工具例子吗？
-4. Checkpoints 机制解决的是什么问题？你在什么场景下会用它？
-5. 为什么文章说 Roo Code"不会替代你的工作"？AI 编程助手的正确定位是什么？
-6. 如果你要给一个团队推广 Roo Code，你会怎么回答"它和 Cursor 有什么区别"这个问题？
-7. 社区团队接手维护意味着什么？对你选择是否采用这个工具有什么影响？
-
----
-
-## 进阶路径
-
-**已经装好了，想进一步用好：**
-
-- **模式切换策略**：不要只用 Code Mode。遇到架构问题切换 to Architect Mode，调试问题切换 to Debug Mode，养成根据任务类型选模式的习惯。
-- **MCP Server 扩展**：从简单的工具开始（如文件系统访问、数据库查询），逐步扩展到更复杂的工作流（如集成 Jira、GitHub 等）。
-- **Custom Modes 探索**：如果团队有特定的开发流程，可以尝试配置 Custom Modes 来固化最佳实践。
-- **Checkpoints 工作流**：在尝试大范围重构前创建 checkpoint，这样如果方向不对可以快速回退。
-
-**想了解更多信息：**
-
-- 官方文档：[docs.roocode.com](https://docs.roocode.com)
-- GitHub 仓库：[RooCodeInc/Roo-Code](https://github.com/RooCodeInc/Roo-Code)
-- 社区 Discord：[discord.gg/roocode](https://discord.gg/roocode)
-
----
-
-## 8. 总结
-
-Roo Code 代表了一种新的 AI 编程范式：**不是单一的代码补全，而是一个多模式 AI Agent 团队**。通过 Code、Architect、Ask、Debug、Custom 五种模式，它覆盖了从编码到架构的完整开发流程。
-
-如果你在找一个比 Copilot 更强大、比 Claude Code 更易用的 VS Code AI 编程助手，Roo Code 值得关注。
-
----
-
-**相关信息**：
-
-- GitHub：[RooCodeInc/Roo-Code](https://github.com/RooCodeInc/Roo-Code)（23.5k stars）
-- 官网：[docs.roocode.com](https://docs.roocode.com)
-- Discord：[discord.gg/roocode](https://discord.gg/roocode)
-- Reddit：[r/RooCode](https://www.reddit.com/r/RooCode/)
-
-> 🦞 每日 11:30 自动更新
+| 资源 | 链接 |
+|------|------|
+| Roo Code 仓库 | [RooCodeInc/Roo-Code](https://github.com/RooCodeInc/Roo-Code) |
+| Roo Code 文档（已冻结）| [roocodeinc.github.io/Roo-Code](https://roocodeinc.github.io/Roo-Code/) |
+| Zoo Code 仓库 | [Zoo-Code-Org/Zoo-Code](https://github.com/Zoo-Code-Org/Zoo-Code) |
+| Roo → Zoo 迁移指南 | [docs.zoocode.dev/roo-to-zoo-migration](https://docs.zoocode.dev/roo-to-zoo-migration) |
+| Cline 仓库 | [cline/cline](https://github.com/cline/cline) |
+| Roomote 官网 | [roocode.com](https://roocode.com) |
+| VS Code Marketplace | [Roo Code 扩展页](https://marketplace.visualstudio.com/items?itemName=RooVeterinaryInc.roo-cline) |

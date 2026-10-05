@@ -1,504 +1,158 @@
 ---
-title: "字节跳动UI-TARS：32k星的多模态AI Agent全栈，支持MCP和浏览器自动化"
+title: "UI-TARS：字节跳动的开源 GUI Agent 全栈，和它已经停服的远程操控"
 date: "2026-05-11T13:05:00+08:00"
+lastmod: "2026-09-28T10:30:00+08:00"
 slug: "bytedance-ui-tars-desktop-multimodal-agent"
 github_repo: "bytedance/UI-TARS-desktop"
 source_key: "gh:bytedance/UI-TARS-desktop"
-description: "深度解析bytedance/UI-TARS-desktop：字节跳动开源的多模态AI Agent全栈，包含Agent TARS CLI和UI-TARS Desktop两个产品，支持GUI Agent、浏览器自动化和MCP工具集成。"
+description: "拆解 bytedance/UI-TARS-desktop：MCP 内核、DOM/视觉/混合三种浏览器控制模式的模型适配边界，免费远程操控从 2025 年 6 月上线到 8 月停服的完整时间线，以及 2026 年这套栈还剩什么、该怎么用。"
 draft: false
 categories: ["技术笔记"]
 tags: ["AI Agent", "多模态", "MCP", "浏览器自动化", "字节跳动", "TypeScript"]
 hiddenFromHomePage: true
 ---
 
-## 学习目标
+# UI-TARS：字节跳动的开源 GUI Agent 全栈，和它已经停服的远程操控
 
-阅读本文后，你应该能够：
+bytedance/UI-TARS-desktop 把「让模型看懂屏幕、动手操作」这件事拆成了三层：GUI（Graphical User Interface，图形用户界面）操作模型 UI-TARS、面向终端用户的桌面应用 UI-TARS Desktop、面向开发者的通用 Agent 框架 Agent TARS。三层共用一个仓库，TypeScript 实现，Apache-2.0 许可，GitHub 星标 39,143（2026-09-28 API 读数）。
 
-1. **理解 UI-TARS 的两个产品形态**——清楚 Agent TARS CLI 和 UI-TARS Desktop 的区别和适用场景
-2. **掌握 MCP 驱动架构**——理解 Model Context Protocol 如何连接工具链
-3. **配置三种浏览器控制策略**——知道 Visual Grounding、DOM、Hybrid 模式的区别
-4. **完成基础部署**——能启动 Agent TARS CLI 或安装 UI-TARS Desktop
-5. **评估适用性**——能判断 UI-TARS 是否适合你的自动化需求
+它 2025 年上半年最出圈的卖点是「免费远程操控」——点一下按钮，就能让 AI 替你操作云端电脑和浏览器。这个卖点已经失效：官方文档明确 Remote Operator 服务于 2025 年 8 月 20 日停服。今天再评估这个项目，值得看的不是远程操控，而是它作为 GUI Agent 的完整参考实现：MCP（Model Context Protocol，模型上下文协议）内核、DOM 与视觉两条控制路线、事件流协议，都在一个仓库里给出了可运行的答案。
 
----
+## 先分清仓库里的三样东西
 
-## 目录
+这个仓库的名字最容易让人混淆：桌面应用叫 UI-TARS Desktop，模型也叫 UI-TARS，CLI 又叫 Agent TARS。三者关系是「模型 → 应用 → 框架」：
 
-1. [一句话定位](#一句话定位)
-2. [两个产品：Agent TARS vs UI-TARS Desktop](#两个产品agent-tars-vs-ui-tars-desktop)
-3. [核心架构：MCP 驱动的 Event Stream 协议](#核心架构mcp-驱动的-event-stream-协议)
-4. [技术栈与实现](#技术栈与实现)
-5. [快速开始](#快速开始)
-6. [与同类工具的比较](#与同类工具的比较)
-7. [适用场景](#适用场景)
-8. [版本历史亮点](#版本历史亮点)
-9. [总结](#总结)
-10. [自测题](#自测题)
-11. [练习](#练习)
-12. [进阶路径](#进阶路径)
-13. [资料口径说明](#资料口径说明)
+| | UI-TARS 模型 | UI-TARS Desktop | Agent TARS |
+| --- | --- | --- | --- |
+| 是什么 | 视觉语言模型（VLM，Vision-Language Model），专门做 GUI 界面定位与操作 | Electron 桌面应用，连接模型后操作本地电脑和浏览器 | CLI / Web UI / 无头服务器的通用 Agent 框架 |
+| 所在位置 | [bytedance/UI-TARS](https://github.com/bytedance/UI-TARS)（独立仓库，11.5k stars） | 本仓库 `apps/ui-tars` | 本仓库 `multimodal/` 目录，npm 包 `@agent-tars/cli` |
+| 给谁用 | 模型使用者与部署者 | 终端用户，下载 `.dmg` / `.exe` 即装 | 开发者，`npx` 一行启动 |
+| 控制对象 | —— | 本地计算机与浏览器 | 浏览器为主，配合 MCP 工具链 |
 
----
+本文说的「TARS 技术栈」指后两者。模型层是独立仓库，Desktop 的本地 Operator 需要自行配置模型服务才能跑起来——这一点原文档常被忽略，后文细说。
 
-> 如果你在找一个能在真实浏览器和桌面上执行任务的 AI Agent 框架，字节跳动的 UI-TARS 值得关注。
+## 内核：MCP 与事件流
 
----
+README 对 Agent TARS 架构的表述是「The kernel is built on MCP」：内核建在 MCP 之上，同时支持挂载第三方 MCP Server 连接真实世界的工具。官方文档给出的挂载方式是在配置文件里声明命令：
 
-## 一句话定位
+```ts
+// agent-tars.config.ts
+import { defineConfig } from '@agent-tars/interface';
 
-[UI-TARS-desktop](https://github.com/bytedance/UI-TARS-desktop)（简称 TARS）是字节跳动开源的多模态 AI Agent 技术栈，包含两个核心产品：
+export default defineConfig({
+  mcpServers: {
+    'mcp-server-chart': {
+      command: 'npx',
+      args: ['-y', '@antv/mcp-server-chart'],
+    },
+  },
+});
+```
 
-- **Agent TARS**：面向开发者的 CLI / Web UI 工具，通过 MCP 协议连接各种工具
-- **UI-TARS Desktop**：面向终端用户的桌面应用，支持本地和远程计算机/浏览器控制
+这条示例来自官方 MCP 文档，用的图表生成服务 mcp-server-chart。文档同时给了一个实用提醒：经 stdio 连接 MCP Server 有固有延迟，会让会话创建变慢。
 
-当前 GitHub ⭐ **32.5k**，TypeScript 实现，Apache 2.0 许可证。
+事件流（Event Stream）是另一条主线：协议驱动的事件流同时支撑上下文工程和 Agent UI。落到使用体验上，Web UI 里有会话管理、原生流式输出、GUI Grounding 的实时光标动画，v0.3.0 又加了 Event Stream Viewer 用于追踪和调试数据流。调试 Agent 时能看到每一步工具调用和计时，这是它比「黑盒 RPA 脚本」更可观察的地方。
 
----
+## 三种浏览器控制模式：选模式本质是选模型
 
-## 两个产品：Agent TARS vs UI-TARS Desktop
+Agent TARS 的 Hybrid Browser Agent 支持三种浏览器操作方式，官方文档按「DOM、VLM、两者结合」划分：
 
-很多人被这个 repo 的两个名字搞混。实际上它们是同一个技术栈的两个交付形态：
+| 模式 | 工作原理 | 依赖 |
+| --- | --- | --- |
+| `dom` | 用 Browser Use 工具集解析 DOM、标记可交互元素，不依赖视觉 | 任何能做工具调用的模型，纯文本模型（如 DeepSeek）也能用 |
+| `visual-grounding` | 截图交给 GUI Agent（UI-TARS / Doubao 1.5 VL）做定位，模型返回坐标执行点击输入，不挂 DOM 工具 | 需要支持视觉定位的模型 |
+| `hybrid` | 合并前两者的动作空间，由模型自行决定用哪个工具 | 同上，视觉模型为佳 |
 
-### Agent TARS（开发者版）
+三种模式都带 `navigate` 和 `tab` 两个基础导航工具。关键约束在模型兼容性上，官方文档的兼容表写得清楚：volcengine 的 Seed1.5-VL 对 Visual Grounding 完整支持；Anthropic 的 claude-3.7-sonnet 和 OpenAI 的 gpt-4o 这一项都标注为「施工中」（🚧）。换句话说，选了 Claude 或 GPT 做驱动，`dom` 模式才是稳妥路线；想用视觉定位，模型基本只有火山引擎系可选。
 
-面向需要命令行和 API 集成的开发者：
+官方文档用同一个验证码任务对比过三种模式：打开 2captcha 的普通文本验证码并「通过它」。结果是 `dom` 模式因为模型看不到屏幕，操作路径绕来绕去最终失败；`visual-grounding` 模式三轮动作直接完成——`click(point='383 502')` 激活输入框、`type('W9H5K')` 填入验证码、`click(point='339 607')` 点确认。这组对照说明两条路线的分野：结构化页面 DOM 又快又稳，视觉依赖的页面（验证码、Canvas、复杂渲染）只有看得见屏幕的模型能处理。
+
+至于 `hybrid`，官方的说法值得留意：由于 visual-grounding 本身已包含信息提取工具，大多数场景下 hybrid 的实际表现和 visual-grounding 接近；它的价值在容错——某些场景可以先试轻量的 DOM 路线，失败再回落到视觉方案。
+
+## 一次订票任务流过系统
+
+README 的 Showcase 里有这样一条指令：
+
+> Please help me book the earliest flight from San Jose to New York on September 1st and the last return flight on September 6th on Priceline
+
+这条任务在系统里的流转大致是：Agent 拿到自然语言目标后规划步骤，浏览器工具先 `navigate` 打开 Priceline，页面上每个可交互元素随后进入模型视野——走 `visual-grounding` 路线时，模型对着截图返回坐标，浏览器执行点击和输入；走 `dom` 路线时，模型从带编号的元素列表里挑目标。每一步动作、每次工具调用的耗时、模型的思考过程都以事件形式流入事件流，Web UI 上能看到实时的光标动画，事后可用 Event Stream Viewer 回放排查。
+
+需要说明边界：README 只提供了演示视频，没有声明任务完成率，也没有「全程无人工干预」的承诺。涉及支付这类不可逆操作的环节，仍然应该由人来完成或确认——这是使用任何 GUI Agent 的底线，不是这个项目特有的限制。
+
+## 上手：命令与配置
+
+Agent TARS CLI 的启动方式（README 原例，需要 Node.js ≥ 22，npm 元数据的要求是 ≥ 22.15.0）：
 
 ```bash
-# 一键启动 CLI
+# npx 一行启动，进入交互式 Web UI
 npx @agent-tars/cli@latest
 
-# 安装全局
+# 或全局安装
 npm install @agent-tars/cli@latest -g
 
-# 连接各种模型提供商
+# 指定模型提供商（官方 README 示例）
 agent-tars --provider volcengine --model doubao-1-5-thinking-vision-pro-250428 --apiKey your-api-key
 agent-tars --provider anthropic --model claude-3-7-sonnet-latest --apiKey your-api-key
-agent-tars --provider openai --model gpt-4o --apiKey your-api-key
 ```
 
-支持流式输出、多工具并行调用、运行时计时统计、Event Stream 调试视图。
+CLI 共五个子命令：`agent-tars`（默认，交互式 UI）、`serve`（无头服务器）、`run`（静默模式，结果输出到 stdout）、`request`（直接请求 LLM 提供商）、`workspace`（管理全局工作区）。Web UI 默认端口 8888，可用 `--port` 改。
 
-### UI-TARS Desktop（桌面版）
-
-面向非技术用户的桌面应用，内置 UI-TARS-1.5 模型，可选本地或远程 Operator：
+配置优先级和密钥管理是实用的部分：Agent TARS 依次查找 `agent-tars.config.ts` / `.yml` / `.yaml` / `.json` / `.js`；`--config` 可以传多个文件按序合并，也支持远程 URL；API key 可以写环境变量名，由 CLI 运行时读取：
 
 ```bash
-# 本地 Operator：使用本地 UI-TARS-1.5 模型
-# 远程 Operator：一键连接远程计算机或浏览器，无需配置
+npx agent-tars --model.provider openai --model.apiKey OPENAI_API_KEY --model.baseURL OPENAI_BASE_URL
 ```
 
-v0.2.0 引入了 Remote Computer Operator 和 Remote Browser Operator，号称"完全免费，无需配置，点击即用"。
+UI-TARS Desktop 的路径不同：从 GitHub Releases 下载安装包（macOS 为 arm64/x64 两个 `.dmg`，Windows 为 `.exe`，无官方 Linux 包），然后在设置里配置 VLM Provider。官方 quick-start 文档给出两条路线：
 
----
+1. **Hugging Face for UI-TARS-1.5**：用 Inference Endpoints 部署 UI-TARS-1.5-7B，拿到 Base URL（需以 `/v1/` 结尾）和 API Key 填入。
+2. **VolcEngine Ark for Doubao-1.5-UI-TARS**：开通火山方舟的 `doubao-1.5-ui-tars-250328`，Base URL 为 `https://ark.cn-beijing.volces.com/api/v3`。
 
-## 核心架构：MCP 驱动的 Event Stream 协议
+选 Provider 时文档特别提醒要选对预设（如「VolcEngine Ark for Doubao-1.5-UI-TARS」），否则 GUI 动作解析会出问题。另外，桌面版的 Browser Operator 模式要求本机装有 Chrome、Edge 或 Firefox。
 
-### MCP（Model Context Protocol）
+模型自部署还有第三条路：本地 vLLM（要求 `vllm>=0.6.1`）或 HuggingFace Inference Endpoints，部署指南在 bytedance/UI-TARS 仓库的 `README_deploy.md`。仓库里的 `docs/deployment.md` 已改为指向这份新指南——UI-TARS-1.0 时代的旧部署文档不再维护。
 
-TARS 的内核构建在 [MCP](https://modelcontextprotocol.io/) 之上。MCP 是 Anthropic 主导的 AI 工具集成协议，定义了 LLM 如何调用外部工具的标准化接口。
+## 版本时间线：高峰、停服与停滞
 
-TARS 支持：
-- 挂载第三方 MCP Servers（如文件系统、数据库、Web 搜索）
-- 通过 MCP 连接真实世界的工具链
-- 事件流协议（Event Stream）驱动上下文工程和 Agent UI
+把 release 历史连起来看，能看清这个项目的节奏：
 
-### 三种浏览器控制策略
+| 时间 | 事件 |
+| --- | --- |
+| 2025-01-22 | UI-TARS Desktop v0.0.1 发布，项目开源 |
+| 2025-04-17 | v0.1.0：重设计 Agent UI，新增浏览器操作，接入 UI-TARS-1.5 |
+| 2025-06-11 | v0.2.0：免费 Remote Computer / Browser Operator 上线——无需配置、点击即用，但仅限中国大陆，每会话 30 分钟 |
+| 2025-06-25 | Agent TARS Beta 与 CLI 发布（首个 CLI release 是 0.2.9，2025-07-03） |
+| 2025-08-20 | Remote Operator 服务停服；官方指引改走火山引擎 OS Agent Services 自行部署 |
+| 2025-11-04 | v0.3.0：多工具流式输出、工具调用与深度思考的计时统计、Event Stream Viewer、AIO Agent Sandbox 隔离执行环境 |
+| 2026-09（本文更新时） | v0.3.0 仍是最新正式版；main 分支持续提交（最近一次推送 2026-09-24） |
 
-TARS 的 Hybrid Browser Agent 支持三种控制模式：
+v0.2.0 和停服只隔了两个多月，「完全免费」的窗口期很短。v0.2.4（2025-08-21）的发布说明里已经把远程版本指向火山引擎的商业部署入口。此后一年多，桌面应用和 CLI 都没有新的正式版——仓库没有死，main 分支仍在动，但对生产使用者来说，这就是「以参考实现的节奏在维护」，不是「以产品的节奏在迭代」。评估时应按前者的预期来管理。
 
-| 模式 | 描述 | 适用场景 |
-|------|------|----------|
-| **Visual Grounding** | 基于视觉模型理解页面元素 | 复杂 UI、视觉依赖页面 |
-| **DOM** | 基于 HTML DOM 结构操作 | 结构化页面、精确点击 |
-| **Hybrid** | 混合视觉 + DOM | 通用场景 |
+## 适用边界与采用顺序
 
-### GUI Agent 的核心能力
+**值得现在就用：** 想吃透 GUI Agent 工程实现团队。三种控制模式的取舍、MCP 工具挂载、事件流协议、Agent UI 的组织方式，这个仓库都给出了能跑通的完整答案，比读论文直观得多。个人开发者用 `npx` 加一个 API key 就能搭一条自然语言驱动的浏览器自动化流水线，成本低。
 
-TARS 不仅能控制浏览器，还能控制真实桌面：
+**谨慎采用：** 把它当生产级 RPA 引擎。没有 SLA，CLI 正式版停在 v0.3.0 已近一年；关键业务流程要自己兜底（AIO Sandbox 提供了隔离执行环境的起点，但运维责任在你）。需要远程操控能力的场景，官方免费服务已停，选项是火山引擎 OS Agent Services 自建，或自己部署 UI-TARS-1.5 模型。
 
-```bash
-# 帮助用户预订机票
-"Please help me book the earliest flight from San Jose to New York on September 1st and the last return flight on September 6th on Priceline"
-```
+**不必用：** 纯结构化的页面抓取和表单填充，Playwright 加选择器更轻更可控；跨浏览器测试矩阵是 Playwright / Selenium 的主场，GUI Agent 的每步推理在这个场景里是成本不是收益。
 
-TARS 会自动操作浏览器完成：打开 Priceline → 填写出发地/目的地/日期 → 搜索 → 选择航班 → 填写乘客信息 → 付款。整个流程无需人工干预。
-
----
-
-## 技术栈与实现
-
-### 语言与依赖
-
-- **语言**：TypeScript（主语言）+ Python（部分工具）
-- **关键框架**：Node.js >= 22
-- **模型**：支持多种 VLM（Vision-Language Model），包括：
- - 豆包 Doubao-1.5-Thinking-Vision-Pro
- - Anthropic Claude 3.7 Sonnet
- - OpenAI GPT-4o
- - UI-TARS-1.5（自有模型）
-
-### MCP 工具生态
-
-TARS 通过 MCP 协议连接的工具类别包括：
-
-- **Shell 命令**：在终端执行系统命令
-- **文件系统**：读写本地文件
-- **浏览器**：Playwright/Puppeteer 级别的浏览器自动化
-- **Web 搜索**：获取实时信息
-- **自定义 MCP Server**：用户可自建工具
-
-### 部署方式
-
-```bash
-# Cloud Deployment（云端部署）
-# 支持 ModelScope 平台部署
-# 详见 docs/deployment.md
-```
-
----
-
-## 快速开始
-
-### Agent TARS CLI
-
-```bash
-# 方式1：npx 一键运行
-npx @agent-tars/cli@latest
-
-# 方式2：全局安装
-npm install @agent-tars/cli@latest -g
-
-# 方式3：从源码编译
-git clone https://github.com/bytedance/UI-TARS-desktop
-cd UI-TARS-desktop
-npm install
-npm run build
-```
-
-### UI-TARS Desktop
-
-1. 下载 releases 中的 `.dmg` 或 `.exe` 安装包
-2. 安装后启动，选择"本地 Operator"或"远程 Operator"
-3. 输入任务描述，Agent 自动执行
-
-### Web UI（无头模式）
-
-```bash
-# 启动 Web UI 服务器
-agent-tars web-ui
-
-# 访问 http://localhost:18792
-```
-
----
-
-## 与同类工具的比较
-
-| 工具 | 定位 | 控制范围 | MCP 支持 | 模型 |
-|------|------|----------|---------|------|
-| **TARS** | 多模态 Agent 全栈 | 浏览器 + 桌面 | ✅ | 多种 VLM |
-| **Playwright** | 浏览器自动化 | 仅浏览器 | ❌ | 无 |
-| **AgentQL** | AI 驱动的 Web 抓取 | 仅浏览器 | 部分 | 需要 LLM |
-| **Claude Computer Use** | Anthropic 官方 GUI Agent | 浏览器 + 桌面 | ❌ | 仅 Claude |
-| **OpenAI Operator** | OpenAI 官方 | 浏览器 | ❌ | 仅 GPT |
-
-TARS 的优势在于：支持多种 VLM 而非绑定单一模型，支持 MCP 工具生态，支持远程操控（这对技术支持场景很有价值）。
-
----
-
-## 适用场景
-
-**✅ 强项场景：**
-- 自动化测试（Web 应用 UI 测试）
-- 自动化任务（RPA 场景：预订、数据录入）
-- 技术支持（远程操作用户桌面）
-- 爬虫（需要理解页面语义而非纯结构）
-- 浏览器操作的工作流自动化
-
-**❌ 局限：**
-- 极度依赖视觉理解，页面渲染失败会影响体验
-- 远程 Operator 需要网络连接和权限配置
-- 桌面控制功能仍在完善中
-
----
-
-## 版本历史亮点
-
-| 版本 | 时间 | 关键更新 |
-|------|------|----------|
-| v0.3.0 | 2025-11 | Agent TARS CLI v0.3.0：流式工具输出、运行时计时统计、Event Stream Viewer、AIO Agent Sandbox |
-| v0.2.0 | 2025-06 | Remote Computer Operator + Remote Browser Operator 完全免费 |
-| v0.1.0 | 2025-04 | 重设计 Agent UI、支持 UI-TARS-1.5 模型、浏览器操作功能 |
-| 初始版 | 2025-01 | Agent TARS Beta 发布 |
-
----
-
-## 自测题
-
-**1.** UI-TARS 的两个产品形态（Agent TARS CLI 和 UI-TARS Desktop）的核心区别是什么？分别适合什么用户群体？
-
-<details>
-<summary>点击查看答案</summary>
-
-核心区别：
-- **Agent TARS CLI**：面向开发者的命令行/Web UI 工具，通过 MCP 协议连接各种工具，支持流式输出、多工具并行调用
-- **UI-TARS Desktop**：面向终端用户的桌面应用，内置 UI-TARS-1.5 模型，支持本地和远程计算机/浏览器控制
-
-适用群体：
-- CLI 适合需要命令行和 API 集成的开发者
-- Desktop 适合非技术用户或需要远程操控的场景
-
-</details>
-
-**2.** UI-TARS 的三种浏览器控制策略（Visual Grounding、DOM、Hybrid）分别适合什么场景？
-
-<details>
-<summary>点击查看答案</summary>
-
-- **Visual Grounding**：基于视觉模型理解页面元素，适合复杂 UI、视觉依赖页面（如 Canvas 绘图、复杂交互组件）
-- **DOM**：基于 HTML DOM 结构操作，适合结构化页面、需要精确点击的场景（如表单填写、按钮点击）
-- **Hybrid**：混合视觉 + DOM，适合通用场景（大多数网页自动化任务）
-
-</details>
-
-**3.** UI-TARS 基于 MCP（Model Context Protocol）架构的主要优势是什么？如果 MCP 工具链中的某个工具失败，会发生什么？
-
-<details>
-<summary>点击查看答案</summary>
-
-主要优势：
-1. **工具扩展性**：可以挂载第三方 MCP Servers（文件系统、数据库、Web 搜索等）
-2. **标准化接口**：MCP 是 Anthropic 主导的 AI 工具集成协议，定义了 LLM 调用外部工具的标准化接口
-3. **生态兼容性**：支持多种 VLM，不绑定单一模型
-
-如果工具链中的某个工具失败：
-- UI-TARS 会捕获错误并尝试恢复（取决于具体的 Agent 实现）
-- 对于关键工具（如文件写入），应该在 Agent 配置中添加错误处理或备用工具
-- 建议在开发过程中使用 Event Stream 调试视图观察工具调用情况
-
-</details>
-
-**4.** UI-TARS Desktop 的 Remote Computer Operator 和 Remote Browser Operator 是什么？为什么它们"完全免费"？
-
-<details>
-<summary>点击查看答案</summary>
-
-- **Remote Computer Operator**：一键连接远程计算机，无需配置
-- **Remote Browser Operator**：一键连接远程浏览器，无需配置
-
-"完全免费"指的是：
-- UI-TARS Desktop 应用本身免费
-- 远程 Operator 功能免费（不需要额外付费）
-- 但使用远程 Operator 需要网络连接，并且远程计算机/浏览器需要运行 UI-TARS（可能有计算成本）
-
-注意：文章中说的"完全免费"可能指的是 UI-TARS Desktop 应用和远程 Operator 功能不收取额外费用。实际使用时，远程计算机/浏览器的运行成本取决于你的部署方式。
-
-</details>
-
----
-
-## 练习
-
-### 练习 1：启动 Agent TARS CLI 并连接模型
-
-**任务：** 在你的机器上安装并启动 Agent TARS CLI，连接一个模型提供商（如 OpenAI GPT-4o）。
-
-**步骤：**
-1. 安装 Node.js ≥ 22
-2. 运行 `npx @agent-tars/cli@latest`
-3. 连接 OpenAI：`agent-tars --provider openai --model gpt-4o --apiKey your-api-key`
-4. 输入测试提示："帮我打开 example.com 并截图"
-
-**验证：** Agent TARS 成功打开浏览器、访问 example.com、并返回截图。
-
-### 练习 2：测试三种浏览器控制策略
-
-**任务：** 使用 Agent TARS 或 UI-TARS Desktop，分别用三种控制策略访问同一个复杂网页（如 Google Maps、Figma 设计稿）。
-
-**步骤：**
-1. 在配置中设置控制策略为 Visual Grounding
-2. 输入提示："在 Google Maps 上搜索「东京塔」并截图"
-3. 记录成功率和响应时间
-4. 切换到 DOM 模式，重复测试
-5. 切换到 Hybrid 模式，重复测试
-
-**思考：** 哪种策略在你的网络环境下表现最好？为什么？
-
-### 练习 3：通过 MCP 挂载自定义工具
-
-**任务：** 编写一个简单的 MCP Server（如天气查询工具），并挂载到 Agent TARS。
-
-**示例 MCP Server（Node.js）：**
-
-```javascript
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-
-const server = new Server({
-  name: "weather-server",
-  version: "1.0.0",
-}, {
-  capabilities: {
-    tools: {},
-  }
-});
-
-server.setRequestHandler("tools/list", async () => {
-  return {
-    tools: [
-      {
-        name: "get_weather",
-        description: "获取指定城市的天气",
-        inputSchema: {
-          type: "object",
-          properties: {
-            city: { type: "string" }
-          },
-          required: ["city"]
-        }
-      }
-    ]
-  };
-});
-
-// 实现工具调用逻辑...
-```
-
-**扩展：** 将这个 MCP Server 挂载到 Agent TARS，并测试调用。
-
----
-
-## 进阶路径
-
-当你掌握了 UI-TARS 的基础使用后，可以沿着以下路径深入：
-
-### 路径 1：深入 MCP 协议
-
-1. **阅读 MCP 规范**——理解工具发现、调用、错误处理的完整流程
-2. **学习 MCP Server 开发**——编写自己的 MCP Server（Python、TypeScript、Go）
-3. **研究 MCP 生态**——探索已有的 MCP Servers（文件系统、数据库、API 集成等）
-
-### 路径 2：贡献到 UI-TARS 项目#
-
-1. **阅读 UI-TARS 源码**——理解 Agent TARS CLI 和 UI-TARS Desktop 的实现
-2. **提交 PR**——修复 bug、添加新功能（如支持更多 VLM、改进 DOM 控制策略）
-3. **改进文档**——帮助其他用户更好地理解和使用 UI-TARS#
-
-### 路径 3：构建自己的 GUI Agent#
-
-1. **理解视觉语言模型（VLM）**——如何训练或微调 VLM 用于 GUI 理解
-2. **学习浏览器自动化**——Playwright、Puppeteer、Selenium 的底层原理
-3. **研究 Agent 编排**——如何 design 多步骤任务（如预订机票）的 Agent 工作流#
-
-### 路径 4：远程操控的安全与隐私#
-
-1. **学习远程访问控制**——如何安全地授权远程 Operator 操控你的计算机#
-2. **理解沙箱隔离**——如何为 Agent 提供受限的执行环境（如 Docker 容器）#
-3. **研究审计日志**——如何记录 Agent 的所有操作，便于事后审计#
-
----
-
-## 资料口径说明#
-
-本文基于以下来源编写，存在若干需要说明的边界：
-
-1. **信息来源与时效性**：本文主要基于 UI-TARS Desktop 的 GitHub 仓库 README、官方文档（agent-tars.com）以及 v0.3.0（2025-11）的功能。UI-TARS 仍在活跃开发中，功能和配置方式可能随版本变化。
-
-2. **技术细节验证**：本文中的架构解析、命令示例、配置示例基于公开文档和源码分析。由于无法在实际环境中完整测试所有功能（特别是 Remote Computer Operator、Remote Browser Operator、MCP 工具挂载等高级功能），部分技术细节可能需要根据实际情况调整。
-
-3. **性能数据未实测**：本文未包含实际的任务完成率、响应时间、视觉识别准确率等性能数据。实际性能会受到你的网络环境、计算机配置、VLM 模型质量等多重因素影响。
-
-4. **安全建议的边界**：本文提供的安全建议（如远程访问控制、沙箱隔离）是基于通用最佳实践。具体的远程操控安全需求需要根据你的威胁模型调整。本文不构成专业安全审计或法律建议。
-
-5. **未覆盖的内容**：本文未详细讨论如何开发 MCP Server、如何微调 VLM 用于 GUI 理解、如何设计复杂的 Agent 工作流（如多步骤任务编排）。这些内容的详细讨论需要单独的文章或视频教程。
-
-6. **更新记录**：本文基于 UI-TARS Desktop v0.3.0（2025-11）编写。如果 UI-TARS 发布新版本，部分内容可能需要更新。
-
----
-
-## 总结
-
-TARS 是字节跳动在 AI Agent 领域的一次有分量的开源尝试。选它的理由：
-
-1. **多模型支持**：不绑定单一 LLM，提供商可以用自己的 API key
-2. **MCP 生态**：基于 Anthropic 推动的 MCP 协议，工具扩展性强
-3. **远程操控**：Remote Operator 解决了"帮用户操作电脑"的实际需求
-4. **全栈覆盖**：从 CLI 到桌面 App，从浏览器到桌面
-
-如果你的工作涉及浏览器自动化、RPA 或需要 AI 帮你操作 GUI，TARS 值得加入工具箱。
-
----
+合理的上手顺序：先 `npx @agent-tars/cli@latest` 跑通默认交互 UI，用官方的订酒店示例感受事件流；再按你手头的模型选控制模式（有 Seed1.5-VL 或部署了 UI-TARS 的用 visual-grounding，用 Claude/GPT 的先走 `dom`）；确实需要桌面控制时再装 Desktop 配模型。每一步的退出成本都不高。
 
 ## 常见问题
 
-**Q1：UI-TARS 支持哪些操作系统？**
+**UI-TARS Desktop 内置模型吗？** 不内置。桌面应用是壳，模型服务要自己接：Hugging Face endpoint 跑 UI-TARS-1.5-7B，或火山方舟的 Doubao-1.5-UI-TARS，或 vLLM 自部署。「下载即用」的只有应用本身。
 
-- **Agent TARS CLI**：支持 macOS、Linux、Windows（需要 Node.js ≥ 22）
-- **UI-TARS Desktop**：支持 macOS、Windows（提供 .dmg 和 .exe 安装包）
-- **远程 Operator**：通过浏览器访问，跨平台
+**还能白嫖官方的免费远程操控吗？** 不能。服务 2025-08-20 停服，此前的「免费」也仅限中国大陆、每会话 30 分钟。替代方案是火山引擎 OS Agent Services（收费的商业部署）或自己部署模型。
 
-**Q2：UI-TARS 的视觉识别准确率如何？**
+**它能过验证码吗？** 官方文档演示过 2captcha 的普通文本验证码：`visual-grounding` 模式能通过，`dom` 模式失败。至于 reCAPTCHA 这类带行为检测的复杂验证码，没有官方结论，也不建议拿生产流程去赌。
 
-视觉识别准确率取决于：
-- VLM 模型质量（UI-TARS-1.5 优于通用 VLM）
-- 页面复杂度（简单页面准确率高，复杂页面可能出错）
-- 控制策略（Visual Grounding 适合复杂 UI，DOM 适合结构化页面）
+**Agent TARS 的代码在仓库哪里？** `multimodal/` 目录下，与 `apps/ui-tars`（桌面应用）、`packages/`（agent-infra 等基础库）同属一个 monorepo。npm 包 `@agent-tars/cli` 的 0.3.0 版实际依赖 `@tarko/agent-cli`。
 
-建议在关键任务中添加人工审核或回滚机制。
+**和 Playwright 是什么关系？** 两者不在一个层面。Playwright 是给程序用的浏览器自动化库，操作者是代码；Agent TARS 的操作者是模型——`dom` 模式基于 Browser Use 工具集解析页面，`visual-grounding` 模式靠视觉模型定位。前者快而脆（选择器一变就断），后者慢而韧（看得到就能点），按任务稳定性要求选。
 
-**Q3：Remote Computer Operator 和 Remote Browser Operator 安全吗？**
+## 资料口径
 
-安全风险包括：
-- 远程 Operator 需要网络连接和权限配置
-- 如果被恶意控制，可能导致数据泄露或系统损坏
-- 建议在受信任的网络环境中使用，并配置访问控制
-
-**Q4：UI-TARS 能处理验证码吗？**
-
-- **简单验证码**（如数字字母验证码）：可能通过视觉识别解决
-- **复杂验证码**（如 reCAPTCHA、滑动验证码）：通常需要人工干预或第三方验证码识别服务
-- **建议**：在自动化流程中添加验证码检测和处理逻辑
-
-**Q5：UI-TARS 与其他浏览器自动化工具（如 Playwright、Selenium）有什么区别？**
-
-| 特性 | UI-TARS | Playwright | Selenium |
-|------|---------|------------|----------|
-| **控制方式** | 视觉 + DOM + Hybrid | DOM | DOM |
-| **AI 驱动** | ✅（VLM） | ❌ | ❌ |
-| **MCP 支持** | ✅ | ❌ | ❌ |
-| **学习曲线** | 低（自然语言） | 中（需要编程） | 高（需要编程 + 浏览器驱动） |
-| **适用场景** | 需要语义理解的自动化 | 结构化页面自动化 | 跨浏览器测试 |
-
-**Q6：如何提高 UI-TARS 的识别准确率？**
-
-1. **优化 prompt**：使用结构化、具体的描述（如"点击左上角的蓝色「登录」按钮"而非"点击登录"）
-2. **调整控制策略**：根据页面类型选择 Visual Grounding、DOM 或 Hybrid
-3. **提供上下文**：在 prompt 中提供页面背景信息（如"这是一个登录页面，用户名输入框在页面顶部"）
-4. **使用高质量 VLM**：UI-TARS-1.5 优于通用 VLM
-
----
-
-## 总结
-
-TARS 是字节跳动在 AI Agent 领域的一次有分量的开源尝试。选它的理由：
-
-1. **多模型支持**：不绑定单一 LLM，提供商可以用自己的 API key
-2. **MCP 生态**：基于 Anthropic 推动的 MCP 协议，工具扩展性强
-3. **远程操控**：Remote Operator 解决了"帮用户操作电脑"的实际需求
-4. **全栈覆盖**：从 CLI 到桌面 App，从浏览器到桌面
-
-如果你的工作涉及浏览器自动化、RPA 或需要 AI 帮你操作 GUI，TARS 值得加入工具箱。
-
----
-
-**项目信息**
-
-- GitHub：[bytedance/UI-TARS-desktop](https://github.com/bytedance/UI-TARS-desktop) ⭐ 32.5k
-- 语言：TypeScript（CLI）+ Python（部分工具）
-- 许可证：Apache 2.0
-- 官方文档：[agent-tars.com](https://agent-tars.com)
-- 社区：[Discord](https://discord.gg/HnKcSBgTVx)
-
----
-
+- 数据时点为 2026-09-28：stars / forks 来自 GitHub API 实时读数（39,143 / 3,966）；npm 版本来自 npmjs.com registry。
+- 版本与功能描述依据：仓库 main 分支 README（2026-09）、v0.3.0 release notes（2025-11-04）、`docs/quick-start.md`、`docs/setting.md`、v0.3.0 tag 下的官方文档源（CLI / Browser / MCP / Web UI 四篇）。
+- 本文未实测任务完成率、响应时间等性能指标；涉及生产采用的部分基于架构与维护状态推断，已在上文标明推断依据。
+- 官方文档站 agent-tars.com，社区 Discord：[discord.gg/HnKcSBgTVx](https://discord.gg/HnKcSBgTVx)。

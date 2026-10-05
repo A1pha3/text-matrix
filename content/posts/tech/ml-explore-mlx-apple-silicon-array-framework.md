@@ -4,7 +4,7 @@ date: "2026-06-17T15:03:26+08:00"
 slug: "ml-explore-mlx-apple-silicon-array-framework"
 github_repo: "ml-explore/mlx"
 source_key: "gh:ml-explore/mlx"
-lastmod: "2026-09-19T00:00:00+08:00"
+lastmod: "2026-10-05T00:00:00+08:00"
 description: "MLX 是 Apple 机器学习研究团队开源的数组框架。本文按 main 分支源码拆解它的统一内存模型、惰性求值与 eval tape、compile 的重编译边界、Metal/CPU/CUDA 三套后端，以及 ring/MPI/NCCL/JACCL 四套分布式后端。"
 draft: false
 categories: ["技术笔记"]
@@ -56,21 +56,21 @@ README 列出的是六个特性条目：熟悉的 API、可组合函数变换、
 
 ## 2. 仓库现状与核实口径
 
-下表数字全部在 2026-09-19 通过 GitHub API、PyPI 的包元数据与一次跳过 blob 的浅克隆得到，方法见文末维护指引。框架类文章里的 star 数和版本号最容易过期，这里把口径写清，方便后续复核。
+下表数字全部在 2026-10-05 通过 GitHub API、PyPI 的包元数据与一次跳过 blob 的浅克隆得到，方法见文末维护指引。框架类文章里的 star 数和版本号最容易过期，这里把口径写清，方便后续复核。
 
 | 项 | 值 | 口径 |
 |---|---|---|
 | 仓库 | [ml-explore/mlx](https://github.com/ml-explore/mlx) | — |
-| Stars / Forks | 28,473 / 2,263 | GitHub API `stargazers_count` / `forks_count` |
-| 未关闭 issue + PR | 156 | `open_issues_count`，含 PR |
+| Stars / Forks | 28,656 / 2,309 | GitHub API `stargazers_count` / `forks_count` |
+| 未关闭 issue + PR | 121 | `open_issues_count`，含 PR |
 | License | MIT | — |
-| 建仓 / 最近推送 | 2023-11-28 / 2026-09-17 | `created_at` / `pushed_at` |
-| 最新 release tag | `v0.32.2`（2026-08-25） | GitHub Releases |
-| `main` 上的版本号 | 0.32.3 | `mlx/version.h` 的 `MLX_VERSION_MAJOR/MINOR/PATCH` |
-| PyPI latest | 0.32.2 | `pypi.org/pypi/mlx/json` |
+| 建仓 / 最近推送 | 2023-11-28 / 2026-10-05 | `created_at` / `pushed_at` |
+| 最新 release tag | `v0.32.3`（2026-09-29） | GitHub Releases |
+| `main` 上的版本号 | 0.32.4 | `mlx/version.h` 的 `MLX_VERSION_MAJOR/MINOR/PATCH` |
+| PyPI latest | 0.32.3 | `pypi.org/pypi/mlx/json` |
 | Python 下限 | 3.10 | `requires_python` |
-| 代码规模 | `mlx/` 619 个文件，其中 554 个 `.cpp/.h/.cu/.metal/.mm` | `git ls-tree -r mlx/` |
-| 公共算子声明 | `mlx/ops.h` 302 条 `MLX_API` | 计数口径是声明条数，非去重后的函数名数 |
+| 代码规模 | `mlx/` 630 个文件，其中 565 个 `.cpp/.h/.cu/.metal/.mm` | `git ls-tree -r mlx/` |
+| 公共算子声明 | `mlx/ops.h` 304 条 `MLX_API` | 计数口径是声明条数，非去重后的函数名数 |
 | 原语数量 | `mlx/primitives.h` 118 个 `class`、119 处 `void eval_gpu` | 后者含基类的纯虚与转发声明，不是「119 个可实例化原语」 |
 | 姊妹仓库 | `mlx-swift`、`mlx-c`、`mlx-examples`、`mlx-lm`、`mlx-data` | 均在 `ml-explore` 组织下 |
 
@@ -78,7 +78,7 @@ README 列出的是六个特性条目：熟悉的 API、可组合函数变换、
 
 ## 3. 系统地图：真实目录与职责边界
 
-整份核心实现是 C++20，Python 绑定只用 nanobind（`python/src/CMakeLists.txt` 里是 `nanobind_add_module`，仓库内没有 pybind11）。`mlx/backend/` 下有 497 个文件，按目录切分如下。
+整份核心实现是 C++20，Python 绑定只用 nanobind（`python/src/CMakeLists.txt` 里是 `nanobind_add_module`，仓库内没有 pybind11）。`mlx/backend/` 下有 508 个文件，按目录切分如下。
 
 ```text
         Python / C++ / C / Swift API
@@ -110,7 +110,7 @@ README 列出的是六个特性条目：熟悉的 API、可组合函数变换、
 | 核心 | `mlx/array.{h,cpp}`、`mlx/primitives.{h,cpp}`、`mlx/transforms.cpp`、`mlx/compile.cpp` | 建图、求值 tape、自动微分、融合与编译 | 不写 kernel |
 | 后端公共 | `mlx/backend/common/`、`mlx/backend/gpu/` | 与设备无关的模板（broadcasting、reduce、matmul 骨架）与 GPU 派发 | 不做具体指令 |
 | CPU | `mlx/backend/cpu/`，其中 `gemms/cblas.cpp`、`simd/accelerate_simd.h` | BLAS/LAPACK、Accelerate 或 OpenBLAS 路径 | 不知道图结构 |
-| Metal | `mlx/backend/metal/`（`kernels/` 137 个文件、`jit/`、`nojit_kernels.cpp`） | MSL 源码、`.air` 编译、pipeline 与 command buffer | 不定义算子语义 |
+| Metal | `mlx/backend/metal/`（`kernels/` 147 个文件、`jit/`、`nojit_kernels.cpp`） | MSL 源码、`.air` 编译、pipeline 与 command buffer | 不定义算子语义 |
 | CUDA | `mlx/backend/cuda/`（`.cu` + `cublas_utils` + `cudnn_utils`） | CUDA kernel、cuBLAS/cuDNN 路径 | 同上 |
 | 关闭占位 | `mlx/backend/no_cpu/`、`no_gpu/`、`metal/no_metal.cpp`、`io/no_gguf.cpp` | 某后端/格式没编译进来时提供可链接的空实现 | — |
 | 分布式 | `mlx/distributed/` | 集合通信与后端选择 | 不参与单卡算子执行 |
@@ -388,7 +388,7 @@ print(y)
 
 PyPI 上的 `mlx` 已经拆成前端包 + 后端包：前端带 Python ABI 与平台 tag，后端（`mlx-metal`、`mlx-cpu`、`mlx-cuda-12`、`mlx-cuda-13`）只带平台 tag。`setup.py` 用 `MLX_BUILD_FRONTEND_PACKAGE` / `MLX_BUILD_BACKEND_PACKAGE` 两个环境变量区分，前端包在 Darwin 上硬依赖 `mlx-metal==<同版本号>`。
 
-0.32.2 的实际 wheel 覆盖情况（取自 PyPI JSON）：
+0.32.3 的实际 wheel 覆盖情况（取自 PyPI JSON）：
 
 | 包 | 平台 |
 |---|---|
@@ -502,13 +502,13 @@ CMake 选项以 `CMakeLists.txt` 里的 `option()` 行为准，几个默认值�
 
 ## 18. 维护指引：本文断言的核实方法与失效条件
 
-统一核对时间 2026-09-19，对应 `main` 提交 `59d600b5`（版本号 0.32.3，最近推送 2026-09-17）。核实方法固定三步：`git clone --depth 1 --filter=blob:none --no-checkout` 后用 `git ls-tree` 看目录、`git show HEAD:<path>` 按需取文件；PyPI 侧 `curl https://pypi.org/pypi/<pkg>/json` 拿版本与 wheel 文件名；仓库统计走 GitHub API。
+统一核对时间 2026-10-05，对应 `main` 提交 `9503cb7e`（版本号 0.32.4，最近推送 2026-10-05）。核实方法固定三步：`git clone --depth 1 --filter=blob:none --no-checkout` 后用 `git ls-tree` 看目录、`git show HEAD:<path>` 按需取文件；PyPI 侧 `curl https://pypi.org/pypi/<pkg>/json` 拿版本与 wheel 文件名；仓库统计走 GitHub API。
 
 下一轮复核请优先重查这些位置，它们失效最快：
 
 - 第 2 节整张快照表：stars/forks/版本/tag 是随时间漂移量。
 - 第 12 节的安装矩阵与 extra 名称：`mlx[cuda]` 与 `mlx[cuda12]` 的措辞分歧（README 对 docs）只要合并一次就会变。
-- `mlx-cuda` 与 `mlx-cuda-12/13` 的包名与版本对齐情况：PyPI 上历史名 `mlx-cuda` 停在 0.30.0，新名已到 0.32.2。
+- `mlx-cuda` 与 `mlx-cuda-12/13` 的包名与版本对齐情况：PyPI 上历史名 `mlx-cuda` 停在 0.30.0，新名已到 0.32.3。
 - 第 9 节 JaCCL 的前置条件：macOS 26.2、恢复模式 `rdma_ctl enable`、全连接 mesh 三条都是阶段性限制，一旦进系统设置就会整段作废。
 - 第 8 节 `MLX_METAL_FAST_SYNCH` 的默认值：它挂在 issue #3142 上，修完就该翻回来改。
 - 所有代码引用：路径与行号会随重构移动，本文一律只写路径与可 grep 的符号名。

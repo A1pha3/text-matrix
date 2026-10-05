@@ -1,10 +1,11 @@
 ---
-title: "OpenAI Agents SDK：官方多智能体工作流框架——21K Stars的生产级多Agent架构指南"
+title: "OpenAI Agents SDK：官方多智能体工作流框架——生产级多 Agent 架构指南"
 date: "2026-04-17T16:30:00+08:00"
+lastmod: "2026-09-29"
 slug: "openai-agents-python-multi-agent-sdk"
 github_repo: "openai/openai-agents-python"
 source_key: "gh:openai/openai-agents-python"
-description: "21,475 Stars的OpenAI官方多智能体SDK。支持OpenAI Responses/Chats API及100+第三方LLM，提供Agent/SandboxAgent/Tool/Guardrail/Handoff/Human-in-the-loop等完整生态，Python 3.10+可用。"
+description: "OpenAI 官方推出的轻量多智能体 SDK（截至 2026-09 已超 2.9 万 Star）。用少量原语——Agent、Tools、Handoffs、Guardrails、Sessions、Tracing——把多个 LLM 调用组织成可交接、可校验、可观测的工作流。Python 3.10+，内置 OpenAI Responses 与 Chat Completions 支持，其他模型经 any-llm 或 LiteLLM 适配器接入。"
 draft: false
 categories: ["技术笔记"]
 tags: ["OpenAI", "多智能体", "AI Agent", "Python", "工作流", "MCP"]
@@ -12,34 +13,34 @@ tags: ["OpenAI", "多智能体", "AI Agent", "Python", "工作流", "MCP"]
 
 # OpenAI Agents SDK：官方多智能体工作流框架
 
-OpenAI Agents SDK 真正解决的问题不是"调用模型"，而是把多个 LLM 调用组织成一条可观测、可校验、可交接的流水线。它把 Agent、工具、安全检查、人工介入和会话管理打包成同一套编程模型，目标读者是已经在用 LLM API、但发现单 Agent 架构在复杂任务中不够用的开发者。
+OpenAI Agents SDK 真正解决的问题不是"调用模型"，而是把多个 LLM 调用组织成一条可观测、可校验、可交接的流水线。它把 Agent、工具、安全检查、人工介入和会话管理打包进同一套编程模型，目标读者是已经在用 LLM API、但发现单 Agent 架构在复杂任务里不够用的开发者。
 
 > **前置知识**：Python 基础、LLM API 使用经验、对 Agent 概念有基本了解
 > **技术栈**：Python 3.10+ / OpenAI Responses API / MCP / Pydantic v2
+> **版本口径**：正文以 `openai-agents` 0.22.3（2026-09-17 发布）与 main 分支为准，核对日期 2026-09-29。SDK 迭代很快，API 以你安装的版本为准。
 
 ## 这篇文章覆盖什么
 
-文章重点在 SDK 的设计取舍，不在 API 签名。下面几个问题是阅读时的主线：
-1. OpenAI Agents SDK 和 LangChain / LangGraph 的定位差异
-2. Agent、Handoff、Tool 三者的协作关系与各自边界
+重点在 SDK 的设计取舍，不在逐条 API 签名。阅读主线：
+
+1. Agents SDK 和 LangChain / LangGraph 的定位差异
+2. Agent 作为 Tool（`Agent.as_tool()`）和 Handoff 的边界与选择
 3. Sandbox Agent 在什么场景下比普通 Agent 更合适
-4. Guardrails 的拦截时机（输入前 / 输出后）和失败后的行为
-5. Human-in-the-loop 的触发条件设计与动态介入
-6. 用 Tracing 定位 Agent 行为异常的实际步骤
+4. Guardrails 的三种拦截位置（输入前 / 输出后 / 工具调用）与执行模式
+5. Human-in-the-loop（人工审批）的触发条件与暂停恢复流程
+6. 用 Tracing 定位多 Agent 链路异常的实际步骤
 
 ---
 
 ## 单 Agent 为什么不够用
 
-当一个 Agent 试图覆盖所有任务时，最直接的问题是系统提示词膨胀——为了告诉模型"什么时候该做什么"，instructions 越写越长，模型反而更容易漏掉关键约束。工具列表同理，把搜索、代码执行、文件读写、数据库查询全挂在一个 Agent 上，模型在工具选择上的出错率会明显上升。
+当一个 Agent 试图覆盖所有任务，最直接的问题是系统提示词膨胀。为了告诉模型"什么时候该做什么"，instructions 越写越长，模型反而更容易漏掉关键约束。工具列表同理，把搜索、代码执行、文件读写、数据库查询全挂在一个 Agent 上，模型在工具选择上的出错率会明显上升。
 
 更隐蔽的问题是上下文污染。一次代码生成任务里夹带的错误日志，会影响后续无关问答的质量；一次工具调用返回的超长结果，会挤掉早期的关键指令。单 Agent 架构里，这些上下文都共享同一个对话窗口，没有自然的隔离边界。
 
-多 Agent 架构的思路是把职责拆开：每个子 Agent 只做一件事，指令更短，上下文更干净，出错的爆炸半径也更小。Agent 之间通过明确的交接协议协作，Guardrails 在交接边界上做安全检查，Tracing 让每一步都有据可查。OpenAI Agents SDK 就是把这套思路落成了一组可复用的 Python 原语。
+多 Agent 的思路是把职责拆开：每个子 Agent 只做一件事，指令更短、上下文更干净、出错的爆炸半径也更小。Agent 之间通过明确的交接协议协作，Guardrails 在交接边界做校验，Tracing 让每一步都有据可查。Agents SDK 就是把这套思路落成一组可复用的 Python 原语。
 
-## SDK 总览：先分清几套并行机制
-
-SDK 内部有几套容易混淆的机制，先明确边界，再看细节会清晰很多。
+## SDK 总览：先分清两种协作机制
 
 ```mermaid
 flowchart LR
@@ -55,27 +56,25 @@ flowchart LR
     R --> TR[Tracing]
 ```
 
-最容易混的三组机制：
+最容易混的两组机制，区别在会话控制权谁掌握：
 
 | 机制 | 作用 | 触发方式 | 典型场景 |
 |------|------|----------|----------|
-| `tools=[agent]`（Agent as Tool） | 把子 Agent 当工具调用，父 Agent 拿到返回值后继续 | 模型自主决定调用 | 代码生成 → 代码审查（子 Agent 只出结果，不接管会话） |
-| `handoffs=[agent]` | 把会话控制权完整交给另一个 Agent | 父 Agent 指令触发 `handoff_to()` | 路由分发、多轮子任务 |
-| `handoff(agent, context=...)` | 带上下文交接，传递优先级/部门等元信息 | 通过 `handoff()` 包装 | 带紧急标记的任务路由 |
-| 条件 Handoff | 在运行时根据输入动态选择目标 Agent | 自定义函数返回值 | 按用户意图动态分发 |
+| `Agent.as_tool()` | 把子 Agent 当工具调用，父 Agent 拿到返回值后继续 | 模型自主决定调用 | 代码生成 → 代码审查（子 Agent 只出结果，不接管会话） |
+| `handoffs=[agent]` | 把会话控制权完整交给另一个 Agent | 模型调用对应的 `transfer_to_*` 交接工具 | 路由分发、多轮子任务 |
 
-关键区分点：Agent as Tool 是"调用—返回"，父 Agent 始终掌握会话；Handoff 是"移交—接管"，目标 Agent 拿到控制权后，原 Agent 不再参与本轮。这两种模式不能互相替代——需要保留上下文连续性时用 Tool，需要切换主导权时用 Handoff。
+关键判断点：Agent as Tool 是"调用—返回"，父 Agent 始终掌握会话；Handoff 是"移交—接管"，目标 Agent 拿到控制权后，原 Agent 不再主导本轮。两者不能互相替代——需要保留上下文连续性时用 Tool，需要切换主导权时用 Handoff。
 
-为什么要把这些机制拆开？因为多 Agent 系统里最常见的故障源就是控制权混乱——父 Agent 以为子 Agent 只是个工具，结果子 Agent 接管了会话；或者父 Agent 想保留决策权，却用了 Handoff 把控制权交了出去。把 Tool 和 Handoff 做成显式区分的 API，是为了让控制流在代码层面可读，而不是藏在 instructions 的措辞里。
+为什么要显式区分？多 Agent 系统里最常见的故障源就是控制权混乱：父 Agent 以为子 Agent 只是个工具，结果它接管了会话；或者父 Agent 想保留决策权，却用了 Handoff 把控制权交出去。把 Tool 和 Handoff 做成两种 API，是为了让控制流在代码层面可读，而不是藏在 instructions 的措辞里。
 
 SDK 的整体定位：
 
-| 特性 | 说明 |
+| 能力 | 说明 |
 |------|------|
-| **Provider Agnostic** | 支持 OpenAI API 及 100+ 第三方 LLM |
-| **类型安全** | 完整 Pydantic v2 集成 |
-| **内置能力** | Sandbox / Tracing / Handoff / Guardrails 全部内置 |
-| **生产验证** | 已用于 OpenAI 内部多个生产级 Agent 系统 |
+| **原语少** | Agent、Tools、Handoffs、Guardrails、Sessions、Tracing，Python-first |
+| **Provider-agnostic** | 内置 OpenAI Responses 与 Chat Completions 两种 API，官方宣称支持 100+ LLM；第三方模型经 any-llm 或 LiteLLM 适配器接入 |
+| **类型安全** | Pydantic v2 全程参数校验 |
+| **血统** | OpenAI 官方出品，是早期实验项目 Swarm 的生产级升级版 |
 
 ---
 
@@ -89,44 +88,38 @@ Agent 是 LLM、指令、工具和安全配置的组合：
 from agents import Agent
 
 agent = Agent(
-    name="Research Assistant",      # Agent名称
-    instructions="""                # 系统指令
-        You are a research assistant.
-        You excel at finding accurate information
-        and citing your sources.
-    """,
-    tools=[search_web, read_file],  # 可用工具列表
-    model="gpt-4o",                 # 指定模型（可选）
+    name="Research Assistant",
+    instructions="""You are a research assistant.
+        You excel at finding accurate information and citing sources.""",
+    tools=[search_web, read_file],
 )
 ```
+
+没有指定 `model`，SDK 会用运行时默认模型。想固定型号就显式传 `model="gpt-5.6-luna"` 这样的字符串，或传一个 `Model` 实例。（这里的 `search_web`、`read_file` 假设已按下一节的 `@function_tool` 方式定义。）
 
 ### Agent 的核心组件
 
 ```python
 Agent(
-    # 身份与指令
-    name: str,                      # Agent名称（唯一标识）
-    instructions: str | Callable,   # 系统提示词（静态或动态生成）
-
-    # 模型配置
-    model: str | Model = "gpt-4o", # 模型选择
-    model_provider: str = "openai", # 模型提供商
-
-    # 工具系统
-    tools: list[Tool] = [],         # 可用工具列表
-    tool_classes: list[type] = [],  # 工具类（自动实例化）
-
-    # 安全与控制
-    guardrails: list[Guardrail] = [],  # 输入输出安全校验
-    handoffs: list[Agent] = [],         # 可转交的Agent列表
-
-    # 记忆与会话
-    session_recency_config = None,   # 记忆配置
-    max_tokens = None,              # 输出token限制
+    name: str,                          # Agent 名称（唯一标识）
+    instructions: str | Callable | None,  # 系统提示词（静态字符串或动态生成函数）
+    prompt: Prompt | Callable | None,   # 声明式 Prompt 对象（在代码外配置指令与工具；仅 OpenAI 模型的 Responses API 支持）
+    model: str | Model | None = None,   # 模型选择；None 时用默认模型
+    model_settings: ModelSettings,      # 温度、推理力度等模型参数
+    tools: list[Tool] = [],             # 可用工具
+    mcp_servers: list[MCPServer] = [],  # 挂载的 MCP 服务器
+    handoffs: list[Agent | Handoff] = [],  # 可转交的 Agent
+    input_guardrails: list[InputGuardrail] = [],   # 输入安全校验
+    output_guardrails: list[OutputGuardrail] = [], # 输出安全校验
+    output_type: type | None = None,    # 结构化输出的类型
+    tool_use_behavior: ...,             # 工具结果是否直接作为最终输出
+    reset_tool_choice: bool = True,     # 工具调用一轮后是否重置 tool_choice
 )
 ```
 
-`instructions` 支持传入函数，函数接收运行上下文，返回字符串。这在需要根据用户身份、会话历史动态生成系统提示词时有用——同一个客服 Agent，对 VIP 用户和普通用户给出不同的服务承诺，靠的就是这个机制。
+注意几个容易想当然的地方：`model` 不传时不是写死某个型号，而是取运行时默认模型（0.22.x 里是 `gpt-5.6-luna`，可用环境变量 `OPENAI_DEFAULT_MODEL` 覆盖）；安全校验没有统一的 `guardrails` 字段，输入和输出分成 `input_guardrails`、`output_guardrails` 两组。
+
+`instructions` 支持传入函数，函数接收运行上下文和 Agent 实例，返回字符串（同步或异步皆可）。需要根据用户身份、会话历史动态生成提示词的场景用得上——同一个客服 Agent，对 VIP 用户和普通用户给出不同的服务承诺，靠的就是这个机制。
 
 ### 内置 Agent 类型
 
@@ -136,31 +129,24 @@ Agent(
 agent = Agent(name="Assistant", instructions="You are helpful.")
 ```
 
-**Sandbox Agent**：隔离环境执行的 Agent（v0.14.0+）
+**Sandbox Agent**：在隔离工作区执行的 Agent（beta）
 
 ```python
-from agents.sandbox import SandboxAgent, Manifest, GitRepo
+from agents.sandbox import Manifest, SandboxAgent
+from agents.sandbox.entries import LocalDir
 
 sandbox_agent = SandboxAgent(
     name="Code Assistant",
     instructions="Inspect files and run commands in the sandbox.",
-    default_manifest=Manifest(entries={"repo": GitRepo(repo="owner/repo", ref="main")}),
+    default_manifest=Manifest(
+        entries={"repo": LocalDir(src="/path/to/local/repo")}
+    ),
 )
 ```
 
-**Realtime Agent**：语音交互 Agent
+**Realtime agent**：面向语音交互的 Agent，配合 `gpt-realtime-2.1` 这类实时模型使用，官方 README 列出的能力包括自动打断检测、上下文管理和护栏。需要构建"模型边说话边听"的体验时考虑它。
 
-```python
-from agents.realtime import RealtimeAgent
-
-voice_agent = RealtimeAgent(
-    name="Voice Assistant",
-    instructions="You are a helpful voice assistant.",
-    model="gpt-realtime-1.5",
-)
-```
-
-Sandbox Agent 和普通 Agent 的区别不在"能不能执行代码"，而在"执行环境是否隔离"。普通 Agent 调用 `function_tool` 时，代码直接跑在宿主进程里；Sandbox Agent 通过 Manifest 声明可访问的文件源（Git 仓库、本地目录、URL），在独立的沙箱客户端里执行命令，适合让 LLM 操作不可信代码或不可信仓库。
+Sandbox Agent 和普通 Agent 的区别不在"能不能执行代码"，而在"执行环境是否隔离"。普通 Agent 调用工具时，代码直接跑在宿主进程里；Sandbox Agent 通过 Manifest 声明可访问的文件源（本地目录、Git 仓库、远程物），在独立的沙箱客户端里执行命令，适合让 LLM 操作不可信代码或不可信仓库。
 
 ---
 
@@ -176,7 +162,6 @@ from agents import Agent, function_tool
 @function_tool
 def search_web(query: str) -> str:
     """Search the web for information."""
-    # 实现搜索逻辑
     return f"Results for: {query}"
 
 @function_tool
@@ -191,41 +176,43 @@ agent = Agent(
 )
 ```
 
-`@function_tool` 会从函数签名和 docstring 自动生成工具 schema，Pydantic 负责参数校验。函数的 type hint 越精确，模型调用时传错参数的概率越低。上例里的 `eval` 仅作演示，生产环境应换成 `ast.literal_eval` 或专用的表达式解析库，避免注入风险。
+`@function_tool` 从函数签名和 docstring 自动生成工具 schema，Pydantic 负责参数校验。type hint 越精确，模型调用时传错参数的概率越低。上例里的 `eval` 仅作演示，生产环境要换成 `ast.literal_eval` 或专门的表达式解析库，避免注入风险。
 
-### MCP (Model Context Protocol) Tool
+### MCP（Model Context Protocol）Tool
 
-连接外部 MCP 服务器的工具：
+SDK 原生支持多种 MCP 传输。最常见的 stdio 方式是启动一个本地进程、通过 stdin/stdout 通信：
 
 ```python
 from agents import Agent
-from agents.tools.mcp import MCPTool
+from agents.mcp import MCPServerStdio
 
-# 连接MCP服务器
-mcp_tool = MCPTool(
-    command="npx",
-    args=["-y", "@modelcontextprotocol/server-filesystem", "/path/to/files"],
+server = MCPServerStdio(
+    name="Filesystem",
+    params={
+        "command": "npx",
+        "args": ["-y", "@modelcontextprotocol/server-filesystem", "/path/to/files"],
+    },
 )
 
 agent = Agent(
     name="File Assistant",
     instructions="You can read and write files.",
-    tools=[mcp_tool],
+    mcp_servers=[server],
 )
 ```
 
-MCP 把工具做成可复用的独立服务：一个 MCP 服务器写好后，任何支持 MCP 的客户端（Claude Desktop、Cursor、Agents SDK）都能直接调用，不用为每个宿主重写工具封装。
+除 stdio 外，还支持 `MCPServerSse`（HTTP + Server-Sent Events）、`MCPServerStreamableHttp`（Streamable HTTP），以及 `HostedMCPTool`——后者把整个工具调用放到 OpenAI 的服务器上执行，由 Responses API 代为连接公开可达的 MCP 服务器。
+
+MCP 的价值在可复用：一个 MCP 服务器写好后，任何支持 MCP 的客户端（Claude Desktop、Cursor、Agents SDK）都能直接调用，不用为每个宿主重写工具封装。
 
 ### Agents as Tools
 
-Agent 本身也可以作为工具被其他 Agent 调用：
+Agent 可以作为工具挂到另一个 Agent 上。当前推荐的写法是用 `Agent.as_tool()`：
 
 ```python
-# 定义子Agent
 coder = Agent(
     name="Coder",
-    instructions="You write Python code.",
-    tools=[...],
+    instructions="You write clean Python code.",
 )
 
 reviewer = Agent(
@@ -233,16 +220,17 @@ reviewer = Agent(
     instructions="You review code for bugs.",
 )
 
-# 父Agent可以使用子Agent
-parent_agent = Agent(
+team_lead = Agent(
     name="Team Lead",
     instructions="Coordinate a coding team.",
-    tools=[coder, reviewer],  # Agent作为工具
-    handoffs=[coder, reviewer],
+    tools=[coder.as_tool(), reviewer.as_tool()],  # 当工具调用
+    handoffs=[coder, reviewer],                    # 也可以直接移交
 )
 ```
 
-同一个子 Agent 可以同时出现在 `tools` 和 `handoffs` 里——父 Agent 既可以把它当工具调用（拿到结果后继续），也可以把会话移交给它（让它接管后续对话）。选择哪种模式取决于父 Agent 是否需要保留控制权。
+同一个子 Agent 可以同时出现在 `tools` 和 `handoffs` 里——父 Agent 既可以把它当工具调用（拿结果继续），也可以把会话移交给它（让它接管后续对话）。选哪种取决于父 Agent 是否要保留控制权。
+
+默认情况下，`as_tool()` 生成的工具只有一个字符串参数 `input`，父 Agent 用一句自然语言指令调用它。子 Agent 需要结构化输入时，传 `parameters=...` 声明入参 schema（Pydantic 模型或 dataclass）；返回值也可以用 `custom_output_extractor` 自定义提取。
 
 ---
 
@@ -250,75 +238,79 @@ parent_agent = Agent(
 
 ### Handoff 机制
 
-Handoff 是 Agent 之间的"交接棒"机制：
+Handoff 是 Agent 之间的"交接棒"。在模型眼里，每个 Handoff 是一个 `transfer_to_<agent_name>` 工具：
 
 ```python
-# Agent A
-agent_a = Agent(
-    name="Router",
-    instructions="Classify the user's intent and hand off to the right agent.",
-    handoffs=[coder_agent, writer_agent, analyst_agent],
-)
+from agents import Agent
 
-# Agent B
 coder_agent = Agent(
     name="Coder",
     instructions="You write code.",
+    handoff_description="Hand off when the user needs code written.",
 )
 
-# 从Agent A交接给Agent B
-# 在Agent A的指令中触发：handoff_to(coder_agent)
+router_agent = Agent(
+    name="Router",
+    instructions="Classify the user's intent and hand off to the right agent.",
+    handoffs=[coder_agent],
+)
 ```
 
-Handoff 触发后，目标 Agent 接管会话，原 Agent 不再参与本轮。这意味着目标 Agent 的 instructions 会替换原 Agent 的，工具列表也会切换。如果希望目标 Agent 知道"为什么被叫过来"，需要通过上下文传递。
+Handoff 触发后，目标 Agent 接管会话，它的 instructions 和工具列表会替换原 Agent 的。`handoff_description` 用来提示模型"什么时候该选这个交接"，避免模板判断。
 
-### 带上下文的 Handoff
+### 用 `handoff()` 定制交接
 
-Handoff 可以传递上下文信息：
+`handoff()` 可以在交接时附加行为，最常用的是 `on_handoff` 回调、`input_type`（结构化元数据）和 `input_filter`（过滤接收方看到的上下文）：
 
 ```python
-from agents import Agent, RunContextWrapper, handoff
+from pydantic import BaseModel
+from agents import Agent, handoff, RunContextWrapper
 
-# 带配置的Handoff
-handoff_to_analyst = handoff(
-    agent=analyst_agent,
-    # 传递额外上下文
-    context={
-        "priority": "high",
-        "department": "engineering",
-    },
-)
+class EscalationData(BaseModel):
+    reason: str
+    priority: str = "low"
+
+async def on_handoff(
+    ctx: RunContextWrapper[None], input_data: EscalationData
+) -> None:
+    print(f"Escalated: {input_data.reason} ({input_data.priority})")
+
+escalation = Agent(name="Escalation agent")
 
 router = Agent(
     name="Router",
-    instructions="Route to analyst with priority context.",
-    handoffs=[handoff_to_analyst],
+    instructions="Escalate when the user asks for a manager.",
+    handoffs=[
+        handoff(
+            agent=escalation,
+            on_handoff=on_handoff,
+            input_type=EscalationData,
+        )
+    ],
 )
 ```
 
-### 条件 Handoff
+`input_type` 描述 Handoff 工具调用本身的入参：模型调用交接时带上 `reason`、`priority` 这些字段，SDK 本地校验后把解析结果传给 `on_handoff`。它不是给接收 Agent 的主输入，也不会改变交接目标——只是让模型在交接这一刻多交一点元信息，方便记录或分发。
+
+### 动态控制：`is_enabled`
+
+如果想让某个交接在特定条件下才可用（比如"只有管理员会话才允许转接退款"），用 `handoff(..., is_enabled=...)`，传布尔或返回布尔的可调用：
 
 ```python
-async def route_to_specialist(context: RunContextWrapper) -> Agent:
-    """根据用户输入决定转交给哪个Agent"""
-    user_input = context.messages[-1].content.lower()
+from agents import Agent, handoff, RunContextWrapper
 
-    if "code" in user_input or "debug" in user_input:
-        return coder_agent
-    elif "write" in user_input or "article" in user_input:
-        return writer_agent
-    else:
-        return general_agent
+refund_open = True  # 可由你的路由、权限系统决定
 
-agent = Agent(
+def refund_available(ctx: RunContextWrapper) -> bool:
+    return refund_open and is_admin(ctx)  # 应用内的判断逻辑
+
+router = Agent(
     name="Router",
-    instructions="Route to the appropriate specialist.",
-    handoffs=[coder_agent, writer_agent, general_agent],
-    handoff_condition=route_to_specialist,
+    handoffs=[handoff(agent=refund_agent, is_enabled=refund_available)],
 )
 ```
 
-条件 Handoff 适合意图分类不稳定的场景——当模型自主判断不可靠时，用规则函数兜底。但规则函数本身也会成为维护负担，意图分支多了之后，规则会越写越脆。一个实用的折中是：常见意图走规则，长尾意图交给模型自主 Handoff。
+意图分类不稳定的场景，与其靠模型自主选目标，不如把"谁能被转到"收窄到规则里。规则越多越脆，一个实用折中是：常见的稳定分支用 `handoff_description` + 预置交接让模型自己选，少数受权限或状态约束的分支用 `is_enabled` 收口。
 
 ---
 
@@ -326,120 +318,83 @@ agent = Agent(
 
 ### Guardrail 的工作位置
 
-Guardrails 在输入和输出阶段进行安全校验：
+Guardrails 有三处注入点：
 
 ```
-用户输入 → [Input Guardrail] → Agent处理 → [Output Guardrail] → 用户输出
-                   │                                    │
-                   ▼                                    ▼
-             验证/过滤/拒绝                        验证/过滤/拒绝
+输入 Guardrail（仅首个 Agent）→ Agent 处理 → 输出 Guardrail（仅产出最终结果的 Agent）
+                                                        │
+                                    工具 Guardrail（每次 function-tool 调用前后）
 ```
 
-Input Guardrail 在 Agent 处理之前运行，Output Guardrail 在 Agent 返回之后运行。两者都是可选的，触发后会抛出异常或返回拒绝结果，具体行为取决于 Guardrail 的实现。
+- **输入 Guardrail** 只对链路里的第一个 Agent 生效，检查最初的用户输入。
+- **输出 Guardrail** 只对产出最终结果的那个 Agent 生效。
+- **工具 Guardrail** 对每次受保护的 function-tool 调用生效（本地 MCP 工具也可配置），适合在既有 manager / handoff / 委派链里对每步工具调用做校验。
 
-### 内置 Guardrails
+### 触发与执行模式
+
+每条 Guardrail 跑完产生一个 `GuardrailFunctionOutput`，`tripwire_triggered=True` 时中断当前运行并抛出 `InputGuardrailTripwireTriggered` 或 `OutputGuardrailTripwireTriggered` 异常。示例：
 
 ```python
-from agents.guardrails import (
-    PIIGuardrail,      # 个人身份信息检测
-    ToxicityGuardrail, # 有害内容检测
-    RelevanceGuardrail, # 相关性检测
-)
+from agents import Agent, Runner, InputGuardrailTripwireTriggered
 
-agent = Agent(
-    name="Assistant",
-    instructions="You are a helpful assistant.",
-    guardrails=[
-        PIIGuardrail(),        # 拒绝包含PII的输入
-        ToxicityGuardrail(),   # 拒绝有害输出
-        RelevanceGuardrail(threshold=0.3),  # 拒绝不相关输入
-    ],
-)
+try:
+    result = await Runner.run(agent, user_input)
+except InputGuardrailTripwireTriggered as e:
+    # 拦截到越界输入，转成用户友好的提示
+    handle_blocked_input(e)
 ```
 
-### 自定义 Guardrail
+输入 Guardrail 有两种执行模式：
 
-```python
-from agents.guardrails import InputGuardrail, OutputGuardrail, GuardrailFunctionOutput
+- **并行（默认）**：Guardrail 与 Agent 同时开始，延迟最低，但 tripwire 触发时模型可能已经消耗了 token、执行了工具。
+- **阻塞（`run_in_parallel=False`）**：Guardrail 先跑完，Agent 再启动。触发即拦截，省 token、避免副作用，适合对成本敏感或需要 "失败即止" 的场景。
 
-class CustomInputGuardrail(InputGuardrail):
-    name = "custom_input_guardrail"
-
-    async def check(self, context: RunContextWrapper) -> GuardrailFunctionOutput:
-        user_input = context.messages[-1].content
-
-        # 自定义检查逻辑
-        if contains_profanity(user_input):
-            return GuardrailFunctionOutput(
-                tripwire_triggered=True,
-                message="Please use appropriate language.",
-            )
-
-        return GuardrailFunctionOutput(tripwire_triggered=False)
-
-agent = Agent(
-    name="Assistant",
-    guardrails=[CustomInputGuardrail()],
-)
-```
-
-`tripwire_triggered=True` 会中断当前运行，触发 `GuardrailTripwireTriggered` 异常。生产环境通常需要在 Runner 外层捕获这个异常，转成用户友好的提示，而不是把堆栈直接抛给前端。Guardrails 的代价是延迟——每条 Guardrail 都是一次额外调用，叠加多了会让首字响应明显变慢，建议只保留与业务强相关的检查。
+要说明的是：SDK 本身不内置"现成的 PII 检测 / 有害内容检测"这类开箱组件。PII、毒性这些能力要么自己写 Guardrail 函数，要么用独立的 [openai-guardrails](https://github.com/openai/openai-guardrails-python) 包（它提供 `GuardrailAgent` 作为 `Agent` 的平替）。Guardrails 的代价是延迟——每条都是一次额外调用，叠多了首字响应明显变慢，建议只保留与业务强相关的检查。
 
 ---
 
-## Human-in-the-Loop：在关键节点插入人工审批
+## Human-in-the-loop：在关键节点插入人工审批
 
-### 介入模式
+### 标记需要审批的工具
+
+SDK 的做法是在工具上声明"这个调用要审批"，而不是在 Agent 上挂一个审批列表：
 
 ```python
-from agents import Agent
-from agents.human_in_the_loop import Approval, Form
+from agents import Agent, Runner
+from agents.decorators import tool
 
-# 方式1：Approval（简单批准）
-agent = Agent(
-    name="Assistant",
-    instructions="Ask for approval before executing dangerous actions.",
-    human_in_the_loop=[
-        Approval(prompt="Approve this action?", tools=["delete_file"]),
-    ],
-)
-
-# 方式2：Form（结构化输入）
-human_feedback_form = Form(
-    name="feedback",
-    description="Get feedback from human",
-    fields=[
-        {"name": "approved", "type": "boolean", "description": "Is this correct?"},
-        {"name": "correction", "type": "string", "description": "What should be changed?"},
-    ],
-)
+@tool(needs_approval=True)
+async def cancel_order(order_id: int) -> str:
+    """Cancel a customer's order."""
+    return f"Cancelled order {order_id}"
 
 agent = Agent(
-    name="Assistant",
-    human_in_the_loop=[human_feedback_form],
+    name="Support agent",
+    instructions="Handle tickets and ask for approval when needed.",
+    tools=[cancel_order],
 )
 ```
 
-Approval 适合二值决策（执行/不执行），Form 适合需要补充信息的场景（比如让用户修正 Agent 的理解）。两者都通过 `tools` 参数限定触发范围——只有调用指定工具时才弹出审批，避免每个动作都打断流程。
+`needs_approval` 除了传 `True`，还能传一个异步函数，按每次调用的参数决定要不要审批——比如"subject 里带 refund 才需要人工确认"。`ShellTool`、`ApplyPatchTool`、`Agent.as_tool()`、本地 MCP 服务器（`require_approval`）也都支持同样的机制。
 
-### 动态介入
+### 暂停、批准、恢复
+
+工具需要审批时，运行会暂停，`result.interruptions` 里会出现待批准的调用。典型处理是转成 `RunState`，审批后带着状态继续跑：
 
 ```python
-from agents import Agent, RunConfig
+result = await Runner.run(agent, "Cancel order 12345")
 
-# 根据条件决定是否介入
-run_config = RunConfig(
-    human_in_the_loop=[
-        Approval(
-            prompt="Confirm deployment?",
-            tools=["deploy_to_production"],
-            condition=lambda ctx: "production" in ctx.messages[-1].content,
-        ),
-    ],
-)
+if result.interruptions:
+    state = result.to_state()
+    for interruption in result.interruptions:
+        if user_approves(interruption):   # 你的审批前端
+            state.approve(interruption)
+        else:
+            state.reject(interruption)
+    result = await Runner.run(agent, state)
 ```
 
-`condition` 让审批只在特定条件下触发——比如只有当用户消息包含"production"时，部署操作才需要人工确认。这比"所有操作都要审批"实用得多，后者会让 Agent 的响应延迟高到不可用。
+`RunState` 可序列化（`to_json` / `to_string`），长时审批可以把暂停状态存进数据库或队列，另一进程 `from_json` / `from_string` 恢复后再跑。每次审批只对当次调用生效；想在一个运行里对同一工具以后的所有调用统一放行或拒绝，用 `state.approve(..., always_approve=True)` 或 `state.reject(..., always_reject=True)`。
 
 ---
 
@@ -447,22 +402,20 @@ run_config = RunConfig(
 
 ### Sandbox Agent 概述
 
-Sandbox Agent 在隔离环境中执行任务，适合需要文件系统访问、命令执行的场景：
+Sandbox Agent 在独立工作区执行，适合需要文件系统访问、命令执行的场景：
 
 ```python
 from agents import Runner
 from agents.run import RunConfig
 from agents.sandbox import Manifest, SandboxAgent, SandboxRunConfig
-from agents.sandbox.entries import GitRepo, LocalFiles
+from agents.sandbox.entries import LocalDir
+from agents.sandbox.sandboxes import UnixLocalSandboxClient
 
 agent = SandboxAgent(
     name="Workspace Assistant",
     instructions="Inspect the workspace before answering.",
     default_manifest=Manifest(
-        entries={
-            "repo": GitRepo(repo="openai/openai-agents-python", ref="main"),
-            "local": LocalFiles(path="/path/to/project"),
-        }
+        entries={"project": LocalDir(src="/path/to/project")}
     ),
 )
 
@@ -470,43 +423,38 @@ result = Runner.run_sync(
     agent,
     "What files were modified in the last commit?",
     run_config=RunConfig(
-        sandbox=SandboxRunConfig(
-            client=UnixLocalSandboxClient(),  # 本地隔离环境
-        )
+        sandbox=SandboxRunConfig(client=UnixLocalSandboxClient()),
     ),
 )
 ```
 
-### Manifest 配置
+### Manifest：访问控制清单
+
+Manifest 是 Sandbox 的权限清单——只有声明在 `entries` 里的资源，沙箱才能访问：
 
 ```python
 from agents.sandbox import Manifest
-from agents.sandbox.entries import GitRepo, URL, LocalFiles
+from agents.sandbox.entries import LocalDir, GitRepo
 
 manifest = Manifest(
     entries={
-        "repo": GitRepo(
-            repo="owner/repo",
-            ref="main",
-            include=["*.py", "*.md"],  # 只同步特定文件
-        ),
-        "docs": URL(url="https://docs.example.com"),
-        "local": LocalFiles(path="/path/to/data"),
+        "repo": GitRepo(repo="owner/repo", ref="main"),
+        "local": LocalDir(src="/path/to/data"),
     }
 )
 ```
 
-Manifest 是 Sandbox 的访问控制清单——只有声明在 entries 里的资源，沙箱才能访问。`include` 参数可以进一步过滤，比如只同步 `.py` 和 `.md` 文件，避免把整个仓库（包括二进制、密钥文件）拉进沙箱。
+`GitRepo` 拉取仓库的指定分支，`LocalDir` 挂载本地目录。整个沙箱的可见范围都由这份清单决定，避免把无关目录、密钥文件暴露给模型控制的环境。
 
-### Sandbox 类型
+### 选择 Sandbox 客户端
 
-| Sandbox 类型 | 说明 | 适用场景 |
+| Client | 安装 | 适用场景 |
 |-------------|------|----------|
-| UnixLocalSandboxClient | 本地 Unix 环境 | 开发/测试 |
-| DockerSandboxClient | Docker 容器 | 生产隔离 |
-| E2BSandboxClient | 云端沙箱 | 付费托管 |
+| `UnixLocalSandboxClient` | 无需额外安装 | macOS / Linux 上信任的本地开发；Linux 上并**不**提供强 OS 级隔离；Windows 不支持 |
+| `DockerSandboxClient` | `openai-agents[docker]` | 容器隔离，或想用某个镜像复现目标环境；Windows 官方推荐用它或托管客户端 |
+| `E2BSandboxClient` 等托管客户端 | 各自的 extra（`openai-agents[e2b]` 等，还有 Modal、Daytona、Cloudflare、Runloop、Blaxel、Vercel） | 把工作区边界交给云厂商托管 |
 
-开发阶段用 UnixLocalSandboxClient 足够，生产环境建议切到 Docker 或 E2B——前者依赖宿主机的隔离能力，后者把执行环境完全外包，适合不想自己维护沙箱基础设施的团队。
+开发阶段用 `UnixLocalSandboxClient` 最省事，但它只是"本地进程 +（macOS 上）sandbox-exec 的文件限制"，不适合跑不可信输入。生产需要真正的隔离边界时，换成 Docker 或托管客户端，用 `SandboxRunConfig(client=..., options=...)` 指定。
 
 ---
 
@@ -514,97 +462,77 @@ Manifest 是 Sandbox 的访问控制清单——只有声明在 entries 里的�
 
 ### 内置 Tracing
 
-OpenAI Agents SDK 内置 Tracing，无需额外配置：
+SDK 内置 Tracing，默认把追踪数据上报到 OpenAI 的 Tracing 服务，无需额外的可视化基础设施：
 
 ```python
 from agents import Agent, Runner
-from agents.tracing import trace
 
-# 方式1：自动Tracing
 agent = Agent(name="Assistant", instructions="You are helpful.")
+
+# 自动 Tracing：每次 run 自带一条 trace
 result = await Runner.run(agent, "Hello!")
 
-# 方式2：手动Tracing
+# 手动命名 trace：把多次调用装进同一条工作流
 with trace("My Agent Workflow"):
-    result = await Runner.run(agent, input)
+    result = await Runner.run(agent, "Hello!")
 ```
 
-### Tracing UI
+### Tracing 能看什么
 
-SDK 自动将追踪数据发送到 OpenAI 的 Tracing 服务，可在 UI 中查看：
-- Agent 调用链
-- 工具执行时间
+Tracing 服务里可以展开：
+
+- Agent 调用链与每次 handoff / tool 调用的先后
+- 工具执行耗时与每一步的输入输出
 - Token 消耗
-- 中间输出
+- 中间的模型响应
 
-### 自定义 Span
-
-```python
-from agents.tracing import trace, Span
-
-with trace("Custom Workflow") as span:
-    span.set_attribute("user_id", user_id)
-
-    with trace("Step 1"):
-        result1 = await step1()
-
-    with trace("Step 2"):
-        result2 = await step2(result1)
-
-    span.set_status("success")
-```
-
-Tracing 在调试多 Agent 链路时几乎是必需的——当一次请求穿过 Router → Coder → Reviewer 三个 Agent，光看最终输出很难定位是哪个环节的 instructions 写得不对。Tracing UI 能展开每一步的输入、输出和耗时，把"黑盒"变成"白盒"。排查思路通常是：先看调用链是否按预期 Handoff，再看每一步的输入是否被上游污染，最后看 Token 消耗是否异常飙升。
+调多 Agent 链路时这几乎是刚需——当一次请求穿过 Router → Coder → Reviewer 三个 Agent，光看最终输出很难定位是哪一环的 instructions 写得不对。排查顺序通常是：先看调用链是否按预期交接，再看每一步的输入有没有被上游污染，最后看 Token 消耗是否异常飙升。
 
 ---
 
 ## Sessions：跨轮次的会话管理
 
-### 自动会话管理
+### 自动会话历史
+
+Sessions 是 SDK 内置的会话记忆：在 `Runner.run` 里传一个 session，SDK 自动帮你取历史、追加本轮内容，省去手动拼 `.to_input_list()`：
+
+```python
+from agents import Agent, Runner, SQLiteSession
+
+session = SQLiteSession("conversation_123")
+agent = Agent(name="Assistant", instructions="Reply concisely.")
+
+result = await Runner.run(agent, "My name is Alice.", session=session)
+
+# 第二轮自动带上第一轮上下文
+result = await Runner.run(agent, "What's my name?", session=session)
+print(result.final_output)  # 会记住 "Alice"
+```
+
+`SQLiteSession` 是内置的轻量实现，默认内存存储，可传数据库文件路径做持久化。
+
+### 多副本共享：Redis 会话
+
+```bash
+pip install openai-agents[redis]
+```
 
 ```python
 from agents import Agent, Runner
-from agents.sessions import Session
+from agents.extensions.memory import RedisSession
 
-# 自动创建和管理会话
-session = await Session.create()
-
-agent = Agent(name="Assistant", instructions="You are helpful.")
-
-# 第一次对话
-result1 = await Runner.run(agent, "My name is Alice.", session_id=session.id)
-
-# 第二次对话（自动包含历史）
-result2 = await Runner.run(agent, "What's my name?", session_id=session.id)
-# → "Your name is Alice."
+session = RedisSession.from_url("user_123", url="redis://localhost:6379/0")
+result = await Runner.run(agent, "Hello", session=session)
+await session.close()
 ```
 
-### Redis 会话存储（可选）
-
-```bash
-pip install 'openai-agents[redis]'
-```
-
-```python
-from agents.sessions import RedisSessionManager
-
-session_manager = RedisSessionManager(
-    redis_url="redis://localhost:6379",
-)
-
-session = await Session.create(
-    session_manager=session_manager,
-    user_id="user_123",
-)
-```
-
-默认的会话存储是内存级的，进程重启就丢。生产环境用 Redis 后端，可以跨进程、跨实例共享会话历史，适合部署在多副本架构里。如果每次请求都是一次性的（比如无状态的分类任务），可以不启用 Sessions，避免不必要的存储开销。
+内存 Store 进程一重启就丢。需要跨进程、跨实例共享会话历史（多副本部署）时，换成 `RedisSession`（`agents.extensions.memory` 里还有 `AsyncSQLiteSession`、`SQLAlchemySession`、`MongoDBSession`）。如果每次请求都是一次性的无状态任务，可以不开 Sessions，省掉存储开销。
 
 ---
 
 ## 任务流案例：一次代码审查请求如何穿过系统
 
-把前面几个机制串起来看。假设用户发来一条请求："帮我写一个斐波那契函数，然后审查一下"。
+把前面几个机制串起来。用户发来："帮我写一个斐波那契函数，然后审查一下"。
 
 ```mermaid
 sequenceDiagram
@@ -636,18 +564,16 @@ sequenceDiagram
     R->>U: 返回最终结果
 ```
 
-这条请求在系统里的实际路径：
+这条请求的实际路径：
 
-1. **Router 接收请求**，Input Guardrail 先检查输入是否包含敏感信息或越界请求。
-2. **Router 判断意图**，识别出"写代码 + 审查"是复合任务，决定先 Handoff 给 Coder。
-3. **Coder 接管会话**，生成斐波那契函数，完成后 Handoff 回 Router。Tracing 记录这一步的输入、输出和 Token 消耗。
-4. **Router 调用 Reviewer**——这里用的是 Agent as Tool 而不是 Handoff，因为 Router 需要拿到审查结果后继续决策，不能让 Reviewer 接管会话。
-5. **如果审查未通过**，Router 再次 Handoff 给 Coder 重写；如果通过，Handoff 给 Tester 写测试。
-6. **Tester 完成后**，Router 汇总结果返回给用户。整个链路的每一步都在 Tracing 里有记录。
+1. **Router 接收请求**，输入 Guardrail 先检查用户输入是否越界。注意输入 Guardrail 只对第一个 Agent（Router）生效。
+2. **Router 判断意图**，识别出"写代码 + 审查"是复合任务，决定 Handoff 给 Coder。
+3. **Coder 接管会话**，生成函数，完成后 Handoff 回 Router。Tracing 记录这一环的输入、输出、token。
+4. **Router 调用 Reviewer**——这里用 `as_tool()` 而不是 Handoff，因为 Router 要拿着审查意见继续决策，不能让 Reviewer 接管会话。
+5. **审查未通过**，Router 再 Handoff 给 Coder 重写；通过则 Handoff 给 Tester 写测试。
+6. **Tester 完成后**，Router 汇总结果返回。整条链路的每一步都在 Tracing 里有记录。
 
-这个案例里最关键的取舍是第 4 步：为什么用 Agent as Tool 而不是 Handoff？因为审查是 Router 决策链的一环，Router 需要根据审查结果决定"重写还是测试"。如果用 Handoff，Reviewer 会接管会话，Router 就失去了对流程的控制权。主干用 Handoff、分支用 Tool 的混合模式，是多 Agent 编排里常见的实用写法。
-
-如果发现 Router 经常把请求移交给错误的 Agent，调整顺序通常是：先改 instructions（最轻，但效果最不确定），再调整 handoffs 列表的组成，最后才引入条件 Handoff（最重，但最可控）。
+第 4 步是最关键的取舍：为什么用 Tool 而不是 Handoff？因为审查是 Router 决策链的一环，Router 要根据结果决定"重写还是测试"。用了 Handoff 的话，Reviewer 会接管会话，Router 就失去了流程控制权。主干走 Handoff、分支走 Tool 的混合写法，是多 Agent 编排里常见的实用模式。
 
 ---
 
@@ -656,9 +582,8 @@ sequenceDiagram
 ### 代码审查团队
 
 ```python
-from agents import Agent, Runner, RunConfig, handoff
+from agents import Agent, Runner
 
-# 定义三个专业Agent
 coder = Agent(
     name="Coder",
     instructions="You write clean, efficient Python code.",
@@ -672,51 +597,45 @@ reviewer = Agent(
 tester = Agent(
     name="Tester",
     instructions="You write comprehensive tests for the code.",
-    handoffs=[reviewer],  # 测试失败转回审查
+    handoffs=[reviewer],
 )
 
-# 协调Agent
 coordinator = Agent(
     name="Coordinator",
     instructions="""You coordinate a code review team.
-    1. First, hand off to Coder to write the code
-    2. Then hand off to Reviewer to review it
-    3. If there are issues, the Reviewer will send it back to Coder
-    4. Once approved, hand off to Tester to write tests
-    5. If tests fail, Tester sends back to Reviewer""",
-    handoffs=[
-        handoff(agent=coder),
-        handoff(agent=reviewer),
-        handoff(agent=tester),
-    ],
+    1. Hand off to Coder to write the code.
+    2. Hand off to Reviewer to review it.
+    3. If there are issues, Reviewer sends it back to Coder.
+    4. Once approved, hand off to Tester to write tests.
+    5. If tests fail, Tester sends back to Reviewer.""",
+    handoffs=[coder, reviewer, tester],
 )
 
-# 执行工作流
-result = await Runner.run(coordinator, "Write a function to calculate fibonacci numbers.")
+result = await Runner.run(
+    coordinator,
+    "Write a function to calculate fibonacci numbers.",
+)
 ```
 
-### 带 Guardrail 和 Tracing 的完整配置
+### 带人工审批的完整配置
 
 ```python
-from agents import Agent, Runner, RunConfig
-from agents.guardrails import PIIGuardrail, ToxicityGuardrail
+from agents import Agent, Runner
+from agents.decorators import tool
 
-config = RunConfig(
-    tracing_export_endpoint="https://api.openai.com/tracing",  # 可选
-    human_in_the_loop=[Approval(prompt="Proceed?", tools=["delete_data"])],
-)
+@tool(needs_approval=True)
+async def delete_data(key: str) -> str:
+    """Delete a stored value. Requires approval."""
+    return f"Deleted {key}"
 
 agent = Agent(
     name="Safe Assistant",
-    instructions="You are a helpful assistant.",
-    guardrails=[
-        PIIGuardrail(),
-        ToxicityGuardrail(),
-    ],
+    instructions="Help the user, but ask for approval on destructive actions.",
+    tools=[delete_data],
 )
-
-result = await Runner.run(agent, "Hello!", run_config=config)
 ```
+
+这里 `delete_data` 声明了 `needs_approval=True`，真正执行删除前会暂停等人工确认；外面的进程负责把 `interruptions` 转成审批界面。输入/输出 Guardrail 按前面的 `InputGuardrailTripwireTriggered` 模式在外层捕获。
 
 ---
 
@@ -733,57 +652,61 @@ result = await Runner.run(agent, "Hello!", run_config=config)
 # 标准安装
 pip install openai-agents
 
-# 带语音支持
+# 带语音 / 实时能力
 pip install 'openai-agents[voice]'
 
-# 带Redis会话支持
+# 带 Redis 会话
 pip install 'openai-agents[redis]'
+
+# 带 Docker 沙箱
+pip install 'openai-agents[docker]'
 ```
 
-### 与 LangChain/LangGraph 对比
+### 与 LangChain / LangGraph 对比
 
 | 特性 | OpenAI Agents SDK | LangChain | LangGraph |
 |------|------------------|-----------|-----------|
 | **定位** | 多 Agent 协作框架 | LLM 应用框架 | 图编排框架 |
 | **学习曲线** | 低 | 中 | 高 |
-| **Guardrails** | 内置 | 需第三方 | 需第三方 |
+| **原语** | Agent / Handoff / Tool / Guardrail | 链与组件 | 节点与边 |
+| **Guardrails** | 内置机制（需自写函数） | 需第三方 | 需第三方 |
 | **Sandbox** | 内置 | 无 | 无 |
-| **Tracing** | 内置 | LangSmith（付费） | LangSmith（付费） |
-| **Provider** | OpenAI 官方 | 社区驱动 | 社区驱动 |
+| **Tracing** | 内置 | LangSmith（独立服务） | LangSmith（独立服务） |
+| **Provider** | OpenAI 官方 + any-llm / LiteLLM 适配器 | 生态广泛 | 生态广泛 |
 
-这张表不是"谁更好"的排名。LangChain 适合需要大量预置工具集成和文档处理管道的场景；LangGraph 适合需要精细状态管理和复杂图编排的场景；OpenAI Agents SDK 的优势在于多 Agent 交接、Sandbox 和 Guardrails 都内置，且与 OpenAI 生态深度集成。如果工作流以"多角色协作 + 安全校验"为主，SDK 的开箱即用程度最高。
+这张表不是"谁更好"的排名。需要大量预置工具集成和文档处理管道，LangChain 顺手；需要精细状态管理和图编排，LangGraph 更强。Agents SDK 的优势在于多 Agent 交接、Sandbox、Guardrails 都内置，与 OpenAI 生态深度集成。如果工作流以"多角色协作 + 安全校验"为主，SDK 的开箱即用程度最高。
 
 ---
 
 ## 采用顺序与适用边界
 
-**建议先上的团队**：已经在用 OpenAI 生态、需要将单 Agent 拆分为多 Agent 协作的团队；当前工作流中有明确的角色分工（如代码生成 → 审查 → 测试），但缺乏系统化交接机制的团队。
+**建议先上的团队**：已经在用 OpenAI 生态、想把单 Agent 拆成多 Agent 协作的团队；当前工作流中有明确角色分工（代码生成 → 审查 → 测试），但缺乏系统化交接机制的团队。
 
-**可以先观望的情况**：团队已深度绑定了 LangGraph 的图编排模式，并且需要更细粒度的状态管理；或者工作流仍以单 Agent + 工具调用为主、暂时不需要多 Agent 交接的场景。
+**可以先观望的情况**：已深度绑定 LangGraph 的图编排，且需要更细粒度的状态管理；或工作流仍以单 Agent + 工具调用为主、暂时不需要交接。
 
-**起步建议**：从 Agent + handoffs 的最小组合开始，先不引入 Sandbox 和 Human-in-the-loop；跑通一条两 Agent 交接链路后，再加入 Guardrails 和 Tracing。Sandbox 和 Human-in-the-loop 涉及更多基础设施（沙箱环境、审批前端），最后再上。
+**起步建议**：从 `Agent + handoffs` 的最小组合开始，先不引入 Sandbox 和 HITL。跑通一条两条 Agent 的交接链路后，再加 Guardrails 和 Tracing。Sandbox、HITL 涉及更多基础设施（沙箱环境、审批前端/Sessions 存储），最后再上。
 
 ---
 
 ## FAQ
 
 **Q1：OpenAI Agents SDK 只能用于 OpenAI 模型吗？**
-不限于 OpenAI。它是 provider-agnostic 的，支持 OpenAI、Azure、Anthropic 及 100+ 第三方 LLM。
+不是。内置支持 OpenAI Responses 与 Chat Completions 两种 API，SDK 是 provider-agnostic 的；其他模型经官方的 any-llm 或 LiteLLM 适配器接入（`agents.extensions.models` 里的 `AnyLLMModel`、`LitellmModel`）。
 
 **Q2：Sandbox Agent 安全吗？**
-Sandbox Agent 在隔离环境中执行文件操作和命令，默认只读本地 Git 仓库。生产环境建议使用 Docker 或云端沙箱。
+取决于客户端。`UnixLocalSandboxClient` 在 Linux 上不做 OS 级隔离，适合信任的本地开发；跑不可信代码要用 Docker 或托管客户端，把隔离边界交给沙箱后端。
 
-**Q3：Guardrails 会影响性能吗？**
-会有轻微延迟（通常 <100ms），但相比无防护时因有害输出导致的回滚成本，这点开销是合理的。叠加多条 Guardrails 时要注意累计延迟。
+**Q3：Guardrails 影响性能吗？**
+每次 Guardrail 都是一次额外调用，会有延迟。输入 Guardrail 用并行模式可压延迟，代价是触发时模型可能已跑了一段；对成本敏感或要"失败即止"的用阻塞模式。
 
 **Q4：如何调试 Agent 行为？**
-使用内置 Tracing，可以查看每个 Agent 调用、工具执行、Token 消耗的详细信息。排查顺序通常是：先看调用链是否按预期 Handoff，再看每步输入是否被上游污染，最后看 Token 消耗是否异常。
+用内置 Tracing。排查顺序：先看调用链是否按预期交接，再看每步输入有没有被上游污染，最后看 token 消耗是否异常。
 
 **Q5：支持语音 Agent 吗？**
-支持。使用 Realtime Agent 配合 `gpt-realtime-1.5` 模型即可构建语音交互 Agent。
+支持。Realtime agent 配合 `gpt-realtime-2.1` 这类实时模型处理语音交互。
 
 **Q6：Agent as Tool 和 Handoff 怎么选？**
-需要保留会话控制权时用 Agent as Tool（父 Agent 拿到结果后继续决策）；需要切换主导权时用 Handoff（目标 Agent 接管后续对话）。两者可以混用——主干流程用 Handoff，分支决策用 Tool。
+要保留会话控制权用 Tool（`Agent.as_tool()`，父 Agent 拿结果继续）；要切换主导权用 Handoff（目标 Agent 接管后续对话）。两者可混用——主干用 Handoff，分支决策用 Tool。
 
 ---
 
@@ -791,5 +714,7 @@ Sandbox Agent 在隔离环境中执行文件操作和命令，默认只读本地
 
 - **GitHub 仓库**：https://github.com/openai/openai-agents-python
 - **官方文档**：https://openai.github.io/openai-agents-python/
+- **中文文档**（社区翻译，覆盖常用章节）：https://openai.github.io/openai-agents-python/zh/
 - **JavaScript 版本**：https://github.com/openai/openai-agents-js
 - **示例代码**：https://github.com/openai/openai-agents-python/tree/main/examples
+- **独立的守卫组件包**：https://github.com/openai/openai-guardrails-python

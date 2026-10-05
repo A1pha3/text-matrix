@@ -1,596 +1,159 @@
 ---
-title: "Pangolin：20K Stars·零信任远程访问平台·基于WireGuard"
+title: "Pangolin：半年八个版本，从 WireGuard 远程访问平台长成开源 SASE"
 date: "2026-04-12T02:31:39+08:00"
+lastmod: "2026-10-05T00:00:00+08:00"
 slug: pangolin-zero-trust-remote-access-guide
 github_repo: "fosrl/pangolin"
 source_key: "gh:fosrl/pangolin"
-description: "Pangolin 是一个基于 WireGuard 的零信任远程访问平台，提供身份感知的 VPN 功能。"
+description: "Pangolin 基于 WireGuard 做零信任远程访问：站点连接器免开端口、浏览器反代加客户端隧道两套入口，1.22 起又多了身份感知 AI 网关。本文核实其半年八个版本的演进与自托管部署的真实路径。"
 draft: false
 categories: ["技术笔记"]
-tags: ["WireGuard", "网络安全"]
+tags: ["WireGuard", "网络安全", "零信任", "自托管"]
 ---
 
-# Pangolin：20K Stars·零信任远程访问平台·基于 WireGuard 的身份感知 VPN
+# Pangolin：半年八个版本，从 WireGuard 远程访问平台长成开源 SASE
 
-> **目标读者**：需要安全远程访问解决方案的开发者、运维工程师、网络安全从业者、企业IT管理员
-> **预计阅读时间**：25-35分钟
-> **前置知识**：了解 VPN 基本概念、网络安全基础、Docker 使用经验
-> **难度定位**：⭐⭐⭐ 中级实用
+今年 4 月写这篇文章时，Pangolin README 第一句还是 "an open-source, identity-based remote access platform built on WireGuard"——一个基于 WireGuard 的身份感知远程访问平台。半年后的今天再打开仓库，同一句的位置写的是 "an open-source SASE platform"，并直接点名对标的对象：Cloudflare One、Zscaler、Prisma，只是开源、可自托管。官方仓库描述也从"远程访问"改成了 "networking and security platform ... and AI workloads"。
 
----
+这个转向不是改个口号。半年里 Pangolin 从 1.17.0 走到 1.24.0，浏览器里跑 SSH/RDP/VNC、特权访问管理（PAM）、资源启动主页这些能力陆续进来，8 月底的 1.22 更是直接加了身份感知 AI 网关——给 Claude Code、Codex 这类 coding agent 一个统一的、免散落 API key 的入口。底下的东西没变：出站 WireGuard 隧道、按资源而非按网络授权的零信任模型。变的是覆盖面，从"让人访问应用和内网"扩到了"给人和 AI 代理的统一网络入口"。
 
-## 一、学习目标
+这篇文章把两件事讲清楚：这套系统的核心机制在发文时是什么样、经过哪些核实；以及这半年它到底长了什么、哪些值得你现在上手时关注。
 
-阅读本文后，你应该能够：
+## 一、系统地图：一个控制面，两类资源，三种入口
 
-1. **理解 Pangolin 的核心价值**：为何它是最安全的远程访问解决方案
-2. **掌握零信任架构**：理解零信任与传统 VPN 的区别
-3. **使用核心功能**：Site Connectors、反向代理访问、客户端访问
-4. **部署 Pangolin**：自托管部署和 Pangolin Cloud 使用
-5. **配置访问控制**：基于身份和上下文的细粒度访问控制
+Pangolin 由四个部分组成。控制面是主仓库 `fosrl/pangolin`，TypeScript 写的 Next.js 应用，管身份、策略和隧道调度；Gerbil（`fosrl/gerbil`，Go）是 WireGuard 接口管理服务端，负责隧道终结；Newt（`fosrl/newt`，Go）是装在远程网络里的站点连接器，1.23 起改名叫 Pangolin Site；再加各平台的桌面/移动客户端。主仓库语言构成以 TypeScript 为绝对主体（Go 只占约 0.6%，都在配套仓库里），数据库支持 SQLite 和 PostgreSQL 双驱动，由启动脚本切换。
 
----
-
-## 二、项目概述
-
-### 1.1 Pangolin 是什么
-
-**Pangolin** 是一个基于 WireGuard 的**开源零信任远程访问平台**，让用户可以安全、便捷地访问私有和公共资源。
-
-> "Pangolin is an open-source, identity-based remote access platform built on WireGuard that enables secure, seamless connectivity to private and public resources."
-
-### 1.2 核心数据
-
-| 指标 | 数值 |
-|------|------|
-| Stars | **20.1k** ⭐ |
-| Forks | 635 |
-| 贡献者 | 88 |
-| 最新版本 | v1.17.0 (2026-04-04) |
-| 提交数 | 5,624 commits |
-| 许可证 | AGPL-3.0 + Fossorial Commercial License |
-| 语言 | TypeScript 98.1%, Go 0.9% |
-
-### 1.3 核心定位
-
-| 维度 | 说明 |
-|------|------|
-| 🔐 **零信任安全** | 细粒度访问控制，非全局网络暴露 |
-| 🌐 **远程访问** | 浏览器访问 Web 应用，客户端访问任意资源 |
-| 📡 **无需公网 IP** | Site Connectors 穿透防火墙，无需开放端口 |
-| 🔑 **身份感知** | 基于身份和上下文的访问控制 |
-
-### 1.4 在线资源
-
-| 资源 | 链接 |
-|------|------|
-| 🌐 **官网** | https://pangolin.net/ |
-| 📚 **文档** | https://docs.pangolin.net/ |
-| 💬 **Discord** | https://discord.gg/HCJR8Xhme4 |
-| 💼 **Slack** | https://pangolin.net/slack |
-| 🐳 **Docker** | https://hub.docker.com/r/fosrl/pangolin |
-| 📥 **客户端下载** | https://pangolin.net/downloads |
-
-## 二、核心功能详解
-
-### 2.1 四大核心功能
-
-| 功能 | 说明 |
-|------|------|
-| 🏢 **Site Connectors** | 轻量级站点连接器，无需公网 IP 或开放端口 |
-| 🌐 **反向代理访问** | 身份感知的隧道式反向代理，浏览器访问 Web 应用 |
-| 💻 **客户端访问** | 通过 Pangolin 客户端访问 SSH/数据库/RDP 等私有资源 |
-| 🔒 **零信任访问** | 仅授予用户明确授权的特定资源，而非整个网络 |
-
-### 2.2 Site Connectors（站点连接器）
-
-```
-传统 VPN 问题：
-❌ 需要公网 IP
-❌ 需要开放端口
-❌ 暴露整个网络
-
-Pangolin Site Connector 方案：
-✅ 无需公网 IP
-✅ 无需开放端口
-✅ 安全隧道穿越防火墙
+```mermaid
+flowchart LR
+    U["浏览器 / 桌面·移动客户端"] --> CP
+    subgraph cloud["入口服务器（需公网 IP）"]
+        CP["Pangolin 控制面 + Traefik 反代"]
+        G["Gerbil（WireGuard 隧道服务端）"]
+        CP --- G
+    end
+    subgraph site["远程站点（无需公网 IP / 开放端口）"]
+        N["Pangolin Site 连接器（原 Newt）"]
+        R["内网资源：Web 应用 / SSH / 数据库 / 模型服务"]
+        N --- R
+    end
+    N -- "出站 WireGuard 隧道" --> G
+    CP --> U
 ```
 
-**工作原理**：
-- Site Connector 主动建立到 Pangolin 控制平面的出站连接
-- 远程网络通过加密隧道暴露
-- 支持 NAT 穿透和 restrictive firewalls
+理解它的关键是资源两分法——两类资源走两条不同入口，但共用同一套身份和策略：
 
-### 2.3 浏览器反向代理访问
+| | 公共资源（反向代理入口） | 私有资源（客户端隧道入口） |
+|---|---|---|
+| 访问方式 | 浏览器直接打开，过 Traefik 反代 | 装 Pangolin 客户端，走 WireGuard 隧道 |
+| 典型对象 | HTTPS 应用、AI 网关、浏览器版 SSH/RDP/VNC | 主机/端口段/CIDR、内网 HTTPS、CLI SSH |
+| 客户端要求 | 无，浏览器即可 | 需安装客户端 |
+| 授权粒度 | 用户/角色 + 规则（IP、地理位置、URL 路径等） | 同一套身份体系，按资源逐个授权 |
 
-| 特性 | 说明 |
-|------|------|
-| 🔐 **身份认证** | 用户认证 + 细粒度授权 |
-| 🛣️ **智能路由** | 自动路由、负载均衡、健康检查 |
-| 📜 **自动 SSL** | 自动 HTTPS 证书 |
-| 🌊 **隧道传输** | 通过加密隧道暴露，非直接暴露到互联网 |
+官方在文档里把定位讲得很直白：反向代理只会暴露 Web 应用、VPN 会给你整张扁平网络，Pangolin 把两者合在一起——公共资源承担代理的职责，私有资源承担 VPN 的职责，而身份、访问规则和日志对所有协议以同样的方式生效。
 
-### 2.4 零信任访问控制
+## 二、零信任怎么落地：按资源授权，不按网络
 
-| 对比 | 传统 VPN | Pangolin |
-|------|---------|---------|
-| 网络暴露 | 暴露整个网络 | 仅授权特定资源 |
-| 攻击面 | 大 | 小 |
-| 访问控制 | 网络层 | 应用层 |
-| 身份验证 | IP/凭据 | 身份 + 上下文 |
+传统 VPN 的访问模型是"连上之后你就在网内"——拿到整张网络的可见性，访问控制在网络层，验证手段常常只是 IP 和凭据。Pangolin 的做法拆开看是三条：
 
-## 三、部署选项
+**按资源授权。** 用户被明确授予的是某个资源，不是某个网段。每个资源可以单独配用户、角色、端口限制。官方文档把这当作与 VPN 的第一分界：VPN 给整个扁平网络的可见性，Pangolin 私有资源只路由到特定主机、子网或内部应用。
 
-### 3.1 三种部署模式
+**身份加上下文的规则。** 公共资源支持 SSO、MFA，以及基于身份、角色、地理位置、IP、URL 路径的访问规则；1.20 又给地理封锁加了 "Country Is Not" 匹配类型。1.24 起规则还能匹配 HTTP 方法。
 
-| 部署方式 | 说明 | 适用场景 |
-|----------|------|----------|
-| ☁️ **Pangolin Cloud** | 全托管服务，即开即用，按量付费 | 快速上线、无基础设施 |
-| 🖥️ **自托管：社区版** | 免费开源，AGPL-3.0 许可证 | 个人/开源项目 |
-| 🏢 **自托管：企业版** | Fossorial Commercial License | 企业内部部署 |
+**协议无关。** 不管下面是 HTTPS、SSH、RDP、VNC 还是 AI 提供商的 API，认证和策略是同一套。这是它后来做 AI 网关能"顺滑"的底层原因——网关只是又一种被反代的资源，权限模型不用重造。
 
-### 3.2 Pangolin Cloud
+发文时源码里就已经有完整的 OIDC 身份提供商路由（`server/routers/idp/` 下的 OIDC 回调、校验、更新全套）和审计日志路由（`server/routers/auditLogs/`），这两块不是后来补的。现行 README 还补了一句官方对开箱身份的说法：可以自带 IdP，也可以直接用 Pangolin 自建身份。
+
+## 三、两条访问主线怎么工作
+
+### 站点连接器：出站隧道，免开端口
+
+站点连接器部署在远程网络里，主动向入口服务器发起出站 WireGuard 连接，配合 NAT 穿透穿过限制性防火墙。所以远程站点不需要公网 IP、不需要开放任何入站端口——这是它和"自建 WireGuard 网关"最实际的区别，后者总得在某处开个 UDP 口。
+
+这里要纠正一个容易读宽的说法："无需公网 IP"针对的是**远程站点一侧**。自己自托管控制面时，入口服务器本身需要公网 IP、一个指向它的域名，以及开放 80/443（TCP）和 51820/21820（UDP）这些端口——这是官方 quick install 文档列明的前置条件。真正做到"哪里都能部署"的是站点那一侧。
+
+1.18 给站点线加了一组运维能力：uptime 追踪、任意健康检查（HTTP/TCP，可不挂资源独立配）、告警规则（邮件、webhook 等通知站点和资源状态变化）。1.21 加了同网检测——客户端和资源在同一网络时直连，不再绕出口中继。1.24 则把出口节点（exit nodes）做了进来，客户端可以把整个出口流量交给某个站点。
+
+### 浏览器反代：入口即认证
+
+Web 应用通过身份感知的反代暴露，Pangolin 处理路由、负载均衡、健康检查和自动 SSL 证书，网络本身不经公网直接暴露。认证这一层支持 PIN 码、通行码、邮箱 OTP、地理封锁、允许名单这些次要手段，主入口还是 SSO。
+
+1.19 的发布标题是 "Browser Remote Access — SSH, RDP, VNC & More"：SSH 终端、远程桌面直接跑在浏览器里，SSH 侧带特权访问管理（PAM）——会话审批、录制这类运维审计能力。这一步让"运维人员接内网机器"这个场景彻底摆脱了客户端：浏览器开个标签页就能进。1.22 把浏览器 SSH/RDP/VNC 和私有 SSH/HTTPS 资源从企业版下放到了社区版。
+
+### 客户端隧道：私有资源与 DNS 别名
+
+装了客户端的设备可以访问主机/端口段、CIDR 网段、内网 HTTPS 资源，连接器支持部署多个做冗余。私有 HTTPS 资源的 TLS 在站点边缘终止，应用从公共互联网完全不可达。DNS 别名给内网地址配好记的名字，客户端解析后直连。1.24 给客户端这侧补齐了体验：iOS/macOS 按需激活、Android 常连接、Windows 登录即连、Linux CLI 支持子网路由做 site-to-site。
+
+## 四、AI 网关：这半年最重要的新东西
+
+1.22（2026-08-27）加入的 identity-aware AI gateway 值得单独一节，因为它改变了这个项目的适用面。
+
+它本质是一种新的资源类型：像 HTTPS 资源一样有域名、在反代后面、复用同一套用户和角色，但代理的是 AI API 流量——Chat Completions、Anthropic Messages、Gemini generateContent 这些格式按请求转发到匹配的上游。上游可以是云端的 OpenAI、Anthropic、Gemini、Bedrock、Vertex AI、OpenRouter，也可以通过自定义 provider 接 Ollama、vLLM 这类自托管模型服务器，甚至经站点连接器隧道进内网模型。一个 URL 同时服务 Claude、GPT 和本地模型。
+
+解决的问题是 API key 的散落：真实上游密钥只存在 Pangolin，客户端拿虚拟 API key（每个用户自带身份密钥，机器和服务可以发手动 key），网关校验后转发并附上 Remote-* 身份头。私有网关更进一步——只有 Pangolin 客户端在线的设备能访问，官方原话是 "the connected client is the credential"，连接本身即凭证。对 Claude Code、Codex 这种强制要求 key 字段的客户端，官方 CLI 提供了 `pangolin configure claude` / `pangolin configure codex` 直接写好配置。
+
+配套的管控都在：按 provider、模型、资源、角色或虚拟 key 设美元或 token 预算，请求前检查、超限阻断；用量分析按同样维度汇总成本和 token。唯一要留意版本的是会话日志（保存每次调用的 prompt 和响应）只限 Cloud 和自托管企业版。
+
+## 五、一次真实访问怎么流过系统
+
+以"外网开发者要调内网 Grafana，顺手 SSH 到内网机器"为例，走一遍 Pangolin 1.22+ 的完整链路：
+
+1. 管理员事先在内网机器上装好 Pangolin Site 连接器，它向入口服务器建起出站 WireGuard 隧道；Grafana 被添加为公共资源，绑定 `grafana.example.com`，授权给"平台组"；内网机器 22 端口被添加为私有 SSH 资源。
+2. 开发者在家用浏览器打开 `grafana.example.com`。Traefik 反代收到请求，发现没有会话，重定向到 Pangolin 登录页；OIDC 跳转到公司 IdP 完成认证，MFA 通过。
+3. 策略引擎检查该用户是否在"平台组"、来源 IP 和地理位置是否命中规则，全部放行后反代把请求经隧道转发到内网 Grafana——Grafana 服务器上没有任何入站端口开放。
+4. 同一个浏览器里，开发者打开资源面板点开那台机器的 SSH 资源，Pangolin 在浏览器内起终端会话；如果走的是客户端，则通过 WireGuard 隧道直连该主机的 22 端口，DNS 别名让它看起来就像在局域网里敲 `ssh web-01`。
+5. 整个过程落在审计日志里：谁、何时、从哪个 IP、访问了哪个资源。
+
+如果是 1.22 之后的 coding agent 场景，把第 2 步的浏览器换成 `pangolin configure claude` 写好的 Claude Code 配置：agent 调模型时打向网关域名，网关认出这是某个用户的客户端会话，按预算检查后转发给上游——开发者全程没碰过任何真实 API key。
+
+## 六、部署：官方路径是一条安装器命令，不是 docker-compose
+
+原文把自托管部署写成 "git clone + 复制 compose 示例 + docker-compose up，默认端口 8080"——这里要更正：8080 是错的，克隆仓库也不是官方推荐路径。官方 quick install 是在入口服务器上执行：
 
 ```bash
-# 注册账号
-访问 https://app.pangolin.net/auth/signup
-
-# 即开即用，按量付费
+curl -fsSL https://static.pangolin.net/get-installer.sh | bash
+sudo ./installer
 ```
 
-**特点**：
-- 无需管理基础设施
-- 自动扩展
-- 按使用量计费
-- 有免费额度
+安装器交互式问几件事：版本（社区版/企业版）、根域名（如 `example.com`）、仪表盘子域（默认 `pangolin.example.com`）、Let's Encrypt 邮箱、是否安装 Gerbil 做隧道（不装则退化为纯反向代理）。文件全部落在当前目录。前置条件在文档里列得很清楚：Linux + root、公网 IP、指向服务器的域名、防火墙开放 80/443/TCP 和 51820/21820/UDP，推荐 Ubuntu 20.04+ 或 Debian 11+。
 
-### 3.3 自托管部署
+仓库里确实有 `docker-compose.example.yml`，那是给手动部署准备的，内容是三个服务：`pangolin`（控制面，容器内 3001 健康检查）、`gerbil`（监听 51820/21820/UDP 与 80/443/TCP）、`traefik` v3.6（与 gerbil 共享网络命名空间做反代）。不想自己管这些时，DigitalOcean Marketplace 有一键镜像。
 
-**快速安装**：
-```bash
-# 查看快速安装指南
-https://docs.pangolin.net/self-host/quick-install
+三种模式怎么选，官方的边界画得比发文时更清楚：
 
-# DigitalOcean 一键部署
-https://marketplace.digitalocean.com/apps/pangolin-ce-1
-```
+| 模式 | 适合谁 | 关键差异 |
+|---|---|---|
+| Pangolin Cloud | 不想碰服务器 | 官方托管仪表盘、数据库、证书和分布式节点；可配"远程节点"把隧道流量留在自己带宽上 |
+| 自托管社区版 | 个人、小团队、想审计每一行代码 | 免费 AGPL-3；1.22 后浏览器 SSH/RDP/VNC、私有 SSH/HTTPS 资源都已进 CE |
+| 自托管企业版 | 需要集群高可用、日志流、AI 会话日志、更多 IdP | FCL 许可，个人及年收入低于 10 万美元的组织免费（需 license key） |
 
-**Docker 部署**：
-```bash
-# 拉取镜像
-docker pull fosrl/pangolin
+企业版许可 wording 这半年精确过一次：从"年收入低于 $100K"改成了"**毛**年收入低于 $100K USD"（gross annual revenue），性质没变，口径更严了。
 
-# docker-compose 部署
-docker-compose up -d
-```
+## 七、半年变迁清单：1.17.0 → 1.24.0
 
-## 四、客户端下载
+发文时最新版是 1.17.0（tag 打于 2026-04-04），到 2026-10-05 复核时已到 1.24.0，共 8 个 minor 版本、仓库累计 94 个 tag。按版本过一遍这半年：
 
-### 4.1 支持平台
+| 版本 | 时间（tag） | 主要变化 |
+|---|---|---|
+| 1.18.0 | 2026-04-28 | HTTPS 私有资源；多站点路由（按延迟/健康度选路）；uptime 追踪与独立健康检查；告警规则；通配符资源 `*.my-resource.domain.com` |
+| 1.19.0 | 2026-06-11 | 浏览器远程访问 SSH/RDP/VNC；SSH 资源成为独立类型（需 Badger 插件 v1.4.1+） |
+| 1.20.0 | 2026-07-09 | 资源启动主页 Resource Launcher 与全局命令面板（CE 即有）；地理封锁 Country Is Not；VNC 认证支持用户名（兼容 macOS） |
+| 1.21.0 | 2026-07-20 | 同网检测（同网络直连不走中继）；分享链接可绑定账户、支持会话持久化；记住上次使用的 IdP |
+| 1.22.0 | 2026-08-27 | **AI 网关**（云 + 自托管模型、虚拟 key、keyless、预算强制、用量分析）；浏览器 SSH/RDP/VNC 与私有 SSH/HTTPS 资源从 EE 下放 CE；证书状态进 CE |
+| 1.23.0 | 2026-09-16 | 企业版自助高可用与集群；服务器管理员可多人；**Newt 更名 Pangolin Site**，CLI 命令进站点安装向导 |
+| 1.24.0 | 2026-09-30 | 出口节点（exit nodes）；资源规则支持 HTTP 方法匹配；四端客户端体验更新；Linux CLI 子网路由 |
 
-| 平台 | 下载链接 |
-|------|----------|
-| 🍎 **macOS** | https://pangolin.net/downloads/mac |
-| 🪟 **Windows** | https://pangolin.net/downloads/windows |
-| 🐧 **Linux** | https://pangolin.net/downloads/linux |
-| 📱 **iOS** | https://pangolin.net/downloads/ios |
-| 🤖 **Android** | https://pangolin.net/downloads/android |
+数据面的同期变化：stars 从发文当天的 20,151（Wayback Machine 实拍）涨到 23,003，forks 793，贡献者 121，main 分支提交 8,587 个，仓库仍在以周为单位活跃推进（2026-10-04 仍有推送）。
 
-## 五、技术架构
+## 八、采用建议
 
-### 5.1 系统架构
+**可以认真考虑的**：需要给分布式团队/多站点提供远程访问，但不想把流量交给 Cloudflare Access 这类闭源 SaaS；站点在 NAT 后、开不了入站端口；或者正在给团队配 AI 网关、想让 coding agent 用上统一的身份和预算管控——1.22 之后 Pangolin 在"自托管 SASE + AI 网关"这个组合上是少有的开源选项，README 自己的类比也准确：Cloudflare One 的想法，开源可自托管的做法。
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                     Pangolin 技术架构                           │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐   │
-│  │   Browser   │    │   Pangolin  │    │    Site     │   │
-│  │   Client    │───▶│   Cloud/    │◀───│  Connectors │   │
-│  └─────────────┘    │   Control   │    └─────────────┘   │
-│         │           │   Plane     │           │            │
-│  ┌──────▼──────┐   └──────┬──────┘   ┌──────▼──────┐   │
-│  │   Web App    │          │          │   Private    │   │
-│  │   Access    │          │          │   Network    │   │
-│  └─────────────┘          │          └─────────────┘   │
-│                            │                             │
-│  ┌─────────────┐          │          ┌─────────────┐   │
-│  │    CLI      │──────────┤          │   Private   │   │
-│  │   Client    │          │          │   Resource  │   │
-│  └─────────────┘          │          └─────────────┘   │
-└─────────────────────────────────────────────────────────────┘
-```
+**不必急着上的**：如果需求只是"自己几台机器互相访问"，Tailscale 或裸 WireGuard 更省事——Pangolin 的价值在资源粒度的授权、面向外部用户的入口和审计，纯设备组网用不着这些。想要企业版集群高可用的，1.23 刚落地自助 HA，可以再观察一个版本周期。
 
-### 5.2 核心组件
-
-| 组件 | 说明 |
-|------|------|
-| **Control Plane** | 控制平面，管理身份、策略、隧道 |
-| **Site Connector** | 站点连接器，部署在远程网络 |
-| **Client Agent** | 客户端代理，访问私有资源 |
-| **Reverse Proxy** | 反向代理，浏览器访问 Web 应用 |
-
-### 5.3 技术栈
-
-| 层次 | 技术 |
-|------|------|
-| 前端 | TypeScript (Next.js) |
-| 后端 | Go, TypeScript |
-| 数据库 | PostgreSQL, SQLite |
-| 隧道 | WireGuard |
-| 认证 | OIDC, OAuth2 |
-
-## 六、安全特性
-
-### 6.1 零信任安全模型
-
-**核心原则**：
-- 默认拒绝，最小权限
-- 持续验证，不信任网络
-- 微分段，仅授权特定资源
-
-### 6.2 身份与访问管理
-
-| 功能 | 说明 |
-|------|------|
-| 🔐 **OIDC 支持** | 集成企业身份提供商 |
-| 👥 **用户组** | 基于组的访问策略 |
-| 📋 **资源级别控制** | 细粒度资源授权 |
-| 📊 **审计日志** | 完整访问审计 |
-
-### 6.3 网络安全
-
-| 特性 | 说明 |
-|------|------|
-| 🛡️ **加密隧道** | WireGuard 加密 |
-| 🔄 **NAT 穿透** | 无需端口映射 |
-| 🌐 **出站连接** | Site Connector 仅需出站连接 |
-| 🏷️ **DNS 别名** | 友好的资源命名 |
-
-## 七、应用场景
-
-### 7.1 企业远程办公
-
-```
-场景：员工在家或出差访问企业内部系统
-
-传统方案：
-❌ VPN 暴露整个网络
-❌ 配置复杂
-❌ 安全性低
-
-Pangolin 方案：
-✅ 仅授权特定应用
-✅ 浏览器直接访问
-✅ 零信任安全
-```
-
-### 7.2 运维管理
-
-```bash
-场景：运维人员管理多地机房服务器
-
-Pangolin 功能：
-✅ 无需公网 IP
-✅ 跨防火墙访问
-✅ 审计日志完整
-```
-
-### 7.3 物联网安全
-
-```
-场景：安全访问分散的 IoT 设备
-
-Pangolin 功能：
-✅ Site Connector 轻量部署
-✅ 端到端加密
-✅ 设备级别授权
-```
-
-### 7.4 开发测试环境
-
-```bash
-场景：团队访问开发/测试环境
-
-Pangolin 功能：
-✅ 快速共享资源
-✅ 按需授权
-✅ 即时撤销访问
-```
-
-## 八、快速开始
-
-### 8.1 注册 Pangolin Cloud
-
-```bash
-# 1. 访问注册页面
-https://app.pangolin.net/auth/signup
-
-# 2. 创建组织
-# 3. 下载客户端
-# 4. 开始使用
-```
-
-### 8.2 自托管部署
-
-```bash
-# 1. 克隆仓库
-git clone https://github.com/fosrl/pangolin
-cd pangolin
-
-# 2. 复制配置示例
-cp docker-compose.example.yml docker-compose.yml
-
-# 3. 启动服务
-docker-compose up -d
-
-# 4. 访问管理界面
-# 默认端口：8080
-```
-
-### 8.3 配置 Site Connector
-
-```bash
-# 1. 在目标网络部署 Site Connector
-# 2. 配置连接到控制平面
-# 3. 验证连接状态
-# 4. 开始使用
-```
-
-## 九、运维管理
-
-### 9.1 用户管理
-
-| 操作 | 说明 |
-|------|------|
-| 👤 **添加用户** | 邮箱邀请或手动添加 |
-| 👥 **用户组** | 按组批量授权 |
-| 🔑 **重置密码** | 管理员可重置 |
-
-### 9.2 资源管理
-
-| 操作 | 说明 |
-|------|------|
-| ➕ **添加资源** | Web 应用、SSH、数据库等 |
-| 🔗 **配置路由** | 资源路径和端口 |
-| 🏷️ **DNS 别名** | 友好访问名称 |
-
-### 9.3 监控审计
-
-| 功能 | 说明 |
-|------|------|
-| 📊 **访问日志** | 完整操作审计 |
-| 📈 **使用统计** | 流量、活跃度统计 |
-| 🔔 **告警通知** | 异常访问告警 |
-
-## 十、对比竞品
-
-| 特性 | Pangolin | Tailscale | Cloudflare Access |，传统 VPN |
-|------|-----------|-----------|-----------------|----------|
-| **Stars** | 20.1k ⭐ | - | - | - |
-| **开源** | ✅ AGPL-3.0 | ⚠️ 部分开源 | ❌ | ⚠️ 部分开源 |
-| **零信任** | ✅ | ✅ | ✅ | ❌ |
-| **反向代理** | ✅ | ❌ | ✅ | ❌ |
-| **浏览器访问** | ✅ | ❌ | ✅ | ❌ |
-| **无需公网 IP** | ✅ | ✅ | ❌ | ❌ |
-| **企业版免费** | ✅ | ❌ | ❌ | ⚠️ |
-
-## 十一、许可证说明
-
-### 11.1 许可证结构
-
-| 版本 | 许可证 | 费用 |
-|------|---------|------|
-| **社区版** | AGPL-3.0 | 免费 |
-| **企业版** | Fossorial Commercial License | 免费（年收入<$10 万）|
-
-### 11.2 AGPL-3.0 要求
-
-- ✅ 自由使用和修改
-- ✅ 自由分发
-- 🔗 网络使用时必须开源
-- 🔗 衍生作品必须开源
-
-## 十二、资源链接
-
-### 12.1 官方资源
-
-| 资源 | 链接 |
-|------|------|
-| 🌐 **官网** | https://pangolin.net/ |
-| 📚 **文档** | https://docs.pangolin.net/ |
-| 💬 **Discord** | https://discord.gg/HCJR8Xhme4 |
-| 💼 **Slack** | https://pangolin.net/slack |
-| 🐳 **Docker Hub** | https://hub.docker.com/r/fosrl/pangolin |
-| 📥 **客户端下载** | https://pangolin.net/downloads |
-| 📧 **联系我们** | contact@pangolin.net |
-
-### 12.2 社交媒体
-
-| 平台 | 链接 |
-|------|------|
-| 🎥 **YouTube** | https://www.youtube.com/@pangolin-net |
-| 🐦 **Twitter** | @PangolinVPN |
-
-## 十三、总结
-
-Pangolin 是**新一代零信任远程访问平台**：
-
-| 维度 | 说明 |
-|------|------|
-| 🔐 **零信任安全** | 细粒度访问控制，最小权限 |
-| 🌐 **浏览器访问** | 无需 VPN 客户端，浏览器直接访问 |
-| 📡 **无需公网 IP** | Site Connector 出站连接即可 |
-| 🔑 **身份感知** | 基于身份和上下文的访问控制 |
-| 🆓 **免费选项** | 社区版免费，企业版年收入<$10 万免费 |
+**从哪开始**：先在 Pangolin Cloud 上把概念跑通（资源和策略模型与自托管完全一致），再决定是否自托管；自托管前确认入口服务器满足公网 IP、域名、四个端口的硬条件；站点侧从一台机器装 Pangolin Site 连接器开始，先反代一个内网 Web 应用，验证 SSO 和规则，再扩客户端隧道。
 
 ---
 
-## 自测题
+## 口径说明
 
-### 问题 1：Pangolin 的核心优势是什么？
-<details>
-<summary>查看参考答案</summary>
-
-Pangolin 的核心优势包括：
-- **零信任安全**：细粒度访问控制，仅授予用户明确授权的特定资源，而非整个网络
-- **无需公网 IP**：Site Connectors 通过出站连接建立隧道，无需开放端口
-- **身份感知**：基于身份和上下文的访问控制，而非简单的 IP/凭据验证
-- **浏览器访问**：通过反向代理，浏览器直接访问 Web 应用，无需 VPN 客户端
-- **免费选项**：社区版免费，企业版年收入<$10 万免费
-
-</details>
-
-### 问题 2：Pangolin 与传统 VPN 的区别是什么？
-<details>
-<summary>查看参考答案</summary>
-
-Pangolin 与传统 VPN 的主要区别：
-- **网络暴露**：传统 VPN 暴露整个网络，Pangolin 仅授权特定资源
-- **攻击面**：传统 VPN 攻击面大，Pangolin 攻击面小
-- **访问控制**：传统 VPN 在网络层控制，Pangolin 在应用层控制
-- **身份验证**：传统 VPN 使用 IP/凭据，Pangolin 使用身份+上下文
-- **部署复杂度**：传统 VPN 需要公网 IP 和开放端口，Pangolin 无需这些
-
-</details>
-
-### 问题 3：如何部署 Pangolin？
-<details>
-<summary>查看参考答案</summary>
-
-Pangolin 的三种部署模式：
-1. **Pangolin Cloud**：全托管服务，即开即用，按量付费，有免费额度
-2. **自托管：社区版**：免费开源，AGPL-3.0 许可证，适合个人/开源项目
-3. **自托管：企业版**：Fossorial Commercial License，适合企业内部部署
-
-快速安装：参考 https://docs.pangolin.net/self-host/quick-install，或使用 Docker 部署：`docker-compose up -d`
-
-</details>
-
-### 问题 4：Site Connector 的工作原理是什么？
-<details>
-<summary>查看参考答案</summary>
-
-Site Connector 的工作原理：
-1. Site Connector 主动建立到 Pangolin 控制平面的出站连接
-2. 远程网络通过加密隧道暴露，无需公网 IP 或开放端口
-3. 支持 NAT 穿透和 restrictive firewalls
-4. 用户通过 Pangolin 客户端或浏览器访问远程网络中的私有资源
-
-这种设计的优势：无需配置防火墙规则，适用于任意网络环境。
-
-</details>
-
-### 问题 5：Pangolin 支持哪些客户端平台？
-<details>
-<summary>查看参考答案</summary>
-
-Pangolin 支持的全平台客户端：
-- **macOS**：https://pangolin.net/downloads/mac
-- **Windows**：https://pangolin.net/downloads/windows
-- **Linux**：https://pangolin.net/downloads/linux
-- **iOS**：https://pangolin.net/downloads/ios
-- **Android**：https://pangolin.net/downloads/android
-
-所有客户端都支持 WireGuard 协议，提供高性能的加密隧道。
-
-</details>
-
----
-
-## 练习
-
-### 练习 1：部署 Pangolin 社区版
-**目标**：使用 Docker 部署 Pangolin 社区版
-
-**步骤**：
-1. 准备一台有公网 IP 的服务器（或本地虚拟机）
-2. 安装 Docker 和 docker-compose
-3. 参考官方文档：https://docs.pangolin.net/self-host/quick-install
-4. 配置 `docker-compose.yml` 文件
-5. 运行 `docker-compose up -d` 启动服务
-6. 访问 Web 界面，完成初始化配置
-
-**验证标准**：
-- Pangolin 服务成功启动
-- 可以通过浏览器访问 Web 界面
-- 完成管理员账号创建
-
----
-
-### 练习 2：配置 Site Connector
-**目标**：配置 Site Connector 访问内网资源
-
-**步骤**：
-1. 在 Pangolin 控制平面添加一个 Site Connector
-2. 在内网机器上安装 Site Connector 客户端
-3. 配置 Site Connector 连接到 Pangolin 控制平面
-4. 配置访问控制策略，允许特定用户访问内网资源
-5. 测试从外部网络访问内网资源
-
-**验证标准**：
-- Site Connector 成功连接到控制平面
-- 外部用户可以通过 Pangolin 访问内网资源
-- 访问控制策略正常工作
-
----
-
-### 练习 3：配置浏览器反向代理访问
-**目标**：配置反向代理，让用户体验浏览器直接访问 Web 应用
-
-**步骤**：
-1. 在 Pangolin 控制平面添加一个 Web 应用
-2. 配置反向代理规则（域名、端口、SSL 证书）
-3. 配置身份认证和访问控制策略
-4. 用户通过浏览器访问 Web 应用，自动跳转认证
-5. 认证通过后，用户可以访问 Web 应用
-
-**验证标准**：
-- 用户可以通过浏览器访问 Web 应用
-- 未认证用户被重定向到登录页面
-- 认证通过后，用户可以正常访问 Web 应用
-
----
-
-## 进阶路径
-
-如果你想深入掌握 Pangolin 并基于它构建安全的远程访问方案，建议按以下路径学习：
-
-1. **理解零信任架构**：深入学习零信任网络的概念、原则和最佳实践
-2. **研究 WireGuard**：了解 WireGuard VPN 协议的工作原理、性能优势、安全特性
-3. **掌握身份管理**：学习如何集成身份提供商（如 OAuth、LDAP、SAML）到 Pangolin
-4. **配置高级策略**：研究如何配置基于角色、时间、位置的访问控制策略
-5. **监控和审计**：学习如何监控 Pangolin 的访问日志、审计用户行为
-6. **高可用部署**：研究如何部署 Pangolin 的高可用架构，避免单点故障
-7. **贡献开源**：参与 Pangolin 开源项目，提交 PR，改进文档或功能
-
----
-
-## 资料口径说明
-
-本文档基于以下来源编写，存在相应局限性：
-
-1. **信息来源**：主要基于 Pangolin GitHub 仓库（https://github.com/fosrl/pangolin）和官方文档（https://docs.pangolin.net/）
-2. **版本时效性**：本文档编写时的最新版本是 v1.17.0 (2026-04-04)，新版本可能包含额外功能或改动
-3. **功能完整性**：Pangolin 仍在活跃开发中，部分功能可能在未来版本中变化或被移除
-4. **部署兼容性**：自托管部署的兼容性可能因操作系统、Docker 版本、网络环境而异
-5. **性能数据**：文档中未包含具体性能数据，实际性能取决于硬件配置、网络条件、用户数量
-6. **安全声明**：Pangolin 的零信任安全特性需要正确配置才能发挥作用，错误配置可能导致安全漏洞
-
----
-
----
-
-**🔗 相关资源：**
-
-| 资源 | 链接 |
-|------|------|
-| GitHub | https://github.com/fosrl/pangolin |
-| 官网 | https://pangolin.net/ |
-| 文档 | https://docs.pangolin.net/ |
-| Discord | https://discord.gg/HCJR8Xhme4 |
-
----
-
-_🦞 本文由钳岳星君撰写，基于 Pangolin (20.1k Stars)_
+本文 2026-04-12 首发时基于 commit `9e50569c`（发文前约 21 小时）的仓库状态，当时定位语、三种部署模式、四大功能、OIDC 与审计日志等均对照该时点源码与 README 核实。2026-10-05 按 main 分支、1.24.0 版本 release notes、官方文档（quick install、产品对比、Cloud 与自托管对比、AI 网关公告）复核并改写，历史读数 20,151 stars 来自 Wayback Machine 2026-04-12 快照。Pangolin 迭代很快，具体功能边界请以官方文档为准。

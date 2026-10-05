@@ -1,19 +1,19 @@
 ---
 title: "Stirling-PDF 架构拆解：开源边界划在构建脚本里，AI Engine 却不归 MIT"
 date: 2026-06-22T20:59:00+08:00
-lastmod: "2026-09-20T14:20:00+08:00"
+lastmod: "2026-10-03T12:00:00+08:00"
 slug: "stirling-pdf-open-source-pdf-platform-architecture"
 github_repo: "Stirling-Tools/Stirling-PDF"
 source_key: "gh:Stirling-Tools/Stirling-PDF"
 categories: ["技术笔记"]
 tags: ["PDF", "Java", "FastAPI", "Monorepo", "架构分析"]
-description: "对照 Stirling-Tools/Stirling-PDF main 分支提交 d6784b3 拆解这个 9.2 万星的 PDF 平台：开源与商业的分界线画在 Gradle flavor 和前端源码分层里，而不只是 LICENSE 文件里；Python AI Document Engine 走的是需要订阅的 User License；三种语言的类型由 Java 的一份 OpenAPI 规范生成，并有 CI 检查挡住漂移。"
+description: "对照 Stirling-Tools/Stirling-PDF main 分支提交 d6784b3 拆解这个 9.3 万星的 PDF 平台：开源与商业的分界线画在 Gradle flavor 和前端源码分层里，而不只是 LICENSE 文件里；Python AI Document Engine 走的是需要订阅的 User License；三种语言的类型由 Java 的一份 OpenAPI 规范生成，并有 CI 检查挡住漂移。"
 draft: false
 ---
 
 > **目标读者**：在选型上把 Stirling-PDF 当作「那个开源 PDF 工具」来评估的团队负责人；想参考多语言单仓库（monorepo）分层做法的后端与前端架构师；打算给已有 Java 服务接一层 Python 智能体服务的工程师。
 > **核心问题**：它现在到底还是不是一个开源 PDF 工具箱，以及那条商业线与 AI 线是怎么切分的。
-> **事实边界**：本文核对的是 `Stirling-Tools/Stirling-PDF` 的 `main` 分支提交 `d6784b3`（2026-09-18）、GitHub API（应用程序接口）在 2026-09-20 的读数，以及仓库内的 `LICENSE`、`README.md`、`ADDING_TOOLS.md`、`DATABASE.md`（数据库备份说明）、`docker/README.md`、`engine/.env`、`engine/src/stirling/documents/README.md`、八份 `.taskfiles/*.yml` 与前端的 `frontend/package.json`。目录与文件计数取自提交树，行内代码是从源文件摘出的原文（注释有删节处会标明）。发布版能力与 `main` 的差异没有逐项复核，涉及处会写明。
+> **事实边界**：本文核对的是 `Stirling-Tools/Stirling-PDF` 的 `main` 分支提交 `d6784b3`（2026-09-18）、GitHub API（应用程序接口）在 2026-09-20 的读数，以及仓库内的 `LICENSE`、`README.md`、`ADDING_TOOLS.md`、`DATABASE.md`（数据库备份说明）、`docker/README.md`、`engine/.env`、`engine/src/stirling/documents/README.md`、八份 `.taskfiles/*.yml` 与前端的 `frontend/package.json`。目录与文件计数取自提交树，行内代码是从源文件摘出的原文（注释有删节处会标明）。2026-10-03 复核过一次动态读数，仓库在这中间发布了 v3.0.0（2026-09-24）到 v3.0.2（2026-10-01）三个版本；本文的结构分析仍锚定 `d6784b3`——那是 v3.0.0 之前的 `main`，涉及处会写明。
 
 ## 一句话判断
 
@@ -25,25 +25,25 @@ Stirling-PDF 已经不是一个「带网页界面的 Java PDF 工具」，但把
 
 两条线看完，选型问题的答案就分开了：自托管做 PDF 批处理，它仍然是这个赛道里最完整的开源选项；把 AI 文档理解算进成本，要算的是订阅，不是硬件。支撑这两条线跑动的还有第三条——五十多个工具是怎么长到 105 个端点而不互相踩脚的，这一条不决定价格，只决定维护成本。
 
-## 项目坐标（2026-09-20 核对）
+## 项目坐标（2026-10-03 复核）
 
 | 字段 | 值 |
 |------|------|
-| 仓库 | [`Stirling-Tools/Stirling-PDF`](https://github.com/Stirling-Tools/Stirling-PDF)，默认分支 `main`，最近推送 2026-09-19 |
+| 仓库 | [`Stirling-Tools/Stirling-PDF`](https://github.com/Stirling-Tools/Stirling-PDF)，默认分支 `main`，最近推送 2026-10-02 |
 | 核对提交 | `d6784b3`（2026-09-18），提交树 8,078 个路径 |
-| 最近 release | `v2.14.3`（2026-08-06，"lots of bug fixes"） |
+| 最近 release | `v3.0.2`（2026-10-01）；本文核对时（2026-09-20）的最新 release 还是 `v2.14.3`（2026-08-06，"lots of bug fixes"），v3.0.0（"PDF Processor, Brand new text editor"）尚未发布 |
 | 建仓 | 2023-01-27（早期归 `Frooodle` 所有） |
-| 主语言 | Java、TypeScript，字节数只差七万 |
-| Stars / Forks | 92,583 / 8,987 |
-| 开放议题 | 628（`open_issues_count` 同时计入 issue 与拉取请求（pull request），未拆分） |
+| 主语言 | Java、TypeScript，字节数差约 24 万 |
+| Stars / Forks | 93,461 / 10,158 |
+| 开放议题 | 580（`open_issues_count` 同时计入 issue 与拉取请求（pull request），未拆分） |
 | License | 根目录 MIT；`app/proprietary/`（企业特性）、`app/saas/`（软件即服务形态）、`engine/` 及前端七个子目录各挂自己的许可 |
 | 部署 | 单一容器镜像、分离前后端容器、桌面客户端、私有 API |
 
-用 `GET /repos/.../compare/v2.14.3...d6784b3` 一比：`main` 领先 699 个提交、落后 19 个，状态 `diverged`。最新 release 里有 19 个提交没回到 `main`，`main` 上又多出 699 个。读这份仓库时，凡是「某个能力现在能不能用到」的判断，都要回到 tag 那一侧再确认一次。
+用 `GET /repos/.../compare/v2.14.3...d6784b3` 一比：`main` 领先 699 个提交、落后 19 个，状态 `diverged`。那次比较里，`v2.14.3` 有 19 个提交没回到 `main`，`main` 上又多出 699 个；v3.0.0 到 v3.0.2 都发布在这次比较之后。读这份仓库时，凡是「某个能力现在能不能用到」的判断，都要回到 tag 那一侧再确认一次。
 
 ## 把它拆成三条线看
 
-前面那两条线之外还有第三条。仓库里同时存在三条线，各有自己的决定因素：商业线由许可目录与构建 flavor 决定，受版本发布影响；契约线由那份 OpenAPI 生成链决定，只要生成规则不动就基本稳定；工具线是端点与工具目录的持续累积，几乎每天都在变。三条线的交叉点不多：proprietary 侧确实消费 `SwaggerDoc.json`，因为 `@ToolIO` 与 `resourceWeight` 的取值会进规范；反过来，engine 不读许可证，前端也不从规范里生成类型之外的东西。先把三条线分开，再合起来看：
+前面那两条线之外，仓库里同时存在第三条线，各有自己的决定因素：商业线由许可目录与构建 flavor 决定，受版本发布影响；契约线由那份 OpenAPI 生成链决定，只要生成规则不动就基本稳定；工具线是端点与工具目录的持续累积，几乎每天都在变。三条线的交叉点不多：proprietary 侧确实消费 `SwaggerDoc.json`，因为 `@ToolIO` 与 `resourceWeight` 的取值会进规范；反过来，engine 不读许可证，前端也不从规范里生成类型之外的东西。先把三条线分开，再合起来看：
 
 | 线 | 位置 | 它在解决什么 | 什么时候会咬你 |
 |------|------|------|------|
@@ -143,7 +143,7 @@ tool-models:
 
 `app/core/src/main/java/stirling/software/SPDF/controller/` 下共 94 个 Java 文件，其中 74 个以 `Controller.java` 结尾：`api/` 递归 70 个，`web/` 4 个。`api/` 顶层是 21 个 Controller 加 6 个子目录（`converters`、`filters`、`form`、`misc`、`pipeline`、`security`），子目录里再放 49 个。
 
-命名并不统一：`converters/` 下九个以 `Controller.java` 结尾，另外九个文件叫 `ConvertEmlToPDF.java`、`ConvertPdfJsonExceptionHandler.java` 这样按方向或职责命名的类。所以「数 Controller 文件」会得到比实际少的答案，端点数量才是要盯的指标（上一节的 105）。
+命名并不统一：`converters/` 下九个以 `Controller.java` 结尾，另有十个主类按方向或职责命名，如 `ConvertEmlToPDF.java`、`ConvertPdfJsonExceptionHandler.java`，剩下的三十五个是测试类。所以「数 Controller 文件」会得到比实际少的答案，端点数量才是要盯的指标（上一节的 105）。
 
 端点本身是自描述的。`MergeController` 类上是另一个元注解 `@GeneralApi`，它把 `@RestController`、`@RequestMapping("/api/v1/general")` 与 OpenAPI 的 `@Tag` 折叠成一处声明；方法注解只补上剩余的 `/merge-pdfs`（合并）：
 
@@ -197,7 +197,7 @@ frontend/editor/src/tools/
 
 实际路径要再深一层：这些文件都在 `frontend/editor/src/core/` 下面，文档省略了 `core`。注册也不是自动的，新工具还要改 `core/data/useTranslatedToolRegistry.tsx`。这个文件 1,580 行，`useTranslatedToolCatalog()` 在里面先展开一个 `allTools: ToolRegistry`，把 `proprietaryTools` 与 `prototypeTools` 两组注册表并进同一个对象（注释说明原型工具只在 `prototypes` 构建里非空），再逐项声明图标、名称、组件、分类、`maxFiles`、`endpoints`、`operationConfig` 与可选的设置组件。开源侧新增一个工具，落点就是这张清单里的一处展开。
 
-`core/hooks/tools/` 下是 48 个工具目录共 150 个文件，平均每个工具三个文件；`merge`（合并）是四个（`useMergeOperation.ts`、`useMergeParameters.ts` 各带一个测试），`split` 是三个。目录之外还有 `shared/` 与 3 个平铺的钩子（hook）文件。「加工具 = 加文件」这句话大致成立，代价在另一侧：`shared/` 是 21 个文件、4,394 行，其中 `useToolOperation.ts` 单文件 917 行、33 条 import，`toolOperationTypes.ts` 401 行，`toolAutomation.ts` 550 行。抽象没有把复杂度消掉，它把复杂度从 48 个调用点收敛到 21 个共享文件里。这是同一件事的两面，只讲前面一半会误导打算照抄的人。
+`core/hooks/tools/` 下是 48 个工具目录共 147 个文件，平均每个工具三个文件；`merge`（合并）是四个（`useMergeOperation.ts`、`useMergeParameters.ts` 各带一个测试），`split` 是三个。目录之外还有 `shared/` 与 3 个平铺的钩子（hook）文件。「加工具 = 加文件」这句话大致成立，代价在另一侧：`shared/` 是 21 个文件、4,394 行，其中 `useToolOperation.ts` 单文件 917 行、33 条 import，`toolOperationTypes.ts` 401 行，`toolAutomation.ts` 550 行。抽象没有把复杂度消掉，它把复杂度从 48 个调用点收敛到 21 个共享文件里。这是同一件事的两面，只讲前面一半会误导打算照抄的人。
 
 三个共享 Hook 的名字是准确的：`useBaseTool.ts`（217 行）、`useToolOperation.ts`、`useBaseParameters.ts`（57 行），加上 `components/tools/shared/createToolFlow.tsx`（207 行）。`useBaseTool` 的返回契约能看出它到底管了多少事：
 
@@ -328,26 +328,26 @@ engine = [
 
 ## 数字怎么读
 
-GitHub 的语言统计量的是各语言源文件的字节数，不做归属拆分。当前的读数：
+GitHub 的语言统计量的是各语言源文件的字节数，不做归属拆分。当前的读数（2026-10-03，反映 `main` 现状而非 `d6784b3`）：
 
 | 语言 | 字节数 |
 |------|------|
-| Java | 17,883,678 |
-| TypeScript | 17,810,639 |
-| Python | 1,420,712 |
-| CSS | 920,882 |
-| Shell | 288,664 |
-| JavaScript | 246,038 |
-| Gherkin | 201,435 |
-| Rust | 188,162 |
-| HTML | 110,140 |
-| Dockerfile | 56,333 |
+| Java | 18,552,442 |
+| TypeScript | 18,312,795 |
+| Python | 1,477,862 |
+| CSS | 924,280 |
+| Shell | 308,299 |
+| JavaScript | 236,757 |
+| Rust | 207,831 |
+| Gherkin | 203,165 |
+| HTML | 106,052 |
+| Dockerfile | 59,686 |
 
-三个读法上的提醒。Java 与 TypeScript 只差约 7.3 万字节，但这个「几乎相等」里含 1,866 行自动生成的 `toolApiTypes.ts` 与 `core/generated/docsManifest.json`，不能读成「前端手写量等于后端」。Python 那 140 万字节主体在 `engine/`，但仓库脚本与 CI 里用到的 Python 也记在同一行——`pyproject.toml` 的 `tools` 组注释写明它是「repository scripts and CI workflows」共用的工具库。反过来，`app/proprietary` 的 1,140 个文件是记在 Java 名下的，把 Java 字节数当成开源后端的规模会高估。
+三个读法上的提醒。Java 与 TypeScript 只差约 24 万字节（约 1.3%），但这个「几乎相等」里含 1,866 行自动生成的 `toolApiTypes.ts` 与 `core/generated/docsManifest.json`，不能读成「前端手写量等于后端」。Python 那 148 万字节主体在 `engine/`，但仓库脚本与 CI 里用到的 Python 也记在同一行——`pyproject.toml` 的 `tools` 组注释写明它是「repository scripts and CI workflows」共用的工具库。反过来，`app/proprietary` 的 1,140 个文件是记在 Java 名下的，把 Java 字节数当成开源后端的规模会高估。
 
-剩下两行也有归属：Gherkin 20 万字节说明行为驱动测试是这个仓库的一等公民，`.taskfiles/cucumber.yml` 指向 `testing/cucumber`，engine 的 `cucumber` 依赖组里装的是 `behave`。Rust 那 18 万字节则是 Tauri 桌面壳，`frontend/editor/src-tauri/` 下 `Cargo.toml`、`build.rs`、`capabilities/default.json` 齐全。
+剩下两行也有归属：Gherkin 20 万字节说明行为驱动测试是这个仓库的一等公民，`.taskfiles/cucumber.yml` 指向 `testing/cucumber`，engine 的 `cucumber` 依赖组里装的是 `behave`。Rust 那 21 万字节则是 Tauri 桌面壳，`frontend/editor/src-tauri/` 下 `Cargo.toml`、`build.rs`、`capabilities/default.json` 齐全。
 
-仓库里能直接对上口径的计数，比字节数好用得多：
+仓库里能直接对上口径的计数（锚定 `d6784b3`），比字节数好用得多：
 
 | 口径 | 数值 | 来源 |
 |------|------|------|
@@ -389,7 +389,7 @@ Docker 侧有三档镜像：`ultra-lite`、标准、`fat`，`docker/README.md` �
 3. **`/processor/pipelines/new` 直连 404，但从首页点进去正常。** 深链兜底依赖那个 `LOWEST_PRECEDENCE - 2` 的 `RouterFunctionMapping`。如果为了简化把它改成一个裸 `RouterFunction` Bean，order 回到默认的 `-1`，症状会反转：深链正常，而 `/actuator`、`/error` 这类后端路由被 SPA 吞掉。
 4. **AI 功能「偶尔卡住不返回」，engine 日志里有一行 Request 却没有对应 Response。** `services/runtime.py` 把 Anthropic 的 httpx 连接池 keepalive 关掉了，原因写得很具体：Cloudflare 前置会静默关闭空闲连接，复用旧连接时请求体被丢进黑洞，一直挂到分片推理自己的超时才醒。代价是每次多约 150 ms 握手。诊断同类问题时把 `STIRLING_HTTP_DEBUG=true` 打开，用有没有成对的 Request / Response 行判断卡在哪一层。
 5. **升级依赖时撞上用户数据库读不出来。** `app/proprietary/build.gradle` 里那一行 `runtimeOnly 'com.h2database:h2:2.3.232'` 后面跟着一条禁止升级的注释：2.4.x 换了文件格式，会让已有用户库打不开。这是升级类 PR 最容易被漏掉的一条约束，也是一次性故障里最贵的一种。
-6. **功能在 `main` 上见过，装出来没有。** 先分清读的是仓库还是发布物：`main` 领先 `v2.14.3` 共 699 个提交，`engine/` 又在商业许可目录下。想确认某个能力在自己的实例里到底有没有，顺序是：先查它在不在 `app/core` 或 `core/` 分层里，再查 `DISABLE_ADDITIONAL_FEATURES` 的实际取值，最后才看版本。
+6. **功能在 `main` 上见过，装出来没有。** 先分清读的是仓库还是发布物：成文时 `main` 领先 `v2.14.3` 共 699 个提交，此后 v3.0.x 又已发布；`engine/` 还在商业许可目录下。想确认某个能力在自己的实例里到底有没有，顺序是：先查它在不在 `app/core` 或 `core/` 分层里，再查 `DISABLE_ADDITIONAL_FEATURES` 的实际取值，最后才看版本。
 
 ## 适用边界
 
@@ -407,7 +407,7 @@ Docker 侧有三档镜像：`ultra-lite`、标准、`fat`，`docker/README.md` �
 2. `tool-models:check` 与 `tool-models` 的区别是什么，为什么它需要 `git diff --exit-code`？
 3. 以 `core` flavor 构建时，`AiEngineClient` 会不会进入产物？依据在哪一行？
 4. `engine` 的 `STIRLING_RAG_MAX_SEARCHES` 和 `STIRLING_MODEL_MAX_CONCURRENCY` 各自限制的是什么行为？
-5. 「48 个工具目录 150 个文件」和「21 个共享文件 4,394 行」合起来说明了一件什么事？
+5. 「48 个工具目录 147 个文件」和「21 个共享文件 4,394 行」合起来说明了一件什么事？
 
 ## 下一步读什么
 
@@ -432,9 +432,9 @@ git ls-tree --name-only HEAD frontend/editor/src/core/hooks/tools/ \
   | grep -v '\.ts$' | grep -v '/shared$' | wc -l  # 48 个工具目录
 ```
 
-端点与模型两个数字要从生成文件里取：`git show HEAD:frontend/editor/src/core/types/toolApiTypes.ts` 落到本地后，数 `TOOL_ENDPOINTS` 数组里的字符串项得 105，`^export interface`（88）加 `^export type … = Record<string, never>`（19）得请求模型数 107。单独数任一项都会得到偏小或偏大的中间值，而 `^export type` 一共 21 行、含两个非模型的类型定义，按它数会多数两个。
+端点与模型两个数字要从生成文件里取：`git show frontend/editor/src/core/types/toolApiTypes.ts` 落到本地后，数 `TOOL_ENDPOINTS` 数组里的字符串项（在 `d6784b3` 上得 105），`^export interface`（88）加 `^export type … = Record<string, never>`（19）得请求模型数 107。单独数任一项都会得到偏小或偏大的中间值，而 `^export type` 一共 21 行、含两个非模型的类型定义，按它数会多数两个。
 
-本文的读数在三种情况下需要重算：`main` 上出现新的 `v2.x` tag（发布线与仓库线的差距消失）、`settings.gradle` 改掉无条件 `include ':proprietary'`、或 `SwaggerDoc.json` 不再是前后端类型的唯一输入。语言字节数与 Stars 每次复核都会变，但这两项不构成结论，只用于说明量级。
+本文的读数在三种情况下需要重算：发布线追上分析锚点（v3.0.x 已于 2026-09-24 起发布，截至 2026-10-03，`main` 上 `toolApiTypes.ts` 已是 106 个端点、1,903 行——按 `HEAD` 复读会得到与本文不同的数字，本文的 105 与 1,866 都只对 `d6784b3` 成立）、`settings.gradle` 改掉无条件 `include ':proprietary'`、或 `SwaggerDoc.json` 不再是前后端类型的唯一输入。语言字节数与 Stars 每次复核都会变，但这两项不构成结论，只用于说明量级。
 
 ## 参考
 
@@ -443,4 +443,4 @@ git ls-tree --name-only HEAD frontend/editor/src/core/hooks/tools/ \
 - 数据库备份：`DATABASE.md`（自动备份由 `system.databaseBackup.cron` 控制，默认每日零点；管理动作触发手动导出；可经 Web 或 API 上传 SQL 恢复）
 - 引擎内文档：`engine/src/stirling/documents/README.md`（RAG 层与两种后端）
 - 部署：`docker/README.md` 与 `docker/compose/`，文档站 <https://docs.stirlingpdf.com>
-- 读数来源：GitHub API 的 `repos` 与 `languages` 两个端点，2026-09-20
+- 读数来源：GitHub API 的 `repos` 与 `languages` 两个端点，2026-09-20 首次核对，2026-10-03 复核

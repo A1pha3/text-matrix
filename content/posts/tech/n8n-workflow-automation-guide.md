@@ -47,7 +47,7 @@ tags: ["n8n", "工作流自动化", "AI Agent", "LangChain", "开源"]
 
 ## n8n 在企业场景里靠什么站住脚
 
-把 n8n 放到 Zapier、Make（原 Integromat）旁边比较时，集成数量并不构成护城河。n8n 官方维护 400+ 核心节点，叠加社区包后集成总数超过 1500，但 Zapier 的应用目录在 8000 个量级，Make 的可视化编排也更顺。比数量比不过。n8n 在企业场景里能站住脚，靠的是代码扩展、自托管、AI LangChain 原生集成这三者同时具备。
+把 n8n 放到 Zapier、Make（原 Integromat）旁边比较时，集成数量并不构成护城河。n8n 官方维护 400+ 核心节点，集成中心（含社区节点）目前收录超过 2000 项，但 Zapier 的应用目录已经超过 1 万，Make 的可视化编排也更顺。比数量比不过。n8n 在企业场景里能站住脚，靠的是代码扩展、自托管、AI LangChain 原生集成这三者同时具备。
 
 这三者组合起来，直接影响采购决策：当工作流需要处理客户数据、内部知识库或受合规约束的凭证时，Zapier 和 Make 的云端模型会让数据必须经过第三方 SaaS，而 n8n 自托管可以把数据流限制在企业网络内；工作流逻辑复杂到无代码表达式无法表达时，n8n 的 Code 节点允许直接写 JavaScript 或 Python，自托管还能按文档启用额外的 npm 模块；而工作流的核心是 LLM 调用而非传统 API 编排时，n8n 内置的 LangChain 节点把 Agent、Tool、Memory、Vector Store 做成了一等公民，而不是通过 HTTP Request 节点拼装。
 
@@ -88,7 +88,7 @@ n8n 的核心可以拆成五层，理解这五层的边界，比记集成数量�
                          ▼
 ┌─────────────────────────────────────────────────────────┐
 │  持久化层  工作流定义、执行历史、凭证密文                │
-│           SQLite（默认）/ PostgreSQL / MySQL             │
+│           SQLite（默认）/ PostgreSQL                     │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -98,7 +98,7 @@ n8n 的核心可以拆成五层，理解这五层的边界，比记集成数量�
 
 **AI 节点和普通节点走的是同一套执行引擎**。LangChain Agent 节点是一个会多次回调工具节点的特殊节点，它的执行历史、错误处理、数据流转和普通节点一致，因此可以用同一套调试和监控手段管理 AI 工作流。
 
-**触发器决定工作流的执行模型**。Webhook 触发器是同步的，调用方等待结果；Schedule 触发器是异步批处理；第三方应用事件触发器（如 GitHub Webhook、Slack Event）依赖 n8n 实例的公网可达性。选错触发器类型是新手最常见的坑。
+**触发器决定工作流的执行模型**。Webhook 触发器默认是异步的：Respond 选项的默认值是 Immediately，收到请求立即返回 "Workflow got started"，工作流在后台继续跑；把 Respond 改成 When Last Node Finishes，或者接一个 Respond to Webhook 节点，才变成调用方等待结果的同步模式。Schedule 触发器是异步批处理；第三方应用事件触发器（如 GitHub Webhook、Slack Event）依赖 n8n 实例的公网可达性。选错触发器类型是新手最常见的坑。
 
 
 
@@ -161,7 +161,6 @@ docker run -it --rm \
 ### 单机生产：Docker Compose
 
 ```yaml
-version: '3'
 services:
   n8n:
     image: docker.n8n.io/n8nio/n8n
@@ -215,7 +214,7 @@ n8n 选择 item 数组而不是单个对象，是因为工作流自动化的典�
 
 触发器决定工作流何时启动。几类触发器的执行语义不同：
 
-- **Webhook**：同步，调用方等待 n8n 返回。适合做 API 代理或即时响应。
+- **Webhook**：默认异步，收到请求立即返回；配置 Respond 模式或接 Respond to Webhook 节点后可同步等待。适合做 API 代理或即时响应。
 - **Schedule**：异步，按 cron 表达式触发。适合批处理。
 - **Email**：异步，IMAP 轮询新邮件。适合邮件驱动的流程。
 - **Manual**：只在编辑器里手动点击执行。用于调试。
@@ -267,13 +266,13 @@ n8n 选择 item 数组而不是单个对象，是因为工作流自动化的典�
     ▼
 [IF 节点]
     │  判断回复中是否包含 "需要人工" 标记
-    ├── 是 → [Slack 通知] → [Webhook Response 返回工单号]
-    └── 否 → [Webhook Response 返回回复]
+    ├── 是 → [Slack 通知] → [Respond to Webhook 返回工单号]
+    └── 否 → [Respond to Webhook 返回回复]
 ```
 
 ### 一次执行的内部流转
 
-1. **Webhook 触发器**收到 HTTP 请求，把 `question` 和 `user_id` 包成 item 传给下游。
+1. **Webhook 触发器**收到 HTTP 请求，Respond 模式配置为 Respond to Webhook 节点（调用方同步等待结果），把 `question` 和 `user_id` 包成 item 传给下游。
 2. **LangChain Agent 节点**接收 item，把 `question` 作为用户消息发给 LLM。LLM 根据 system prompt 决定调用工具。
 3. 假设 LLM 决定先检索知识库：Agent 节点暂停，调用 **Vector Store 检索**节点，传入查询词。检索节点返回 top-3 文档片段给 Agent。
 4. Agent 把片段塞进上下文，再次调用 LLM。LLM 判断信息不足，决定再查工单历史。Agent 调用 **PostgreSQL 工单查询**节点。
@@ -281,7 +280,7 @@ n8n 选择 item 数组而不是单个对象，是因为工作流自动化的典�
 6. Agent 把所有上下文交给 LLM 生成最终回复。回复里包含 "需要人工：是" 标记。
 7. **IF 节点**解析回复，走 "是" 分支。
 8. **Slack 通知**节点用 Slack 凭证发消息到 `#support` 频道，附带问题、用户 ID、Agent 的分析。
-9. **Webhook Response** 节点返回工单号给调用方。
+9. **Respond to Webhook** 节点返回工单号给调用方。
 10. 整个执行过程被写入执行历史，包含每个节点的输入输出、耗时、状态。
 
 ### 从这个案例能看到的几件事
@@ -292,7 +291,7 @@ n8n 选择 item 数组而不是单个对象，是因为工作流自动化的典�
 
 **错误处理需要显式设计**。如果 Vector Store 检索失败，Agent 会拿到错误信息继续推理，可能产生幻觉。生产环境应该在工具节点里加 try-catch，返回结构化错误给 Agent，而不是让 LLM 自己猜。
 
-还有一点容易忽略：Webhook 触发器有超时限制。LLM 调用 + 工具调用可能超过 30 秒，HTTP 客户端会超时。长任务应该改成异步——Webhook 立即返回 "处理中"，后台工作流完成后通过另一个 Webhook 或 Slack 通知。
+还有一点容易忽略：同步 Webhook 的耗时受调用方超时约束。这个案例用了 Respond to Webhook 节点，调用方要一直等到工作流结束——LLM 多轮推理加工具调用很容易超过 HTTP 客户端常见的 30 秒超时，表现是调用方报错、n8n 执行历史里却显示成功。长任务应该改成异步——Webhook 用默认的立即响应先返回 "处理中"，后台工作流完成后通过另一个 Webhook 或 Slack 通知。
 
 
 
@@ -304,58 +303,43 @@ n8n 的集成不是单一形态，理解三种集成方式的差异，比数集�
 
 **原生集成节点**：n8n 官方维护的节点，如 OpenAI、Slack、PostgreSQL、GitHub。字段映射、分页、错误处理已经处理好，能用就用。
 
-**HTTP Request 节点**：通用 HTTP 客户端，可以调用任何 REST API。适合原生节点没覆盖的服务，或需要精细控制请求的场景。配合 `Define OAuth2 API` 凭证类型，可以给任意 API 加 OAuth2 支持。
+**HTTP Request 节点**：通用 HTTP 客户端，可以调用任何 REST API。适合原生节点没覆盖的服务，或需要精细控制请求的场景。配合通用凭证类型（Generic Credential Type）下的 OAuth2 API 凭证，可以给任意 API 加 OAuth2 支持。
 
 **自定义节点**：用 TypeScript 写的节点包，发布到 npm。适合内部系统或高频使用的第三方服务。开发成本高于前两者，但复用性最好。
 
 ### OpenAI 集成示例
 
-```javascript
-// OpenAI ChatGPT 节点配置
-{
-  "resource": "chat",
-  "operation": "complete",
-  "model": "gpt-4",
-  "messages": [
-    {
-      "role": "user",
-      "content": "解释这段代码的功能"
-    }
-  ],
-  "temperature": 0.7,
-  "maxTokens": 500
-}
-```
+OpenAI 节点发一条聊天消息的配置路径：Resource 选 `Text`，Operation 选消息类操作，Model 下拉会加载凭证账号可用的模型（官方文档的建议是低成本高速用 `gpt-4o-mini`，更高质量用 `gpt-4o`），在 Messages 里配置 role 和 content——一条 System 消息定行为，一条 User 消息放输入。随机性用 Options 里的 Temperature 控制，客服分流这类确定性场景压到 0.3 以下更稳，且 Temperature 和 Top P 只调其中一个。
 
-实际配置时优先用 n8n 编辑器的可视化字段，JSON 形态主要用于版本管理和模板导出。`temperature` 和 `maxTokens` 的取值要根据场景调，客服场景建议 `temperature` 设 0.3 以下以减少随机性。
+注意 n8n 版本之间这个节点的操作名称和参数有过调整（1.117.0 引入 V2 后，Chat Completions API 和 Responses API 分成了两个操作），部署时以编辑器里的实际字段为准。
 
 ### Slack 集成示例
 
-```javascript
-// Slack 发送消息节点配置
-{
-  "resource": "message",
-  "operation": "post",
-  "channel": "#general",
-  "text": "工作流执行完成！\n状态：成功\n时间：{{ $now }}",
-  "username": "n8n Bot"
-}
+Slack 节点发一条频道消息：Resource 选 `Message`，Operation 选 `Send`，Send Message To 选 `Channel` 并用 ID、名称或 URL 指定目标频道，Message Text 里写正文，可以内嵌表达式：
+
+```text
+工作流执行完成！
+状态：{{ $json.status }}
+时间：{{ $now }}
 ```
 
-`{{ $now }}` 是 n8n 的表达式语法，运行时求值。表达式可以引用上游节点的输出，比如 `{{ $json["workflow_name"] }}`。
+`{{ $now }}` 是 n8n 的表达式语法，运行时求值，返回 Luxon 的 DateTime 对象。表达式可以引用上游节点的输出，比如 `{{ $json["workflow_name"] }}`。
 
 ### 数据库集成示例
 
-```javascript
-// PostgreSQL 查询节点
-{
-  "operation": "execute",
-  "query": "SELECT * FROM users WHERE created_at > $1",
-  "values": ["{{ $json.since }}"]
-}
+PostgreSQL 节点执行一条参数化查询：Operation 选 `Execute Query`，Query 里写 SQL，用 `$1`、`$2` 占位：
+
+```sql
+SELECT * FROM users WHERE created_at > $1;
 ```
 
-参数化查询是硬性要求。直接拼字符串会导致 SQL 注入，n8n 的 PostgreSQL 节点支持 `$1`、`$2` 占位符，配合 `values` 数组传参。
+参数值放在 Options → Query Parameters 里（逗号分隔），也可以用表达式从上游 item 取：
+
+```text
+{{ $json.since }}
+```
+
+参数化查询是硬性要求。直接拼字符串会导致 SQL 注入；PostgreSQL 节点对查询参数做了消毒处理，配合 `$1`、`$2` 占位符使用就能挡住注入。
 
 ### 集成分类速查
 
@@ -427,14 +411,17 @@ docker run -d \
 | `N8N_PORT` | 端口 | 5678 |
 | `N8N_PROTOCOL` | 协议 | http |
 | `WEBHOOK_URL` | Webhook 基础 URL | - |
-| `N8N_BASIC_AUTH_ACTIVE` | 启用 Basic Auth | false |
-| `N8N_BASIC_AUTH_USER` | Basic Auth 用户名 | - |
-| `N8N_BASIC_AUTH_PASSWORD` | Basic Auth 密码 | - |
 | `N8N_ENCRYPTION_KEY` | 加密密钥 | 自动生成 |
 | `EXECUTIONS_DATA_SAVE_ON_ERROR` | 错误时保存数据 | all |
 | `EXECUTIONS_DATA_SAVE_ON_SUCCESS` | 成功时保存数据 | all |
+| `EXECUTIONS_DATA_PRUNE` | 自动清理旧执行历史 | true |
+| `EXECUTIONS_DATA_MAX_AGE` | 执行历史保留时长（小时） | 336 |
+| `EXECUTIONS_DATA_PRUNE_MAX_COUNT` | 执行历史保留条数上限（0 为不限） | 10000 |
+| `N8N_METRICS` | 暴露 Prometheus 指标端点 | false |
 
-`N8N_ENCRYPTION_KEY` 在生产环境必须显式设置并妥善保管。丢失后所有凭证不可解密，等于工作流全部失效。`EXECUTIONS_DATA_SAVE_ON_SUCCESS` 在高频工作流下建议改成 `none` 或自定义 prune，否则执行历史会无限增长撑爆数据库。
+`N8N_ENCRYPTION_KEY` 在生产环境必须显式设置并妥善保管。丢失后所有凭证不可解密，等于工作流全部失效。执行历史的自动清理默认开启（保留 336 小时、上限 10000 条），高频工作流要留意两个相反的问题：清理跟不上写入时数据库持续膨胀；留存窗口太短时又满足不了审计要求。按需调 `EXECUTIONS_DATA_MAX_AGE` 或 `EXECUTIONS_DATA_PRUNE_MAX_COUNT`；真正用不到执行数据的高频工作流，把 `EXECUTIONS_DATA_SAVE_ON_SUCCESS` 改成 `none` 最直接。
+
+Code 节点默认禁止导入第三方模块。自托管需要跑外部 npm 包时，用 `NODE_FUNCTION_ALLOW_EXTERNAL` 按包名放行（内置模块用 `NODE_FUNCTION_ALLOW_BUILTIN`），逗号分隔，`*` 表示全部放行。放行等于把任意代码执行能力交给能编辑工作流的用户，范围越小越好。
 
 ### 数据持久化
 
@@ -446,7 +433,7 @@ docker volume create n8n_data
 docker volume inspect n8n_data
 ```
 
-默认用 SQLite，数据存在 `n8n_data` 卷里。生产环境建议改用 PostgreSQL，性能和并发能力都更好。切换数据库时执行历史不会自动迁移，需要导出工作流定义后在新数据库重新导入。
+默认用 SQLite，数据存在 `n8n_data` 卷里。生产环境建议改用 PostgreSQL，性能和并发能力都更好——这是 n8n 仅支持的两个数据库，MySQL 支持已随 1.0 弃用。切换数据库时数据不会自动迁移，需要导出工作流和凭证后在新数据库重新导入，具体步骤见[排查与运维](#排查与运维)的 Q3。
 
 ### HTTPS 配置
 
@@ -485,27 +472,35 @@ services:
 
 ## 企业级功能：什么时候需要
 
-n8n 的企业级功能按需开启，单团队用不上就别开。
+n8n 的企业级功能按需开启，单团队用不上就别开。注意这一节的功能多数是付费计划能力，规划预算前先对照官方定价页：项目权限（RBAC）从低阶付费计划起步，SSO 和 LDAP 需要自托管 Business 及以上，审计日志、外部密钥库、多 main 高可用是 Enterprise。
 
 ### 权限管理
 
+n8n 的角色分两层。实例层（Instance roles）管整个 n8n：
+
 | 角色 | 权限 |
 |------|------|
-| Owner | 完全控制 |
-| Admin | 管理用户和工作流 |
-| Member | 编辑自己的工作流 |
-| Editor | 仅编辑 |
-| Viewer | 仅查看 |
+| Owner | 完全控制，每个实例唯一 |
+| Admin | 管理用户和实例设置 |
+| Member | 创建并编辑自己的工作流 |
 
-角色系统在多团队共用一个 n8n 实例时才有价值。单团队使用时全员 Admin 反而更顺手，权限分层带来的管理成本可能超过收益。
+项目层（Project roles）管单个项目内的工作流和凭证：
 
-**项目隔离**：按项目分组工作流，独立权限控制，跨项目模板共享。适合多业务线共用平台的中大型组织。
+| 角色 | 权限 |
+|------|------|
+| Project Admin | 管理项目、成员和工作流 |
+| Project Editor | 编辑项目内工作流 |
+| Project Viewer | 只读 |
+
+实例层角色免费版就有；项目隔离（Projects）是付费功能，不同计划的共享项目数不同。角色系统在多团队共用一个 n8n 实例时才有价值，单团队使用时全员 Member/Project Admin 反而更顺手，权限分层带来的管理成本可能超过收益。
+
+**项目隔离**：按项目分组工作流和凭证，独立权限控制。适合多业务线共用平台的中大型组织。
 
 ### SSO 配置
 
-SSO 是 n8n 企业版功能，支持 SAML 2.0 与 OIDC（OpenID Connect），另有独立的 LDAP/Active Directory 登录。企业已有身份提供商时强制走 SSO，把认证收口到一处，避免本地账号泄露后在多用户间横向移动。两者都是 Business/Enterprise 计划的功能。
+SSO 支持 SAML 2.0 与 OIDC（OpenID Connect），另有独立的 LDAP/Active Directory 登录。计划归属：自托管需要 Business 及以上，n8n Cloud 只有 Enterprise 计划提供。企业已有身份提供商时强制走 SSO，把认证收口到一处，避免本地账号泄露后在多用户间横向移动。
 
-n8n 2.x 的 SSO 默认在编辑器左侧 **Settings → SSO** 界面配置：选择协议、填入 IdP 提供的元数据或发现端点、Client ID 与密码，保存后激活即可，不需要碰环境变量。只有当你想用基础设施即代码（IaC）自动批铺实例时，才需要把 SSO 交给环境变量管理——这是 n8n v2.18.0 才支持的能力，且必须先把主开关打开，否则对应变量会被忽略：
+SSO 默认在编辑器的 **Settings → SSO** 界面配置：选择协议、填入 IdP 提供的元数据或发现端点、Client ID 与密码，保存后激活即可，不需要碰环境变量（操作者需要是实例 Owner 或 Admin）。只有当你想用基础设施即代码（IaC）自动批铺实例时，才需要把 SSO 交给环境变量管理——这是 n8n v2.18.0 才支持的能力，且必须先把主开关打开，否则对应变量会被忽略：
 
 ```yaml
 # 环境变量（生产环境通过密钥管理服务注入，不要写进 docker-compose.yml）
@@ -517,15 +512,15 @@ N8N_SSO_OIDC_DISCOVERY_ENDPOINT=https://your-idp.com/.well-known/openid-configur
 N8N_SSO_USER_ROLE_PROVISIONING=instance_role
 ```
 
-开启 env 管理后，UI 里对应的 SSO 控件会变成只读，n8n 每次启动都用环境变量覆盖配置。走 SAML 时把 `N8N_SSO_OIDC_*` 换成 `N8N_SSO_SAML_LOGIN_ENABLED` 与 `N8N_SSO_SAML_METADATA_URL`（或以 `N8N_SSO_SAML_METADATA` 直接传 XML）。`N8N_SSO_OIDC_CLIENT_SECRET` 这类敏感值必须通过密钥管理服务注入，不要写进 docker-compose.yml 提交到 Git。SSO 相关环境变量名在不同 n8n 版本间有调整，部署前以 [n8n 官方环境变量文档](https://docs.n8n.io/hosting/configuration/environment-variables/) 为准。
+开启 env 管理后，UI 里对应的 SSO 控件会变成只读，n8n 每次启动都用环境变量覆盖配置。走 SAML 时把 `N8N_SSO_OIDC_*` 换成 `N8N_SSO_SAML_LOGIN_ENABLED` 与 `N8N_SSO_SAML_METADATA_URL`（或以 `N8N_SSO_SAML_METADATA` 直接传 XML）。`N8N_SSO_OIDC_CLIENT_SECRET` 这类敏感值必须通过密钥管理服务注入，不要写进 docker-compose.yml 提交到 Git。SSO 相关环境变量名在不同 n8n 版本间有调整，部署前以 [n8n 官方环境变量文档](https://docs.n8n.io/deploy/host-n8n/configure-n8n/basic-configuration/use-environment-variables/) 为准。
 
 ### 空中隔离部署
 
-n8n 支持 Air-Gapped 环境部署：无需互联网连接，完全离线运行，企业内部数据安全。代价是无法用 n8n Cloud 的模板同步、无法自动更新节点定义。适合金融、军工、能源等强隔离行业。
+n8n 支持 Air-Gapped 环境部署：无需互联网连接，完全离线运行，企业内部数据安全（自托管即可行，不需要额外 license）。代价是装不了社区节点、收不到版本更新，升级靠人工搬运镜像。适合金融、军工、能源等强隔离行业。
 
 ### 审计日志
 
-用户操作记录、工作流执行历史、敏感操作告警。审计日志建议导出到外部 SIEM（如 ELK、Splunk），n8n 自身的日志存储不适合长期合规留存。
+用户操作记录、工作流执行历史、敏感操作告警（Enterprise 功能）。需要长期合规留存时，用 Log streaming（同为 Enterprise）把日志持续推送到 Datadog 这类外部系统，或导出到 SIEM（如 ELK、Splunk），n8n 自身的日志存储不适合长期留存。
 
 
 
@@ -543,38 +538,45 @@ n8n 支持 Air-Gapped 环境部署：无需互联网连接，完全离线运行�
 
 ### 创建自定义节点
 
-```bash
-# 使用 n8n 节点开发工具
-npx n8n-node-dev
+官方脚手架是 `@n8n/node-cli`（工具名 `n8n-node`），开发环境要求 Node.js 22.22.0 以上：
 
-# 选择基础模板
-? Select a template for your new node
-  ❯ Empty Node
-    CredentialType
-    Template
+```bash
+# 交互式创建节点项目（推荐）
+npm create @n8n/node@latest
+
+# 或者直接用 CLI 建项目
+npx @n8n/node-cli new n8n-nodes-my-app --template declarative/custom
 ```
+
+模板有三类：`declarative/custom` 是 REST API 场景的声明式骨架（默认推荐），`declarative/github-issues` 是带凭证和资源划分的完整示例，`programmatic/example` 是程序化风格骨架（适合复杂逻辑）。
 
 ### 节点结构
 
 ```text
-my-custom-node/
-├── src
-│   └── nodes
-│       └── MyCustomNode
-│           ├── MyCustomNode.node.ts
-│           └── MyCustomNode.trigger.ts
-├── credentials
-│   └── MyCustomApi.credentials.ts
+n8n-nodes-my-app/
+├── nodes/
+│   └── MyApp/
+│       ├── MyApp.node.ts
+│       └── myapp.svg
+├── credentials/
+│   └── MyAppApi.credentials.ts
 ├── package.json
-└── README.md
+└── tsconfig.json
 ```
 
 凭证和节点分开存放是有意设计：一个凭证类型可以被多个节点复用，比如内部 API 网关的 Token 可能被十几个内部服务节点共用。
 
 ### 节点代码示例
 
+官方脚手架默认生成声明式（declarative）风格——用路由描述 API 调用，代码量少，适合标准 REST 服务。需要自定义执行逻辑时用程序化（programmatic）风格，两种风格可以共存于同一个包。下面是程序化风格的骨架：
+
 ```typescript
-import { INodeType, INodeTypeDescription } from 'n8n-workflow';
+import {
+  IExecuteFunctions,
+  INodeExecutionData,
+  INodeType,
+  INodeTypeDescription,
+} from 'n8n-workflow';
 
 export class MyCustomNode implements INodeType {
   description: INodeTypeDescription = {
@@ -632,8 +634,8 @@ export class MyCustomNode implements INodeType {
 ### 发布节点
 
 ```bash
-# 构建
-pnpm build
+# 构建（脚手架内置 npm script，底层跑 n8n-node build）
+npm run build
 
 # 登录 npm
 npm login
@@ -642,7 +644,7 @@ npm login
 npm publish --access public
 ```
 
-发布前在 `package.json` 里加 `n8n` 字段声明节点入口，否则 n8n 识别不到。内部节点可以发到私有 npm registry，不必公开。
+脚手架生成的 `package.json` 已带 `n8n` 字段，通过 `credentials` 和 `nodes` 数组声明编译产物入口，n8n 靠它识别节点包——改包名时别动这个字段。内部节点可以发到私有 npm registry，不必公开；开发过程中在实例的 Settings → Community nodes 里用包名安装即可测试。
 
 
 
@@ -717,39 +719,41 @@ npm publish --access public
 
 1. 用 Manual 触发器逐步测试，不要直接用 Webhook 触发器调试。
 2. 在每个节点后加 Code 节点打印 `JSON.stringify($input.all(), null, 2)`，看实际数据结构。
-3. 用编辑器的 "Preview" 模式查看每个节点的输入输出，比看执行日志直观。
+3. 执行后在编辑器里点开任意节点，面板直接展示这一步的输入输出数据，比翻执行日志直观。
 4. 执行历史里点开失败节点，看错误堆栈和当时的输入数据——大多数错误是数据结构不匹配，不是节点本身的问题。
 
 ### 处理大文件
 
 - 用流式处理（Streaming），不要把整个文件读进内存。
-- 配置节点超时时间（在节点设置的 `Timeout` 字段里），避免长任务卡死执行引擎。
-- 用 "Chunk" 或 "Loop" 节点分批处理，每批控制在几百条。
+- 给慢节点设超时：HTTP Request 节点在 Options 里配 Timeout；整个工作流的上限用 `EXECUTIONS_TIMEOUT` 控制（默认 -1 不限制），避免长任务无限占用执行引擎。
+- 用 Loop Over Items 节点（旧名 SplitInBatches）分批处理，每批控制在几百条。
 
 ### 错误处理与重试
 
 n8n 的错误处理有三种模式：
 
-- **节点级重试**：在节点设置里开启 retry，配置间隔和次数。适合网络抖动类错误。
-- **错误触发器**：用 `Error Trigger` 节点捕获工作流错误，转发到告警工作流。适合集中监控。
+- **节点级重试**：在节点设置里开启 Retry On Fail，配置间隔和次数。适合网络抖动类错误。
+- **错误工作流**：在工作流 Settings 里指定一个含 Error Trigger 节点的工作流，原工作流出错时自动触发，转发到告警。适合集中监控。
 - **Try-Catch 模式**：用 `Execute Workflow` 节点调用子工作流，子工作流失败时走补偿逻辑。适合需要事务性的场景。
 
 ```javascript
-// 错误告警工作流
-const error = $json.error;
-const workflowName = $workflow.name;
+// 错误告警工作流（第一个节点是 Error Trigger）
+const execution = $json.execution;
+const workflow = $json.workflow;
 
-if (error) {
-  return [{
-    json: {
-      alert: 'Workflow Failed',
-      workflow: workflowName,
-      error: error.message,
-      time: new Date().toISOString()
-    }
-  }];
-}
+return [{
+  json: {
+    alert: 'Workflow Failed',
+    workflow: workflow.name,
+    failedNode: execution.lastNodeExecuted,
+    error: execution.error.message,
+    executionUrl: execution.url,
+    time: new Date().toISOString()
+  }
+}];
 ```
+
+Error Trigger 的输出结构是 `execution.error`（含 `message`、`stack`）、`execution.lastNodeExecuted` 和 `workflow.name`，告警消息里带上执行链接（`execution.url`），值班的人点开就能定位到失败节点。
 
 ### 常见问题速查
 
@@ -757,8 +761,8 @@ if (error) {
 |------|---------|---------|
 | 第三方 Webhook 不触发 | `WEBHOOK_URL` 配成 `localhost` 或内网地址 | 改成外部可访问的 HTTPS 地址，重启 n8n |
 | 凭证全部失效 | `N8N_ENCRYPTION_KEY` 丢失或被重置 | 从备份恢复原密钥；无法恢复则需重新录入所有凭证 |
-| 执行历史撑爆磁盘 | `EXECUTIONS_DATA_SAVE_ON_SUCCESS=all` 且无 prune | 改成 `none` 或配置 prune 策略，定期清理旧记录 |
-| 工作流执行到一半卡住 | 节点超时未配置，长任务阻塞执行引擎 | 在节点设置里配 `Timeout`，长任务改异步子工作流 |
+| 执行历史暴涨 | 保存粒度全开，留存窗口又调得太长 | 调低 `EXECUTIONS_DATA_MAX_AGE` / `EXECUTIONS_DATA_PRUNE_MAX_COUNT`，高频流改 `SAVE_ON_SUCCESS=none` |
+| 工作流执行到一半卡住 | 下游 HTTP 请求没设超时，长任务阻塞执行 | HTTP Request 节点 Options 里配 Timeout，或设 `EXECUTIONS_TIMEOUT`；长任务改异步子工作流 |
 | Code 节点只输出 1 条 | 写了 `return [transformed]` 而非 `return items.map(...)` | 改成 map 写法保留批量语义 |
 | 升级后工作流行为异常 | 用了 `latest` 标签，大版本有不兼容变更 | 锁定具体版本号，先在测试环境验证再上生产 |
 | 多副本下 Webhook 重复执行 | Webhook 触发器未做幂等 | 在业务层用唯一 ID 去重，或用 `EXECUTIONS_MODE=queue` 配合 Redis 分发 |
@@ -772,7 +776,7 @@ if (error) {
 本地跑通不代表生产没问题，两者的差异通常在触发器和数据上。先按这个顺序排查：
 
 1. 看执行历史里失败那次的输入数据。生产环境的真实数据往往比测试数据大几个量级，item 数组可能有几百上千条，某个字段的 null 或类型变化都会让节点炸掉。
-2. 检查触发器类型。Webhook 触发器是同步的，如果下游节点耗时超过 HTTP 客户端超时（通常 30 秒），调用方会断开，但 n8n 这边的工作流还在跑——表现为"调用方说失败，执行历史显示成功"。长任务改成异步，参考[一次 AI Agent 工作流的完整路径](#一次-ai-agent-工作流的完整路径)末尾的超时处理。
+2. 检查触发器的响应模式。配置成同步（When Last Node Finishes 或 Respond to Webhook）时，如果下游节点耗时超过调用方 HTTP 客户端的超时（常见 30 秒），调用方会断开，但 n8n 这边的工作流还在跑——表现为"调用方说失败，执行历史显示成功"。长任务改成异步，参考[一次 AI Agent 工作流的完整路径](#一次-ai-agent-工作流的完整路径)末尾的超时处理。
 3. 看监控的执行成功率趋势。如果是某天突然下降，多半是上游 API 变更或凭证过期，不是工作流本身的问题。
 
 **Q2：工作流处理大批量数据时越来越慢，瓶颈在哪？**
@@ -787,14 +791,14 @@ if (error) {
 
 **Q3：从 SQLite 迁移到 PostgreSQL，执行历史和凭证会一起迁过去吗？**
 
-不会自动迁移。n8n 的数据库切换只迁移工作流定义和凭证，执行历史留在原库里。正确做法：
+不会自动迁移。n8n 的数据库切换不搬数据，正确做法：
 
 1. 在新 PostgreSQL 实例上启动 n8n，让它自动建表。
-2. 从旧 SQLite 实例导出工作流定义（编辑器里 Export 或调 `/api/v1/workflows/export`）。
-3. 在新实例导入工作流，重新录入凭证——`N8N_ENCRYPTION_KEY` 不同的话，旧密文解不开，必须重录。
+2. 从旧实例导出工作流和凭证：`n8n export:workflow --all`、`n8n export:credentials --all --decrypted`（明文导出，文件要妥善保管）。
+3. 在新实例导入：`n8n import:workflow`、`n8n import:credentials`。两个实例的 `N8N_ENCRYPTION_KEY` 相同时，加密凭证可以不解密直接迁；密钥不同就必须走 `--decrypted` 明文导出，导入时由新实例用新密钥重新加密。
 4. 如果执行历史有合规留存需求，单独用 `sqlite3` 导出成 CSV 存档，不要指望 n8n 帮你迁。
 
-凭证重录这件事容易踩坑：很多人以为换个数据库密钥也能跟着迁，结果上线时所有工作流报错。参考[工作流的核心抽象](#工作流的核心抽象)里凭证一节，加密密钥和凭证是绑定的。
+凭证是这条迁移路上最容易踩的坑：直接搬数据库文件，上线后所有工作流报错——加密密钥和凭证密文是绑定的，参考[工作流的核心抽象](#工作流的核心抽象)里凭证一节。
 
 **Q4：AI Agent 工作流里工具节点偶尔失败，LLM 拿到错误后开始编造结果，怎么处理？**
 
@@ -809,25 +813,59 @@ if (error) {
 
 ### 高可用部署
 
-单机 n8n 进程退出，工作流就停。生产环境建议多副本 + Redis + PostgreSQL：
+单机 n8n 进程退出，工作流就停。规模化的正确形态是 queue 模式：main 进程负责编辑器、定时调度和接收 Webhook（只生成执行，不执行），worker 进程从 Redis 队列取任务真正执行，状态写回 PostgreSQL。worker 无状态，按负载增减即可；SQLite 不适合这个形态，数据库必须换成 PostgreSQL。
 
 ```yaml
-# docker-compose.yml for HA
+# docker-compose.yml（queue 模式最小可用形态）
 services:
-  n8n:
+  redis:
+    image: redis:7-alpine
+
+  postgres:
+    image: postgres:15
+    environment:
+      - POSTGRES_USER=n8n
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=n8n
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
+  n8n-main:
     image: docker.n8n.io/n8nio/n8n
-    deploy:
-      replicas: 3
+    ports:
+      - "5678:5678"
+    environment: &n8n_env
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=postgres
+      - DB_POSTGRESDB_USER=n8n
+      - DB_POSTGRESDB_PASSWORD=${POSTGRES_PASSWORD}
+      - DB_POSTGRESDB_DATABASE=n8n
+      - EXECUTIONS_MODE=queue
+      - QUEUE_BULL_REDIS_HOST=redis
+      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
     depends_on:
       - redis
       - postgres
-  redis:
-    image: redis:7-alpine
-  postgres:
-    image: postgres:15
+
+  n8n-worker:
+    image: docker.n8n.io/n8nio/n8n
+    command: worker
+    environment: *n8n_env
+    depends_on:
+      - redis
+      - postgres
+
+volumes:
+  pg_data:
 ```
 
-多副本模式下，`EXECUTIONS_MODE` 要设成 `queue`，Webhook 触发器由 Redis 队列分发到不同副本执行。注意：定时触发器在多副本下会去重，但 Webhook 触发器需要外部负载均衡保证幂等。
+几个关键点：
+
+- 所有进程共享同一个 `N8N_ENCRYPTION_KEY`，否则 worker 解不开凭证。
+- worker 默认并发 10 个执行，用 `n8n worker --concurrency=5` 调整；官方建议并发不低于 5，过低的并发反而会耗尽数据库连接池。
+- Webhook 量大了再加独立的 `n8n webhook` 进程做接入层（`command: webhook`），用负载均衡把 `/webhook/*` 和 `/webhook-waiting/*` 路由过去，编辑器流量留在 main。
+- 定时触发器只在 main 上调度，天然不会重复执行；Webhook 的重复投递靠业务层幂等（唯一 ID 去重）。
+- 想让 main 本身跑多个副本互为热备（multi-main setup），那是企业版能力；社区版把 main 做成单点、配好自动拉起和备份即可。
 
 ### 升级
 
@@ -845,9 +883,9 @@ docker rm n8n
 
 监控三个指标就够了：
 
-- **执行成功率**：低于 95% 说明工作流有稳定性问题。n8n 自身的执行历史 API（`/api/v1/executions`）可以拉到每次执行的状态，配合 Prometheus 暴露成功率指标。
+- **执行成功率**：低于 95% 说明工作流有稳定性问题。设 `N8N_METRICS=true` 打开 `/metrics` 端点（默认关闭，不要暴露到公网）接 Prometheus；也可以用 Public API 的 `/api/v1/executions` 拉每次执行的状态做补充。
 - **执行耗时 P95**：突然变长通常是上游 API 变慢或数据库索引缺失。关注 P95 而非平均值，长尾任务会拖垮整体体验。
-- **队列积压**：多副本模式下，Redis 队列长度持续增长说明副本数不够。用 `redis-cli LLEN <queue_name>` 监控。
+- **队列积压**：queue 模式下设 `N8N_METRICS_INCLUDE_QUEUE_METRICS=true`，Prometheus 里会多出 `n8n_scaling_mode_queue_jobs_waiting`（排队中）、`n8n_scaling_mode_queue_jobs_active`（处理中）、`n8n_scaling_mode_queue_jobs_failed`（失败）三个指标，waiting 持续增长说明 worker 数量不够。main 和 worker 都能暴露指标。
 
 告警建议接 PagerDuty 或飞书机器人，不要只靠邮件——工作流故障往往在非工作时间发生，邮件告警的响应速度不够。
 
@@ -874,15 +912,15 @@ docker rm n8n
 ### 落地顺序
 
 1. **先跑通一个非关键工作流**。选一个数据不敏感、失败可接受的工作流（如每日报告推送），用 Docker 单机部署验证。这一步验证的是 Docker 部署、`WEBHOOK_URL` 配置、凭证加密存储是否正常工作。
-2. **再迁移一个 AI 工作流**。把一个现有的 LLM 调用脚本改造成 n8n 工作流，体验 LangChain 节点的编排能力。重点看 Code 节点在自托管下如何启用外部模块、LangChain Agent 节点的工具回调机制、以及 Webhook 触发器的超时限制。
+2. **再迁移一个 AI 工作流**。把一个现有的 LLM 调用脚本改造成 n8n 工作流，体验 LangChain 节点的编排能力。重点看 Code 节点在自托管下如何启用外部模块（`NODE_FUNCTION_ALLOW_EXTERNAL`）、LangChain Agent 节点的工具回调机制、以及 Webhook 的响应模式与超时行为。
 3. **然后做凭证和权限治理**。把散落在各处的 API Key 收敛到 n8n 凭证系统，按团队划分项目。这一步验证的是凭证的 OAuth2 Token 刷新、项目隔离的权限模型、以及 `N8N_ENCRYPTION_KEY` 的备份策略。
-4. **最后做高可用和监控**。工作流数量上 50 条、有核心业务依赖后，再上多副本和监控。盯三个指标：执行成功率、P95 耗时、队列积压，分别对应工作流稳定性、长尾任务和 Redis 队列健康度。
+4. **最后做高可用和监控**。工作流数量上 50 条、有核心业务依赖后，再上 queue 模式扩 worker 和监控。盯三个指标：执行成功率、P95 耗时、队列积压，分别对应工作流稳定性、长尾任务和 Redis 队列健康度。
 
 ### 不要做的事
 
 - 不要把 n8n 当数据库用。工作流定义和执行历史不是业务数据，该存业务库的还是要存业务库。
 - 不要在 Code 节点里写复杂业务逻辑。Code 节点适合数据转换，复杂逻辑应该抽成独立服务，n8n 通过 HTTP Request 调用。
-- 不要忽略执行历史的增长。生产环境必须配置 prune 策略，否则磁盘会爆。
+- 不要忽略执行历史的增长。默认 prune 保留 14 天、1 万条，按自己的审计要求显式调整，别让默认值替你做决定。
 - 不要用 `latest` 标签跑生产。版本漂移会导致工作流行为突然变化。
 
 ### Sustainable Use License 的边界
@@ -903,7 +941,7 @@ n8n 的许可证是 Sustainable Use License，属于 fair-code 范畴，不是 O
 - 集成中心：https://n8n.io/integrations
 - 模板库：https://n8n.io/workflows
 - 社区论坛：https://community.n8n.io
-- AI 指南：https://docs.n8n.io/advanced-ai/
+- AI 指南：https://docs.n8n.io/build/integrate-ai/
 
 
 
@@ -966,9 +1004,9 @@ n8n 的许可证是 Sustainable Use License，属于 fair-code 范畴，不是 O
 
 ### 第四步：上高可用和监控
 
-- 产出物：多副本部署 + Redis 队列 + PostgreSQL + Prometheus 监控 + 告警接入。
-- 验证标准：单副本宕机不影响工作流执行，执行成功率、P95 耗时、队列积压三个指标有告警阈值。
-- 关键卡点：`EXECUTIONS_MODE=queue` 配置、Webhook 触发器的幂等设计、Redis 队列监控。
+- 产出物：queue 模式部署（main + 多 worker + Redis + PostgreSQL）+ Prometheus 监控 + 告警接入。
+- 验证标准：单个 worker 宕机不影响其余 worker 继续执行，执行成功率、P95 耗时、队列积压三个指标有告警阈值。
+- 关键卡点：`EXECUTIONS_MODE=queue` 配置、`N8N_ENCRYPTION_KEY` 多进程共享、Webhook 的幂等设计、队列指标监控。
 
 ### 不建议走的路
 

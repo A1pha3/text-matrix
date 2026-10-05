@@ -1,10 +1,11 @@
 ---
 title: "Babel：开源EDA工具链驱动的AI原生Chiplet设计流程"
 date: 2026-05-22T20:20:00+08:00
+lastmod: 2026-10-04
 slug: "babel-ai-native-chiplet-design-open-source-eda"
 github_repo: "amoslee2026/Babel"
 source_key: "gh:amoslee2026/Babel"
-description: "Babel 是基于开源 EDA 工具链（Yosys/OpenSTA/Magic/Netgen）和 5-agent 流水线的 AI 原生 Chiplet 设计流程，通过 Claude Code 和 labeled issue 从 PRD 驱动到 GDSII，并用三层 Spec-Code 追溯体系让需求、代码、断言、约束保持一致。"
+description: "Babel 是基于开源 EDA 工具链（Yosys/OpenSTA/Magic/Netgen）和 5-agent 流水线的 AI 原生 Chiplet 设计流程，通过 Claude Code 和 labeled issue 从 PRD 驱动到 GDSII，并用三层 Spec-Code 追溯体系和 Claude Code hooks 强制需求、代码、断言、约束保持一致。本文基于 2026-10-04 的 GitHub 数据与仓库源码。"
 draft: false
 categories: ["技术笔记"]
 tags: ["AI Agent", "EDA", "芯片设计"]
@@ -12,20 +13,25 @@ tags: ["AI Agent", "EDA", "芯片设计"]
 
 # Babel：开源 EDA 工具链驱动的 AI 原生 Chiplet 设计流程
 
-Babel 把 Claude Code 这类 AI coding agent 引入芯片设计流程，用 labeled issue 驱动 5 个 agent 串联走完 PRD 到 GDSII 的全流程。它复用 Yosys、OpenSTA、Magic、Netgen 等开源 EDA 工具，把"设计师 → RTL → 验证 → 综合 → PD"的人工接力改写成 agent 间的状态机 handoff。项目创建于 2026-05-22，到 2026 年 9 月初约 42 星，仍处于早期阶段，但已经沉淀出 v1.3 版本：除了 5-agent 流水线，还包含三层 Spec-Code 追溯体系、寄存器映射 pipeline 和提交质量门禁。
+Babel 把 Claude Code 这类 AI coding agent 引入芯片设计流程，用 labeled issue 驱动 5 个 agent 串联走完 PRD 到 GDSII 的全流程。它复用 Yosys、OpenSTA、Magic、Netgen 等开源 EDA 工具，把"设计师 → RTL → 验证 → 综合 → PD"的人工接力改写成 agent 间的状态机 handoff。项目创建于 2026-05-22，到 2026 年 10 月初 48 星，最后一次代码提交停在 2026-08-04，仍处于早期阶段；README 自述已到 v1.3，除了 5-agent 流水线，还包含三层 Spec-Code 追溯体系、寄存器映射 pipeline 和提交质量门禁。
 
 | 指标 | 数值 |
 |------|------|
 | GitHub | [amoslee2026/Babel](https://github.com/amoslee2026/Babel) |
-| ⭐ Stars | 42 |
-| 🍴 Forks | 9 |
+| ⭐ Stars | 48 |
+| 🍴 Forks | 10 |
 | 📜 License | GPL-3.0 |
 | 💻 主要语言 | Verilog（含 SystemVerilog） |
-| 🏷️ 当前版本 | v1.3 |
+| 🏷️ 当前版本 | v1.3（README 自述） |
+| 🕒 最近推送 | 2026-08-04 |
+
+以上数据为 2026-10-04 的 GitHub API 读数。仓库历史被清理成单个 checkpoint 提交（2026-07-21），另在 [gitlink.org.cn](https://www.gitlink.org.cn/amoslee2011/Babel) 维护一份主仓库镜像。
 
 ## 系统架构
 
 Babel 的分层设计分三层。上层是 agent 编排层，用 Claude Code 的 slash command 和 labeled issue 驱动；中层是 skill 层，把 EDA 工具调用、质量检查、流程生成、质量门控封装成可复用 skill；下层是开源 EDA 工具层，Yosys/OpenSTA/Magic 等工具直接执行综合、时序分析、物理设计。
+
+这个分层在仓库里落在 `.claude/` 下，共五类角色：`agents/` 是 5 个 `bba-*` 编排者，`commands/` 是 14 个触发它们的 slash command 入口，`skills/` 是单一用途的工具封装，`hooks/` 是流程强制脚本，`schemas/` 是跨阶段交付物的 JSON schema。CLAUDE.md 对其中三者的分工有一句界定：agent 是顶层编排者，skill 是单一用途工具，command 是启动 agent 的薄跳板——你在 Claude Code 里敲的 `/bba-guru-rtl` 是 command，它背后拉起的是同名的 agent。
 
 ```
 用户需求 → [bba-architect] → bba-guru-rtl → bba-guru-verification → bba-guru-synthesis → bba-guru-pd → signoff
@@ -48,7 +54,9 @@ Babel 的分层设计分三层。上层是 agent 编排层，用 Claude Code 的
 
 ### 为什么用 issue handoff
 
-芯片设计流程是多阶段接力：架构师交付 MAS（微架构规范）后，RTL 工程师才能开始编码；RTL 通过 lint 后，验证工程师才能跑仿真。Babel 把这种接力关系映射成 GitHub issue 的 label 状态机，每个 agent 监听自己负责的 label，处理完后打上下一个 label。
+芯片设计流程是多阶段接力：架构师交付 MAS（微架构规范）后，RTL 工程师才能开始编码；RTL 通过 lint 后，验证工程师才能跑仿真。Babel 把这种接力关系映射成 GitHub issue 的 label 状态机，每个 agent 认领自己负责的 label，处理完后打上下一个 label。
+
+有一点要澄清：v1.3 的接力不是全自动的。写完 handoff 文件后，流水线推进 hook 只会提示下一条建议的 slash command，源码注释写明 v1.3 仅通知、不自动派发（Claude Code hooks 无法直接调用 agent，自动接力留给 v1.4）。也就是说，每个阶段仍由用户敲下 `/bba-guru-*` 来启动，状态机记录的是"谁有资格开跑"，而不是"谁在后台候命"。
 
 选 issue handoff 而不是函数调用或消息队列，是因为：
 
@@ -88,7 +96,7 @@ Babel 的分层设计分三层。上层是 agent 编排层，用 Claude Code 的
 
 ## Skill 体系
 
-Skill 是 agent 调用 EDA 工具和执行质量检查的封装单元，按用途分六类，合计 35+ 个。前四类是流水线主力，后两类支撑工程运维。
+Skill 是 agent 调用 EDA 工具和执行质量检查的封装单元，按用途分六类。`.claude/skills/` 下实测 31 个目录（另有一个 `_gate_common` 公共库），加上 14 个 slash command 入口，对应 README 宣称的"35+ Skill"。前四类是流水线主力，后两类支撑工程运维。
 
 ### EDA 工具 Skill
 
@@ -146,7 +154,7 @@ Skill 是 agent 调用 EDA 工具和执行质量检查的封装单元，按用�
 |-------|------|
 | `/bb-create-issue` / `/bb-list-issues` / `/bb-close-issue` | Issue 协议：查看状态、触发阶段、关闭 issue |
 
-质量门控 skill 是 agent 间 handoff 的守门员：上一个 agent 的产物必须通过对应门控，才会打上 `ready-for-*` label 触发下一个 agent。
+质量门控 skill 是 agent 间 handoff 的守门员：上一个 agent 的产物必须通过对应门控，才会打上 `ready-for-*` label 触发下一个 agent。四个 gate skill 共享 `_gate_common` 里的同一套检查框架（gate_runner），差别只在各自加载的检查项配置。
 
 ## 设计产物目录结构
 
@@ -176,15 +184,17 @@ designs/<name>/
 
 `.handoff/` 目录是状态机的持久化层：`ready-for-*.md` 记录每个 handoff 的上下文，`fix_iter.json` 和 `global_fix_iter.json` 跟踪迭代次数。agent 崩溃重启后，从这两个文件恢复状态。
 
+这棵树是 README 声明的目标结构，仓库里两个现成设计各自停在不同阶段，产物未必齐全：`tinystories_npu` 走到 RTL（有 `rtl/`、`rtl_artifact.json` 和 Verilator 仿真入口），`NPU_top` 只留下 `mas/`、`pd_report*.json` 和 `gdsii/`。阅读时以各自目录的实际内容为准。
+
 ## 任务流案例：AI 推理处理器如何流过系统
 
-假设用户想设计一个主频 1GHz、能运行主流大模型的 AI 推理处理器，使用 ASAP7 PDK：
+假设用户想设计一个主频 1GHz、能运行主流大模型的 AI 推理处理器，使用 ASAP7 PDK。下面每一步结束时，上一阶段打完 label，hook 会提示下一条命令，由用户敲下才进入下一阶段：
 
-1. **需求解析**：用户在 Claude Code 中描述需求，`/bba-architect` 被触发。agent 把自然语言需求解析成 `idea/parsed_idea.json`，生成 `PRD.md`，暂停等待用户确认。
+1. **需求解析**：用户在 Claude Code 中执行 `/bba-architect`。agent 把自然语言需求解析成 `idea/parsed_idea.json`，生成 `PRD.md`，暂停等待用户确认。
 
 2. **架构设计**：用户确认 PRD 后，agent 生成 `arch_spec/` 下的架构文档，再生成 `mas/mas.json`（schema-valid 的微架构规范）。`/bb-spec-review` 做对抗评审，通过后打 `ready-for-rtl` label。
 
-3. **RTL 生成**：`/bba-guru-rtl` 监听到 `ready-for-rtl`，读 MAS，用 `/bb-rtl-coder` 生成 SystemVerilog，用 `/bb-check-lint` 跑 verible lint。lint 失败则自动修复，最多 3 次；通过后用 `/bb-check-cdc` 检查跨时钟域。`/bb-gate-rtl-quality` 门控通过后打 `ready-for-verification`。
+3. **RTL 生成**：用户按提示执行 `/bba-guru-rtl`，agent 读 MAS，用 `/bb-rtl-coder` 生成 SystemVerilog，用 `/bb-check-lint` 跑 verible lint。lint 失败则自动修复，最多 3 次；通过后用 `/bb-check-cdc` 检查跨时钟域。`/bb-gate-rtl-quality` 门控通过后打 `ready-for-verification`。
 
 4. **验证**：`/bba-guru-verification` 生成测试平台和验证计划，用 verilator 跑仿真，收集覆盖率。覆盖率不达标则补充测试用例，最多 8 次。100% 覆盖率后打 `ready-for-synth`。
 
@@ -192,7 +202,7 @@ designs/<name>/
 
 6. **物理设计**：`/bba-guru-pd` 用 `/bb-create-floorplan` 生成 floorplan TCL，用 `/bb-invoke-magic` 做 placement + DRC，用 `/bb-invoke-qrouter` 布线，用 `/bb-invoke-netgen` 做 LVS，用 `/bb-invoke-klayout` 导出 GDSII。DRC/LVS/STA 任一失败则返工，最多 8 次。全部通过后打 `signoff`。
 
-7. **用户审核**：`signoff` label 触发用户审核 GDSII。用户可强制打 `*-needs-fix` label 回流到任意阶段。
+7. **用户审核**：`signoff` label 打上后，hook 提示用户审核 GDSII。用户可强制打 `*-needs-fix` label 回流到任意阶段。
 
 agent 间没有共享内存或直接调用，状态只通过文件系统和 issue label 传递。单个 agent 失败时可以单独重试，不必回滚整条流水线。
 
@@ -223,7 +233,7 @@ agent 间没有共享内存或直接调用，状态只通过文件系统和 issu
 
 ### 寄存器映射 Pipeline
 
-寄存器是最容易"定义一套、实现一套"的地方。Babel 让每个模块只有一个事实来源 `spec/MAS/<module>/regmap.md`，用脚本生成三种产物：Markdown/CMSIS-SVD 文档、SystemVerilog 断言（覆盖 reset/RO/W1C/reserved/addr 五类行为）、注入 RTL 文件头的 SHA256 spec hash。改寄存器定义时只改一处，文档、断言、哈希一起更新，天然保持一致。
+寄存器是最容易"定义一套、实现一套"的地方。Babel 让每个模块只有一个事实来源 `spec/MAS/<module>/regmap.md`，用脚本生成三种产物：Markdown/CMSIS-SVD 文档、SystemVerilog 断言（覆盖 reset/RO/W1C/reserved/addr 五类行为）、注入 RTL 文件头的 SHA256 spec hash。改寄存器定义时只改这一处，重新跑一遍脚本，三份产物同时更新——不存在"文档改了、断言忘了"的缝隙。
 
 README 给出示例设计各模块的规模：
 
@@ -240,7 +250,9 @@ README 给出示例设计各模块的规模：
 
 ### 变更传播与提交门禁
 
-追溯体系还要防止"改了上游忘了下游"。Babel 用 git hook 检测上游 artifact 的变更，把下游标记为 stale，提醒重跑对应 agent。`git commit` 前自动跑质量门禁：RTL lint、REQ_ID 唯一性、`@spec_hash` 一致性。三道检查全过才允许提交，避免把不一致的状态写进历史。
+追溯体系还要防止"改了上游忘了下游"。这套强制不是 git hook，而是 Claude Code 的 hooks 机制：`.claude/settings.json` 注册了 `.claude/hooks/` 下 7 个 shell 脚本，挂在四类事件上——写文件之后跑变更传播（把下游 artifact 标记为 stale，提醒重跑对应 agent）和流水线推进；执行 Bash 之前跑提交质量门禁；用户输入进来前校验 JSON schema；会话结束做总结。
+
+提交门禁的拦截逻辑在源码里可以看得很具体：hook 只匹配 `git commit` 命令，且只对 `feature/*` 和 `dev/*` 分支生效，命中后检查受影响设计的质量门控报告（`designs/<name>/` 下的 `quality_gate_*.json`）是否存在且为 pass，不过就拒绝提交——README 把门禁内容概括为 RTL lint、REQ_ID 唯一性、`@spec_hash` 一致性三道检查。用户始终可以用 `git commit --no-verify` 绕过，机制防的是 agent 无意中把不一致状态写进历史，不是防人。
 
 这套机制用文件落地：`scripts/` 下集中了 `generate_regmap_doc.py`、`generate_regmap_assertions.py`、`compute_spec_hash.py`、`babel_traceability.py`、`allocate_req_id.py`、`check_req_uniqueness.py`，分别负责文档生成、断言生成、哈希注入、追溯矩阵、编号分配与唯一性校验。
 
@@ -258,7 +270,7 @@ README 给出示例设计各模块的规模：
 | Verilator | latest | Verilog 仿真 |
 | verible | latest | SV lint |
 
-Babel 通过 shell 调用这些工具，不修改工具本身。版本号来自项目 README，实际可用版本以各工具官方发布为准。
+Babel 通过 shell 调用这些工具，不修改工具本身。上表版本号来自 README；仓库里另有一份自称"唯一版本权威"的 `.claude/references/tool_versions.md`（2026-05-30 核验），但两处已经漂移——OpenSTA 写 2.5.0（README 写 2.2.0）、Verilator 写 5.012（README 写 latest）、Netgen 写 1.5.275（README 写 1.5），还多了项目自带的 Babel-LSP 0.2.0。该文件只约束 CLAUDE.md 和各 skill 的引用，README 表不在同步范围内。实际搭环境时以 `tool_versions.md` 为准更稳，两处不一致本身也说明版本约束还没收敛。
 
 ## PDK：ASAP7
 
@@ -273,10 +285,13 @@ Babel 的示例设计跑在 ASAP7 上——亚利桑那州立大学开源的预�
 
 选 ASAP7 而非真实工艺，是因为它开源、可免费使用、文档齐全，适合验证流程本身。它不代表先进工艺的真实时序行为，Babel 的结果是流程验证，不是流片签核。
 
+有一点克隆仓库前要知道：`libs/` 整个目录在 `.gitignore` 里被排除（CLAUDE.md 注明它是 symlink），所以仓库里并不存在 `libs/asap7/`——PDK 需要自行下载并放到该位置，这是跑通示例设计的前置条件。
+
 ## 快速开始
 
 ```bash
-# 设置 EDA 工具环境
+# 设置 EDA 工具环境（作者本机路径，换成你自己的；
+# 也可用 BB_EDA_ENV 环境变量指定，所有 bb-invoke-* skill 都会读它）
 source ~/wrk/eda_opensources/eda_env.sh
 
 # 在 Claude Code 中描述设计需求
@@ -293,6 +308,10 @@ claude-code
 ```
 
 `>` 开头的行是 Claude Code 的输入提示符，`/bba-*` 是 slash command。agent 会在每个质量门控点暂停，等待用户确认或自动打 label 继续。
+
+除了对话式输入，还有一条文件入口：把需求写成 `designs/<name>/idea/*.md`，再执行 `/bba-architect <name>`，agent 会从解析这个文件开始跑流程——仓库自带的两个设计就是这么起步的。
+
+不想搭 EDA 环境也能先看产物：`designs/` 下有两个现成设计，`NPU_top` 已经跑完物理设计，`gdsii/` 里有最终的 `NPU_top.gds` 和布线后的 `NPU_top_routed.gds`；`tinystories_npu` 是一个面向 TinyStories 15M 模型推理的边缘 NPU（17 个模块，目标 500MHz），从 idea、PRD、MAS 到 RTL 的产物齐全。翻这两个目录，比读十遍流程图更容易理解每个阶段交付什么。
 
 ## 学习教程
 
@@ -313,24 +332,25 @@ Babel 在 `tutorial/` 下提供面向电子工程毕业生的 16 章教程，覆
 
 - **教学和原型验证**：Babel 把完整芯片设计流程串成可复现的 agent 流水线，适合用来理解从 PRD 到 GDSII 的每个阶段产出什么、检查什么。
 - **开源 EDA 工具链练手**：想在真实设计任务中熟悉 Yosys/OpenSTA/Magic 时，Babel 提供了现成的调用封装和质量门控。
-- **AI agent 流程编排参考**：issue handoff + labeled state machine 的模式可以迁移到其他多阶段接力场景。
+- **AI agent 流程编排参考**：issue handoff + labeled state machine 的模式可以迁移到其他多阶段接力场景；Claude Code hooks 挂在工具调用事件上做流程强制的做法同样可以单独借鉴。
 
 ### 需要注意的风险
 
-- **项目成熟度**：项目创建于 2026-05-22，到 2026 年 9 月初约 42 星，仍处于早期阶段。skill 封装、迭代限制、质量门控的具体实现可能随版本变化。
+- **项目成熟度**：项目创建于 2026-05-22，到 2026 年 10 月初 48 星，最后一次代码提交停在 2026-08-04，之后两个月没有更新，git 历史也被清理成单个 checkpoint 提交。skill 封装、迭代限制、质量门控的具体实现可能随版本变化，且 README 与仓库内部文件已有版本漂移（见技术栈一节）。
 - **AI agent 的收敛性**：迭代限制承认 agent 无法 100% 自主收敛。复杂设计（如大规模 SoC、模拟混合信号）很可能频繁触发 `escalate-user`，需要设计师深度介入。
 - **开源 EDA 工具的能力边界**：Yosys/OpenSTA/Magic 在先进工艺节点的支持有限，Babel 目前示例使用 ASAP7 PDK（7nm 教学工艺），不代表能直接用于流片。
 - **Claude Code 依赖**：整个流程依赖 Claude Code 的 agent 能力，使用前需要确认 Claude Code 订阅和 API 配额。
 
 ### 采用顺序
 
-1. 先在 ASAP7 PDK 上跑通一个简单设计（如计数器、FIFO），熟悉 agent 流水线和 issue handoff 机制
-2. 用 `/bb-spec-review` 和 `/bb-code-review` 等质量检查 skill 单独评审现有 RTL，理解 skill 封装
-3. 尝试中等复杂度设计（如简单 RISC-V 核心），观察哪些阶段容易触发回流
-4. 评估是否把 issue handoff 模式迁移到自己的设计流程中，与现有 EDA 工具链集成
+1. 不装环境先读产物：翻 `designs/NPU_top` 和 `designs/tinystories_npu` 的目录，对照上文理解每个阶段交付什么
+2. 备齐 EDA 工具链和 ASAP7 PDK（注意 `libs/` 需自备），在 ASAP7 上跑通一个简单设计（如计数器、FIFO），熟悉 agent 流水线和 issue handoff 机制
+3. 用 `/bb-spec-review` 和 `/bb-code-review` 等质量检查 skill 单独评审现有 RTL，理解 skill 封装
+4. 尝试中等复杂度设计（如简单 RISC-V 核心），观察哪些阶段容易触发回流
+5. 评估是否把 issue handoff 模式迁移到自己的设计流程中，与现有 EDA 工具链集成
 
-Babel 复用开源 EDA 工具，把精力放在流程编排和质量门控上，把 agent 间协作、迭代收敛、状态持久化落成可观察的 label 和文件，设计师随时可以介入、回流或审计。
+Babel 复用开源 EDA 工具，把精力放在流程编排和质量门控上，把 agent 间协作、迭代收敛、状态持久化落成可观察的 label 和文件，设计师随时可以介入、回流或审计。它离生产流片还很远，但作为"AI 原生芯片设计流程长什么样"的第一个完整开源参照，值得翻一遍源码。
 
 ---
 
-*相关链接：[GitHub](https://github.com/amoslee2026/Babel) | 依赖工具：Yosys、OpenSTA、Magic、Netgen、QRouter、KLayout*
+*相关链接：[GitHub](https://github.com/amoslee2026/Babel) | [GitLink 镜像](https://www.gitlink.org.cn/amoslee2011/Babel) | 依赖工具：Yosys、OpenSTA、Magic、Netgen、QRouter、KLayout*

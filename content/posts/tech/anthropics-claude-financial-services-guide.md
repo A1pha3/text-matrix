@@ -1,6 +1,7 @@
 ---
 title: "Claude for Financial Services：Anthropic 金融服务智能体仓库深度拆解"
 date: "2026-05-06T20:05:34+08:00"
+lastmod: "2026-09-28T00:00:00+08:00"
 slug: "anthropics-claude-financial-services-guide"
 github_repo: "anthropics/financial-services"
 source_key: "gh:anthropics/financial-services"
@@ -11,19 +12,19 @@ tags: ["Claude", "Anthropic", "AI Agent", "MCP"]
 ---
 
 > **目标读者**：想搞清楚 Anthropic 如何把金融工作流做成可安装智能体的开发者、平台团队与金融科技从业者
-> **核心判断**：这个仓库交付的是一套把投行、行研、私募、财富管理和基金运营的工作流拆成 agent、skill、command 和 connector 的参考实现——同一份 prompt 和 skill，可以在 Cowork 里交互式用，也可以通过 Managed Agents API 挂到自家编排层后面
-> **资料基线**：本文以 [anthropics/financial-services](https://github.com/anthropics/financial-services) 仓库 README、managed-agent-cookbooks 目录说明和若干 agent guardrail 文档为准，并比对仓库最新主干内容做了事实校验。仓库内容会随版本更新，文中涉及的 agent 数量、skill 数量、连接器数量以本文写作时（2026 年 5 月）的主干为准，后续可能变化
+> **核心判断**：这个仓库交付的是一套把投行、行研、私募和基金运营的工作流拆成 agent、skill、command 和 connector 的参考实现——同一份 prompt 和 skill，可以在 Cowork 里交互式用，也可以通过 Managed Agents API 挂到自家编排层后面
+> **资料基线**：本文以 [anthropics/financial-services](https://github.com/anthropics/financial-services) 仓库 README、managed-agent-cookbooks 目录说明和若干 agent guardrail 文档为准，全文事实已对照 2026 年 9 月 28 日的主干逐条复核。仓库内容会随版本更新，文中涉及的 agent 数量、skill 数量、连接器数量以该日主干为准；与 5 月发文时相比的可见变化是 wealth-management 垂直包已从仓库移除、数据连接器从 11 个增至 12 个
 > **预计阅读时间**：22 - 30 分钟
 
-> **快速信息卡**
-> - **Stars**: 32,612+
-> - **Forks**: 4,732+
+> **快速信息卡**（2026-09-28 读数）
+> - **Stars**: 37,826
+> - **Forks**: 5,462
 > - **License**: Apache-2.0
 > - **语言**: Python
-> - **最后更新**: 2026-06-26
+> - **最后更新**: 2026-09-21
 
 **学习目标**：读完后你能判断的几件事：
-- 仓库、Cowork 插件发布源、Managed Agent（托管智能体）模板这三层的边界分别在哪
+- GitHub 仓库、插件市场源名、Managed Agent（托管智能体）模板这三层各自管什么、边界在哪
 - 你的团队该直接装命名 agent，还是只装一块 vertical plugin
 - 这个仓库能产出哪些分析产物，又有哪些合规和操作底线绝对不能碰
 - 一套典型的金融工作流从触发到产出，在不同运行面上经历了什么
@@ -82,11 +83,11 @@ README 开头的声明写得很直白：这里的内容不构成投资、法律�
 
 ## 2. 第一次读容易搞混的三件事
 
-公开仓库是 [anthropics/financial-services](https://github.com/anthropics/financial-services)。但 README 在安装示例里用的发布源是 `anthropics/claude-for-financial-services`，插件标识是 `@claude-for-financial-services`。
+公开仓库是 [anthropics/financial-services](https://github.com/anthropics/financial-services)。但安装命令里出现的名字是两个：`claude plugin marketplace add anthropics/financial-services` 添加市场时用的是 GitHub 路径，装插件时的后缀却是 `@claude-for-financial-services`。
 
-这是有意为之。Anthropic 把"开源代码仓库"和"插件市场发布源"分开了：GitHub 上你能 fork 和改源码，插件市场里你只做安装和版本管理。两套名字对应两套用途，不搞清楚这一点，第一次看文档就会在安装方式上走弯路。
+后缀来自仓库内 `.claude-plugin/marketplace.json` 的 `name` 字段——插件市场的源名叫 `claude-for-financial-services`，和 GitHub 仓库名不是一回事。市场源名是装好之后引用插件用的标识，GitHub 路径是拉取代码用的地址。两套名字对应两套用途，不搞清楚这一点，第一次看安装命令就会疑惑为什么一个命令里出现两个名字。
 
-**命名 agent 和 vertical plugin 不是一回事。** README 里最显眼的是 Pitch Agent、Market Researcher、GL Reconciler 这些命名 agent——它们是端到端工作流入口，装完就能跑完整任务。但仓库底层还有一层 vertical plugins：它们承载可复用的 skills、slash commands 和 MCP connectors，按投行、行研、私募、财富管理、基金运营等垂直场景分组。如果你只想要 `/comps`、`/dcf`、`/earnings` 这样的单条能力，不需要整套 agent，从 vertical plugin 入手更合适。
+**命名 agent 和 vertical plugin 不是一回事。** README 里最显眼的是 Pitch Agent、Market Researcher、GL Reconciler 这些命名 agent——它们是端到端工作流入口，装完就能跑完整任务。但仓库底层还有一层 vertical plugins：它们承载可复用的 skills、slash commands 和 MCP connectors，按投行、行研、私募、基金运营等垂直场景分组。如果你只想要 `/comps`、`/dcf`、`/earnings` 这样的单条能力，不需要整套 agent，从 vertical plugin 入手更合适。
 
 **这是参考模板，不是即插即用的生产系统。** 仓库内容几乎都是 Markdown、JSON 和 YAML——没有构建系统，没有二进制分发，没有 docker-compose。你可以直接装起来试，但只要牵涉真实金融数据、内部术语、PPT 模板、Excel 模板、审批链路或监管留痕，几乎都要做二次定制。Anthropic 给的是一套"你们公司往里塞自己流程和约束"的骨架，不是一个封闭产品。
 
@@ -98,12 +99,11 @@ plugins/
     pitch-agent/agents/pitch-agent.md
     gl-reconciler/agents/gl-reconciler.md
     ...
-  vertical-plugins/                  ← 7 组垂直能力包 + MCP 连接器
-    financial-analysis/              ← 核心：全部建模技能和 11 个数据连接器
+  vertical-plugins/                  ← 6 组垂直能力包 + MCP 连接器
+    financial-analysis/              ← 核心：全部建模技能和 12 个数据连接器
     investment-banking/
     equity-research/
     private-equity/
-    wealth-management/
     fund-admin/
     operations/
   partner-built/                     ← 第三方数据商插件
@@ -113,7 +113,7 @@ managed-agent-cookbooks/             ← 10 个 agent 的托管部署模板
   pitch-agent/agent.yaml
   ...
 claude-for-msft-365-install/         ← M365 加载项企业部署工具
-scripts/                             ← deploy / validate / sync / orchestrate
+scripts/                             ← deploy / check / validate / sync / orchestrate
 ```
 
 这套目录把复用边界划开了。命名 agent 管一条工作流的端到端执行。Vertical plugin 管可复用的领域技能和命令。Managed Agent cookbook 把同一套 system prompt 和 skills 包装成可通过 API 托管部署的形式。分析师和平台团队看到的是不同的运行面，底层的 prompt 和 skill 来源不变。
@@ -122,7 +122,7 @@ scripts/                             ← deploy / validate / sync / orchestrate
 
 ## 4. 现在有哪些 agent，它们各自能干到什么程度
 
-截至本文写作时（2026 年 5 月），README 列出了 10 个命名 agent，按 4 组理解最清晰：
+截至 2026 年 9 月核对时，README 列出了 10 个命名 agent，按 4 组理解最清晰：
 
 | 职能 | Agent | 它产出的是"第一版底稿"，到不了"结论"这一步 |
 | ------ | ------ | ------ |
@@ -132,7 +132,7 @@ scripts/                             ← deploy / validate / sync / orchestrate
 | | Earnings Reviewer | 财报+电话会 → 模型更新 → 点评草稿 |
 | | Model Builder | 在 Excel 中生成 DCF、LBO、三张报表或 comps 模型 |
 | Fund admin & finance ops | Valuation Reviewer | 消化 GP 材料 → 估值模板 → LP 报告底稿 |
-| | GL Reconciler | 找总账与子账差异、追根因、形成异常报告 |
+| | GL Reconciler | 找总账与子账差异、追根因、路由给人工签核 |
 | | Month-End Closer | 月结中的计提、roll-forward 和差异说明 |
 | | Statement Auditor | LP 报表分发前的审计与勾稽 |
 | Operations & onboarding | KYC Screener | 开户文件解析、规则引擎筛查、缺口标注 |
@@ -145,7 +145,7 @@ scripts/                             ← deploy / validate / sync / orchestrate
 
 ## 5. skills 和 commands：比 agent 列表更有复用价值的那层
 
-如果只盯着命名 agent，会严重低估这个仓库真正可复用的部分。以 `financial-analysis` 这个核心 vertical plugin 为例，截至本文写作时它承载了 14 个 skill 和对应的 slash command，覆盖了金融建模最常用的操作：
+如果只盯着命名 agent，会严重低估这个仓库真正可复用的部分。以 `financial-analysis` 这个核心 vertical plugin 为例，截至 2026 年 9 月核对时它承载了 13 个 skill 和 7 条 slash command，覆盖了金融建模最常用的操作：
 
 | Skill | Command | 做的事情 |
 | ------ | ------ | ------ |
@@ -168,10 +168,10 @@ scripts/                             ← deploy / validate / sync / orchestrate
 - **investment-banking**：`/one-pager`、`/cim`、`/teaser`、`/buyer-list`、`/merger-model`、`/process-letter`、`/deal-tracker`
 - **equity-research**：`/earnings`、`/earnings-preview`、`/initiate`、`/model-update`、`/morning-note`、`/sector`、`/thesis`、`/catalysts`、`/screen`
 - **private-equity**：`/source`、`/screen-deal`、`/dd-checklist`、`/dd-prep`、`/unit-economics`、`/returns`、`/ic-memo`、`/portfolio`、`/value-creation`、`/ai-readiness`
-- **wealth-management**：`/client-review`、`/financial-plan`、`/rebalance`、`/client-report`、`/proposal`、`/tlh`
-- **fund-admin**：`/gl-recon`、`/break-trace`、`/accruals`、`/nav-tieout`
 
-仓库还在 partner-built 目录下单独放了 LSEG 和 S&P Global 的插件。把第三方数据商放进一级目录，说明 Anthropic 对金融数据层的边界有清醒判断：金融工作流的数据层一家模型公司写不完，最终要和数据商生态对接。LSEG 插件管债券相对价值、互换曲线、外汇 carry 和期权波动率；S&P Global 插件管 tear sheets、财报预览和融资摘要。
+不是每个垂直包都带命令。fund-admin 和 operations 只有 skill、没有 slash command——总账对账（gl-recon、break-trace）、应计（accrual-schedule）、NAV 勾稽（nav-tieout）这些技能由 agent 在工作流里自动调用，不需要分析师手动触发。仓库曾在 2026 年 9 月前提供过 wealth-management 垂直包（客户检视、财务规划、再平衡等六条命令），已在 9 月中旬的 PR #349 中移除，本文不再展开。
+
+仓库还在 partner-built 目录下单独放了 LSEG 和 S&P Global 的插件。把第三方数据商放进一级目录，说明 Anthropic 对金融数据层的边界有清醒判断：金融工作流的数据层一家模型公司写不完，最终要和数据商生态对接。LSEG 插件管债券相对价值、互换曲线、外汇 carry、期权波动率和宏观利率监控；S&P Global 插件管 tear sheets、财报预览和融资摘要。这两个插件各自带独立的 `.mcp.json`，数据走合作方自己的通道。
 
 > **自测**：你已经装了 Market Researcher agent，团队里的分析师还想单独用 `/earnings` 命令写季报点评。应该再装 equity-research vertical plugin 吗？提示：想想 agent 是 self-contained 的，slash commands 从哪来。
 
@@ -181,23 +181,25 @@ scripts/                             ← deploy / validate / sync / orchestrate
 
 **触发。** 一位投行分析师在 Cowork 里激活 Pitch Agent，输入目标公司名称和交易场景（sell-side M&A）。
 
-**第一段：数据接入与模型构建。** Agent 先通过 MCP connector 拉数据——comps 数据可能从 FactSet 或 CapIQ 来，precedents 从内部 deal database 来。`comps-analysis` skill 自动触发，生成可比公司分析。分析师审一轮后，`dcf-model` skill 启动，跑 DCF 估值。这一步结束后，agent 停下——guardrail 要求 banker 在模型阶段审核。
+**第一段：数据接入与模型构建。** Agent 先通过 MCP connector 拉数据——pitch-agent 的 cookbook 里挂了 CapIQ 和 Daloopa 两个数据源，comps 和 precedents 从这里来。`comps-analysis` skill 自动触发，生成可比公司分析。分析师审一轮后，`dcf-model` skill 启动，跑 DCF 估值。这一步结束后，agent 停下——guardrail 要求 banker 在模型阶段审核。
 
 **第二段：deck 生成。** 审核通过后，`pitch-deck` skill 填充公司定制的 PowerPoint 模板（模板本身通过 `/ppt-template` 命令预先教给了系统）。`ib-check-deck` skill 做一致性检查。deck 生成后 agent 再次停下，第二次人工审核。
 
-**第三段：托管部署面。** 如果平台团队决定把同一条工作流挂到后端，他们会拿 `managed-agent-cookbooks/pitch-agent/agent.yaml`，运行 `scripts/deploy-managed-agent.sh pitch-agent`。部署脚本解析 agent.yaml 中的文件引用，上传 skills，创建 leaf-worker 子 agent，然后 POST orchestrator 到 `/v1/agents`。之后编排层通过 `scripts/orchestrate.py` 参考实现来路由 `handoff_request` 事件。
+**第三段：托管部署面。** 如果平台团队决定把同一条工作流挂到后端，他们会拿 `managed-agent-cookbooks/pitch-agent/agent.yaml`，运行 `scripts/deploy-managed-agent.sh pitch-agent`（脚本支持 `--dry-run`，依赖 jq 和带 pyyaml 的 python3）。这份 manifest 声明模型为 `claude-opus-4-7`，system prompt 直接引用 `plugins/agent-plugins/pitch-agent/agents/pitch-agent.md` 这一份文件，另带 researcher、modeler、deck-writer 三个子 agent。部署脚本解析这些文件引用，上传 skills，创建 leaf-worker 子 agent，然后 POST orchestrator 到 `/v1/agents`。之后编排层通过 `scripts/orchestrate.py` 参考实现来路由 `handoff_request` 事件。
 
 这个流程里人工卡点有两处：模型完成后一次，deck 完成后一次。两次停下来都出于同一个原因：金融场景里某些判断必须留在人手里，与模型能力是否够用无关。Pitch Agent 替分析师做了两件重体力活：跨数据源拼信息和按模板生成 deck。签字的节点没有让出去。
 
-走 Managed Agents 路径还多一层：部署脚本要你提前设好 `CAPIQ_MCP_URL`、`DALOOPA_MCP_URL`、`FACTSET_MCP_URL` 等环境变量。少了这些，命令能跑，数据接不进来。同样装完 agent，有的团队觉得效果好，有的觉得"只是演示"——差距主要出在数据层有没有接上，模型侧反倒不是瓶颈。
+走 Managed Agents 路径还多一层：部署前要按 cookbook 设好数据源环境变量——pitch-agent 需要 `CAPIQ_MCP_URL` 和 `DALOOPA_MCP_URL`，manifest 里的 `${CAPIQ_MCP_URL}` 占位符由部署脚本从环境读入后替换。少了这些，命令能跑，数据接不进来。同样装完 agent，有的团队觉得效果好，有的觉得"只是演示"——差距主要出在数据层有没有接上，模型侧反倒不是瓶颈。
 
 > **自测**：Pitch Agent 的工作流里有两个人工卡点，分别在哪两步之后？如果把这两个卡点拿掉会发生什么——答案不是"不合规"，想得更具体一些：产出物在哪个环节最可能出错？
 
 ## 7. MCP 连接器：离生产最近的那层，也是最远的那层
 
-`financial-analysis` 核心插件集中管理所有数据连接器，截至本文写作时接入的有 11 个：Daloopa、Morningstar、S&P Global、FactSet、Moody's、MT Newswires、Aiera、LSEG、PitchBook、Chronograph、Egnyte。
+`financial-analysis` 核心插件集中管理所有数据连接器，截至 2026 年 9 月核对时接入的有 12 个：Daloopa、Morningstar、S&P Global、FactSet、Moody's、MT Newswires、Aiera、LSEG、PitchBook、Chronograph、Egnyte、Box。
 
-每个 MCP 接入通常需要供应商订阅或 API key——Anthropic 自己也写了这条注释。这带来两个直接后果：
+所有连接器都写在 `plugins/vertical-plugins/financial-analysis/.mcp.json` 里，形态统一是远程 HTTP 服务——每条配置只有 `type: http` 和一个 `https://mcp.<厂商>/...` 形式的 URL，没有本地进程，没有 SDK 集成。接入动作就是把 URL 指向你有权访问的服务端点。
+
+每个 MCP 端点通常需要供应商订阅或 API key——Anthropic 自己也写了这条注释。这带来两个直接后果：
 
 1. 仓库提供的是"把数据接进工作流的接口形状"，数据本体仍要靠订阅。用这个仓库不等于免费用 Bloomberg 或 CapIQ 的数据。
 2. 越接近生产场景，越需要把内部的系统——研究库、CRM、文档库、审计系统——通过 MCP 接进来，公开大模型本身撑不起金融工作流的数据层。
@@ -210,7 +212,7 @@ scripts/                             ← deploy / validate / sync / orchestrate
 
 ### 8.1 分析师直接上手：Cowork
 
-最短路径。在 Cowork 里进 Settings → Plugins → Add plugin，粘贴 `https://github.com/anthropics/claude-for-financial-services`，然后从市场列表里挑需要的 agent 和 vertical。也可以直接把 `plugins/` 下某个目录打包成 zip 上传。
+最短路径。在 Cowork 里进 Settings → Plugins → Add plugin，粘贴 `https://github.com/anthropics/financial-services`，然后从市场列表里挑需要的 agent 和 vertical。也可以直接把 `plugins/` 下某个目录打包成 zip 上传。
 
 优点快，适合验证"这个工作流值不值得做"。缺点堆在另一边：能控制的范围基本停在插件层，和企业自定义编排、审计、权限体系之间还有距离。
 
@@ -219,7 +221,7 @@ scripts/                             ← deploy / validate / sync / orchestrate
 不想立刻给团队装完整 agent，只想先试 `/comps`、`/dcf`、`/earnings`、`/ic-memo` 这类单条命令，用 Claude Code 装 vertical plugin 更合适：
 
 ```bash
-claude plugin marketplace add anthropics/claude-for-financial-services
+claude plugin marketplace add anthropics/financial-services
 claude plugin install financial-analysis@claude-for-financial-services
 claude plugin install investment-banking@claude-for-financial-services
 claude plugin install equity-research@claude-for-financial-services
@@ -244,7 +246,7 @@ Anthropic 在文档里标得很清楚：子 agent 委派能力 `callable_agents`
 2. 再在 Claude Code 装 `financial-analysis` 和一个对应 vertical plugin，确认 slash commands、skills 和 connectors 是否符合实际工作习惯。
 3. 只有前面两步跑通，再去看 Managed Agents，把它接进审批、调度和审计流程。
 
-最小可试装的起点就是前面那段 4 行命令。如果是 Managed Agents 路径，部署前还必须补齐对应数据源的 MCP 地址——Pitch Agent、Market Researcher、GL Reconciler 这些 cookbook 都要求先设好 `CAPIQ_MCP_URL`、`DALOOPA_MCP_URL`、`FACTSET_MCP_URL`、`GL_MCP_URL` 等环境变量。
+最小可试装的起点就是前面那段 4 行命令。如果是 Managed Agents 路径，部署前要按 cookbook 补齐对应数据源的 MCP 地址：Pitch Agent 用 `CAPIQ_MCP_URL` 和 `DALOOPA_MCP_URL`，Market Researcher 用 `CAPIQ_MCP_URL` 和 `FACTSET_MCP_URL`，GL Reconciler 用 `GL_MCP_URL` 和 `SUBLEDGER_MCP_URL`——每个 agent 的变量清单以它自己那份 agent.yaml 为准。
 
 > **自测**：一个做私募尽调的 5 人小团队，没有后端开发人员。他们该从 Cowork、Claude Code + vertical plugin、还是 Managed Agents 开始？如果他们半年后招了平台工程师，又该往哪条路径迁移？
 
@@ -312,7 +314,7 @@ Anthropic 在文档里标得很清楚：子 agent 委派能力 `callable_agents`
 
 **Cowork 里装了 agent，但 slash commands 不出现。** slash commands 定义在 `vertical-plugins/<vertical>/commands/` 下。如果你只装了命名 agent 而没有装对应的 vertical plugin，agent 仍然能跑（因为 skills 已打包），但显式的 slash commands 不会出现在命令面板里。想用 `/comps`、`/dcf` 这类命令，要么装对应的 vertical plugin，要么确认你装的 agent 本身就暴露了这些命令。
 
-**Managed Agent 部署后 `orchestrate.py` 报 handoff 超时。** `scripts/orchestrate.py` 是参考事件循环，不是生产级编排器。它假设你的 agent 之间的 handoff 在默认超时内完成。如果你的 agent 要拉大量数据（比如跑一次完整的 comps + DCF + LBO 模型），handoff_request 的响应时间可能远超参考实现的等待窗口。解决办法是自己写编排层的超时和重试逻辑——Anthropic 提供的是骨架，没有提供现成的重试策略。
+**直接拿 `orchestrate.py` 当生产编排器。** `scripts/orchestrate.py` 自己的文件头写着 REFERENCE ONLY——它只示范事件循环的形状：订阅源 agent 的会话事件流，从输出文本里用正则提取 `handoff_request`，校验后调用 steer 把任务转给目标 agent。没有重试，没有持久化，没有失败恢复，这些都要你的编排层（Temporal、Airflow 或事件总线）自己补。它还自带一条值得照搬的安全缓解：handoff 是从模型输出文本里解析的，被处理文档里可能被注入伪造的 handoff_request，所以脚本对目标 agent 做了硬白名单、对 payload 做了 schema 校验——你自己的编排层至少要做到这两条。
 
 **Agent 跑出来的数字和 Bloomberg 终端对不上。** agent 拉的数据来自你配置的 MCP 连接器，不是 Anthropic 自带的金融数据库。如果你配的是 FactSet，结果和 Bloomberg 不一致是正常的——数据源本身就有差异。这属于金融数据行业的常态，不构成 bug。解决办法是统一团队使用的数据源，或者写一个 cross-source reconciliation skill 来做差异说明。
 
@@ -320,8 +322,8 @@ Anthropic 在文档里标得很清楚：子 agent 委派能力 `callable_agents`
 
 - [Anthropic 开源仓库：financial-services](https://github.com/anthropics/financial-services)
 - [仓库 README](https://raw.githubusercontent.com/anthropics/financial-services/main/README.md)
-- [Managed-agent templates 目录](https://github.com/anthropics/financial-services/tree/main/managed-agent-cookbooks)
-- [Claude Managed Agents API 文档](https://platform.claude.com/docs/en/api/managed-agents)
+- [Managed-agent cookbooks 目录](https://github.com/anthropics/financial-services/tree/main/managed-agent-cookbooks)（每个 agent 一份 `agent.yaml` 与安全说明）
+- [Managed Agents 参考事件循环 orchestrate.py](https://github.com/anthropics/financial-services/blob/main/scripts/orchestrate.py)
 - [Claude Cowork 产品页](https://claude.com/product/cowork)
 - [Model Context Protocol (MCP) 规范](https://modelcontextprotocol.io/)
 
@@ -329,20 +331,20 @@ Anthropic 在文档里标得很清楚：子 agent 委派能力 `callable_agents`
 
 ## 自测题
 
-1. **插件系统的三层结构（plugins/、external_plugins/、marketplace.json 远程插件）分别是什么？**
-   - 参考答案：plugins/ 是 Anthropic 官方维护的插件；external_plugins/ 是第三方合作插件（经审核）；marketplace.json 远程插件是第三方插件（指向外部 Git 仓库）
+1. **仓库的三层内容（agent-plugins/、vertical-plugins/、managed-agent-cookbooks/）各自承载什么？**
+   - 参考答案：agent-plugins/ 是 10 个自包含的命名 agent（system prompt + 打包的 skills 副本）；vertical-plugins/ 是按垂直场景组织的可复用 skills、slash commands 和 MCP 连接器（源文件在这层）；managed-agent-cookbooks/ 是把同一套 prompt 和 skills 包装成可通过 Managed Agents API 托管部署的模板（agent.yaml + 子 agent + steering 示例）
 
 2. **Pitch Agent 的工作流里有两个人工卡点，分别在哪两步之后？**
    - 参考答案：模型完成后一次，deck 完成后一次。如果把这两个卡点拿掉，产出物在数字溯源、模板一致性、合规表述这几个环节最可能出错。
 
-3. **MCP 连接器的四种类型（stdio、SSE、HTTP、WebSocket）分别适用什么场景？**
-   - 参考答案：stdio：本地工具，调起子进程（如 PostgreSQL、clangd）；SSE：托管服务，支持 OAuth（如 GitHub、GitLab）；HTTP：REST API 直连；WebSocket：实时双向通信（消息推送场景）
+3. **仓库的 MCP 连接器是什么形态？接上数据的前提是什么？**
+   - 参考答案：全部是远程 HTTP 服务，`.mcp.json` 里每条配置只有 `type: http` 加一个厂商端点 URL。端点通常需要供应商订阅或 API key——仓库提供接口形状，不提供数据本体。
 
-4. **插件安全策略的三项检查（has_broad_scope_hooks、has_undisclosed_telemetry、description_matches_behavior）分别防什么？**
-   - 参考答案：has_broad_scope_hooks：防止插件监听全局事件窃取数据；has_undisclosed_telemetry：强制声明所有外向网络调用；description_matches_behavior：确保 README 与实际行为一致，避免伪装。
+4. **文中提到哪些写进 agent 定义的 guardrails？**
+   - 参考答案：Pitch Agent 在模型完成和 deck 生成后各停一次等 banker 审核；Earnings Reviewer 要求所有数字可溯源，找不到来源标 `[UNSOURCED]`，且永不对外发布（发布需资深分析师签字）；KYC Screener 只给建议，风险评级由合规官决定。
 
-5. **开发一个 MCP 服务器时，工具的 description 字段应该怎么写？**
-   - 参考答案：说明工具的用途（实现细节交给代码）、列举典型的输入格式和输出示例、指明适用场景和禁忌场景。
+5. **改了 vertical 源文件之后，为什么 agent 行为可能没变化？该做什么？**
+   - 参考答案：命名 agent 打包了 skills 副本（`agent-plugins/<slug>/skills/`），读的是副本不是 vertical 源文件。需要跑 `python3 scripts/sync-agent-skills.py` 把更新推到所有打包了该 skill 的 agent；推送前可用 `scripts/check.py` 校验副本与源是否一致。
 
 ---
 
@@ -356,12 +358,12 @@ Anthropic 在文档里标得很清楚：子 agent 委派能力 `callable_agents`
 ### 阶段二：验证命令和技能（2-4 周）
 - 在 Claude Code 装 `financial-analysis` 和一个对应 vertical plugin
 - 确认 slash commands、skills 和 connectors 是否符合实际工作习惯
-- 测试 `/validate` 的方法论审查是否帮到团队
+- 试着改一条 skill 源文件，跑 `python3 scripts/sync-agent-skills.py` 观察 agent 行为如何跟着变（仓库的 `check.py`/`validate.py` 脚本用于校验 manifest 和引用完整性）
 
 ### 阶段三：接入数据源（1-3 个月）
-- 配置 MCP 连接器（FactSet、CapIQ、Snowflake 等）
-- 设置环境变量（`CAPIQ_MCP_URL`、`DALOPRA_MCP_URL`、`FACTSET_MCP_URL` 等）
-- 跑通完整工作流（从触发到产出）
+- 把 `.mcp.json` 里的连接器指向你有订阅的端点（FactSet、CapIQ、Daloopa 等 12 个任选）
+- 在 Cowork 或 Claude Code 里跑通一条带真实数据的完整工作流（从触发到产出）
+- 如果要走 Managed Agents，再按所选 cookbook 设好环境变量（`CAPIQ_MCP_URL`、`DALOOPA_MCP_URL` 等，以 agent.yaml 里的占位符为准）
 
 ### 阶段四：生产部署（3 个月+）
 - 看 `managed-agent-cookbooks/`，把工作流接进审批、调度、事件系统
@@ -387,33 +389,19 @@ Anthropic 在文档里标得很清楚：子 agent 委派能力 `callable_agents`
 <details>
 <summary>参考答案（以 Pitch Agent 为例）</summary>
 
-**Agent 系统提示词**：`agent-plugins/pitch-agent/agents/pitch-agent.md`
+**Agent 系统提示词**：`agent-plugins/pitch-agent/agents/pitch-agent.md`——pitch-agent 的 cookbook 就是通过 `system.file` 引用这份文件。
 
-**Skills**（在 `vertical-plugins/financial-analysis/skills/` 中）：
-- `comps`（可比公司分析）
-- `dcf`（贴现现金流建模）
-- `earnings`（盈利预测与复盘）
-- `risk-factors`（风险因子识别）
-- `management-track-record`（管理层跟踪）
-- ...（可能更多）
+**Skills**（打包副本在 `agent-plugins/pitch-agent/skills/`，共 11 个）：3-statement-model、audit-xls、comps-analysis、dcf-model、deck-refresh、ib-check-deck、lbo-model、pitch-deck、pptx-author、sector-overview、xlsx-author。注意 pitch-deck 来自 investment-banking、sector-overview 来自 equity-research——一个 agent 的技能包会跨垂直包取材，这正是 sync 脚本存在的原因。
 
-**Commands**（在 `vertical-plugins/financial-analysis/commands/` 中）：
-- `/comps`
-- `/dcf`
-- `/earnings`
-- ...（可能更多）
+**Commands**（在 `vertical-plugins/financial-analysis/commands/` 中）：`/comps`、`/dcf`、`/lbo`、`/3-statement-model`、`/debug-model`、`/competitive-analysis`、`/ppt-template`。命令只在 vertical 层定义，agent 层不重复。
 
-**MCP 连接器**（在 `.mcp.json` 中）：
-- FactSet MCP
-- CapIQ MCP
-- Snowflake/BigQuery（如果配置）
-- ...
+**MCP 连接器**：仓库级在 `plugins/vertical-plugins/financial-analysis/.mcp.json`（12 个远程 HTTP 端点）；pitch-agent 的托管部署另在 cookbook 的 agent.yaml 里挂 `capiq` 和 `daloopa` 两个 `mcp_toolset`。
 
 **三层关系**：
 - Agent 系统提示词（`agent-plugins/pitch-agent/agents/pitch-agent.md`）定义角色和行为边界
-- Skills（`vertical-plugins/financial-analysis/skills/`）提供领域知识和分析框架
+- Skills 提供领域知识和分析框架，源文件在 vertical 层，agent 打包同步副本
 - Commands（`vertical-plugins/financial-analysis/commands/`）提供显式触发入口
-- MCP 连接器（`.mcp.json`）连接外部数据源
+- MCP 连接器（`.mcp.json` / agent.yaml 的 `mcp_servers`）连接外部数据源
 
 </details>
 
@@ -424,141 +412,65 @@ Anthropic 在文档里标得很清楚：子 agent 委派能力 `callable_agents`
 **任务**：为 `financial-services` 仓库配置一个 MCP 连接器，让 AI 能够查询金融数据。
 
 **要求**：
-1. 选择一个 MCP 连接器（FactSet、CapIQ、Snowflake 等）
+1. 选择一个你团队有订阅的 MCP 连接器（FactSet、CapIQ、Morningstar 等）
 2. 在 `.mcp.json` 中添加配置
 3. 测试连接器是否能正常工作（AI 是否能调用工具）
 4. 验证 Skill 是否能正确注入
 
 <details>
-<summary>参考答案（以 FactSet MCP 为例）</summary>
+<summary>参考答案（以 FactSet 为例）</summary>
 
-**.mcp.json 配置示例**：
+仓库里的连接器是远程 HTTP 端点，不是本地进程。在 `plugins/vertical-plugins/financial-analysis/.mcp.json` 的 `mcpServers` 里确认或修改 `factset` 条目（仓库自带的默认值是 `https://mcp.factset.com/mcp`）：
 
 ```json
 {
   "mcpServers": {
     "factset": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-factset"],
-      "env": {
-        "FACTSET_API_KEY": "your-api-key",
-        "FACTSET_API_SECRET": "your-api-secret"
-      }
+      "type": "http",
+      "url": "https://mcp.factset.com/mcp"
     }
   }
 }
 ```
 
 **测试步骤**：
-1. 启动 Claude Cowork 或 Claude Code
-2. 输入 `/comps TSLA US Equity`
-3. 检查 AI 是否自动调用了 FactSet MCP 连接器的 `get-company-data` 工具
-4. 检查生成的可比公司分析是否符合 `comps` Skill 中定义的最佳实践
+1. 确认你持有的 FactSet 订阅覆盖该 MCP 端点（README 注明"接入可能需要供应商订阅或 API key"）
+2. 启动 Claude Cowork 或 Claude Code，装载 financial-analysis 插件
+3. 让 Claude 拉一家公司的市场数据，观察回复是否引用了 FactSet 的数据
+4. 对一个你已知答案的数字（如某公司最近一季营收）交叉核对，确认数据真的接通了
 
 **常见问题**：
-- API 密钥错误：检查 `FACTSET_API_KEY` 和 `FACTSET_API_SECRET` 是否正确
-- MCP 服务器未启动：确认 `npx -y @modelcontextprotocol/server-factset` 能正常运行
-- AI 没有调用工具：检查 Skill 文件中的触发条件是否匹配
+- 端点无响应：确认你的网络环境能访问 `mcp.factset.com`，企业内网常需代理放行
+- 连上了但没有数据：订阅权限不含对应数据集，联系数据商开通
+- 想换内部数据源：把 URL 指向公司自己的 MCP 服务即可，配置形态完全相同
 
 </details>
 
 ---
 
-### 练习 3：创建一个自定义 Skill
+### 练习 3：读懂官方 skill，再写一个自己的
 
-**任务**：为你的团队创建一个自定义 Skill，用于生成投资委员会（IC）备忘录。
+**任务**：private-equity 垂直包自带 `ic-memo` skill（投资委员会备忘录）。先读懂它，再为你们团队流程里仓库没有覆盖的文档写一个新 skill。
 
 **要求**：
-1. 在 `vertical-plugins/financial-analysis/skills/` 下创建 `ic-memo/` 目录
-2. 创建 `SKILL.md` 文件，编码 IC 备忘录的结构模板
-3. 定义 Skill 的触发条件（何时自动激活）
-4. 测试 Skill 是否能正确注入
+1. 读 `plugins/vertical-plugins/private-equity/skills/ic-memo/SKILL.md`，总结它的结构：触发条件怎么写、输出结构怎么组织、有没有硬性检查项
+2. 选一个你们团队特有、仓库没覆盖的文档（如内部立项周报、投后季度回顾）
+3. 仿照官方 skill 的写法，在 `vertical-plugins/<对应垂直>/skills/` 下新建目录和 SKILL.md
+4. 改完后跑 `python3 scripts/sync-agent-skills.py`，观察打包副本如何更新
 
 <details>
-<summary>参考答案</summary>
+<summary>要点提示（以官方 ic-memo 的实际写法为例）</summary>
 
-**Skill 文件** (`vertical-plugins/financial-analysis/skills/ic-memo/SKILL.md`)：
+官方 ic-memo 的 SKILL.md 分三段 Workflow：先列 Gather Inputs 清单（历史财务、尽调发现、交易条款、回报测算等缺一不可）；再给标准备忘录结构——执行摘要、公司概况、行业与市场、财务分析、投资论点、交易条款与结构、回报测算、风险因子、建议（Proceed / Pass / Conditional proceed）九节，每节标了篇幅和内容要求；最后规定输出格式（默认 .docx，可用 Markdown，财务部分必须用表格）。
 
-```markdown
-# IC 备忘录生成技能
+写自己的 skill 时照着做四件事：
 
-## Skill 触发条件
-- 对话涉及"投资委员会"、"IC 备忘录"、"投资决策"
-- 对话涉及"尽职调查"、"DD 报告"
-- 用户输入 `/ic-memo` 命令
+- **frontmatter**：name 和 description 决定 Claude 何时自动调用这个技能，官方 description 会写明触发语（如 "write IC memo"、"deal write-up"）
+- **固定结构**：官方 skill 把每节的内容要求和页数都写死——固定结构是可签字底稿的前提
+- **边界约束**：它的 Important Notes 规定"正反两方都要陈述、不淡化风险、缺输入要问而不是假设交易条款"——这和 agent 的 guardrails 是同一设计思想
+- **数据来源**：先收集输入再动笔，财务表必须勾稽一致（EBITDA 桥、Sources & Uses、回报测算相互对得上），你的 skill 也要写清数据从哪来，否则 Claude 只能编
 
-## IC 备忘录结构
-1. 执行摘要（1-2 页）
-   - 交易概览（目标公司、行业、交易规模）
-   - 推荐动作（批准/拒绝/推迟）
-   - 核心投资逻辑（3-5 个关键点）
-   - 核心风险（3-5 个关键点）
-
-2. 市场机会（3-5 页）
-   - 市场规模（TAM/SAM/SOM）
-   - 市场增长率
-   - 市场驱动力
-   - 竞争格局
-
-3. 公司分析（5-8 页）
-   - 商业模式
-   - 产品/服务
-   - 客户基础
-   - 竞争优势（护城河）
-   - 管理团队
-
-4. 财务分析（3-5 页）
-   - 历史财务表现（P&L、资产负债表、现金流量表）
-   - 财务预测（3-5 年）
-   - 估值分析（DCF、Comps、Precedent Transactions）
-   - 投资回报分析（IRR、MoIC）
-
-5. 风险评估（2-3 页）
-   - 市场风险
-   - 执行风险
-   - 财务风险
-   - 监管风险
-   - 缓解措施
-
-6. 交易结构（1-2 页）
-   - 投资金额
-   - 股权比例
-   - 估值
-   - 治理权
-   - 退出策略
-
-7. 附录
-   - 详细财务模型
-   - 可比公司分析详情
-   - 管理层访谈记录
-   - 第三方报告
-
-## 写作风格
-- 结论先行，支持数据在后
-- 量化结果，用数据说话
-- 风险要具体，附上缓解措施
-- 避免模糊语言（"可能"、"也许"），使用确定性语言（"预计"、"大概率"）
-
-## 数据来源
-- 公司提供的财务数据（P&L、资产负债表、现金流量表）
-- 市场研究 reports（第三方）
-- 可比上市公司数据（Capital IQ、FactSet）
--  precedent transactions（Capital IQ、FactSet）
-- 管理层访谈
-
-## 验证清单
-- [ ] 财务模型是否平衡（资产 = 负债 + 权益）
-- [ ] 估值倍数是否在合理范围内（P/E、EV/EBITDA）
-- [ ] 投资回报是否符合基金回报要求（通常 IRR > 20%，MoIC > 2x）
-- [ ] 风险是否充分披露
-- [ ] 退出策略是否可行
-```
-
-**测试步骤**：
-1. 启动 Claude Cowork 或 Claude Code
-2. 输入 `/ic-memo` 或说"生成一份 IC 备忘录"
-3. 检查 AI 是否自动激活 `ic-memo` Skill
-4. 检查生成的 IC 备忘录是否符合 Skill 文件中定义的结构
+写完记得：新 skill 要进哪个 vertical、哪些 agent 需要打包它（跑 sync 脚本）、要不要配一条 slash command（在 `commands/` 下加同名 .md）。
 
 </details>
 
@@ -566,12 +478,11 @@ Anthropic 在文档里标得很清楚：子 agent 委派能力 `callable_agents`
 
 ## 资料口径说明
 
-1. **来源标注**：本文以 [anthropics/financial-services](https://github.com/anthropics/financial-services) 仓库的 README、managed-agent-cookbooks 目录说明和若干 agent guardrail 文档为准，并比对仓库最新主干内容做了事实校验。
-2. **时效性**：仓库内容会随版本更新，文中涉及的 agent 数量、skill 数量、连接器数量以本文写作时（2026 年 5 月）的主干为准，后续可能变化。
-3. **示例数据**：文中涉及的公司名称、股票代码、金额、时间等示例数据均为说明性内容，非真实业务数字。
-4. **功能边界**：本文描述的是仓库当前状态，Anthropic 可能在不通知的情况下调整 agent 功能、增加或下线某些 skills/commands/connectors。
-5. **适用场景**：本文的采用路径和建议基于 Anthropic 官方文档和常见金融工作流程，你的团队可能需要根据实际情况调整。
-6. **合规要求**：如果您的团队在受监管金融行业（投资银行、私募股权、资产管理等），在使用 AI 生成分析报告、投资建议或投资决策支持前，请先完成合规审批。
+1. **来源与版本锚点**：本文事实口径为 [anthropics/financial-services](https://github.com/anthropics/financial-services) 主干 2026 年 9 月 28 日状态，关键声明（agent 清单、skills/commands 计数、MCP 连接器、环境变量、guardrails、安装命令）逐条对照该日 README、`.mcp.json`、agent 定义文件与 managed-agent-cookbooks 核实。文首信息卡的 Stars/Forks 为 2026-09-28 读数。
+2. **时效边界**：这个仓库演进频繁——发文半年内就经历了 wealth-management 移除（PR #349，2026-09-11）与连接器扩容（+Box）。安装命令、目录结构与计数请以你实际拉取的版本为准，本文的核对方法（README + 目录列表 + 源文件逐条对照）可以复用。
+3. **示例数据**：任务流案例中的公司名称、交易场景为说明性设定，非真实业务数字。
+4. **功能边界**：本文描述仓库当前状态，Anthropic 可能在不通知的情况下调整 agent 功能、增删 skills/commands/connectors。
+5. **合规要求**：受监管金融机构在将 AI 生成内容用于分析报告、投资建议或决策支持前，请先完成内部合规审批。
 
 ---
 

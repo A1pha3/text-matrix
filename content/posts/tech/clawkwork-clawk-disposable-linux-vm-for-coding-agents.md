@@ -1,7 +1,7 @@
 ---
 title: "clawk 拆解：把 coding agent 放进一次性 VM 之后，问题变成内存怎么还、流量怎么拦"
 date: 2026-07-16T02:27:02+08:00
-lastmod: "2026-09-21T00:00:00+08:00"
+lastmod: "2026-10-02T00:00:00+08:00"
 draft: false
 slug: clawkwork-clawk-disposable-linux-vm-for-coding-agents
 github_repo: "clawkwork/clawk"
@@ -15,7 +15,7 @@ tags: ["Go", "Coding Agent", "AI Agent", "开源"]
 >
 > **读法**：先给一句判断，再按"进程模型 → 内存 → 网络 → 控制面"四条主线拆开，每条都指出它防的是哪一种真实故障；ticket 流转与 9p 撤回两节把这些机制串起来，文末留了复核命令。
 >
-> **核对基线与边界**：内容对齐 `clawkwork/clawk` 的 `main` 分支提交 `a67d04f`（2026-08-12，v0.4.0 的发布提交是次日 2026-08-13），核对时间 2026-09-21。本文没有实跑 clawk——本机没有 Go 1.26 工具链，也没有安装它或起过 VM。所有结论来自仓库源码与仓库自带文档，关键处标了 `文件:行号`；启动耗时、内存占用这类必须执行才能定案的数字，文中一处也不给。
+> **核对基线与边界**：内容对齐 `clawkwork/clawk` 的 `main` 分支提交 `a67d04f`（2026-08-12，v0.4.0 的发布提交是次日 2026-08-13），核对时间 2026-10-02。本文没有实跑 clawk——本机没有 Go 1.26 工具链，也没有安装它或起过 VM。所有结论来自仓库源码与仓库自带文档，关键处标了 `文件:行号`；启动耗时、内存占用这类必须执行才能定案的数字，文中一处也不给。
 
 ## 一句话判断
 
@@ -29,17 +29,17 @@ clawk 想解决的问题不新：agent 要么每条命令都问你一次，要�
 
 ## 项目坐标
 
-| 项 | 值（2026-09-21 核对） |
+| 项 | 值（2026-10-02 核对） |
 |:---|:---|
 | 仓库 | [clawkwork/clawk](https://github.com/clawkwork/clawk)，`main`，`a67d04f` |
 | 定位 | 给编码智能体一次性 Linux microVM 的 Go 命令行工具（CLI），macOS 优先，Linux 标为实验性 |
 | 许可 | Apache-2.0；`NOTICE` 列出两个被复制改造的第三方组件：`clawkwork/gvisor-tap-vsock` 分支（Apache-2.0）与 hcsshim 的 ext4 写入器（MIT） |
 | 发布 | 仓库建在 2026-07-06，v0.1.0 次日发布；v0.2.0 在 07-13，v0.3.0 在 08-05，v0.4.0 在 08-13 |
-| 活跃度 | `main` 最后一次提交 2026-08-12，距核对日 40 天；1,012 stars、39 forks；贡献者 1 人（`celrenheit`，33 次提交）；2 个未关闭 issue、2 个未关闭 PR |
+| 活跃度 | `main` 最后一次提交 2026-08-12，距核对日 51 天；1,023 stars、40 forks；贡献者 1 人（`celrenheit`，33 次提交）；2 个未关闭 issue、2 个未关闭 PR |
 | 规模 | `git ls-files` 355 个文件；`machine/` 是独立 Go module，靠 `replace` 接进来 |
 | 语言与下限 | Go 1.26（`go.mod:3`）；发行二进制自带 guest 侧程序，用户机不需要 Go |
 
-一个只发布到 v0.4.0、由一个人推进、一个多月没动的仓库，值不值得单独写一篇。值得的理由只有一条：它内部有几处决策把"踩过的那次故障"直接写进了注释，这类材料在别处读不到。同类的本地 microVM 与容器方案，站内已有 [apple/container](/posts/tech/apple-container-macos-lightweight-vm-containers/) 与 [microsandbox](/posts/tech/microsandbox-local-microvm-runtime/) 两篇，但都没有把这三问放到一起处理。
+一个只发布到 v0.4.0、由一个人推进、快两个月没动的仓库，值不值得单独写一篇。值得的理由只有一条：它内部有几处决策把"踩过的那次故障"直接写进了注释，这类材料在别处读不到。同类的本地 microVM 与容器方案，站内已有 [apple/container](/posts/tech/apple-container-macos-lightweight-vm-containers/) 与 [microsandbox](/posts/tech/microsandbox-local-microvm-runtime/) 两篇，但都没有把这三问放到一起处理。
 
 ## 目录
 
@@ -120,13 +120,13 @@ v0.4.0 加的 swap 是这套内存机制的第四块，而它的原因是气球�
 
 实现里有两处细节对得上前面的判断。swap 走自己那块稀疏 virtio-blk 设备而不是 rootfs 上的 swapfile，因为 `swapon(2)` 拒绝带洞文件，写成文件就会按整块大小实打实吃掉宿主磁盘；默认 2 GiB 是上限而非分配，从不换出的沙箱只为它付几百字节的目录项（`internal/sandbox/swapdisk.go:26-33`）。`clawk-init` 自己按 `linux/swap.h` 的 version-1 布局写盘头，magic `SWAPSPACE2` 落在 `[pagesize-10, pagesize)`。不外调 `mkswap(8)` 的理由与它直接改 `/etc/passwd` 建用户同源：rootfs 是任意 OCI 镜像，没人保证里面有 util-linux（`internal/agentembed/init_main.go.in:352-356`）。
 
-气球控制器则要学会看换出量。冷页换出会抬高 `MemAvailable` 又压低 PSI，两个信号同时把这个 guest 读成"很宽松"，不去干预就会把正在干活的 guest 永远停在基线上。所以 `swapTrend` 只在换出量增长时压制回收，静默累计 24 次报告（约两分钟）后放开（`machine/vz/balloon.go:96-167`）；占用会锁存，槽位只在对应页被换回来时释放，光看水位等于永久免死。还有一个不利的对称性：`swapon` 请求了 `SWAP_FLAG_DISCARD`，但两个后端的 virtio-blk 都不宣告 discard 支持，内核于是丢掉这个标志。换出的页在沙箱销毁前不会还回宿主，所以那个数字要按高水位读；也正因为如此，设备稀疏不等于可以随便调大（`internal/sandbox/swapdisk.go:32-37`）。
+气球控制器则要学会看换出量。冷页换出会抬高 `MemAvailable` 又压低 PSI，两个信号同时把这个 guest 读成"很宽松"，不去干预就会把正在干活的 guest 永远停在基线上。所以 `swapTrend` 只在换出量增长时压制回收，静默累计 24 次报告（约两分钟）后放开（`machine/vz/balloon.go:113-167`）；占用会锁存，槽位只在对应页被换回来时释放，光看水位等于永久免死。还有一个不利的对称性：`swapon` 请求了 `SWAP_FLAG_DISCARD`，但两个后端的 virtio-blk 都不宣告 discard 支持，内核于是丢掉这个标志。换出的页在沙箱销毁前不会还回宿主，所以那个数字要按高水位读；也正因为如此，设备稀疏不等于可以随便调大（`internal/sandbox/swapdisk.go:32-37`）。
 
 ## 网络：过滤点在 guest 之下
 
 "agent 有 root、能改 `/etc/resolv.conf`、能装 iptables"是这类工具所有网络策略的共同失效点。clawk 的解法是把过滤放在 guest 内核之外。整台 VM 的三层（网关、DHCP、DNS、NAT）都是 daemon 进程里的 gVisor 用户态协议栈，出向连接在拨号之前先查 allowlist。补丁打在那个 gvisor-tap-vsock 分支上（`go.mod:5-7` 用 `replace` 指过去），挂钩点是四条：出向 TCP SYN、UDP 流、ICMP echo，以及 DNS 应答（`ARCHITECTURE.md:51-57`）。除了这几类，其它 IP 协议根本不转发（`SECURITY.md:11-14`）。
 
-内置白名单 `DefaultAllowedDomains`（`internal/config/types.go:230-379`）有 139 条不重复域名，30 条是 `*.` 前缀的通配。五类分布是：AI 服务 16 条，包管理器 53 条，代码托管与镜像仓库 20 条，云基础设施 34 条，发行版源 16 条。这份清单也划出了它防什么、不防什么：`github.com` 与 `*.github.com` 都在里面。
+内置白名单 `DefaultAllowedDomains`（`internal/config/types.go:230-379`）有 139 条不重复域名，30 条是 `*.` 前缀的通配。五类分布是：AI 服务 16 条，包管理器 53 条，代码托管与镜像仓库 20 条，云基础设施 34 条，发行版源 16 条。这份清单也提前写出了一条失效边界：`github.com` 与 `*.github.com` 都在里面，是预放行的。
 
 规则语义有三条，都跟直觉不一样：
 
@@ -238,7 +238,7 @@ v0.3.0 把它撤了，原因不在性能。Go 的模块缓存和 Cargo 的 regis
 | 分阶段钩子、宿主推文件 | 有 | 无 |
 | 会话历史进 git | 有 | 未接，需要先补一次 copy-out |
 
-Linux 侧的权限模型另有一层设计：造网桥和 TAP 要 `CAP_NET_ADMIN`，clawk 不用 sudo 拿到它——在你自己拥有的命名空间里你就是自己网络=root。所以允许非特权用户命名空间的宿主上，起一台沙箱全程零特权操作，宿主上也不出现任何 clawk 网卡。被禁时退回 bridge 模式，用 `sudo ip` 建设备，每台沙箱最多提示一次、绝不在后台 daemon 里提示；Ubuntu 24.04 之后常见，因为 AppArmor 默认禁非特权 userns，一条 `sysctl` 可解（`docs/commands.md:190-221`）。`CLAWK_NET_MODE=rootless` 能让它在这种机器上直接失败而不偷偷退回 sudo。
+Linux 侧的权限模型另有一层设计：造网桥和 TAP 要 `CAP_NET_ADMIN`，clawk 不用 sudo 拿到它——在属于自己的命名空间里，你就是自己网络的 root。所以允许非特权用户命名空间的宿主上，起一台沙箱全程零特权操作，宿主上也不出现任何 clawk 网卡。被禁时退回 bridge 模式，用 `sudo ip` 建设备，每台沙箱最多提示一次、绝不在后台 daemon 里提示；Ubuntu 24.04 之后常见，因为 AppArmor 默认禁非特权 userns，一条 `sysctl` 可解（`docs/commands.md:190-221`）。`CLAWK_NET_MODE=rootless` 能让它在这种机器上直接失败而不偷偷退回 sudo。
 
 ## 版本边界：哪项能力从哪个版本起
 
@@ -267,7 +267,7 @@ Linux 侧的权限模型另有一层设计：造网桥和 TAP 要 `CAP_NET_ADMIN
 
 不适合的四种情况，都能指到具体缺口：需要 GPU（整个仓库没有任何 GPU 直通相关代码或文档）；需要 Windows guest 或 Intel Mac（FAQ 直接写 No，macOS 要 14+ 且 Apple silicon）；要在 Linux 上用反向转发、ssh-agent 或分阶段钩子（v0.4.0 仍未接通）；以及把"agent 读到的都可能被发出去"当不可接受风险的人。github.com 在内置白名单里，转发的 ssh-agent 能推，所以白名单拦的是往未知地址外传，拦不住数据外流本身。
 
-还有两个和成熟度有关的事实要摆明。仓库自己写着 Pre-1.0、版本之间会有破坏性变更（`README.md:62-65`）；CI 跑两个模块的 build / vet / test 和跨平台编译，但两个 job 都不起真 VM。端到端启动测试挡在 `TEST_GUEST_BOOT` 后面，还需要 `/dev/kvm`（`.github/workflows/ci.yml:5-7`）。也就是说"这条路径在真机器上还行不通"目前主要靠作者本机跑。
+还有两个和成熟度有关的事实要摆明。仓库自己写着 Pre-1.0、版本之间会有破坏性变更（`README.md:62-65`）；CI 跑两个模块的 build / vet / test 和跨平台编译，但两个 job 都不起真 VM。端到端启动测试挡在 `TEST_GUEST_BOOT` 后面，还需要 `/dev/kvm`（`.github/workflows/ci.yml:5-7`）。也就是说，端到端路径在真机器上能不能跑通，目前主要靠作者本机验证。
 
 ## 五道自测题
 
@@ -310,7 +310,7 @@ Linux 侧的权限模型另有一层设计：造网桥和 TAP 要 `CAP_NET_ADMIN
 下面几条命令能对本文最硬的那些断言重跑一遍，前两条只需要 `gh` 认证，后面的需要先 `git clone`：
 
 ```bash
-# 发布节奏与仓库现状（本文写的是 2026-09-21 的快照）
+# 发布节奏与仓库现状（本文写的是 2026-10-02 的快照）
 gh api repos/clawkwork/clawk --jq '{st:.stargazers_count,pushed:.pushed_at,lic:.license.spdx_id}'
 gh api repos/clawkwork/clawk/releases --jq '.[]|{tag:.tag_name,pub:.published_at}'
 gh api 'search/issues?q=repo:clawkwork/clawk+type:issue+state:open' --jq .total_count

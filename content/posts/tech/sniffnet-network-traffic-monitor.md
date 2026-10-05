@@ -1,55 +1,55 @@
 ---
 title: "Sniffnet：Rust 跨平台网络流量监控工具架构解析"
 date: "2026-04-27T19:40:00+08:00"
+lastmod: "2026-09-30T00:00:00+08:00"
 slug: sniffnet-network-traffic-monitor
 github_repo: "GyulyVGC/sniffnet"
 source_key: "gh:GyulyVGC/sniffnet"
-description: "Sniffnet 是一款使用 Rust 和 iced 框架构建的跨平台网络流量监控工具，支持 PCAP 导入导出、实时流量图表、地理定位、协议识别等功能。本文从架构设计角度深入解析其主要模块、技术选型和性能优化策略。"
+description: "Sniffnet 是一款用 Rust 和 iced 构建的跨平台网络流量监控工具，提供实时图表、进程归属、地理定位、端口服务识别、BPF 过滤与 PCAP 导入导出。本文对照 v1.5.1 源码解析其线程模型、编译期服务表与跨平台权限设计。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Rust", "跨平台"]
+tags: ["Rust", "跨平台", "网络监控"]
 ---
 
 ## 快速信息卡
 
 | 属性 | 值 |
 |------|-----|
-| **GitHub Stars** | 37,000+ |
-| **GitHub Forks** | 1,400+ |
+| **GitHub Stars** | 41,300+（2026-09-30 检索） |
+| **GitHub Forks** | 1,900+（同上） |
 | **主要语言** | Rust（edition 2024） |
 | **开源协议** | MIT OR Apache-2.0 |
-| **GUI 框架** | iced 0.14（wgpu 加速） |
-| **当前版本** | v1.5.1 |
-| **项目定位** | 跨平台网络流量监控工具 |
+| **GUI 框架** | iced 0.14（v1.5.0 迁移） |
+| **当前版本** | v1.5.1（2026-07-22 发布） |
+| **界面语言** | 26 种 |
+| **项目定位** | 面向普通用户的跨平台网络流量监控工具 |
 
 ---
 
 # Sniffnet：Rust 跨平台网络流量监控工具架构解析
 
-Sniffnet 真正解决的不是"怎么抓到数据包"——抓包这件事 libpcap 早就做完了。它解决的是两个更难的问题：把一瞬间的原始字节流，整理成普通人能一眼看懂的连接视图；以及让这一过程在 Windows、macOS、Linux 三套权限模型下都跑得通。理解它的架构，关键在看清它如何在"抓包"和"展示"之间切出一层清晰的分隔，并把跨平台的差异化悄悄塞进这一层的边界里。
+Sniffnet 真正解决的不是"怎么抓到包"——这件事 libpcap 早就做完了。它解决两件更难的事：把持续的原始字节流整理成普通人一眼能看懂的连接视图；让这条链路在 Windows、macOS、Linux 三套权限模型下都跑得通。它的架构要点，是在抓包线程和界面之间切出一条消息边界，再把跨平台的差异压进边界两侧各自的实现里。
 
-## 学习目标
+读完这篇解析，你会带走：
 
-读完本文后，你应该能够：
+- 抓包线程与界面线程的边界在哪里，为什么这样切
+- 服务识别为什么选编译期烘焙成静态哈希表，代价是什么
+- 三个平台的抓包权限与进程识别来源各是什么
+- 什么场景该用它，什么场景该换 Wireshark
 
-- 理解 Sniffnet 的技术选型理由（为什么选择 Rust + iced）
-- 区分 Sniffnet 的模块职责（networking、gui、chart、notifications）
-- 成功从源码构建 Sniffnet，并理解 pcap 抓包流程
-- 针对你的场景判断 Sniffnet 是否合适（替代 Wireshark？补充监控？）
-- 理解跨平台差异处理（Windows 权限、macOS 授权、Linux capabilities、程序识别来源差异）
+文中机制描述对照 `main` 分支 v1.5.1 源码；Stars、Fork 与版本信息检索于 2026-09-30。
 
 ---
 
 ## 目录
 
 - [快速信息卡](#快速信息卡)
-- [学习目标](#学习目标)
 - [项目背景与定位](#项目背景与定位)
-- [整体架构：两块主线和一条边界](#整体架构两块主线和一条边界)
+- [整体架构：两个线程域和一条消息边界](#整体架构两个线程域和一条消息边界)
 - [技术选型决策分析](#技术选型决策分析)
-- [主要模块深度解析](#主要模块深度解析)
+- [服务识别的编译期烘焙](#服务识别的编译期烘焙)
 - [一次数据包的完整旅程](#一次数据包的完整旅程)
-- [性能优化策略](#性能优化策略)
+- [性能与稳定性设计](#性能与稳定性设计)
 - [跨平台差异处理](#跨平台差异处理)
 - [开发与扩展](#开发与扩展)
 - [常见问题与故障排查](#常见问题与故障排查)
@@ -61,56 +61,64 @@ Sniffnet 真正解决的不是"怎么抓到数据包"——抓包这件事 libpc
 
 ## 项目背景与定位
 
-Sniffnet 是意大利开发者 Giuliano Bellini 用 Rust 写的开源网络流量监控应用，GitHub 标星超过 37,000，Fork 超过 1,400，支持 Windows、macOS、Linux 三大平台，界面翻译超过 20 种语言。
+Sniffnet 是开发者 Giuliano Bellini（GitHub ID：GyulyVGC）用 Rust 写的开源网络流量监控应用，目前 41,300+ Stars、1,900+ Forks，支持 Windows、macOS、Linux，界面翻译覆盖 26 种语言。版本节奏可以看出来活跃度：v1.4.0（2025-06）引入 PCAP 导入和 ARP 支持，v1.4.1（2025-09）加入 BPF 过滤和 AppImage，v1.5.0（2026-04）带来进程归属、iced 0.14 迁移和适配器流量预览，v1.5.1（2026-07）补上连接延迟显示和反向 DNS 线程池。
 
-它想服务的既不是资深安全研究员的取证需求，也不是运维手里的全流量分析平台，而是"我想知道我电脑现在到底在和谁说话"的普通用户。这个定位决定了它靠直觉完成的事，多数监控工具要靠命令行参数完成。
+它想服务的既不是安全研究员的取证需求，也不是运维的全流量分析平台，而是"我想知道我电脑现在到底在和谁说话"的普通用户。这个定位决定了：别人靠命令行参数完成的事，它靠界面直觉完成；也决定了它不做深度包检测——认服务靠端口号，不拆应用层载荷。
 
-**能力一览：**
+**能力一览**（版本为该能力首次出现的版本）：
 
 | 功能 | 说明 |
 |------|------|
-| 适配器选择 | 选择本机任意网络适配器进行监控 |
-| 流量过滤 | BPF 过滤器精准筛选流量 |
-| PCAP 导入导出 | 兼容 Wireshark 生态 |
-| 实时统计 | 流量速率、连接数、协议分布 |
-| 地理定位 | 基于 MaxMind GeoIP 定位 IP 归属地 |
-| 协议识别 | 内置 6000+ 上层服务、协议、木马、蠕虫识别 |
-| 程序级监控 | 识别产生网络流量的应用（Windows/macOS/Linux/BSD） |
-| 告警通知 | 自定义规则触发系统通知 |
+| 适配器选择与预览 | 选择本机网络适配器；v1.5.0 起初始页可预览各适配器流量图 |
+| 流量过滤 | BPF 过滤器（v1.4.1 起），也支持按 IP、端口、协议、程序的界面过滤 |
+| PCAP 导入导出 | 导入自 v1.4.0 起，兼容 Wireshark 生态 |
+| 实时统计 | 上下行速率、连接数、协议分布、流量环图（v1.4.0 起） |
+| 地理定位 | 内置 GeoLite2 数据库，归属地与 ASN 直接可查 |
+| 服务识别 | 按"端口 + 传输协议"对照 12,000+ 条映射，覆盖 6,400+ 个服务名 |
+| 进程归属 | 显示产生流量的应用与图标（v1.5.0 起，三平台） |
+| 连接延迟 | 显示各连接延迟（v1.5.1 起） |
+| 告警通知 | 自定义规则触发系统通知；v1.4.2 起支持远程 webhook |
+| IP 黑名单 | 导入自定义黑名单（v1.5.0 起），标记可疑连接 |
+| 暂停恢复 | 抓包中途暂停与恢复（v1.4.2 起） |
 
 ---
 
-## 整体架构：两块主线和一条边界
+## 整体架构：两个线程域和一条消息边界
 
-读代码前，先抓住 Sniffnet 内部其实是两条在时间尺度上完全不同的主线：
+读代码前，先抓住 Sniffnet 内部两个在时间尺度上完全不同的线程域：
 
-- **抓包链路（高频、铁定顺序）**：网卡 → pcap → 协议解析 → 结构化数据包。这条线只做一件事，不关心界面。
-- **展示链路（低频、响应交互）**：连接状态聚合 → 图表 → 页面渲染。这条线关心的是"当前有哪些连接、速率多少"，而不是单个数据包。
+- **抓包域（高频、节奏固定）**：原生线程 `thread_parse_packets` 跑抓包循环，读包、解析、聚合，把更新写进异步通道。这条线不碰任何界面代码。
+- **界面域（低频、响应交互）**：iced 主循环消费通道里的消息，更新连接表、速率曲线和统计数字，然后重绘。
 
-两条线之间用一条异步通道隔开，通道传送的是已经解析好的 `ParsedPacket`。这条边界的意义在于：抓包线程永远不被界面卡住拖慢，而界面线程也永远不需要面对原始字节。
+两条域之间用 `async-channel` 隔开，通道里传的是已经聚合好的流量更新（`BackendTrafficMessage`），不是单个数据包。这条边界的意义在于：抓包线程永远不等界面，界面也永远不面对原始字节。这套异步通道是 v1.4.0 引入的（PR #806），此前的耦合方式在流量大时明显吃力。
+
+另外还有一条辅助链路：反向 DNS 查询由一个独立线程池处理（v1.5.1 改造），请求队列也走 `async-channel`，多个线程共享消费——一个慢查询不会再拖住所有域名解析。
 
 ```
 [网络适配器]
-     ↓ pcap 捕获（内核 BPF 先过滤一层）
-[networking::parse_packets]     抓包链路
-     ↓ 解析为 ParsedPacket
-[async-channel]                 ←── 边界（解耦点）
+     ↓ pcap 捕获（BPF 过滤在内核先行）
+[thread_parse_packets]            抓包域（原生线程）
+     ↓ 解析 + 聚合为流量更新
+[async-channel]                   ←── 消息边界（解耦点）
+     ↓ iced Subscription 收消息
+[iced 0.14 主循环 update/view]     界面域
      ↓
-[gui::manage_packets]           展示链路
-     ↓ 更新统计与环形缓冲
-[iced GUI rendering]
+[连接表 · 速率曲线 · 进程归属 · 国旗]
 ```
 
-模块职责矩阵：
+模块职责矩阵（路径相对仓库根目录）：
 
-| 模块 | 职责 | 关键类型 |
+| 模块/路径 | 职责 | 关键类型 |
 |------|------|----------|
-| networking | 抓包设备管理、数据包读取 | Capture, Packet |
-| networking::parse_packets | 协议解析、流量分类 | IpHeader, TransportHeader |
-| gui::manage_packets | 数据包汇总、状态更新 | State, Message |
-| chart | 实时图表渲染 | Chart, Series |
-| notifications | 规则匹配、告警触发 | Rule, Notification |
-| report | PCAP 文件读写 | pcap::Writer, pcap::Reader |
+| src/networking/capture.rs | 起抓包线程、装配会话、rDNS 线程池 | CaptureContext, CaptureSource |
+| src/networking/parse_packets.rs | 抓包循环、etherparse 解析调度 | packet_stream, LaxPacketHeaders |
+| src/networking/manage_packets.rs | 服务识别、按连接聚合统计 | get_service, InfoAddressPortPair |
+| src/networking/types/program_lookup.rs | 端口→进程反查（v1.5.0 起） | ProgramLookup, Program |
+| src/mmdb | GeoLite2 国家/ASN 数据库读取 | MmdbReader |
+| src/chart | 实时图表渲染 | Chart, Series |
+| src/notifications | 告警规则匹配与触发 | Rule, Notification |
+| src/report | PCAP 导入导出的记录读写 | Savefile |
+| src/gui | 页面、组件与主题 | Sniffer（iced 应用） |
 
 ---
 
@@ -118,22 +126,24 @@ Sniffnet 是意大利开发者 Giuliano Bellini 用 Rust 写的开源网络流�
 
 ### 为什么选择 Rust
 
-Rust 给 Sniffnet 带来三个实际好处。
+Rust 给 Sniffnet 三个实际好处，外加一条工程纪律。
 
-**内存安全与零成本抽象的平衡。** 网络监控应用长时间运行，抓到的每个数据包都绑定到原始缓冲区的生命周期。Rust 的所有权和借用检查在编译期保证这些缓冲区在解析期间始终有效，杜绝悬垂引用和数据竞争，又不引入运行时开销。对一个从网卡持续灌数据的程序来说，这直接决定了它能跑多久不出事。
+**内存安全与零成本抽象的平衡。** 网络监控应用长时间运行，抓到的每个数据包都绑定到原始缓冲区的生命周期。Rust 的所有权和借用检查在编译期保证这些缓冲区在解析期间始终有效，不引入运行时开销。对一个从网卡持续灌数据的程序来说，这直接决定了它能跑多久不出事。
 
-**异步并发模型。** tokio 让抓包、渲染、GeoIP 反查三件耗时不同的事各自跑在独立的异步任务里，之间用 `async-channel` 传递数据。开发者不需要手写锁和条件变量，也能保证不会因为抓包阻塞了界面。
+**多线程分发天然清晰。** 抓包线程、rDNS 线程池、端口反查线程各自持有自己的数据，跨线程只走通道。所有权模型让"谁拥有这条连接的统计"在编译期就有答案，不需要靠约定。
 
-**二进制分发友好。** Rust 编译产物静态链接，部署时不需要在目标机器装运行时。Windows 用户下载 MSI、macOS 用户加载 DMG、Linux 用户跑 AppImage，开箱即用。
+**二进制分发友好。** 编译产物静态链接，目标机器不需要装运行时。Windows 用户下载 MSI，macOS 用户加载 DMG，Linux 用户跑 DEB/RPM/AppImage，开箱即用。
+
+工程纪律也在收紧：main 分支的 workspace 配置已全仓禁用 unsafe（`unsafe_code = "forbid"`），`unwrap_used`、`expect_used`、`panic` 在 clippy pedantic 之下全部设为告警——这组约束尚未随版本发布，但对一个要长期挂在用户后台跑的抓包工具，方向比功能列表更能说明态度。
 
 ### GUI 框架选型：iced
 
-Rust 生态里的 GUI 框架有 egui、iced、relm4、dioxus 等。Sniffnet 选 iced，理由有三点。
+Rust 生态里的 GUI 框架有 egui、iced、relm4、dioxus 等。Sniffnet 选 iced，并且在 v1.5.0 完成了从旧版到 iced 0.14 的整体迁移（PR #1032）。选它的理由有三点。
 
-**声明式 UI 与单向数据流。** iced 移植了 Elm 的 "State → View → Message" 模型：应用状态是一个纯数据结构，通过纯函数渲染成界面；用户交互产生消息，消息驱动状态更新，状态再触发重绘。这个模型天然避开了 GTK/Qt 那套信号槽回调，也让状态可以整体被序列化、测试和复现。
+**声明式 UI 与单向数据流。** iced 沿用 Elm 的模型：应用状态是一个纯数据结构，view 函数把它渲染成界面；用户交互产生 Message，update 函数应答消息、修改状态，状态再触发重绘。这套模型和"抓包线程持续推送状态更新"的形态天然契合——后端消息就是 Message 的一种。
 
 ```rust
-// iced 的编程模型：view 是纯函数，update 应答消息
+// iced 的编程模型示意：view 是纯函数，update 应答消息
 fn view(&self) -> Element<Message> {
     Column::new()
         .push(Text::new(&self.status))
@@ -149,207 +159,181 @@ fn update(&mut self, message: Message) {
 }
 ```
 
-**硬件加速渲染。** iced 底层基于 wgpu，能吃到 GPU 渲染红利。对流量图表这种高频重绘的界面，CPU 软件渲染很容易成为瓶颈，wgpu 通过 Vulkan、Metal、DirectX 12 把三套平台统一到同一份代码。
+**渲染后端有兜底。** iced 0.14 的渲染栈同时支持 wgpu（GPU 加速）和 tiny-skia（CPU 软件渲染），两者都启用时走 fallback 组合：优先 wgpu，GPU 初始化失败自动落到 tiny-skia。对流量图表这种高频重绘的界面，GPU 渲染是主力；而对 GPU 驱动不正常的机器，软件渲染保证程序至少能用。
 
-**跨平台控件抽象。** iced 为按钮、输入框、下拉菜单提供了统一的实现，写一套界面代码，三端渲染成各自的原生外观，Sniffnet 不用为每个平台单独写 UI。
+**跨平台控件抽象。** 按钮、输入框、下拉菜单有统一实现，一套界面代码三端通用。页面包括欢迎页（v1.5.0 起带动画）、初始页、Overview、Inspect、连接详情、Notifications、缩略图模式，以及设置页（常规/通知/外观三个子页）。
 
 ### 关键依赖分析
 
-**pcap crate（网络抓包）**
+下表来自 v1.5.1 的 Cargo.toml，全部核实过：
 
-Rust 的 `pcap` crate 封装了 libpcap。Sniffnet 在初始化时打开指定适配器、设置 BPF 过滤器，然后进入循环读包。`pcap` crate 用的是同步 API，Sniffnet 把它放进一个专门的异步任务里跑，避免阻塞其他部分。
+| 依赖 | 版本 | 职责 |
+|------|------|------|
+| pcap | 2.4 | libpcap 封装，抓包会话与 BPF |
+| etherparse | 0.20.3 | 链路层到传输层的协议解析 |
+| async-channel | 2.5 | 抓包域与界面域之间的消息通道 |
+| iced | 0.14 | GUI 框架（features：tokio、svg、lazy、image 等） |
+| phf + phf_codegen | 0.14 | 编译期完美哈希表，服务识别（build.rs 生成） |
+| maxminddb | 0.30 | 读取 GeoLite2 国家/ASN 数据库 |
+| plotters + plotters-iced2 | 0.3 / 0.14 | 2D 图表绘制并嵌入 iced |
+| listeners | 0.6 | 按（端口， 协议）跨平台反查进程 |
+| picon | 0.1 | 程序图标获取 |
+| dns-lookup | 3.0 | 反向 DNS 解析 |
+| surge-ping | 0.9 | 连接延迟测量（v1.5.1 起） |
+| confy | 2.0 | 配置持久化 |
+| clap | 4.6 | 命令行参数 |
+| prefix-trie | 0.9 | IP 黑名单的 CIDR 匹配 |
+| rfd | 0.17 | PCAP 导入导出的文件对话框 |
+| rodio | 0.22 | 通知提示音播放 |
+| reqwest | 0.13 | 检查新版本 |
+
+**抓包层：pcap crate。** Sniffnet 在 `CaptureContext` 里装配会话，实际参数如下（摘自 src/networking/types/capture_context.rs，注释为原文含义）：
 
 ```rust
-use pcap::Capture<pcap::Active>;
-
-// 打开网络适配器并启用混杂模式
-let mut cap = Capture::from_device("eth0")?
-    .promisc(true)
-    .snaplen(65535)
+let inactive = Capture::from_device(device.to_pcap_device())?;
+let cap = inactive
+    .promisc(false)              // 不开混杂模式，只看本机收发的流量
+    .buffer_size(2_000_000)      // 2 MB 缓冲，约容 1 万个 200 字节的包
+    .snaplen(if pcap_out_path.is_some() {
+        i32::from(u16::MAX)      // 要写 PCAP 文件时保留完整帧（65535）
+    } else {
+        200                      // 平时只留每包前 200 字节
+    })
+    .immediate_mode(false)
+    .timeout(150)                // 无包时每 150ms 返回一次，保证界面持续刷新
     .open()?;
-
-// 设置 BPF 过滤器，例如只捕获 HTTP 流量
-cap.filter("tcp port 80")?;
 ```
 
-**etherparse（网络包解析）**
+注意这里有两个反直觉的选择：混杂模式是关的（监控对象就是本机，没必要收整个网段的包）；普通抓包的 snaplen 只有 200 字节——判定服务、协议、方向只需要头部，负载字节直接截掉，同样的 2 MB 缓冲就能多容 30 倍的包。只有导出 PCAP 时才把 snaplen 提到 65535 保留完整帧。BPF 过滤器只在用户填写时应用（`set_bpf`），写错会直接返回错误而不是静默忽略。
 
-原始 pcap 数据是 Ethernet II 帧，要一层层剥开才能拿到 TCP/UDP 负载。`etherparse` 提供从链路层到传输层的解析，支持 IPv4/IPv6、TCP/UDP/ICMP，也能识 GRE、VLAN 等隧道协议。
+**解析层：etherparse。** v1.5.1 直接依赖 etherparse 0.20.3 做二三层解析。抓包线程先看链路类型，再选对应的解析入口（src/networking/parse_packets.rs，节选）：
 
 ```rust
-use etherparse::{IpHeader, SlicedPacket};
-
-fn parse_packet(data: &[u8]) -> Result<(), ()> {
-    match SlicedPacket::from_ethernet(data) {
-        Ok(value) => {
-            match &value.ip {
-                Some(IpHeader::Version4(header, _)) => {
-                    println!("IPv4: {} -> {}", header.source, header.destination);
-                }
-                _ => {}
-            }
-        }
-        Err(_) => return Err(())
+match my_link_type {
+    MyLinkType::Ethernet(_) => LaxPacketHeaders::from_ethernet(packet).ok(),
+    MyLinkType::RawIp(_) | MyLinkType::IPv4(_) | MyLinkType::IPv6(_) => {
+        LaxPacketHeaders::from_ip(packet).ok()
     }
-    Ok(())
+    MyLinkType::LinuxSll(_) => from_linux_sll(packet, true),
+    // ...
 }
 ```
 
-**maxminddb（GeoIP 定位）**
+以太网卡走标准解析，裸 IP 接口走 `from_ip`，Linux 的 `any` 虚拟接口（SLL 链路类型，v1.4.1 起支持）有专门入口。协议覆盖 TCP、UDP、ICMPv4/v6、ARP，剥出源/目的 IP、端口、协议类型和字节数，交给上层聚合。
 
-MaxMind 的 GeoLite2 数据库包含全球 IP 段到国家/城市/ASN 的映射。`maxminddb` crate 提供内存映射读取，单次查询是微秒级。Sniffnet 把查询结果缓存起来，同一 IP 只查一次，避免反复命中磁盘映射。
+顺带看一眼 main 分支的动向：解析代码正在被抽成独立 crate `sniffnet-packet-parser`（基于 etherparse 0.21，新增 IGMP 与 VLAN 支持，已单独发布到 crates.io），产出统一的 `ParsedPacket` 结构。这个重构尚未随正式版本发布，读 v1.5.1 源码看到的仍是 etherparse 直接调用。
 
-**plotters（数据可视化）**
+**地理定位：maxminddb + 内置数据库。** GeoLite2 的国家库和 ASN 库直接打包在安装包里（resources/DB/*.mmdb），开箱可用，不要求用户去 MaxMind 注册下载。`maxminddb` 读内存映射，单次查询微秒级，结果按 IP 缓存。
 
-`plotters` 是 Rust 生态里最成熟的 2D 图表库，折线、柱状、散点、热力图都有。`plotters-iced2` 把它接到 iced 里，让 Sniffnet 能在界面内嵌动态刷新的速率曲线和协议分布图。
+**图表：plotters + plotters-iced2。** `plotters` 负责画速率曲线和分布图，`plotters-iced2` 把它接进 iced 的渲染管线，版本号与 iced 0.14 对齐。
 
 ---
 
-## 主要模块深度解析
+## 服务识别的编译期烘焙
 
-### 网络抓包流程
+Sniffnet 把"这个端口上跑的是什么服务"做成了一张编译期生成的静态哈希表，这是全项目最能体现取舍的一处。
 
-networking 模块是数据引擎，核心逻辑在 `networking/mod.rs`。它有五步：
+数据源是仓库根目录的 `services.txt`：文件头写明它由 nmap 的 nmap-services 自动生成，"Don't edit this file manually"。当前 12,093 条端口/协议映射，覆盖 6,466 个不同的服务名（README 对外口径"6000+ upper layer services"，含协议、木马、蠕虫条目）。
 
-1. **设备枚举**：`pcap::Device::list()` 拉出本机所有适配器，带名称和描述。
-2. **设备打开**：选定适配器后，`Capture::from_device()` 建会话。Linux 需要 `CAP_NET_RAW` 权限。
-3. **过滤器编译**：`filter()` 把 BPF 表达式编成内核过滤程序，不匹配的包在内核就被丢掉，减少进用户空间的拷贝。
-4. **抓包循环**：`while let Ok(packet) = cap.next_packet()` 同步读包，解析后经通道发出去。
-5. **收尾**：程序退出自动关 pcap 句柄，释放适配器。
+`build.rs` 在编译期把它读进来，用 `phf_codegen` 烘焙成一张 `phf::Map<ServiceQuery, Service>`，键是 `(端口, TCP/UDP)` 二元组，生成的代码写进 `OUT_DIR/services.rs`，再由 `manage_packets.rs` include 进来。构建脚本里有硬断言：`assert_eq!(num_entries, 12093)`——条目数对不上就直接编译失败。运行时查表是 O(1)，代价是改表必须重编译，还有断言这道门。
 
-常用 BPF 过滤器：
+查找逻辑比"查一次表"更讲究。`get_service` 对源、目的两个端口各查一次，然后按分数取优：
 
-```
-# 只捕获目标端口为 443 的 HTTPS 流量
-tcp dst port 443
+- 查到服务的端口才有分；
+- 知名端口（< 1024）记 3 分，其余记 1 分；
+- 远端端口加 1 分（组播/广播流量则给目的端口加 1 分）。
 
-# 捕获特定网段的入站流量
-src net 192.168.1.0/24
+比如本机 52341 端口连远端 443：两端都命中时，远端 443 以"知名端口 + 远端"的 4 分胜出，连接被标为 https。这套评分解决了"源端口恰好撞上知名端口号"时的误判。另外，build.rs 还会在 debug 构建下用 rustrict 检查服务名，把 nmap 表里的不雅名称挡在编译期。
 
-# 排除 DNS 流量
-not port 53
-```
-
-### 协议识别与端口映射
-
-`parse_packets.rs` 把 `SlicedPacket` 转成应用需要的结构化数据：
-
-```rust
-pub struct ParsedPacket {
-    pub timestamp: DateTime<Utc>,
-    pub src_ip: IpAddress,
-    pub dst_ip: IpAddress,
-    pub src_port: u16,
-    pub dst_port: u16,
-    pub protocol: TransportProtocol,
-    pub payload_size: usize,
-    pub process_id: Option<u32>,  // v1.5 起三端可用
-}
-```
-
-应用层识别依赖项目根目录的 `services.txt`。这份文件有看点：**它不在运行时被反复遍历**。`build.rs` 在编译期把它读进来，烘焙进一张由 `phf` 生成的静态完美哈希表，覆盖 **6000+ 上层服务**（含协议、木马、蠕虫）。也就是说，运行时根据"端口 + 传输协议"定位服务名是 O(1) 的精确查找，代价是改一次表就要重编译。这个取舍对静态文件合理，但对"想热更新协议库"的开发者就要注意。
-
-服务名查找键是 `(端口, TCP/UDP)` 二元组，这就是为什么同样的端口号 TCP 和 UDP 可能对应不同协议。
-
-### GUI 页面架构
-
-iced 应用通常把状态收敛进一个大 Struct。Sniffnet 的页面状态包括：
-
-**Overview（总览页面）**：当前适配器的实时上下行速率、连接数、协议分布饼图、各协议字节占比。
-
-**Inspect（检查页面）**：表格列出所有检测到的连接，可按源/目的 IP、端口、协议过滤，点开单条看详情。
-
-**Notifications（通知页面）**：管理告警规则，例如"192.168.1.100 的 22 端口出现流量时通知我"。规则匹配在每次数据包处理时同步进行。
-
-**Settings（设置页面）**：主题切换、语言、过滤器、通知音效等。
+这个设计的边界也要说清：认服务靠端口对照，不做应用层指纹识别。端口上跑的不是登记协议时（比如 443 上跑非 TLS 流量），标签就会失真——这是静态表方案的固有代价，Sniffnet 选择用简单换性能和确定性。
 
 ---
 
 ## 一次数据包的完整旅程
 
-用一个具体场景把上面拆散的机制串起来：你启动 Sniffnet，选了 Wi-Fi 适配器，浏览器打开 `https://example.com`。
+用一个具体场景把机制串起来：你启动 Sniffnet，选了 Wi-Fi 适配器，浏览器打开 `https://example.com`。
 
-1. 你先设置了过滤条件，界面把 `tcp dst port 443` 交给 `Capture::filter()`，编译成内核 BPF 程序。
-2. 内核在网卡驱动层就拦下目标端口不是 443 的包，白费的用户空间拷贝为零。你的 HTTPS 流量通过。
-3. `networking` 线程从 pcap 读到这个 1500 字节左右的以太网帧，交给 `parse_packets`。
-4. `etherparse` 剥掉以太网头拿到 IPv4 头，再剥 IP 层拿到 TCP 头，得到源/目的 IP、端口、协议类型、负载长度。
-5. `parse_packets` 用 `(目的端口 443, TCP)` 键去 phf 哈希表里查一次，命中 `https`，把这包标成 HTTPS。
-6. 一个 `ParsedPacket` 被塞进 `async-channel`。抓包线程立刻回去读下一个包，不等界面。
-7. GUI 线程从通道取出，更新 Overview 页的速率曲线和连接表；同一条连接累加字节数，窗口计数加一。
-8. iced 收到 `Message`，触发一次重绘。你看到速率曲线向上跳了一下。
-9. 如果 GeoIP 数据库里有目标 IP，`maxminddb` 查一次国家并缓存；`Inspect` 页那行连接旁边就多了一面国旗。
+1. 界面把可选的 BPF 过滤（比如 `tcp dst port 443`）交给会话装配，`set_bpf` 把表达式编译成内核过滤程序。不匹配的包在内核就被丢掉，不消耗用户空间拷贝。
+2. `capture.rs` 起一个原生线程 `thread_parse_packets`，进入抓包循环。pcap 每次交付帧的前 200 字节，负载已经被截掉。
+3. etherparse 按链路类型剥头（`LaxPacketHeaders`）：以太网头、IPv4 头、TCP 头，得到源/目的 IP、端口、协议、字节数。
+4. `get_service` 拿 `(443, TCP)` 和本机临时端口各查一次 phf 表，评分后命中 `https`。
+5. 这条连接的统计写进以 `AddressPortPair` 为键的聚合表：字节数、包数累加，首末时间戳更新，方向和消息类型归类。没有逐包对象长期留存。
+6. 聚合更新装进 `BackendTrafficMessage`，从 `async-channel` 发出去。抓包线程立刻回去读下一个包，不等界面。
+7. iced 的 Subscription 收到消息，update 更新连接表和速率统计，view 重绘——Overview 页的曲线跳一下，Inspect 页多出一行连接。
+8. 如果这是条新连接：固定 5 个线程的 rDNS 线程池反查域名；`ProgramLookup` 把 `(本地端口, 协议)` 发给查找线程，listeners crate 反查归属进程，picon 取回应用图标；GeoLite2 查出国家与 ASN。几步都是异步补齐的，连接先出现，国旗、进程名随后跟上。
+9. v1.5.1 起，这条连接还会显示延迟——用 surge-ping 对远端连发 3 个 ICMP 探测（单发超时 2 秒），取成功回包的平均往返时间。
 
-这一步一步里，真正"抓"的部分在第 2、3 步，剩下的全是在把抓到的数据变成"人看得懂的连接"。这也是理解 Sniffnet 架构的关键——大部分代码不是抓包，而是围绕抓包结果做的整理与呈现。
+九步里真正"抓"的只有第 2 步，其余全是在把抓到的字节变成"人看得懂的连接"。这也是理解 Sniffnet 架构的关键：大部分代码不是抓包，而是围绕抓包结果做的整理与呈现。
 
 ---
 
-## 性能优化策略
+## 性能与稳定性设计
 
-### Release 编译优化
+### Release 编译配置
 
-Cargo.toml 的 release 配置直接反映了对性能的认真程度：
+Cargo.toml 的 release profile：
 
 ```toml
 [profile.release]
-opt-level = 3    # 最高优化级别
-lto = true       # 跨 crate 链接期优化
-strip = true     # 剥离调试符号
-codegen-units = 1 # 单 codegen 单元，换取更多优化空间
+opt-level = 3     # 最高优化级别
+lto = true        # 跨 crate 链接期优化
+strip = true      # 剥离调试符号
+codegen-units = 1 # 单编译单元，换取更大优化空间
 ```
 
-`lto = true` 让编译器能跨 crate 边界做内联和死代码消除。以 pcap 为例，未做 LTO 时调用 pcap 函数有一层函数跳转开销；开启后这些调用能被内联进调用点，减少单包处理路径上的间接跳转。`codegen-units = 1` 会拉长编译时间，但对性能敏感的桌面应用是划算的交换。
+`lto = true` 让编译器跨 crate 边界内联和消除死代码，单包处理路径上的间接跳转随之减少。`codegen-units = 1` 拉长编译时间，对性能敏感的桌面应用是划算的交换。
 
-### 异步并发：channel 而非锁
+### 缓冲与截断的配合
 
-抓包和渲染之间用 `async-channel` 而不是标准库同步 `mpsc`。它的价值在于抓包线程永远不阻塞：缓冲区满时它可以选择丢弃或给界面信号，而不是让抓包停下等界面消费。对实时监控，丢几帧老数据远好过界面拖慢抓包。
+上面提过的三个参数合起来是套完整设计：2 MB 内核缓冲决定突发流量能攒多少包不丢；snaplen 200 让同样大的缓冲容纳约 1 万个包（源码注释原话"2MB buffer -> 10k packets of 200 bytes"）；`timeout(150)` 保证即使没有新包，pcap 读调用每 150 毫秒也返回一次，界面刷新不断档。三者的目标是同一个：突发不丢包，空闲不卡界面。
 
-### 内存守恒
+### 解耦与异步补齐
 
-`Snaplen` 设成 65535，是 pcap 允许的最大单包捕获长度，保证任何帧（包括巨型帧）都有充足缓冲。对绝大多数不到 1500 字节的以太网帧，这不算浪费——缓冲是复用的一块固定内存，不是每包重新申请。
+抓包线程只管产出，界面只管消费，通道满时各自节奏互不牵制。所有昂贵的补齐动作——反查域名、反查进程、查 GeoIP——都异步进行，且带缓存：进程反查结果有效 60 秒，失败后 1.5 秒重试，不会每个包都触发一次系统调用。rDNS 用线程池并发处理，v1.5.1 专门修了"一个慢查询拖住全部解析"的问题。
 
-流量统计用滑动窗口，只保留最近 N 分钟的数据点，超窗数据直接丢弃。连接表也按生命周期裁剪，已结束的连接移出活跃表。这样长时间运行，内存曲线保持平坦，不会线性上涨。
+### 编译期兜底
+
+main 分支的 workspace 配置已全仓禁用 unsafe，配合 clippy pedantic 告警，把内存安全和大量可疑写法挡在 CI 阶段（尚未随版本发布）。服务表的条目数断言、debug 构建的服务名审查，都在编译期把数据文件的问题拦下。运行期的错误处理走显式 Result 传递，v1.4.0 起还专门清理过一批可能崩溃的路径。
 
 ---
 
 ## 跨平台差异处理
 
-跨平台是 Sniffnet 复杂度最高的地方，也是最容易看得出设计功力的部分。抓包读包逻辑三端共用，差异被压在"获取权限""程序识别"这两个点上。
+跨平台是 Sniffnet 复杂度最高的部分。抓包读包逻辑三端共用，差异被压在"获取权限""进程识别""安装形态"三个点上。
 
-在 v1.5 之前，"这个连接是哪个程序发的"只在 Windows 上可查（因为它能从系统连接表拿到进程归属），另两端无从判断。**v1.5 把程序识别扩展到了 Windows、Linux、macOS 甚至 BSD**——各端通过不同的内部机制拿到进程信息：Windows 走系统连接表 API（`netstat -ano` 的数据源），Linux 借助 `netlink` 套接字读取连接对应的进程，macOS 则遍历系统打开的 socket 到进程的映射。三端用不同的底层来源，对外暴露的是同一套能力：在 `Inspect` 页看"这条连接是 Chrome 发的"。
+先说进程识别，因为它最容易传错。这个能力是 v1.5.0 才引入的（PR #1056，修复的是 2019 年开的 issue #170）——在那之前，任何平台都看不到流量归属的进程。v1.5.0 起三平台统一由 listeners crate 的 `get_process_by_port` 按 `(本地端口, 协议)` 反查进程，crate 在各端调用平台专属的底层系统 API 并做缓存，Sniffnet 侧只面对一套接口。查到的进程配上 picon 取回的应用图标，出现在 Inspect 页和连接详情里。
 
 ### Windows
 
-Windows 抓包底层用 **npcap**（libpcap 的 Windows 移植），需要管理员权限。安装包为 MSI，支持静默安装和组策略批量部署。
-
-进程归属的信息来源是系统连接表 API：据"本地端口"反查"拥有该连接的进程 PID"，再把这个 PID 填进 `ParsedPacket.process_id`。
+抓包底层依赖 npcap（libpcap 的 Windows 实现），安装 npcap 时需要勾选 WinPcap API 兼容模式；开发者构建另需 Npcap SDK 并配置 `LIB` 环境变量。运行需要管理员权限。安装包是 MSI，v1.4.1 起用 SignPath Foundation 提供的证书签名，v1.4.2 起支持 Windows ARM64。
 
 ### macOS
 
-macOS 同样依赖 libpcap，抓包需要以授权后的权限运行（首次会提示授权）。安装包为 DMG。程序的进程识别通过遍历系统 socket 到进程的映射获得。
+构建不需要装任何额外依赖，系统自带的东西就够；运行需要管理员权限。安装包是 DMG。进程识别走 listeners 的 macOS 实现。
 
 ### Linux
 
-Linux 抓包也依赖 libpcap，但提供了最灵活的权限方案。RPM/DEB 安装后可用 `setcap` 给二进制授予 `CAP_NET_RAW`，让普通用户也能抓包：
+运行时依赖 libasound2、libpcap0.8、libfontconfig1 三个库。权限方案最灵活：RPM 包安装时自动执行授权（Cargo.toml 里写死的后安装脚本）：
 
 ```bash
 setcap cap_net_raw,cap_net_admin=eip /usr/bin/sniffnet
 ```
 
-进程识别走 `netlink` 套接字读取连接与进程的对应关系。Linux 还支持 AppImage——把运行时、库、资源打成一个可执行文件，不污染系统。
+DEB 装完手动跑同样命令，或者直接 `sudo -E sniffnet`。AppImage（v1.4.1 起）必须以 sudo 运行。另有 Docker 镜像（v1.4.0 起）。构建期需要 libpcap-dev、libasound2-dev、libfontconfig1-dev、libgtk-3-dev 四个开发包。
 
-三端权限与能力差异总结：
+三端差异汇总：
 
-| 平台 | 底层库 | 权限方式 | 程序识别来源 |
-|------|--------|----------|--------------|
-| Windows | npcap | 管理员权限 | 系统连接表 API |
-| macOS | libpcap | 授权提示 | socket → 进程遍历 |
-| Linux | libpcap | setcap capabilities | netlink 套接字 |
+| 平台 | 抓包底层 | 运行权限 | 安装形态 |
+|------|----------|----------|----------|
+| Windows | npcap | 管理员 | MSI（v1.4.1 起签名） |
+| macOS | 系统 libpcap | 管理员 | DMG |
+| Linux | libpcap | setcap / sudo | DEB、RPM、AppImage、Docker |
 
 ---
 
 ## 开发与扩展
 
-### 运行调试版本
+### 从源码构建运行
 
 ```bash
 git clone https://github.com/GyulyVGC/sniffnet.git
@@ -357,78 +341,67 @@ cd sniffnet
 cargo run # 或 cargo run --release
 ```
 
-首次编译需装系统依赖：Linux 要 `libpcap-dev`，macOS 要 Xcode 命令行工具，Windows 要 Visual Studio Build Tools。详见仓库 Wiki 的 Required Dependencies。
-
-### 新增协议识别
-
-想在运行时新增服务映射，改 `services.txt` 加一行：
-
-```
-# 格式：服务名 <Tab> 端口/传输协议
-myapp  8101/tcp
-```
-
-注意：改动后必须重新编译，因为这张表在编译期被烘焙成哈希表，并受条目数断言约束。若你只是加条目，把 `build.rs` 里的断言一并更新，不然编译会失败。
+首次编译的系统依赖按平台装：Linux 需要 libpcap-dev、libasound2-dev、libfontconfig1-dev、libgtk-3-dev 四个开发包，macOS 不需要额外安装，Windows 需要 Visual Studio Build Tools 加 Npcap SDK。细节以仓库 Wiki 的 Required Dependencies 页为准。
 
 ### 自定义主题
 
-内置 Deep Cosmos、Monokai、Dracula 等主题。新建主题修改 `gui/styles/` 下的定义文件，遵循 iced 的颜色系统即可。
+内置主题是 A11y（默认）、Dracula、Gruvbox、Nord、Solarized、Yeti 六套，各分深浅两版，另支持完全自定义调色板。主题定义在 src/gui/styles/custom_themes/ 下，按现有文件照葫芦画瓢，再在 StyleType 枚举里注册即可。
+
+### 命令行参数
+
+`--adapter [<NAME>]`（v1.3.2 起）直接从指定适配器开始抓包，`--config_path`（v1.5.0 起）打印配置文件路径。完整列表见 Wiki 的 Command-line arguments 页。
+
+### 扩展服务表
+
+`services.txt` 由 nmap-services 自动生成，文件头明确要求不要手动编辑。如果你确实要加自定义映射：改文件、重新编译，并且同步更新 build.rs 里的 `assert_eq!(num_entries, 12093)` 断言，否则编译直接失败——这道断言就是设计给"改了文件没对账"的场景的。
 
 ---
 
 ## 常见问题与故障排查
 
-### Q: 运行 sniffnet 时提示 "Permission denied" 怎么办？
+### Q: 运行时提示 "Permission denied" 怎么办？
 
-**Linux**：设置 capabilities：
+**Linux**：给二进制授权 `sudo setcap cap_net_raw,cap_net_admin=eip /usr/bin/sniffnet`（RPM 包安装时已自动执行），或 `sudo -E sniffnet`；AppImage 必须 sudo。
 
-```bash
-sudo setcap cap_net_raw,cap_net_admin=eip /usr/bin/sniffnet
-```
-
-**macOS**：以授权方式运行，首次启动配合系统授权提示。
-
-**Windows**：以管理员身份运行。
+**macOS / Windows**：以管理员身份运行。
 
 ### Q: 为什么看不到任何流量？
 
-按顺序排查：
+按顺序排查：适配器是否选对（通常是 Wi-Fi 或 Ethernet）；BPF 过滤是否过严（清空再试）；权限是否配置正确；所选适配器上是否真有流量。
 
-1. **适配器选择**：是否在 UI 里选了正确的适配器（通常是 Wi-Fi 或 Ethernet）。
-2. **过滤器设置**：BPF 过滤是否过严，先清空过滤器再试。
-3. **权限问题**：确认已正确配置权限。
-4. **网络活动**：所选适配器上是否有真实的出流量。
+### Q: 为什么有的连接看不到"是哪个程序发的"？
 
-### Q: 为什么看不到"是哪个程序发的"？
+进程识别自 v1.5.0 才有，先确认版本。它是异步反查：结果缓存 60 秒、失败 1.5 秒后重试，所以存活很长的连接基本都能补上归属，而存在几秒就关闭的短连接可能在查到之前就结束了，显示为未知。这属于机制本身的取舍，不是故障。
 
-程序识别在 v1.5 起覆盖 Windows、macOS、Linux（乃至 BSD），但各端条件略有差别：
+### Q: 只抓每包前 200 字节，会不会漏信息？
 
-- **Windows**：以管理员身份运行，稍等片刻让系统连接表建立出进程映射。
-- **macOS**：授予抓包相关权限后可用。
-- **Linux**：授予 `CAP_NET_RAW` 后走 netlink 读取连接对应的进程。
+对 Sniffnet 的定位不会。它做的是统计与连接视图，判定服务、协议、方向只需要各层头部，不分析应用层载荷。要看载荷内容、做流重组，那是 Wireshark 的工作，用 Sniffnet 导出 PCAP 接过去。
 
 ---
 
 ## 自测题
 
-1. Sniffnet 为什么选 Rust + iced？Rust 带来了哪些实际好处？
-2. Sniffnet 的两条主线和它们之间的边界各是什么？
-3. BPF 过滤器在哪一层起作用？如何设置只捕获 HTTPS 流量？
-4. `services.txt` 为什么是编译期的？运行时改成无效吗？
-5. 在 Linux 上让非 root 用户运行 Sniffnet 需要做什么？程序识别在 v1.5 前/后有何不同？
+1. Sniffnet 的两个线程域是什么？中间的消息边界为什么必要？
+2. 服务识别为什么选编译期烘焙成 phf 静态哈希表？代价是什么？运行时改 services.txt 有效吗？
+3. BPF 过滤器在哪一层起作用？普通抓包时 snaplen 为什么只有 200 字节？
+4. `get_service` 在两端端口都命中服务时怎么选？评分规则是什么？
+5. 进程归属能力是哪个版本引入的？三个平台各自的反查来源是什么？
+6. Linux 上让非 root 用户运行 Sniffnet 有哪几种方式？
 
 <details>
 <summary>参考答案</summary>
 
-**题 1**：Rust 提供内存安全、异步并发（tokio）、静态分发。iced 提供单向数据流、GPU 加速、跨平台控件。
+**题 1**：抓包域（`thread_parse_packets` 原生线程：读包、解析、聚合）和界面域（iced 主循环：消费消息、更新状态、重绘）。边界是 `async-channel`，传聚合好的流量更新。必要性：抓包线程永远不等界面，界面永远不面对原始字节；v1.4.0 引入。
 
-**题 2**：抓包链路（网卡 → pcap → 解析）和展示链路（聚合 → 图表 → 渲染），中间用 `async-channel` 边界解耦，抓包线程不被界面阻塞。
+**题 2**：12,093 条映射在 build.rs 里烘焙成 `phf::Map`，运行时 O(1) 精确查找，无运行时解析成本；代价是改表要重编译，且受 `assert_eq!(num_entries, 12093)` 断言约束。运行时改 services.txt 无效，必须重编译并同步断言。文件本身由 nmap-services 自动生成，官方不建议手改。
 
-**题 3**：双在内核层。BPF 过滤程序由内核执行，不匹配的包不进用户空间。`tcp dst port 443` 只留 HTTPS 出流量。
+**题 3**：BPF 由 libpcap 编译成内核过滤程序，在内核执行，不匹配的包不进用户空间。snaplen 200 是因为判定服务和协议只需要头部，截掉负载后同样的 2 MB 缓冲能容约 1 万个包；只有导出 PCAP 时才提到 65535 保留完整帧。
 
-**题 4**：因为 6000+ 条映射在 `build.rs` 里编译成 phf 静态哈希表，运行时是 O(1) 查找。运行时改 `services.txt` 不会生效，需要重新编译（且要同步更新条目数断言）。
+**题 4**：按分数取优。查到服务才计分；知名端口（<1024）3 分、其余 1 分；远端端口（组播/广播时为目的端口）加 1 分。远端知名端口通常以 4 分胜出，避免本机临时端口撞号误判。
 
-**题 5**：Linux 用 `setcap cap_net_raw,cap_net_admin=eip` 授予能力；程序识别在 v1.5 前仅 Windows 能做（查系统连接表），v1.5 起扩展到 Windows、macOS、Linux 与 BSD，各端用不同来源（系统连接表 API / socket 遍历 / netlink）拿到进程归属。
+**题 5**：v1.5.0（PR #1056）。三平台统一走 listeners crate 的 `get_process_by_port` 按 `(本地端口, 协议)` 反查，crate 在各端调用平台专属的底层系统 API 并缓存结果；图标由 picon 提供。
+
+**题 6**：`setcap cap_net_raw,cap_net_admin=eip` 授权二进制（RPM 安装自动做）；`sudo -E sniffnet` 直接以管理员跑；AppImage 必须 sudo；或者用 Docker 镜像。
 
 </details>
 
@@ -436,35 +409,35 @@ sudo setcap cap_net_raw,cap_net_admin=eip /usr/bin/sniffnet
 
 ## 进阶路径
 
-按下面顺序读，每环都搭在前一环的问题上：
+按下面顺序读，每一环都建立在前一环的问题上：
 
-1. **[Sniffnet GitHub 仓库](https://github.com/GyulyVGC/sniffnet)**：先通读 README 和 Wiki 的 Required Dependencies，建立整体认知。
-2. **[pcap crate 文档](https://docs.rs/pcap/latest/pcap/)**：想搞懂"如何抓包""BPF 怎么工作"，这是最直接的参考。
-3. **[iced 官方教程](https://iced.rs/)**：想理解 State-View-Message 模型、如何在界面里嵌实时图表时读。当前依赖是 iced 0.14。
-4. **[etherparse crate 文档](https://docs.rs/etherparse/latest/etherparse/)**：需要自定义协议解析时读。
-5. **[plotters-iced2 文档](https://docs.rs/plotters-iced2/latest/plotters_iced2/)**（可选）：想基于 Sniffnet 做二次开发或复现实时图表时读。
+1. **[Sniffnet GitHub 仓库](https://github.com/GyulyVGC/sniffnet)**：先通读 README 和 Wiki 的 Required Dependencies、Command-line arguments 两页，建立整体认知。
+2. **src/networking/capture.rs 与 capture_context.rs**：抓包线程怎么起、会话参数怎么配，抓包侧的全部秘密在这两个文件里。
+3. **[sniffnet-packet-parser](https://github.com/GyulyVGC/sniffnet/tree/main/lib/sniffnet-packet-parser)**：main 分支正把解析抽成的独立 crate（尚未随版本发布），基于 [etherparse](https://docs.rs/etherparse/latest/etherparse/)，想理解"如何把字节变成结构化头信息"时读。
+4. **src/networking/manage_packets.rs**：`get_service` 的评分逻辑和连接聚合都在这里，是业务语义最浓的一个文件。
+5. **[pcap crate 文档](https://docs.rs/pcap/latest/pcap/)** 和 **[iced 官网](https://iced.rs/)**：想深挖某一侧的底层机制时分别查阅。
 
 ---
 
 ## 与 Wireshark 如何取舍
 
-把 Sniffnet 定位清楚，才知道什么时候派得上用场。
+把 Sniffnet 的定位说清楚，才知道它什么时候派得上用场。
 
-**Wireshark 胜在深度**：完整解码器、协议分析、流重组、复杂过滤表达式，是安全分析和协议调试的标配。它的问题是学习曲线陡，界面信息密度高，普通用户被劝退。
+**Wireshark 胜在深度**：完整协议解码器、流重组、应用层分析，是安全分析和协议调试的标配。代价是学习曲线陡、界面信息密度高，普通用户容易劝退。
 
-**Sniffnet 赢在直觉**：三端图形界面 + 进程归属 + 地理定位 + 一键通知，是"我想知道电脑在和谁通信"这类问题的答案，装了就能用。
+**Sniffnet 赢在直觉**：三端图形界面、进程归属、地理定位、延迟显示、告警通知，装上就能回答"我的电脑在和谁通信"。代价是它不做深度包检测——服务靠端口对照，看不到载荷内容。
 
 一个可行的采用顺序：
 
 - **日常查流量、看谁在联网、简单告警** → 直接上 Sniffnet，几分钟上手。
-- **排查协议问题、深挖会话、取证** → 该用 Wireshark，Sniffnet 导出 PCAP 正好喂给 Wireshark 继续分析。
-- **两者不冲突**，Sniffnet 抓包、Wireshark 深挖，是目前被验证过的高效组合。
+- **排查协议问题、深挖会话、取证** → 用 Wireshark；Sniffnet 的 PCAP 导出正好喂给它继续分析。
+- **两者不冲突**：Sniffnet 常驻看全貌，Wireshark 按需深挖，是验证过的高效组合。
 
-**项目信息：**
+**项目信息**（2026-09-30 检索）：
 
 - GitHub：https://github.com/GyulyVGC/sniffnet
 - 官网：https://sniffnet.app
-- 当前版本：v1.5.1
+- 当前版本：v1.5.1（2026-07-22）
 - License：MIT OR Apache-2.0
 
 ---

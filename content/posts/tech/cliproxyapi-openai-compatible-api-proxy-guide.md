@@ -1,168 +1,199 @@
 ---
-title: "CLIProxyAPI 完整迁移与实战指南（含旧稿说明）"
+title: "CLIProxyAPI 上手与迁移指南：把 CLI 订阅变成 OpenAI 兼容 API"
 date: "2026-04-12T18:00:00+08:00"
+lastmod: 2026-10-02
 slug: cliproxyapi-openai-compatible-api-proxy-guide
-description: "本文整合CLIProxyAPI核心概念、新旧版本差异、完整迁移步骤与实战示例，帮助开发者快速上手并规避版本漂移风险，旧稿链接已重定向至本文。"
+github_repo: "router-for-me/CLIProxyAPI"
+source_key: "gh:router-for-me/CLIProxyAPI"
+description: "CLIProxyAPI 把 Claude Code、Codex、Antigravity 等 CLI 订阅凭据包装成本地 OpenAI/Gemini/Claude 兼容 API。本文按当前 v8 版本梳理安装、配置、账号登录与客户端接入，并给出旧教程失效点的版本对照。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Claude Code", "OpenAI Codex", "API代理"]
+tags: ["Claude Code", "OpenAI Codex", "API 代理", "Go"]
 ---
 
-## 学习目标
-读完本文后，你将能够：
-1. 说清CLIProxyAPI解决的核心问题
-2. 区分新旧版本的关键差异，避免用过期配置踩坑
-3. 独立完成从旧版本到新版本的配置迁移
-4. 快速接入Claude Code、Gemini CLI等主流AI客户端
+# CLIProxyAPI 上手与迁移指南：把 CLI 订阅变成 OpenAI 兼容 API
 
-## 目录
+如果你手里有 Claude Code、Codex、Antigravity 这类工具的订阅账号，会发现这些凭据只能在各自的 CLI 里用——想在自己的程序、脚本或别的客户端里调用，没有现成的 API 可用。CLIProxyAPI（[router-for-me/CLIProxyAPI](https://github.com/router-for-me/CLIProxyAPI)）解决的就是这个问题：它在本地起一个代理服务，把这些 CLI 凭据包装成 OpenAI、Gemini、Claude、Codex 四种协议都兼容的 API 接口，任何兼容客户端或 SDK 都能直接接。
 
-- [学习目标](#学习目标)
-- [为什么需要这篇指南](#为什么需要这篇指南)
-- [CLIProxyAPI核心价值](#cliproxyapi核心价值)
-- [新旧版本关键差异](#新旧版本关键差异)
-- [平滑迁移步骤](#平滑迁移步骤)
-- [常见问题](#常见问题)
-- [自测题](#自测题)
-- [练习](#练习)
-- [进阶路径](#进阶路径)
+这个项目迭代很快。本文初稿写于 2026 年 4 月，半年内项目从 v5 走到 v8，配置结构和不少行为已经变了——当时流传的一批教程（包括本站旧稿的部分说法）今天照着做会直接失败。本文按 2026-10-02 的 v8.0.10 重写，文末给出旧说法与当前事实的对照表。
 
----
+## 它解决什么问题
 
-## 为什么需要这篇指南
-CLIProxyAPI迭代速度很快，早期文章里的支持列表、默认端口、管理能力已经和当前版本不一致。很多开发者照着旧稿配到一半发现命令跑不通，或者功能对不上，就是因为版本漂移。
+CLIProxyAPI 是一个 Go 写的代理服务器（MIT 协议），核心能力有三块：
 
-这篇指南有两个作用：
-- 给从旧链接进来的读者一个准确的入口，不用再自己对比版本
-- 给新上手CLIProxyAPI的开发者一个完整的实操路径，跳过踩坑步骤
+- **凭据转协议**。用 OAuth 登录 Codex、Claude、Antigravity（Google 账号）、Kimi、xAI、Meta、Devin 等渠道后，这些订阅凭据变成标准 API 端点背后的上游。也支持直接配置各家 API key、Vertex AI 服务账号。
+- **多账号轮询**。同一渠道可以登录多个账号，服务按 round-robin 负载均衡自动切换，单个账号配额耗尽时由路由层处理冷却与重试。
+- **协议兼容**。对外同时暴露 OpenAI Chat Completions、OpenAI Responses、Gemini、Claude 四套协议，客户端不需要改代码就能切换上游模型。
 
----
+2026-10-02 的读数：53,761 stars、8,107 forks，最新版本 v8.0.10（发版节奏接近日更）。
 
-## CLIProxyAPI核心价值
-它解决的是多AI客户端统一接入的问题：不用给Claude Code、Gemini CLI、Codex每个都单独配API Key、单独管配额，所有客户端都走OpenAI兼容的API格式，不用改代码就能切换底层模型。内置统计、限流、多账号轮询，适合小团队或者个人多Key管理。
+## 先分清两把钥匙
 
-举个例子：你有三个Claude API Key，CLIProxyAPI可以自动轮询，避免单个Key超限；同时Gemini CLI也能通过这个代理调用，不用单独申请Gemini API。
+这是理解配置文件的关键，也是旧教程最容易搞错的地方：CLIProxyAPI 里有两类完全不同的密钥。
 
----
+**访问密钥（`access.api-keys`）**是客户端访问这个代理时用的密码，由你自己随便定义，跟任何上游厂商无关。客户端带着它请求代理，代理验证身份。
 
-## 新旧版本关键差异
-如果你之前照着旧稿配置，这几个地方一定要注意：
-| 功能                | 旧版本                          | 新版本                          |
-|---------------------|---------------------------------|---------------------------------|
-| 默认端口            | 8080                            | 3000                            |
-| 多账号配置          | 只支持环境变量                  | 支持YAML配置文件+动态重载       |
-| OAuth接入           | 不支持                          | 支持Claude/Gemini的OAuth2.0    |
-| 管理面              | 无                              | 内置Web管理面板（端口自定义）   |
-| 统计维度            | 只统计请求数                    | 按Key/按模型/按客户端统计Token |
+**上游凭据**是代理替你去调各家服务用的：OAuth 登录产生的凭据文件、或者你在 `api-keys` 配置段里填的各家 API key。它们永远不会暴露给客户端。
 
----
+旧教程里"把 Claude API Key 填进 keys 列表客户端就能用"之类的写法，混淆的正是这两层。
 
-## 平滑迁移步骤
-### 第一步：备份旧配置
+## 安装
+
+官方文档站是 [help.router-for.me](https://help.router-for.me/)（有[中文版](https://help.router-for.me/cn/)）。注意：CLIProxyAPI 是 Go 二进制分发的项目，npm 上没有官方包，`npm install -g cliproxyapi` 装不到任何东西。可用的安装路径有五条。
+
+macOS 用 Homebrew（官方仓库收录，当前 8.0.10）：
+
 ```bash
-# 备份旧的环境变量配置
-cp ~/.bashrc ~/.bashrc.cliproxy.bak
-# 备份旧的YAML配置（如果有的话）
-cp config.yaml config.yaml.bak
+brew install cliproxyapi
+brew services start cliproxyapi
 ```
 
-### 第二步：安装新版本
+Homebrew 的默认配置文件在 `$(brew --prefix)/etc/cliproxyapi.conf`。如果想像 Linux 习惯那样把配置放在 `~/.cli-proxy-api/config.yaml`，可以把它符号链接过去（目标文件必须先存在，否则服务起不来）。
+
+Linux 一键脚本或 AUR：
+
 ```bash
-# 用npm全局安装最新版
-npm install -g cliproxyapi@latest
-# 验证版本
-cliproxyapi --version
-# 预期输出：v2.1.0（或更高版本）
+curl -fsSL https://raw.githubusercontent.com/router-for-me/cliproxyapi-installer/refs/heads/master/cliproxyapi-installer | bash
+# Arch 系也可以
+yay -S cli-proxy-api-bin
 ```
 
-### 第三步：迁移配置文件
-新版本用YAML做主要配置，把旧的环境变量转成对应的配置项：
+脚本方式装完用 systemd 用户服务管理：
+
+```bash
+systemctl --user start cli-proxy-api
+systemctl --user enable cli-proxy-api
+```
+
+Windows 从 [GitHub Releases](https://github.com/router-for-me/CLIProxyAPI/releases) 下载压缩包直接运行；或者用官方推荐的桌面客户端 [EasyCLIProxyAPI](https://github.com/router-for-me/EasyCLIProxyAPI)，带图形配置界面、托盘和一键启停。
+
+Docker 方式（镜像 `eceasy/cli-proxy-api`）：
+
+```bash
+docker run --rm -p 8317:8317 \
+  -v /path/to/config.yaml:/CLIProxyAPI/config.yaml \
+  -v /path/to/auth-dir:/root/.cli-proxy-api \
+  -v /path/to/plugins-dir:/CLIProxyAPI/plugins \
+  eceasy/cli-proxy-api:latest
+```
+
+从源码构建需要 Go 1.26+，产物叫 `cli-proxy-api`：
+
+```bash
+git clone https://github.com/router-for-me/CLIProxyAPI.git
+cd CLIProxyAPI
+go build -o cli-proxy-api ./cmd/server
+./cli-proxy-api --config config.yaml
+```
+
+没有 `start` 之类的子命令——它就是单个二进制，直接运行即启动服务；登录、导入等操作通过 flag 触发。
+
+## 配置：v8 布局的关键字段
+
+完整模板见仓库的 `config.example.yaml`（v8 版约 1200 行，大部分是注释掉的示例）。启动前只需要关心几个字段：
+
 ```yaml
-# config.yaml 示例
-port: 3000
-keys:
-  - "sk-ant-xxx"  # Claude API Key
-  - "sk-gemini-xxx" # Gemini API Key
-models:
-  - "claude-3-7-sonnet-20250219"
-  - "gemini-2.5-pro-preview-05-06"
-clients:
-  - name: "Claude Code"
-    type: "openai-compatible"
-  - name: "Gemini CLI"
-    type: "openai-compatible"
+config-version: 8
+
+server:
+  host: ""        # 留空绑定所有接口；只本机用就填 127.0.0.1
+  port: 8317      # 默认端口，从 v5 时代到现在一直是 8317
+
+access:
+  api-keys:       # 客户端访问密钥（自己定义，不是上游 key）
+    - "sk-my-local-key-1"
+
+management:
+  secret-key: ""  # 管理密钥；留空 = 管理 API 整个禁用（404）
+
+oauth:
+  auth-dir: "~/.cli-proxy-api"  # OAuth 凭据文件目录
 ```
 
-### 第四步：验证接入
+几点说明：
+
+- **默认端口是 8317**，不是某些教程写的 3000 或 8080。Docker 的端口映射、Homebrew 服务的配置、源码构建的默认值都是这个数。
+- **`access.api-keys` 不能留模板值**。配置里还是 `your-api-key-1` 这类占位符时，服务会进入安全模式：代理端点全部禁用，只开放管理页面让你先改配置。这不是故障，是故意的。
+- **模型列表不需要配置**。`/v1/models` 返回的是所有已登录上游凭据可用模型的聚合结果，配置文件里没有 `models` 字段。
+- **旧配置文件可以继续用**。v8 加载时会接受旧的扁平写法（`api-keys`、`remote-management` 等顶层键），同一字段新旧两种写法并存时以 v8 值为准；通过管理 API 的 v8 接口成功写入一次配置后，旧写法会被迁移成新结构。
+
+## 登录上游账号
+
+OAuth 登录用 flag 触发，登录一次后凭据落在 `auth-dir`，之后服务启动自动加载并刷新 token：
+
 ```bash
-# 启动代理
-cliproxyapi start -c config.yaml
-# 用curl测试接口
-curl http://localhost:3000/v1/models \
-  -H "Authorization: Bearer sk-ant-xxx"
-# 预期输出：模型列表JSON
+./cli-proxy-api --config config.yaml --claude-login      # Claude 订阅
+./cli-proxy-api --config config.yaml --codex-login       # ChatGPT/Codex 订阅
+./cli-proxy-api --config config.yaml --antigravity-login # Google（Antigravity/Gemini）
+./cli-proxy-api --config config.yaml --kimi-login        # Kimi
 ```
 
-### 第五步：接入客户端
-以Claude Code为例，把API Base URL改成`http://localhost:3000/v1`，API Key填配置文件里的任意一个Key即可。
+完整的渠道 flag：`--codex-login`（另有 `--codex-device-login` 设备码流程）、`--claude-login`、`--antigravity-login`、`--kimi-login`、`--kimi-ai-login`、`--xai-login`、`--devin-login`、`--meta-login`。`--no-browser` 禁止自动开浏览器，`--oauth-callback-port` 改回调端口。各家默认回调端口不同：Codex 用 1455，Claude 用 54545，Antigravity 用 51121，本机有端口冲突时需要留意。
 
----
+Gemini 侧的另外两条路：Vertex AI 走 `--vertex-import` 导入服务账号 JSON；AI Studio 与 Gemini API key 则是普通 API key 上游，配在 `api-keys` 段的对应 provider 分组下。
 
-## 常见问题
-### Q1：旧版本的配置还能用吗？
-A：环境变量配置还能兼容，但建议转到YAML配置，支持更多新功能。如果直接用旧环境变量启动，会报「弃用警告」，不影响基本使用，但统计、多账号功能用不了。
+## 接入客户端
 
-### Q2：迁移后请求报错「model not found」？
-A：检查配置文件里的`models`字段是否和实际订阅的模型匹配，新版本不会自动拉取可用模型，需要手动配置。
+服务起来后，OpenAI、Claude、Gemini、Codex 四套协议的端点挂在同一端口上，都接受 `Authorization: Bearer <访问密钥>` 认证：
 
-### Q3：Web管理面板怎么开？
-A：在配置文件里加`management_port: 3001`，启动后访问`http://localhost:3001`即可，默认不需要账号密码，建议内网使用。
+| 客户端说的协议 | 端点 |
+|---|---|
+| OpenAI Chat Completions | `POST /v1/chat/completions` |
+| OpenAI Responses | `POST /v1/responses` |
+| Claude（Anthropic） | `POST /v1/messages` |
+| Gemini | `POST /v1beta/models/<model>:<action>` |
+| Codex CLI 直通 | `/backend-api/codex` |
 
----
+拿 curl 验证服务是否就绪：
 
-## 进一步学习
-- 官方完整文档：[CLIProxyAPI Docs](https://cliproxyapi.dev/docs)
-- 进阶配置：多账号轮询策略、限流规则、OAuth接入
-- 生态工具：和OpenWebUI、Lobechat的配合方式
+```bash
+curl http://127.0.0.1:8317/healthz
+curl http://127.0.0.1:8317/v1/models \
+  -H "Authorization: Bearer sk-my-local-key-1"
+```
 
----
+以 Claude Code 为例，把 API Base URL 指到 `http://127.0.0.1:8317`、API Key 填 `access.api-keys` 里的任意一个即可。Gemini 协议的客户端把 base URL 指到 `/v1beta`。
 
-## 自测题
+## 管理面板与远程管理
 
-1. **核心问题**：CLIProxyAPI解决的主要问题是什么？为什么不直接在每个AI客户端里单独配置API Key？
-2. **版本差异**：新版本相比旧版本有哪些关键改进？如果你正在使用旧版本，哪些功能会受到影响？
-3. **配置迁移**：从旧版本迁移到新版本时，环境变量的配置如何转换成YAML配置？需要注意哪些兼容性问题？
-4. **客户端接入**：如何让Claude Code通过CLIProxyAPI调用Gemini API？需要修改哪些配置？
-5. **故障排查**：如果CLIProxyAPI启动后客户端连接失败，你应该按什么顺序排查问题？
+浏览器访问 `http://127.0.0.1:8317/management.html` 可以打开内置管理面板（首次访问自动从 [CPAMC](https://github.com/router-for-me/Cli-Proxy-API-Management-Center) 仓库拉取面板资源），查看凭据状态、改配置、管理插件。三个要点：
 
----
+- 面板和 API 跟主服务**同一个端口**，不存在独立的"管理端口"。
+- `management.secret-key` 留空时管理 API 整体返回 404——面板打不开先查这个。
+- `management.allow-remote` 默认 `false`，只有 localhost 能访问；要暴露给局域网需显式打开，并务必设置强密钥。
 
-## 练习
+不想用浏览器的话，`--tui` 启动终端管理界面（`--standalone` 让它内嵌一个本地服务端，`--management-base-url` 连远程实例）。
 
-1. **基础练习**：按照本文的迁移步骤，从旧版本升级到新版本，并验证Claude Code能够正常调用。
-2. **配置练习**：创建一个YAML配置文件，配置两个Claude API Key实现轮询，并设置每分钟100次的限流规则。
-3. **集成练习**：将CLIProxyAPI接入OpenWebUI，验证能够通过统一的API接口调用不同的AI模型。
-4. **监控练习**：使用CLIProxyAPI的统计功能，查看过去24小时的Token消耗情况，找出消耗最多的模型和客户端。
-5. **OAuth练习**：配置CLIProxyAPI的OAuth2.0功能，实现通过Google账号登录并自动获取Gemini API访问权限。
+管理 API 本身有两代路由（`/v0/management` 和 `/v8/management`），v0 兼容旧客户端，v8 配套 v8 配置结构。
 
----
+## 使用统计：内置功能已移除
 
-## 进阶路径
+不少旧教程提到"内置统计、按 Key 按模型统计 Token"——这在 v6.10.0（2026-05-01）起已经移除。现在配置里的 `observability.usage.usage-statistics-enabled` 只控制一个内存中的聚合队列，默认关闭，仅供管理 API 短时读取（默认保留 60 秒），不落盘、没有历史曲线。
 
-### 初级（已掌握本文内容）
-- 理解CLIProxyAPI的核心价值和基本用法
-- 能够完成版本迁移和基础配置
-- 能够接入主流AI客户端
+需要用量统计的话，官方 README 指向两个生态项目：[CPA Usage Keeper](https://github.com/Willxup/cpa-usage-keeper)（独立持久化与可视化服务，SQLite 存储）和 [CPA-Manager-Plus](https://github.com/seakee/CPA-Manager-Plus)（请求级监控加费用估算，可按账号、模型、渠道追踪）。
 
-### 中级（深入理解）
-- 研究CLIProxyAPI的源码实现，理解其请求转发和统计原理
-- 配置复杂的多账号轮询策略和限流规则
-- 集成OAuth2.0认证，实现更安全的访问控制
+## 旧教程说法对照表
 
-### 高级（生产部署）
-- 在团队环境中部署CLIProxyAPI，配置SSO和企业级安全策略
-- 优化性能，配置缓存和负载均衡
-- 开发自定义插件，扩展CLIProxyAPI的功能
+如果你是照着 2026 年上半年之前的教程过来的，这些说法今天需要修正：
 
----
+| 旧教程常见说法 | 当前事实 |
+|---|---|
+| `npm install -g cliproxyapi` | npm 上没有官方包，装不出去。用 brew、安装脚本、Docker 或源码构建 |
+| 默认端口 3000（或旧的 8080） | 一直是 8317 |
+| `cliproxyapi start -c config.yaml` | 无子命令，二进制直接运行：`cli-proxy-api --config config.yaml` |
+| 配置里写 `keys`、`models`、`clients` 字段 | 这些字段不存在。访问密钥在 `access.api-keys`，模型列表自动聚合 |
+| `management_port: 3001` 开管理面板 | 管理面板与主服务同端口，路径 `/management.html`，靠 `management.secret-key` 启用 |
+| 旧版本不支持 OAuth | 2026 年 4 月时 OAuth 登录已支持 Google、Codex、Claude、Qwen、iFlow、Antigravity、Kimi 七个渠道；v8 时代反而是 qwen、iflow 被移除，新增 xai、meta、devin |
+| 旧版只能环境变量配置 | 项目一直用 YAML 配置文件，没有环境变量配置体系 |
+| 内置按 Key/按模型的用量统计 | v6.10.0 起移除，改用生态项目 |
+| 官方文档在 cliproxyapi.dev | 该域名无法访问，官方文档站是 [help.router-for.me](https://help.router-for.me/) |
 
+真实的版本脉络：2026-04 旧稿写作时项目还在 v5 时代（配置是扁平结构，OAuth 渠道含 Google、Qwen、iFlow）；v6.10.0 于 2026-05-01 移除内置统计；v7.0.0 于 2026-05-09 发布；v8.0.0 于 2026-09-27 引入 `config-version: 8` 分组配置与 `/v8/management`。配置字段层面的兼容规则见前文——旧文件能跑，但新教程、新面板、新文档都按 v8 结构说话，迁移到新写法是迟早的事。
+
+## 资源
+
+- 仓库：[router-for-me/CLIProxyAPI](https://github.com/router-for-me/CLIProxyAPI)
+- 官方文档：[help.router-for.me](https://help.router-for.me/)（[中文](https://help.router-for.me/cn/)）
+- 管理面板项目：[Cli-Proxy-API-Management-Center](https://github.com/router-for-me/Cli-Proxy-API-Management-Center)
+- 桌面客户端：[EasyCLIProxyAPI](https://github.com/router-for-me/EasyCLIProxyAPI)
+- 用量统计：[CPA Usage Keeper](https://github.com/Willxup/cpa-usage-keeper)、[CPA-Manager-Plus](https://github.com/seakee/CPA-Manager-Plus)

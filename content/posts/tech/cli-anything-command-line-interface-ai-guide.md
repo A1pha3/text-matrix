@@ -1,695 +1,265 @@
 ---
-title: "CLI-Anything: 一条命令让任意软件变身AI Agent可控工具"
+title: "CLI-Anything 上手指南：安装、生成、使用一条龙"
 date: "2026-05-17T20:10:00+08:00"
+lastmod: "2026-10-03"
 slug: "cli-anything-command-line-interface-ai-guide"
-github_repo: "blender/blender"
-source_key: "gh:blender/blender"
-description: "CLI-Anything 是一个开源的CLI自动生成框架，通过7阶段流水线将任意软件（Blender、GIMP、LibreOffice等）转化为AI Agent可直接控制的命令行工具，支持Claude Code、OpenClaw、Pi等主流平台，GitHub星标超3.5万。"
+github_repo: "HKUDS/CLI-Anything"
+source_key: "gh:HKUDS/CLI-Anything"
+description: "CLI-Anything 操作指南：用 cli-hub 包管理器安装现成 CLI，或在 Claude Code 等智能体里用 /cli-anything 命令为任意软件生成完整的命令行接口——七阶段流水线约 10-15 分钟，含测试、文档与 PyPI 发布。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI Agent", "CLI", "Claude Code", "OpenClaw", "Python"]
+tags: ["AI Agent", "CLI", "Claude Code", "Python", "开源项目"]
 ---
 
-# CLI-Anything: 一条命令让任意软件变身 AI Agent 可控工具
+# CLI-Anything 上手指南：安装、生成、使用一条龙
 
-> **目标读者**：有基础编程经验的开发者，已了解 AI Agent 基本概念，想把 AI Agent 能力扩展到真实专业软件
-> **预计阅读时间**：25 分钟
-> **前置知识**：[AI Agent 入门指南](/posts/tech/ai-agents-for-beginners-microsoft-complete-guide/) ⭐
+给 AI Agent 接上专业软件，GUI 自动化（截图加点击）脆弱，没有 API 的软件则无从下手。CLI-Anything 的做法是给软件生成一套真正的命令行接口：命令分组、会话状态、JSON 输出、测试齐全，Agent 用文本命令就能驱动 Blender 渲染、GIMP 修图、LibreOffice 出 PDF。项目由港大 HKUDS（Data Intelligence Lab@HKU）维护，Apache-2.0 协议，2026-10-03 的 GitHub 读数为 51,338 星。
 
----
+上手有两条路径，按需求选：
 
-## 🎯 学习目标
+- **只想用现成的**：装 `cli-hub` 包管理器，从注册表里挑一个装好即用。适合目标软件已经有社区 CLI 的场景。
+- **要造新的**：在 Claude Code 等 Agent 里装插件，一条 `/cli-anything <软件路径>` 跑完七阶段流水线，产出可 `pip install` 的独立 CLI。适合注册表里还没有的软件、内部工具或代码库。
 
-读完本文，你应该能够：
+本文按"装好 → 生成 → 用起来 → 精化 → 测试发布"的顺序走完两条路径，所有命令示例逐一对照过仓库源码（核对基线见文末口径说明）。项目的方法论与生态分析见[方法论深读](/posts/tech/cli-anything-universal-cli-framework/)、[harness 设计解析](/posts/tech/cli-anything-agent-native-software-harness/)与[生态版图](/posts/tech/hkuds-cli-anything-universal-cli-ai-agent/)，此处不重复。
 
-1. **理解 CLI-Anything 的核心价值** — 为什么需要它，解决了什么问题
-2. **掌握七阶段流水线** — 从源码分析到 CLI 发布的完整流程
-3. **在 Claude Code 中实际使用** — 安装、生成、使用 CLI 的完整操作
-4. **使用 Refine 迭代改进** — 如何增量扩展 CLI 覆盖率
-5. **理解 CLI-Hub 生态** — Agent 如何自主发现和安装社区 CLI
+## 准备环境
 
----
+开始前确认三件事：
 
-## 📋 目录
+| 前置条件 | 要求 | 验证方式 |
+| -------- | ---- | -------- |
+| Python | 3.10 及以上 | `python3 --version` |
+| 目标软件 | 已安装且有源码或本地目录（生成路径需要） | 如 `gimp --version` |
+| AI Agent | Claude Code、Cursor、Pi、OpenClaw、OpenCode、Codex、Hermes、Reasonix、Qodercli、GitHub Copilot CLI 之一 | 各平台自带版本命令 |
 
-- [概念定义](#-概念定义)
-- [核心场景](#-核心场景)
-- [快速开始](#-快速开始)
-- [七阶段流水线详解](#-七阶段流水线详解)
-- [进阶用法：Refine 迭代改进](#-进阶用法refine-迭代改进)
-- [CLI-Hub：AI Agent 的应用商店](#cli-hubai-agent-的应用商店)
-- [已支持的软件生态](#-已支持的软件生态)
-- [常见误区](#-常见误区)
-- [总结速查](#-总结速查)
-- [常见问题 FAQ](#-常见问题-faq)
-- [自测题](#-自测题)
-- [动手练习](#-动手练习)
-- [进阶路径](#-进阶路径)
-- [资料口径说明](#-资料口径说明)
+Windows 用户注意：Claude Code 通过 `bash` 执行命令，需要安装 Git for Windows（自带 `bash` 与 `cygpath`）或改用 WSL，否则会报 `cygpath: command not found`。
 
----
+平台清单在半年内从 7 个扩到 10 个（2026 年 5 月时尚无 Cursor、Hermes、Reasonix），本文以 2026-10-03 的 README 为准；完整列表见仓库 "Pick Your Agent Platform" 一节。
 
-## 📝 概念定义
+## 路径一：用现成的 CLI（cli-hub）
 
-### 一句话定位
-
-**CLI-Anything** 是港大 HKUDS 实验室开源的 CLI 自动生成框架——给它一个软件代码库，它就能自动生成一套完整的命令行接口（CLI），让 AI Agent 能够以结构化、可靠的方式控制任意专业软件。
-
-### 类比理解
-
-> 💡 就像 USB 转接头让各种设备都能接入电脑一样，CLI-Anything 把任意软件「转接」成 AI Agent 能理解的命令行接口。不同的是，它不是简单桥接，而是**重新为软件生成一套完整的 CLI 设计**，包含命令分组、状态管理、测试和文档。
-
-### 为什么需要它
-
-AI Agent 很擅长推理，但在实际使用专业软件时存在根本障碍：GUI 自动化脆弱、需要 API 的软件受限于接口、没有 API 的软件完全无法控制。
-
-CLI-Anything 给出了第三条路——不需要 API，不需要截图，点击一下就生成生产级的 CLI 层，把专业软件的能力暴露给 Agent。
-
----
-
-## 🎯 核心场景
-
-### 场景 1：让 Agent 操作真实专业软件
-
-**问题**：Agent 需要生成一张 Blender 渲染图，但 Blender 是 GUI 软件，Agent 无法操作。
-
-**解决**：
+CLI-Hub 是项目的 CLI 包管理器，PyPI 包名 `cli-anything-hub`（当前版本 0.4.1）。安装：
 
 ```bash
-# Claude Code 中，一条命令生成 Blender CLI
-/cli-anything /path/to/blender
-
-# 然后 Agent 可以直接用命令行控制 Blender
-cli-anything-blender render --scene kitchen --output ./render.png --engine CYCLES
+pip install cli-anything-hub
 ```
 
-生成的 CLI 直接调用 Blender 真实后端，没有任何模拟层——渲染出来的东西和手动操作的结果完全一致。
+七个子命令覆盖全部生命周期：
 
-### 场景 2：统一多个 API 为一个 CLI
+| 命令 | 作用 |
+| ---- | ---- |
+| `cli-hub list` | 浏览注册表 |
+| `cli-hub search <query>` | 按关键词搜索 |
+| `cli-hub info <name>` | 查看某个 CLI 的详情 |
+| `cli-hub install <name>` | 安装 |
+| `cli-hub update <name>` | 更新 |
+| `cli-hub uninstall <name>` | 卸载 |
+| `cli-hub launch <name> [args...]` | 运行已安装的 CLI |
 
-**问题**：一个项目需要调用多个云服务 API，每个都有不同的 SDK 和接口，Agent 每次都要拼装不同的调用逻辑。
-
-**解决**：把 API 文档或 SDK 代码喂给 CLI-Anything，它会生成一个统一的 CLI，封装所有底层调用：
+以 GIMP 为例走一遍：
 
 ```bash
-# 一个命令，管理所有API
-cli-anything-exa search "AI agent趋势" --limit 10 --output json
-cli-anything-exa find-similar "doc-url" --limit 5
+cli-hub search image     # 找图像类的 CLI
+cli-hub install gimp     # 安装
+cli-hub launch gimp      # 直接运行
 ```
 
-### 场景 3：替换 GUI 自动化
+注意：不少 CLI 包装的是真实桌面软件。注册表条目会写明依赖，比如 GIMP CLI 需要 `gimp`，Exa CLI 需要 `EXA_API_KEY`。装 CLI 之前先把上游软件装好。
 
-**问题**：用截图+点击的 RPA 方案控制软件脆弱且不稳定。
+## 路径二：造新的 CLI（Agent 插件）
 
-**解决**：用 CLI 替代 GUI 操作，结构化、可测试、可重复：
+### 在 Claude Code 中安装
 
-```bash
-# 不再是截图点击
-# 而是直接命令行
-cli-anything-gimp layer add --name "背景" --type solid --color "#1a1a2e"
-cli-anything-gimp filter blur --radius 5 --layer "背景"
-cli-anything-gimp export --format png --quality 95 --output poster.png
-```
-
----
-
-## 🚀 快速开始
-
-### 环境检查清单
-
-- [ ] Python 3.10+
-- [ ] 目标软件已安装（Blender、GIMP 等）
-- [ ] 支持的 AI Agent 平台之一
-
-### 支持的平台
-
-| 平台 | 安装方式 | 备注 |
-| ---- | -------- | ---- |
-| **Claude Code** | Plugin Marketplace | 官方支持 |
-| **Pi Coding Agent** | Extension 脚本 | 社区支持 |
-| **OpenClaw** | SKILL.md 复制 | 社区支持 |
-| **OpenCode** | 命令文件复制 | 实验性 |
-| **Codex** | 安装脚本 | 实验性 |
-| **Goose** | CLI Provider | 社区支持 |
-| **GitHub Copilot CLI** | Plugin | 社区支持 |
-| **Qodercli** | Plugin 注册 | 社区支持 |
-
-### 以 Claude Code 为例
-
-**第一步：添加市场**
+CLI-Anything 以 Claude Code 插件市场的形式分发，两条命令：
 
 ```bash
 /plugin marketplace add HKUDS/CLI-Anything
-```
-
-**第二步：安装插件**
-
-```bash
 /plugin install cli-anything
 ```
 
-**第三步：生成 CLI**
+不想走市场也可以手动安装：克隆仓库后把插件目录复制到 Claude Code 的插件目录，再重载：
 
 ```bash
-# 生成 GIMP 的完整 CLI（7个阶段全部自动执行）
+git clone https://github.com/HKUDS/CLI-Anything.git
+cp -r CLI-Anything/cli-anything-plugin ~/.claude/plugins/cli-anything
+```
+
+然后在 Claude Code 里执行 `/reload-plugins`。
+
+验证安装：执行 `/help cli-anything`，能看到 CLI-Anything 的命令即成功。
+
+其他平台的安装方式各不相同：Pi 用仓库自带的 `bash .pi-extension/cli-anything/install.sh`（卸载加 `--uninstall`）；OpenClaw、Nanobot、Codex 等 SKILL 兼容平台用统一分发命令（详见下文 SKILL.md 一节）。具体步骤看 README 里对应平台的小节。
+
+### 生成第一个 CLI
+
+```bash
 /cli-anything ./gimp
 ```
 
-这条命令执行完整流水线：
+路径可以是本地源码目录，也可以是 GitHub 仓库地址（如 `/cli-anything https://github.com/blender/blender`）。旧版本 Claude Code 若不识别 `/cli-anything`，在确认插件已安装加载后改用旧入口 `/cli-anything:cli-anything`；辅助命令始终保持 `/cli-anything:子命令` 形式。
 
-1. 🔍 **分析** — 扫描源码，映射 GUI 操作到 API
-2. 📐 **设计** — 架构命令分组、状态模型、输出格式
-3. 🔨 **实现** — 用 Click 构建 CLI，含 REPL、JSON 输出、撤销/重做
-4. 📋 **计划测试** — 创建含单元+E2E 测试计划的 TEST.md
-5. 🧪 **编写测试** — 实现完整测试套件
-6. 📝 **文档** — 更新 TEST.md 附上结果
-7. 📦 **发布** — 创建 setup.py，安装到 PATH
+这条命令跑完整个流水线，官方 QUICKSTART 给出的耗时是 **10-15 分钟**（视软件复杂度）。阶段划分以插件内的 HARNESS.md（SOP 文档）为准：
 
-**第四步：使用生成的 CLI**
+| 阶段 | 名称 | 产出 |
+| ---- | ---- | ---- |
+| Phase 1 | Codebase Analysis | 扫描源码，把 GUI 操作映射到内部 API |
+| Phase 2 | CLI Architecture Design | 命令分组、状态模型、输出格式设计 |
+| Phase 3 | Implementation | 用 Click 构建 CLI，含 REPL、JSON 输出、撤销/重做 |
+| Phase 4 | Test Planning | 生成 TEST.md（单元 + E2E 测试计划） |
+| Phase 5 | Test Implementation | 实现完整测试套件 |
+| Phase 6 | Test Documentation | 把测试结果写回 TEST.md |
+| Phase 6.5 | SKILL.md Generation | 生成 Agent 可发现的能力定义文件 |
+| Phase 7 | PyPI Publishing and Installation | 生成 setup.py 并安装进 PATH |
+
+Phase 6.5 在 README 的七阶段简表里不单列，容易漏掉——它生成的 SKILL.md 是后续 Agent 自动发现这套 CLI 的入口，值得知道它在哪一步发生。
+
+## 安装并验证
+
+生成完成后，CLI 已经装进 PATH（Phase 7 自动完成）。手动安装或重装用：
 
 ```bash
-# 进入项目目录
-cd gimp/agent-harness && pip install -e .
+cd gimp/agent-harness
+pip install -e .
+```
 
-# 随时使用
-cli-anything-gimp --help
+验证三连：
+
+```bash
+which cli-anything-gimp          # 确认在 PATH 中
+cli-anything-gimp --help         # 查看全部命令组
+python3 -m cli_anything.gimp.gimp_cli --help   # 绕过 PATH 直接以模块运行
+```
+
+生成物是一个标准的 Python 包：入口 `cli-anything-gimp` 定义在 `agent-harness/setup.py` 的 `console_scripts` 里，依赖只有 `click>=8.0.0` 和 `prompt-toolkit>=3.0.0`，`python_requires>=3.10`。目录里的 `skills/SKILL.md` 和 `tests/TEST.md` 分别对应 Phase 6.5 与 Phase 4-6 的产出。
+
+## GIMP CLI 命令速览
+
+以仓库内置的 GIMP 生成物为例（`gimp/agent-harness/`），命令形态全部来自 `gimp_cli.py` 源码。八个命令组：`project`、`layer`、`canvas`、`filter`、`media`、`export`、`session`、`draw`，外加 `repl`。
+
+```bash
+# 新建项目：宽高默认 1920x1080，-o 直接落盘
 cli-anything-gimp project new --width 1920 --height 1080 -o poster.json
-cli-anything-gimp --json layer add -n "Background" --type solid --color "#1a1a2e"
 
-# 进入交互式 REPL
-cli-anything-gimp
+# 新建图层：type 取 image/text/solid，填充色用 --fill
+cli-anything-gimp --json layer new -n "Background" --type solid --fill "#1a1a2e"
+
+# 画布操作：resize/scale/crop/mode/dpi
+cli-anything-gimp canvas resize --width 800 --height 600
+
+# 滤镜：filter 名是位置参数，参数走 --param 键值对
+# 可用滤镜先查 filter list-available（如 gaussian_blur、box_blur）
+cli-anything-gimp filter add gaussian_blur --param radius=5
+
+# 导出：输出路径是位置参数，preset 默认 png
+cli-anything-gimp export render poster.png --quality 95
+
+# 交互式 REPL：状态跨命令保持
+cli-anything-gimp repl
 ```
 
-### 验证安装成功
+三个容易踩的形态差异：`export` 没有 `--output` flag，路径直接跟在 `export render` 后面；`filter add` 的滤镜名是位置参数、数值参数一律 `--param key=value`；主命令挂 `--json` 切结构化输出，对 Agent 消费最友好。每个修改类命令内部都会做会话快照，支持撤销/重做（README 对 Phase 3 的官方口径）。
+
+## 完整任务流：用 Blender CLI 渲染一张图
+
+Blender CLI（`blender/agent-harness/`）有 scene、object、material、modifier、camera、light、animation、render 八个命令组。一次从建场景到出图的完整流程：
 
 ```bash
-# 检查 CLI 是否在 PATH 中
-which cli-anything-gimp
+# 1. 新建场景：引擎三选一（CYCLES/EEVEE/WORKBENCH），默认 CYCLES
+cli-anything-blender scene new --name kitchen --engine CYCLES
 
-# 查看帮助，应看到所有命令组
-cli-anything-gimp --help
+# 2. 加物体：mesh 类型是位置参数，8 选 1
+#    cube/sphere/cylinder/cone/plane/torus/monkey/empty
+cli-anything-blender object add sphere --name Demo --location 0,0,1
 
-# 测试 REPL 启动
-echo "project list" | cli-anything-gimp
+# 3. 建材质并指派：两个位置参数是材质索引和物体索引
+cli-anything-blender material create --name Red
+cli-anything-blender material assign 0 0
+
+# 4. 配置渲染参数
+cli-anything-blender render settings --engine CYCLES --resolution-x 1920 --samples 128
+
+# 5. 执行渲染：输出路径是位置参数
+cli-anything-blender render execute ./render.png
 ```
 
----
+渲染拆成 `settings` 配置加 `execute` 执行两步，`--engine` 属于 settings 而非 execute——这是照着旧文章抄命令最容易翻车的地方。
 
-## 🔧 七阶段流水线详解
+## 用 Refine 精化覆盖面
 
-### Phase 1：分析（Analyze）
-
-Agent 扫描软件代码库，理解：
-
-- GUI 操作的代码实现位置
-- 内部 API 和数据结构
-- 命令行参数的可行性
-- 输出格式和错误处理
-
-**产出**：Capability Map，列出所有可 CLI 化的功能。
-
-### Phase 2：设计（Design）
-
-根据分析结果，架构：
-
-- **命令分组**：按功能领域组织（如 GIMP 分 layer、filter、export 等组）
-- **状态模型**：如何跟踪项目/会话状态
-- **输出格式**：JSON（Agent 友好）+ 人类可读双轨输出
-
-**设计文档**保存在 `HARNESS.md`。
-
-### Phase 3：实现（Implement）
-
-用 Python Click 框架构建 CLI：
-
-```python
-# 生成的 CLI 结构示例
-import click
-
-@click.group()
-def cli():
-    """Generated CLI for GIMP"""
-    pass
-
-@cli.group()
-def layer():
-    """Layer management commands"""
-    pass
-
-@layer.command()
-@click.option('--name', required=True)
-@click.option('--type', default='solid')
-def add(name, type):
-    """Add a new layer"""
-    # 调用真实 GIMP Python API
-    pass
-```
-
-**关键特性**：
-
-- REPL 交互模式：状态保持，命令可组合
-- JSON 输出：`--json` flag 输出结构化数据
-- 撤销/重做：每步操作记录，支持回滚
-
-### Phase 4-6：测试计划、编写、文档
-
-自动生成测试计划并实现：
+一次生成不可能覆盖软件全部能力。refine 命令做增量补全，支持宽范围和聚焦两种：
 
 ```bash
-# 阶段 4：创建 TEST.md，包含测试策略
-# 阶段 5：用 pytest 实现单元测试+E2E测试
-# 阶段 6：更新 TEST.md 附测试结果
-
-# 运行测试
-cli-anything-gimp --test
-```
-
-**测试覆盖**：
-
-- 单元测试：合成数据，验证命令逻辑
-- E2E 测试：真实文件和软件，验证集成
-- CLI 子进程验证：`which cli-anything-gimp` 确认 PATH 安装
-
-### Phase 7：发布（Publish）
-
-```bash
-# 自动生成 setup.py
-# 发布到 PyPI（可选）
-python -m build
-twine upload dist/*
-```
-
-生成 `cli-anything-<software>` 包名，直接 `pip install -e .` 即可用。
-
----
-
-## 🔍 进阶用法：Refine 迭代改进
-
-初始生成后，CLI 覆盖率不可能一步到位。Refine 命令增量分析缺口并补全。
-
-### 宽范围精化
-
-```bash
-# 分析所有功能的覆盖缺口
+# 全量缺口分析
 /cli-anything:refine ./gimp
-```
 
-### 聚焦精化
-
-```bash
-# 只针对特定功能领域扩展
+# 聚焦特定领域
 /cli-anything:refine ./gimp "I want more CLIs on image batch processing and filters"
 ```
 
-**Refine 的行为**：
+官方命令文档（commands/refine.md）对行为的原话是 "Refine never removes existing commands — it only adds or enhances"，即只加不改，可以放心多次运行，逐步逼近完整覆盖。
 
-1. 对比软件完整能力 vs 当前 CLI 覆盖范围
-2. 识别未覆盖的命令/选项/场景
-3. 实现新命令、测试、文档
-4. 每次运行增量、不破坏已有命令
+## 测试与发布
 
-可以多次运行，逐步扩展到完整覆盖。
-
----
-
-## 🔌 CLI-Hub：AI Agent 的应用商店
-
-CLI-Hub 是 CLI-Anything 的元技能（meta-skill），让 Agent 能够**自主发现和安装**社区构建的 CLI。
-
-### 安装
+测试不走 CLI 自身的 flag，而是专门的辅助命令或直接 pytest：
 
 ```bash
-# OpenClaw
-openclaw skills install cli-anything-hub
+# Agent 内运行（QUICKSTART 口径）
+/cli-anything:test gimp
 
-# nanobot
-nanobot skills install cli-anything-hub
+# 手动运行
+cd gimp/agent-harness
+python3 -m pytest cli_anything/gimp/tests/ -v
+
+# 质量校验：检查 CLI 是否达到项目标准
+/cli-anything:validate gimp
 ```
 
-### Agent 自主使用
+仓库 badge 的口径是 "Tests 2,461 Passing" 与 "pytest 100% pass"，这是全部已交付 CLI 的合计数字，单套 CLI 的测试结果看各自的 TEST.md。
 
-给 Agent 一个任务，它会：
+发布是可选项。setup.py 头部注释给了完整路径：`python -m build && twine upload dist/*`，PyPI 包名沿用 `cli-anything-<software>` 约定（如 `cli-anything-gimp`）。只是自用的话，`pip install -e .` 已经够用。
 
-1. 浏览 CLI-Hub 目录（catalog 自动更新）
-2. 识别适合的 CLI
-3. 用一条 `pip install` 命令安装
-4. 读取该 CLI 的 SKILL.md 获取详细用法
-5. 执行任务
+## SKILL.md：让 Agent 自己发现并安装 CLI
 
-### 内置 SKILL.md 生成
+每个生成的 CLI 都带 `skills/SKILL.md`：YAML frontmatter（name、description）加 Markdown 正文（安装方式、前置条件、用法示例）。它不是给人看的 API 文档，而是 Agent 读取后即可上手操作的能力声明。
 
-每个生成的 CLI 都包含 `SKILL.md`——AI Agent 可发现的能力定义文件：
-
-```yaml
----
-name: cli-anything-gimp
-description: GIMP image editor CLI harness
-commands:
-  - group: layer
-    description: Layer management
-    subcommands:
-      - name: add
-        description: Add a new layer
-        args: [...]
----
-```
-
-这让 CLI-Anything 的整个生态都支持 `npx skills add HKUDS/CLI-Anything --list` 式的探索。
-
----
-
-## 📊 已支持的软件生态
-
-截至 2026 年 4 月，CLI-Anything 社区已为以下软件生成 CLI：
-
-| 类别 | 软件 |
-| ---- | ---- |
-| **3D 建模** | Blender、FreeCAD、Godot Engine |
-| **图像处理** | GIMP、Inkscape、Krita、Darktable |
-| **视频编辑** | Kdenlive、Shotcut、OBS Studio |
-| **办公套件** | LibreOffice |
-| **开发工具** | iTerm2、Jenkins、Gitea、Portainer |
-| **科研工具** | ImageJ、QGIS、ParaView、KiCad |
-| **AI/ML 平台** | Stable Diffusion WebUI、ComfyUI、Ollama |
-| **浏览器** | Safari（via safari-mcp） |
-| **游戏引擎** | Godot、s&box |
-| **其他** | Zotero、Obsidian、Draw.io、Zoom |
-
-**总计**：18 个主要应用，2269 个测试通过，覆盖率在持续增长。
-
----
-
-## ⚠️ 常见误区
-
-### 误区 1：生成的 CLI 不如手写的好
-
-**实际情况**：生成流水线使用经过 18 个应用验证的同一套方法论，产出的 CLI 在结构、测试覆盖、文档完整性上都经过质量门禁。手写一个完整 CLI 往往需要数日，生成只需数分钟。
-
-### 误区 2：只能处理开源软件
-
-**实际情况**：CLI-Anything 最擅长处理有源码的软件（分析源码映射 API），但也支持：
-- GitHub 仓库：`/cli-anything https://github.com/blender/blender`
-- 闭源软件的命令行接口（如果软件暴露 CLI）
-- API 文档和 SDK 代码（生成封装 CLI）
-
-### 误区 3：Refine 会破坏已有命令
-
-**实际情况**：Refine 设计为增量、非破坏性。每次运行只添加新命令，不修改已有命令。已有测试持续通过。
-
----
-
-## 📋 总结速查
-
-### 核心要点
-
-1. **CLI-Anything 做什么**：把任意软件转成 AI Agent 可控的 CLI
-2. **一条命令搞定**：`/cli-anything <path>` 生成完整 CLI
-3. **七阶段流水线**：分析→设计→实现→测试计划→测试编写→文档→发布
-4. **迭代改进**：用 `/cli-anything:refine` 增量扩展覆盖
-5. **跨平台**：Claude Code、Pi、OpenClaw、OpenCode 等都支持
-6. **CLI-Hub**：Agent 自主发现和安装社区 CLI
-
-### 快速参考
+SKILL 兼容的平台（OpenClaw、Nanobot、Claude Code、Codex、Reasonix、Antigravity 等）用一条命令安装 CLI-Hub 的元技能（meta-skill），装好后 Agent 就能自己走完"搜注册表 → 装合适的 CLI → 读 SKILL.md → 干活"整个流程：
 
 ```bash
-# Claude Code 中构建 CLI
-/plugin marketplace add HKUDS/CLI-Anything
-/plugin install cli-anything
-/cli-anything ./gimp
-
-# 安装生成的 CLI
-cd gimp/agent-harness && pip install -e .
-
-# 使用
-cli-anything-gimp --help
-cli-anything-gimp --json layer add -n "Background" --type solid
-
-# 精化扩展
-/cli-anything:refine ./gimp "batch processing"
+npx skills add HKUDS/CLI-Anything --skill cli-hub-meta-skill -g -y
 ```
 
----
+之后在 Agent 里直接下任务："Find appropriate CLI software in CLI-Hub and complete the task: ..."。
 
-## 🔗 相关资源
+## 平台支持与常见问题
 
-- **仓库**：[HKUDS/CLI-Anything](https://github.com/HKUDS/CLI-Anything) ⭐ 35.2k
-- **CLI-Hub**：https://hkuds.github.io/CLI-Anything/
-- **中文文档**：[README_CN.md](https://github.com/HKUDS/CLI-Anything/blob/main/README_CN.md)
-- **快速开始指南**：[§Quick Start](https://github.com/HKUDS/CLI-Anything#-quick-start)
-- **贡献指南**：[CONTRIBUTING.md](https://github.com/HKUDS/CLI-Anything/blob/main/CONTRIBUTING.md)
+当前支持 10 个 Agent 平台，各自的安装入口：
 
----
+| 平台 | 安装方式 |
+| ---- | -------- |
+| Claude Code | 插件市场（`/plugin marketplace add`） |
+| Cursor | 见 README 对应小节 |
+| Pi | `bash .pi-extension/cli-anything/install.sh` |
+| OpenClaw / OpenCode / Codex / Hermes / Reasonix / Qodercli / GitHub Copilot CLI | 见 README 对应小节，SKILL 兼容平台可走 `npx skills add` |
 
-## ❓ 常见问题 FAQ
+**装完 `/cli-anything` 提示 Unknown skill 怎么办**：换入口形式没用（两种入口指向同一个技能），按顺序排查——先 `/reload-plugins` 重载，再 `/help cli-anything` 确认插件已加载，不行就从市场重装，最后重试 `/cli-anything ./gimp`。
 
-### Q1: CLI-Anything 生成的 CLI 质量如何？能用于生产环境吗？
+**生成质量能上生产吗**：流水线对结构、测试覆盖、文档完整性有统一要求（HARNESS.md 的规则章），但把生成的 CLI 用于生产前，建议跑完整测试套件、核对 TEST.md 的覆盖率，再对关键命令补充错误处理。生成耗时官方口径 10-15 分钟，不按软件规模分档——比手写一套完整 CLI 快得多，但复杂软件的覆盖广度要靠 refine 迭代补。
 
-**A**: 生成流水线使用经过 18 个应用验证的同一套方法论，产出的 CLI 在结构、测试覆盖、文档完整性上都经过质量门禁。但对于生产环境，建议：
-- 运行完整测试套件（`cli-anything-gimp --test`）
-- 检查生成的 `TEST.md` 确认覆盖率和通过率
-- 使用 `refine` 命令增量扩展覆盖到你需要的功能
-- 手写关键命令的补充测试和错误处理
+**闭源软件能用吗**：生态以开源软件为主（registry 里绝大多数条目有公开源码或仓库）。有 API 文档的闭源软件可以按文档生成封装型 CLI（Exa CLI 就是纯 API 封装的例子）；只有二进制的软件不在设计目标内。
 
-### Q2: 生成过程需要多长时间？
+## 生态现状速览
 
-**A**: 取决于软件大小和复杂度：
-- 小型 CLI 工具（如 `gh`）: 5-10 分钟
-- 中型桌面应用（如 GIMP）: 30-60 分钟
-- 大型软件（如 Blender）: 1-2 小时
+截至 2026-10-03（registry.json 口径）：注册表收录 79 个 CLI，分 31 个类别，数量最多的是 ai（8 个）、devops、web、video、graphics（各 6 个）。README badge 的 "Demos 18 Apps" 指最早走通全流程的专业级验证集，不是支持总数——这是读该仓库数字时最容易混的两个口径。命令面厚薄差距很大：Exa CLI 只有 search、contents、repl 三个命令，而 Mailchimp 这类 API 面大的 CLI 有近 300 个。挑 CLI 时先用 `cli-hub info <name>` 看清命令数与依赖再决定。
 
-时间主要来自 Phase 1（分析）和 Phase 3（实现）。Refine 迭代通常更快，因为只需要处理增量部分。
+## 相关资源
 
-### Q3: 可以生成闭源软件的 CLI 吗？
+- 仓库：[HKUDS/CLI-Anything](https://github.com/HKUDS/CLI-Anything)（51,338 星，2026-10-03）
+- CLI-Hub 官网：<https://clianything.cc/>（旧址 hkuds.github.io/CLI-Anything/ 已 301 到此）
+- 中文文档：[README_CN.md](https://github.com/HKUDS/CLI-Anything/blob/main/README_CN.md)
+- 技术报告：arXiv:2606.03854
+- 包管理器：[PyPI cli-anything-hub](https://pypi.org/project/cli-anything-hub/)（0.4.1）
+- 站内相关：[CLI-Anything 方法论深读](/posts/tech/cli-anything-universal-cli-framework/) · [harness 设计解析](/posts/tech/cli-anything-agent-native-software-harness/) · [导论判断篇](/posts/tech/hkuds-cli-anything-universal-cli-ai/) · [生态版图与采用判断](/posts/tech/hkuds-cli-anything-universal-cli-ai-agent/)
 
-**A**: 理论上可以，但效果有限：
-- **有 API 文档的闭源软件**：可以基于文档生成封装 CLI（类似 SDK wrapper）
-- **只有二进制文件的软件**：需要反编译，准确率大幅下降
-- **有 WebSocket/HTTP API 的软件**：可以通过抓包分析 API，然后生成 CLI
+## 口径说明
 
-最佳实践是使用有源码的软件。如果必须使用闭源软件，考虑联系厂商获取 API 文档。
-
-### Q4: 生成的 CLI 支持哪些操作系统？
-
-**A**: 生成的 CLI 是 Python 包，理论上跨平台。但需要注意：
-- **Windows**：某些命令可能涉及 Unix-only 的路径操作或系统调用
-- **macOS**：通常没问题，但要注意 Homebrew 路径差异
-- **Linux**：最佳支持平台
-
-建议在目标平台上测试生成的 CLI，必要时修改平台相关代码。
-
-### Q5: 如何为生成的 CLI 添加新命令？
-
-**A**: 有两种方式：
-1. **使用 Refine 命令**（推荐）：`/cli-anything:refine ./gimp "添加批处理命令"`，让 Agent 自动分析并添加
-2. **手动编辑**：直接在 `agent-harness/src/` 下添加新的 Click 命令，然后重新安装（`pip install -e .`）
-
-手动编辑时参考已有命令的结构，保持一致性。
-
----
-
-## 📝 自测题
-
-### 第一题：CLI-Anything 的核心价值是什么？
-
-<details>
-<summary>点击查看答案</summary>
-
-CLI-Anything 的核心价值是**把任意软件转成 AI Agent 可控的 CLI**，解决了三个问题：
-1. GUI 自动化脆弱（截图+点击不可靠）
-2. 需要 API 的软件受限于接口
-3. 没有 API 的软件完全无法控制
-
-它通过七阶段流水线自动生成生产级 CLI，让 AI Agent 能够以结构化、可靠的方式控制任意专业软件。
-
-</details>
-
-### 第二题：七阶段流水线的 Phase 4-6 分别是什么？
-
-<details>
-<summary>点击查看答案</summary>
-
-- **Phase 4：测试计划** — 创建含单元+E2E 测试计划的 TEST.md
-- **Phase 5：编写测试** — 实现完整测试套件
-- **Phase 6：文档** — 更新 TEST.md 附上结果
-
-这三个阶段确保生成的 CLI 有完整的测试覆盖和文档。
-
-</details>
-
-### 第三题：Refine 命令的作用是什么？它会破坏已有命令吗？
-
-<details>
-<summary>点击查看答案</summary>
-
-Refine 命令用于**增量改进**生成的 CLI：
-- 分析软件完整能力 vs 当前 CLI 覆盖范围
-- 识别未覆盖的命令/选项/场景
-- 实现新命令、测试、文档
-
-**不会破坏已有命令**：Refine 设计为增量、非破坏性。每次运行只添加新命令，不修改已有命令。已有测试持续通过。
-
-</details>
-
-### 第四题：CLI-Hub 是什么？Agent 如何使用它？
-
-<details>
-<summary>点击查看答案</summary>
-
-CLI-Hub 是 CLI-Anything 的**元技能（meta-skill）**，让 Agent 能够自主发现和安装社区构建的 CLI。
-
-Agent 使用流程：
-1. 浏览 CLI-Hub 目录（catalog 自动更新）
-2. 识别适合的 CLI
-3. 用一条 `pip install` 命令安装
-4. 读取该 CLI 的 SKILL.md 获取详细用法
-5. 执行任务
-
-这让 CLI-Anything 的整个生态都支持探索式发现。
-
-</details>
-
-### 第五题：如何在 Claude Code 中安装和使用 CLI-Anything？
-
-<details>
-<summary>点击查看答案</summary>
-
-**安装步骤**：
-```bash
-# 第一步：添加市场
-/plugin marketplace add HKUDS/CLI-Anything
-
-# 第二步：安装插件
-/plugin install cli-anything
-```
-
-**使用步骤**：
-```bash
-# 生成 CLI
-/cli-anything ./gimp
-
-# 安装生成的 CLI
-cd gimp/agent-harness && pip install -e .
-
-# 使用
-cli-anything-gimp --help
-```
-
-</details>
-
----
-
-## 🛠️ 动手练习
-
-### 练习 1：生成你的第一个 CLI
-
-**任务**：选择一个你常用的开源软件（如 Inkscape、LibreOffice），使用 CLI-Anything 生成它的 CLI。
-
-**步骤**：
-1. 安装 CLI-Anything 插件（参考本文"快速开始"部分）
-2. 运行 `/cli-anything <软件路径>`
-3. 等待七阶段流水线完成
-4. 安装生成的 CLI（`pip install -e .`）
-5. 运行 `cli-anything-<软件> --help` 验证
-
-**预期结果**：成功生成并安装 CLI，能看到所有命令组的帮助信息。
-
----
-
-### 练习 2：运行测试套件
-
-**任务**：为练习 1 生成的 CLI 运行测试，查看测试覆盖率。
-
-**步骤**：
-1. 进入 `agent-harness` 目录
-2. 运行 `cli-anything-<软件> --test`
-3. 查看 `TEST.md` 了解测试策略和结果
-4. 分析哪些功能还没有被测试覆盖
-
-**预期结果**：了解当前 CLI 的质量状态，为下一步 Refine 做准备。
-
----
-
-### 练习 3：使用 Refine 扩展覆盖
-
-**任务**：使用 Refine 命令为练习 1 生成的 CLI 添加新功能。
-
-**步骤**：
-1. 确定你想要添加的功能（如"批处理图像"）
-2. 运行 `/cli-anything:refine ./<软件> "添加批处理功能"`
-3. 等待 Refine 完成
-4. 重新安装 CLI（`pip install -e .`）
-5. 验证新命令是否可用
-
-**预期结果**：CLI 新增了批处理相关命令，且已有命令仍然正常工作。
-
----
-
-## 🚀 进阶路径
-
-### 初学者（0-3 个月）
-
-1. **掌握基础使用**
-   - 在 Claude Code 中安装 CLI-Anything
-   - 成功生成一个简单软件的 CLI（如 `gh`）
-   - 运行测试套件并理解测试结果
-
-2. **理解七阶段流水线**
-   - 阅读本文"七阶段流水线详解"部分
-   - 理解每个阶段的输入和输出
-   - 尝试手动执行每个阶段（而不是一条命令搞定）
-
-### 进阶者（3-6 个月）
-
-1. **掌握 Refine 迭代**
-   - 使用 Refine 为已有 CLI 添加新功能
-   - 理解增量分析和非破坏性设计
-   - 学会阅读和分析 `HARNESS.md`
-
-2. **贡献社区 CLI**
-   - 选择一个开源软件，生成高质量 CLI
-   - 提交到 CLI-Hub 社区
-   - 编写完整的 SKILL.md 和使用文档
-
-### 高级者（6+ 个月）
-
-1. **扩展 CLI-Anything 本身**
-   - 添加新的工具函数类型（如支持更多 CDP 能力）
-   - 优化七阶段流水线的某个阶段
-   - 提交 PR 到 CLI-Anything 主仓库
-
-2. **构建企业级 CLI 生态**
-   - 为内部软件生成 CLI
-   - 建立内部 CLI-Hub
-   - 培训团队使用 CLI-Anything
-
----
-
-## 📚 资料口径说明
-
-### 本文信息来源
-
-| 来源 | 链接 | 用途 |
-|------|------|------|
-| **CLI-Anything GitHub 仓库** | https://github.com/HKUDS/CLI-Anything | 项目介绍、功能列表、使用说明 |
-| **CLI-Hub 官网** | https://hkuds.github.io/CLI-Anything/ | CLI 目录、安装说明 |
-| **CLI-Anything 中文文档** | https://github.com/HKUDS/CLI-Anything/blob/main/README_CN.md | 中文使用指南 |
-| **PyPI 包页面** | https://pypi.org/project/cli-anything-hub/ | 安装说明、依赖信息 |
-
-### 时效性说明
-
-- **项目版本**：本文基于 CLI-Anything 2026 年 4 月的版本编写
-- **GitHub Stars**：截至 2026-04，项目获得 35.2k stars
-- **已支持软件**：截至 2026-04，已为 18 个主要应用生成 CLI，2269 个测试通过
-
-### 准确性边界
-
-- 本文基于项目公开信息编写，所有命令和配置都经过验证
-- 生成时间估算基于社区反馈，实际时间可能因软件复杂度而异
-- Refine 命令的效果取决于基础模型能力，弱模型可能生成不完整 CLI
-
----
-
----
-
-**文档元信息**
-难度：⭐⭐ | 类型：核心概念 | 更新日期：2026-07-01 | 预计阅读时间：25 分钟
+本文 2026-10-03 修订，核对基线：GitHub API 当日读数、仓库 main 分支 HEAD 34f5195（2026-09-22）、QUICKSTART.md 与 HARNESS.md 全文、`gimp`/`blender`/`exa` 三套生成物的 `*_cli.py` 源码、`registry.json`（79 条）、setup.py。原文写作时点（2026-05-17）的平台清单与生态数字已按当次读数刷新，漂移项在文中标注。命令示例与源码逐字核对，若与你本地产物有出入，以生成时的源码为准。

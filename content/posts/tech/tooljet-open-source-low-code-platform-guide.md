@@ -1,16 +1,16 @@
 ---
-title: "ToolJet：开源低代码平台，60+ 组件与 80+ 数据源拼装内部工具"
+title: "ToolJet：开源低代码平台，80+ 组件与 90+ 数据源拼装内部工具"
 date: 2026-08-17T03:24:00+08:00
 slug: "tooljet-open-source-low-code-platform-guide"
 github_repo: "ToolJet/ToolJet"
 source_key: "gh:ToolJet/ToolJet"
-description: "ToolJet 是一个开源的低代码平台，社区版提供可视化拖拽构建器、内置数据库和 80+ 数据源连接器，企业版叠加 AI 生成与 Agent 编排。本文拆解其 Server / Client 架构、代理式数据流与上手路径。"
+description: "ToolJet 是一个开源的低代码平台，社区版提供可视化拖拽构建器、内置数据库和 90+ 数据源连接器，企业版叠加 AI 生成、Workflow 编排与 Agent。本文拆解其 Server / Client 架构、代理式数据流、MCP 构建入口与上手路径。"
 draft: false
 categories: ["技术笔记"]
 tags: ["低代码", "内部工具", "开源", "JavaScript"]
 ---
 
-内部工具开发是个尴尬的领域：需求琐碎但真实，认真写一套前后端太重，用 Excel 凑合又撑不住权限和协作。ToolJet 在这个位置做了多年积累——一个 AGPL v3 开源的低代码平台，主语言 JavaScript/TypeScript（仓库约 40k stars、5.4k forks），2026 年仍在以几乎每天一个版本的节奏发版（LTS 与 beta 双线并行，例如 v3.20.214-lts 与 v3.21.61-beta 前后脚落地）。
+内部工具开发是个尴尬的领域：需求琐碎但真实，认真写一套前后端太重，用 Excel 凑合又撑不住权限和协作。ToolJet 在这个位置做了多年积累——一个 AGPL v3 开源的低代码平台，主语言 JavaScript/TypeScript（仓库约 41k stars、5.5k forks），2026 年仍在以几乎每天一个版本的节奏发版（LTS 与 beta 双线并行，例如 v3.20.237-lts 与 v3.21.75-beta 前后脚落地）。
 
 读完后你会知道：它内部由哪几个服务组成、数据怎么流、什么场景适合它、什么场景不该选它，以及从零起一个实例要几步。
 
@@ -18,7 +18,7 @@ tags: ["低代码", "内部工具", "开源", "JavaScript"]
 
 ToolJet 的工程重点不在"画 UI"，而在**数据连接与执行**。它的设计是：数据库凭据只存在服务端，查询由服务端代跑，浏览器只拿到结果。这个"代理式"结构决定了它能不能进你的生产环境，也是它与 Excel 类工具的本质区别。
 
-社区版（CE）已经覆盖完整的可视化构建能力；AI 生成界面、AI 辅助查询、Agent 编排属于 ToolJet AI（企业版）的付费范畴。评估它时，CE 和 AI 版要分开看。
+社区版（CE）已经覆盖完整的可视化构建能力；AI 生成界面、AI 辅助查询、Agent 编排和 Workflow 都在 ToolJet AI（企业版）的付费范畴。评估它时，CE 和 AI 版要分开看。
 
 ## 系统地图
 
@@ -39,7 +39,7 @@ PostgreSQL（主数据库：应用定义、用户、加密凭据）
   │  PostgREST：把 ToolJet Database 暴露成 REST API
 ToolJet Database（内置数据库，独立的第二个 PostgreSQL 连接）
   ▼
-Redis + BullMQ：队列与后台任务调度（Workflow 用）
+Redis + BullMQ：任务队列（Workflow 与后台任务用，基础单机部署可以不装）
 Worker 进程：消费队列执行工作流
 ```
 
@@ -47,7 +47,7 @@ Worker 进程：消费队列执行工作流
 - **ToolJet Server**：NestJS / Node.js API 服务，管认证、应用定义持久化、查询执行和数据源凭据的加密存储。
 - **PostgreSQL**：主数据库，存应用定义、用户和加密后的数据源凭据。
 - **ToolJet Database**：内置的"零配置"数据库，走独立 PostgreSQL 连接，通过 PostgREST 暴露成 REST API；PostgREST 只与 Server 通信，不对外暴露。
-- **Redis + BullMQ**：任务队列，支撑 Workflow 编排、定时任务与多实例协同（多 Pod / 多 Worker 部署时必需）。
+- **Redis + BullMQ**：任务队列，支撑 Workflow 编排、定时任务与多实例协同（多 Pod / 多 Worker 部署时必需，单机试水可以不装）。
 - **邮件服务**：SMTP 或 Sendgrid / Mailgun 等，用于发送邀请与密码重置。
 
 数据流和构建流是两条主线：数据从浏览器到 Server 再到数据源；构建则是拖组件、绑数据、设权限、发布。
@@ -56,7 +56,7 @@ Worker 进程：消费队列执行工作流
 
 ### 机制 1：查询在服务端执行，凭据不出浏览器
 
-建一个查询时，数据源凭据存在服务端。运行时浏览器只把"执行哪个查询、带什么参数"发给 Server，由 Server 连库取数，结果再回传。数据库账号和密钥不会出现在前端代码里，这就是 README 说的 proxy-only data flow。它同时解决两个问题：前端拿不到凭据，凭据在存储时用 AES-256-GCM 加密。
+建一个查询时，数据源凭据存在服务端。运行时浏览器只把"执行哪个查询、带什么参数"发给 Server，由 Server 连库取数，结果再回传。数据库账号和密钥不会出现在前端代码里，这就是 README 说的 proxy-only data flow——前端拿不到凭据，凭据落盘时还有 AES-256-GCM 加密兜底。
 
 ### 机制 2：ToolJet Database 是"独立 PostgreSQL + PostgREST"
 
@@ -66,17 +66,24 @@ Worker 进程：消费队列执行工作流
 
 表格、表单、图表这类组件本身不装数据，靠绑定表达式把某个查询的结果喂进来，再配好事件（比如按钮点击 → 跑查询 → 刷新表格）。复杂逻辑可以用内嵌 JavaScript 或 Python 片段补上。理解"组件—查询—事件"三个要素，就能拆掉 ToolJet 里绝大多数应用。
 
-### 机制 4：Workflow 是独立于页面的编排层
+### 机制 4：Workflow 是独立于页面的编排层（企业版）
 
-除了页面里的即时事件，ToolJet 还有一个 Workflow 模块：用可视化节点编辑器把多步业务过程串起来，支持分支、循环、条件执行，可被用户动作、定时器或 API 调用触发。数据源连接器在页面查询和 Workflow 里通用，编排出来的流程也可以嵌入应用里。
+除了页面里的即时事件，ToolJet 还有一个 Workflow 模块：用可视化节点编辑器把多步业务过程串起来，内置 If-Else 分支、Loop 循环这类逻辑节点，可由应用内动作（比如按钮点击）、Webhook 或定时器触发，执行走 Redis + BullMQ 队列、由 Worker 进程跑。要注意的是，当前 README 把 Workflows 列在企业版功能里，社区版拿不到这个模块——老资料把它写成 CE 能力，评估时别被误导。
 
 ## 社区版能力清单
 
-- **可视化构建器**：60+ 响应式组件，表格、图表、表单、列表、进度条等；多页面应用与多人实时编辑是内置能力。
-- **数据层**：ToolJet Database、80+ 数据源连接器（数据库、REST / GraphQL API、云存储、SaaS）、Code Anywhere 可跑 JS / Python。
-- **工作流**：Workflow 可视化编排（触发、分支、循环、定时）。
+- **可视化构建器**：80+ 响应式组件，表格、图表、表单、列表、进度条等；多页面应用与多人实时编辑是内置能力。
+- **数据层**：ToolJet Database、90+ 数据源连接器（数据库、REST / GraphQL API、云存储、SaaS）、Code Anywhere 可跑 JS / Python。
 - **协作与安全**：行内评论、@提及、细粒度访问控制；AES-256-GCM 加密、代理式数据流、SSO。
 - **扩展**：用 [ToolJet CLI](https://www.npmjs.com/package/@tooljet/cli) 写自己的插件和连接器。
+
+## 用编码智能体构建：MCP server（beta）
+
+拖拽之外，ToolJet 还开了第三条路：平台内置一个 MCP（Model Context Protocol）server，目前是 beta。装好之后，Claude Code、Codex、Grok Build 有官方插件（捆绑了 ToolJet 的 app-builder skill），Cursor 或其他 MCP 兼容客户端直接连 MCP server 就行。
+
+Agent 做的事和人在可视化编辑器里做的事是同一套：从提示生成页面、查询和组件，或者原地修改现有应用。差别在于 Agent 按 ToolJet 真实的组件与数据契约构建，产出的是一个标准 ToolJet 应用——团队之后继续在可视化编辑器里编辑，权限、环境、版本历史和其他应用走同一套。这个入口的操作跑在你自己的模型订阅上，不消耗 ToolJet AI 的 credits。
+
+对已经在用 Claude Code 或 Cursor 的团队，这意味着可以不打开编辑器就把应用搭出来。设置见官方 [ToolJet MCP 指南](https://docs.tooljet.com/docs/build-with-ai/mcp/overview)。
 
 ## 快速上手
 
@@ -92,7 +99,7 @@ docker run \
   tooljet/try:ee-lts-latest
 ```
 
-生产部署建议走 Docker Compose，用官方生成的 compose 文件，并选 LTS 版本线。README 明确说明 LTS 线只收稳定性修复、安全补丁和性能增强，适合生产；`latest` 更适合尝鲜。自托管时要注意几个环境变量：
+生产部署建议走 Docker Compose，用官方提供的 compose 文件，并选 LTS 版本线。README 明确说明 LTS 线只收稳定性修复、安全补丁和性能增强，适合生产；`latest` 更适合尝鲜。自托管时要注意几个环境变量：
 
 - `TOOLJET_HOST`：访问地址（`http://IP` 或 `https://域名`），必须以 `http://` / `https://` 开头。
 - 密钥类变量（`LOCKBOX_MASTER_KEY` 用 `openssl rand -hex 32` 生成、`SECRET_KEY_BASE` 用 `openssl rand -hex 64` 生成、数据库密码）：官方脚本 `internal.sh` 会帮你生成。
@@ -118,11 +125,13 @@ ToolJet AI 在 CE 之上叠加的能力里，值得关注的几条：
 - **AI App Generation**：自然语言描述直接生成应用初稿。
 - **AI Query Builder / AI Debugging**：辅助生成查询、一键定位问题。
 - **Agent Builder**：构建自动化工作流的智能体。
-- **企业治理**：SOC 2 / GDPR 合规准备、审计日志、RBAC、多环境（dev / stage / prod）、GitSync 与 CI/CD 集成、白标与嵌入。
+- **Workflows**：多步流程编排（If-Else 分支、Loop 循环、定时与 Webhook 触发），见机制 4。
+- **Modules**：把一段 UI 和逻辑做成可复用单元，跨应用引用。
+- **企业治理**：SOC 2 / GDPR 合规准备、审计日志、RBAC 与 SCIM 用户同步、行/组件/页面/查询四级访问控制、多环境（dev / stage / prod）、GitSync 与 CI/CD 集成、白标与自定义域名、应用嵌入。
 
 ## 测什么、不能推出什么
 
-"60+ 组件、80+ 数据源"衡量的是**连接器与组件的覆盖广度**。它说明大多数内部工具的高频需求有现成件可拼，不能推出"任何需求都能在平台内表达干净"。低代码平台的表达力有上限：超过某个复杂度阈值（复杂状态机、特殊渲染、深度定制交互），维护成本会反超传统开发。组件数量也不代表性能——大表要靠分页和虚拟滚动支撑，表格组件需要你显式配置分页，而不是把所有行一次渲染出来。
+"80+ 组件、90+ 数据源"衡量的是**连接器与组件的覆盖广度**。它说明大多数内部工具的高频需求有现成件可拼，不能推出"任何需求都能在平台内表达干净"。低代码平台的表达力有上限：超过某个复杂度阈值（复杂状态机、特殊渲染、深度定制交互），维护成本会反超传统开发。组件数量也不代表性能——大表要靠分页和虚拟滚动支撑，表格组件需要你显式配置分页，而不是把所有行一次渲染出来。
 
 ## 常见问题
 
@@ -144,7 +153,8 @@ ToolJet AI 在 CE 之上叠加的能力里，值得关注的几条：
 
 ## 进阶路径
 
-- 把官方[快速入门](https://docs.tooljet.com/docs/)里的示例应用（时间追踪、CMS、AWS S3 Browser）逐个搭一遍，理解组件—查询—事件三要素。
+- 把官方[快速入门](https://docs.tooljet.com/docs/#quickstart-guide)里的示例应用（时间追踪、CMS、AWS S3 Browser）逐个搭一遍，理解组件—查询—事件三要素。
+- 如果团队已经在用 Claude Code 或 Cursor，把 [ToolJet MCP server](https://docs.tooljet.com/docs/build-with-ai/mcp/overview) 接上，完整跑一次"从提示到可编辑应用"，看产出质量够不够进你们的流程。
 - 用 [ToolJet CLI](https://www.npmjs.com/package/@tooljet/cli) 写一个自己的数据源连接器，摸清平台扩展边界。
 - 读[架构文档](https://docs.tooljet.com/docs/contributing-guide/setup/architecture/)和 docker-compose 文件，弄清 Server / Client / PostgREST / Redis 各自的职责，自托管排障会顺利很多。
 

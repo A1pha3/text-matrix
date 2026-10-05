@@ -1,6 +1,7 @@
 ---
 title: "ComfyUI：用节点图驱动 AI 内容创作的模块化引擎"
 date: 2026-08-09T03:22:48+08:00
+lastmod: 2026-09-29
 slug: "comfyui-node-graph-engine"
 github_repo: "Comfy-Org/ComfyUI"
 source_key: "gh:Comfy-Org/ComfyUI"
@@ -20,7 +21,7 @@ ComfyUI 解决的不是"给扩散模型加个界面"，而是把一次生图从"
 - 工作流可序列化为 JSON：既能保存复用，也能通过 API 远程驱动
 - 改参数只重跑受影响子图，不必整个流程从头再来
 
-[ComfyUI](https://github.com/Comfy-Org/ComfyUI) 用 Python 编写，以 GPL-3.0 许可发布，截至本文写作时在 GitHub 上获得超过 13 万 Star。展开细节之前，先把它拆成四层，后面各节都对应其中一层：
+[ComfyUI](https://github.com/Comfy-Org/ComfyUI) 用 Python 编写，以 GPL-3.0 许可发布，截至 2026 年 9 月 29 日在 GitHub 上获得约 13.5 万 Star。展开细节之前，先把它拆成四层，后面各节都对应其中一层：
 
 | 层级 | 负责什么 | 典型组件 |
 |------|---------|---------|
@@ -28,8 +29,6 @@ ComfyUI 解决的不是"给扩散模型加个界面"，而是把一次生图从"
 | 后端执行 | 队列调度、拓扑排序、部分图重执行 | 执行器、异步队列 |
 | 模型层 | 模型加载、文本编码、采样、解码 | Load Checkpoint、KSampler、VAE Decode |
 | 生态层 | 自定义节点、模板、App Mode、API | Custom Nodes、工作流模板 |
-
-读完全文，你应该能说清这四层各自的工作方式，并能判断自己该不该自建一套。
 
 ## 节点图架构：从画布到推理
 
@@ -59,18 +58,18 @@ ComfyUI 的界面是一张无限画布。用户从搜索面板拖出节点，用
 
 ## 模型支持：广度与分层
 
-ComfyUI 原生支持的模型覆盖当前主流生成模型家族，按模态大致分为：
+ComfyUI 原生支持的模型覆盖当前主流生成模型家族，按模态大致分为（官方口径为代表名单，完整支持随版本持续扩充）：
 
 | 模态 | 代表模型 |
 |------|---------|
-| 图像生成 | Stable Diffusion 1.5 / SDXL / SD3.5、Flux.1 / Flux.2、Qwen Image、Z-Image、Hunyuan Image 2.1 |
-| 图像编辑 | Flux Kontext、Qwen Image Edit、OmniGen2 |
-| 视频生成 | Wan 2.1 / 2.2、LTX-Video 2 / 2.3 / 2.5、HunyuanVideo 1.5 |
-| 音频生成 | ACE-Step 1.5、Stable Audio 3、MiniMax Music 3 |
-| 3D 与视觉 | Hunyuan3D 2.1、TripoSplat、SAM 3 / 3.1、Depth Anything 3 |
-| 文本生成 | Gemma 3 / 4、Qwen3 / Qwen3.5（含多模态输入） |
+| 图像生成 | Stable Diffusion 1.5 / SDXL / SD3.5、Flux.1 / Flux.2、Qwen Image（v0.37.0 起支持 2.1）、Z-Image、Hunyuan Image 2.1、HiDream、Ideogram 4、Krea 2 |
+| 图像编辑 | Flux Kontext、Flux.2 Klein、Qwen Image Edit、OmniGen2、HiDream E1.1 |
+| 视频生成 | Wan 2.1 / 2.2、LTX-Video 2 / 2.3、HunyuanVideo 1.5、CogVideoX、Cosmos Predict2、Mochi |
+| 音频生成 | ACE-Step 1.5、Stable Audio 3、MiniMax Music 3、YuE 2 |
+| 3D 与视觉 | Hunyuan3D 2.1、TripoSplat、SAM 3 / 3.1、Depth Anything 3、MoGe 3、SeedVR2、SUPIR |
+| 文本生成 | Gemma 3 / 4、Qwen3 / Qwen3.5 / Qwen3-VL（含多模态输入） |
 
-除了开源模型，ComfyUI 还通过 API Nodes 接入按调用计费的闭源模型（如 Nano Banana、Seedance、Wan 3.0、Hunyuan3D）。这些节点需要联网且可能产生费用；想完全离线使用，启动时加 `--disable-api-nodes` 参数即可屏蔽所有付费 API 节点。
+闭源模型走另一条路：Partner Nodes（API 节点）按调用计费接入，名单包括 Nano Banana、Seedance、Kling、Runway、Wan 2.7、Hunyuan3D 等，`comfy_api_nodes/` 目录下有四十多个服务接入文件。这些节点需要联网且可能产生费用；想完全离线使用，启动时加 `--disable-api-nodes` 参数即可——它会同时阻止加载所有 API 节点和前端访问互联网。
 
 模型文件不限于完整检查点，也支持分散加载：Text Encoder、VAE、LoRA、ControlNet、Adapter、Upscaler 都能作为独立节点接入，按需组合。`extra_model_paths.yaml` 配置允许指定额外的模型目录，方便与 Automatic1111 WebUI 等其他工具共享模型文件。
 
@@ -80,10 +79,11 @@ ComfyUI 原生支持的模型覆盖当前主流生成模型家族，按模态大
 
 - **异步队列**：生成任务排队执行，不阻塞 UI 线程，提交后可以继续编辑工作流
 - **部分图重执行**：只重新执行受影响的子图，参数微调不必从头跑
-- **显存管理**：自动检测可用 VRAM，在 GPU 和 CPU 之间做模型卸载（Offload），让显存有限的设备也能跑大模型
-- **量化支持**：支持 FP8、GGUF 等量化格式，进一步降低显存占用
+- **异步权重卸载**：权重按需在内存与显存之间流动，由独立数据流搬运（NVIDIA 卡默认开启，默认 2 条流，可用 `--async-offload` 调节）。README 的口径是 4 GB 显存加 8 GB 内存即可较快运行最大的开源模型
+- **磁盘直读**：`--fast-disk` 让权重跳过内存驻留、直接从 NVMe 流式读取；v0.37.0 起检测到快盘会自动启用
+- **量化**：原生量化系统支持 FP8 / INT8，并在 `QUANTIZATION.md` 里定义了分层量化元数据标准，让第三方量化工具的检查点能被直接识别；GGUF 格式则由社区节点 ComfyUI-GGUF 提供
 
-显存卸载把本地运行的门槛从"显存够大"压到"显存够用"。GPU 覆盖 NVIDIA、AMD、Intel、Apple Silicon（通过 MPS 后端）以及华为昇腾（Ascend）。最低 PyTorch 版本要求 2.7，官方建议用更新版本以启用完整优化；NVIDIA 20 系及以上还需要 cu130 以上的 PyTorch。
+显存卸载把本地运行的门槛从"显存够大"压到"显存够用"。GPU 覆盖 NVIDIA、AMD、Intel、Apple Silicon（M1–M4）、华为昇腾（Ascend），README 另附寒武纪 MLU 与天数智芯 Iluvatar Corex 的安装指南。最低 PyTorch 版本要求 2.7，官方建议用更新版本以启用完整优化；NVIDIA 20 系及以上还需要 cu130 以上的 PyTorch。
 
 ## 安装方式
 
@@ -91,7 +91,7 @@ ComfyUI 原生支持的模型覆盖当前主流生成模型家族，按模态大
 
 **桌面应用（推荐新手）**：从 [comfy.org/download](https://www.comfy.org/download) 下载，支持 Windows 和 macOS（Apple Silicon），安装过程最简单。
 
-**Windows 便携包**：从 GitHub Releases 下载 `.7z` 压缩包，解压后直接运行，自带 Python 3.13 和 PyTorch。分 NVIDIA、AMD、Intel 三个版本。
+**Windows 便携包**：从 GitHub Releases 下载 `.7z` 压缩包，解压后直接运行，自带 Python 3.13 和 PyTorch（CUDA 13.0）。分四个版本：NVIDIA（20 系及以上）、AMD、Intel，以及面向 10 系及更老显卡的 cu126 + Python 3.12 版。
 
 **手动安装（全平台）**：
 
@@ -102,7 +102,7 @@ pip install -r requirements.txt
 python main.py
 ```
 
-也可以用官方 CLI：
+Python 3.13 支持最完善；3.14 可以运行，但部分自定义节点的依赖可能出兼容问题。也可以用官方 CLI：
 
 ```bash
 pip install comfy-cli
@@ -115,17 +115,19 @@ comfy install
 
 工作流以 JSON 格式保存，包含节点类型、参数和连线关系。一个实用能力：生成的 PNG 文件内嵌完整工作流元数据，把图片拖回编辑器就能恢复整个工作流（包括模型路径、提示词、采样参数和随机种子），复现和分享都很直接。
 
+输出格式上，除常规 8-bit 图像外，还支持 16-bit PNG、32-bit EXR、10-bit AVIF 以及 HDR 视频，满足后期制作对位深的要求。
+
 此外，Subgraph 功能允许把一组节点封装成单个自定义节点，在多个工作流中复用；App Mode 则把复杂工作流暴露为简化界面，非技术用户填几个输入框就能使用。
 
 ## 版本节奏
 
-ComfyUI 迭代很快，大版本间隔常在两三天到一周，具体节奏随模型适配调整。截至本文写作时最新版本为 v0.34.1（2026 年 8 月 26 日发布）。
+ComfyUI 按周节奏发布（目标周一），稳定大版约每两周一个，补丁版主要承载回迁到稳定版的修复——具体节奏随模型发布调整。截至 2026 年 9 月 29 日，最新稳定版为 v0.37.0（2026 年 9 月 21 日发布），此前三版为 v0.34.0（8 月 26 日）、v0.35.0（9 月 9 日）、v0.36.0（9 月 15 日）。
 
 项目由三个相互关联的仓库构成：
 
 - **ComfyUI Core**：推理引擎和节点系统（即本文介绍的仓库）
-- **Comfy Desktop**：桌面应用封装
-- **ComfyUI Frontend**：Web 前端界面，定期合并进 Core 仓库
+- **[Comfy Desktop](https://github.com/Comfy-Org/Comfy-Desktop)**：桌面应用封装，跟随最新稳定版 Core 发布
+- **[ComfyUI Frontend](https://github.com/Comfy-Org/ComfyUI_frontend)**：Web 前端界面，每两周左右合并进 Core 仓库
 
 ## 适用边界与采用顺序
 
@@ -137,24 +139,33 @@ ComfyUI 适合需要对生成过程精细控制的人：调参、切换模型、
 - **开发者**：用手动安装，通过 API 把工作流嵌进自己的服务
 - **只做轻量尝试**：先别装，用云端在线版验证工作流是否满足需求，再决定是否自建
 
-自定义节点生态（Custom Nodes）是另一大优势，社区贡献了大量扩展节点，覆盖后处理、动画、批量处理等场景。但非稳定版本 Core 可能与部分自定义节点不兼容，生产工作流建议钉在稳定版上。
+自定义节点生态（Custom Nodes）是另一大优势，社区贡献了大量扩展节点，覆盖后处理、动画、批量处理等场景。节点管理也已收编进主仓库：ComfyUI-Manager 并入 Core 后，装上 manager 依赖（`pip install -r manager_requirements.txt`）、用 `--enable-manager` 启动，就能在界面里安装和更新自定义节点。但非稳定版本 Core 可能与部分自定义节点不兼容，生产工作流建议钉在稳定版上。
 
 ## 常见问题
 
-**想完全离线、不产生 API 费用？** 启动参数加 `--disable-api-nodes`，付费 API 节点会被整体屏蔽。
+**想完全离线、不产生 API 费用？** 启动参数加 `--disable-api-nodes`，付费 API 节点会被整体屏蔽，前端也不再联网。
 
-**显存不够跑大模型？** 依次尝试：用 FP8 / GGUF 量化版本、启用动态显存卸载、降低输出分辨率、用分块（Tiled）VAE 解码。
+**显存不够跑大模型？** NVIDIA 卡上异步权重卸载默认已开启；仍不够就依次尝试：用 FP8 量化版本（GGUF 版本装社区节点 ComfyUI-GGUF）、降低输出分辨率、用分块（Tiled）VAE 解码。
+
+**老显卡（10 系及更早）能用吗？** 用 cu126 + Python 3.12 版便携包；新卡不要用这个版本。
 
 **想和 A1111 WebUI 共用模型文件？** 在 `extra_model_paths.yaml` 里把模型目录指到同一个路径，两边都能读到。
 
 **浏览器打不开页面？** 默认端口是 8188，先确认端口没被占用，再检查服务是否真的启动成功（终端最后几行会打印监听地址）。
 
-**自定义节点装不上或报错？** 多数情况是依赖冲突或版本不兼容，先看该节点的 README 要求的 Python / PyTorch 版本，再对照自己环境；确认在稳定版 ComfyUI 上运行。
+**自定义节点装不上或报错？** 多数情况是依赖冲突或版本不兼容，先看该节点的 README 要求的 Python / PyTorch 版本再对照自己环境——Python 3.14 上出问题时可退回 3.13 或 3.12；确认在稳定版 ComfyUI 上运行。
 
 ## 结尾判断
 
-回到开头那句判断：ComfyUI 把"推理管线"变成了"可编辑对象"。节点图让它可组合，JSON 序列化让它可复用，PNG 元数据让它可复现。要不要自建，取决于你是否需要这份控制力；需要，它就是当前最完整的开源选择之一。
+回到开头那句判断：ComfyUI 把"推理管线"变成了"可编辑对象"。节点图让它可组合，JSON 序列化让它可复用，PNG 元数据让它可复现，异步权重卸载再把硬件门槛压到主流办公机的水平。要不要自建，取决于你是否需要这份控制力；需要，它就是当前最完整的开源选择之一。
 
 ---
 
 *项目地址：[github.com/Comfy-Org/ComfyUI](https://github.com/Comfy-Org/ComfyUI) · 官网：[comfy.org](https://www.comfy.org/) · 许可证：GPL-3.0*
+
+## 参考来源与口径说明
+
+- Star 数、许可证、最新版本：GitHub API，2026-09-29 读数（135,413 Star；最新稳定版 v0.37.0，2026-09-21 发布）
+- 模型支持名单、运行要求、快捷键：仓库 README（main 分支，2026-09-29 读取）
+- 量化系统与启动参数：仓库 `QUANTIZATION.md`、`comfy/cli_args.py`、`comfy/model_management.py`；GGUF 加载不在主仓库代码中，由社区节点 [city96/ComfyUI-GGUF](https://github.com/city96/ComfyUI-GGUF) 提供
+- API 节点服务商名单：仓库 `comfy_api_nodes/` 目录（2026-09-29）

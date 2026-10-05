@@ -1,327 +1,131 @@
 ---
-title: "VoltAgent/awesome-agent-skills：1100+ Agent Skills 索引，读懂官方团队与社区技能生态"
+title: "VoltAgent/awesome-agent-skills 解读：66 个团队把官方 Agent Skills 集中到一个索引"
 slug: voltagent-awesome-agent-skills-17k
 github_repo: "VoltAgent/awesome-agent-skills"
 source_key: "gh:VoltAgent/awesome-agent-skills"
 date: "2026-04-22T16:10:00+08:00"
-summary: "基于 README 与 officialskills.sh 的交叉核实，本文拆解 VoltAgent/awesome-agent-skills 到底收录了什么、1100+ 与 581 的差别、兼容各类 AI 编码助手到底意味着什么，以及装 skill 前应该重点看哪些边界。"
-description: "深度解读 VoltAgent/awesome-agent-skills：它不是统一安装器，而是一个收录官方团队技能与社区技能的索引仓库。本文覆盖数量口径、兼容路径、选型方法、风险边界与落地流程，帮助开发者更准确地使用 Agent Skills 生态。"
+lastmod: "2026-10-01T12:00:00+08:00"
+summary: "基于 README、CONTRIBUTING 与 officialskills.sh 的交叉核实，本文拆解这个 Agent Skills 索引仓库的三个数量口径、66 个团队分组、跨工具 skills 路径约定、收录门槛与安全边界，并给出装 skill 前的完整审查流程。"
+description: "深度解读 VoltAgent/awesome-agent-skills：它不是统一安装器，而是收录 66 个开发团队官方技能与社区技能的纯索引仓库。本文覆盖数量口径、兼容路径、收录标准、质量规范、风险边界与引入流程，帮助开发者更准确地使用 Agent Skills 生态。"
 categories: ["技术笔记"]
-tags: ["Agent Skills", "Claude Code", "Codex", "GitHub Copilot", "AI Agent", "开源"]
+tags: ["Agent Skills", "Claude Code", "Codex", "AI Agent", "开源"]
 ---
 
-> **定位**：这篇文章把 VoltAgent/awesome-agent-skills 拆成工程师真正关心的几个问题：它到底是不是“全官方”、为什么会同时出现 1100+ 和 581 两个数量、兼容意味着什么，以及装 skill 前到底该看什么。
-> **目标读者**：已经在用或准备使用 Claude Code、Codex、Cursor、GitHub Copilot、Gemini CLI 等 AI 编码工具的开发者与技术负责人。
-> **信息快照**：本文基于 2026-04-22 可公开访问的 GitHub README 与 officialskills.sh 页面整理，星标、条目数和站点展示结果后续都可能变化。
-> **预计阅读时间**：15 到 20 分钟。
+# VoltAgent/awesome-agent-skills 解读：66 个团队把官方 Agent Skills 集中到一个索引
 
----
+Agent Skills 生态现在不缺技能，缺的是判断：哪些技能来自真正用它们干活的工程团队，哪些是批量生成的填充物。VoltAgent/awesome-agent-skills 押的就是这个判断——README 开头第一句话是 "Hand-picked, not AI-slop generated"（人工精选，不是 AI 垃圾批量生成），收录的全部是 Anthropic、OpenAI、Cloudflare、Stripe、Microsoft、Trail of Bits 这些团队实际发布过的技能，加上一批在社区里被真实采用过的技能。
 
-## §1 先给结论
+先把定位说死：它是一个纯索引仓库，整个仓库只有 README、LICENSE、CONTRIBUTING 三个文件。每条收录就是一个 Markdown 列表项，链接指回技能各自的原始仓库，仓库本身不托管任何技能代码，也不提供安装器。配套的浏览站 officialskills.sh 按同样的口径组织这些条目。收录动作是社区驱动的大门——截至 2026-09-29，PR 编号已经排到 #1101，README 自称 "The most contributed Agent Skills repository"。
 
-先记住下面 6 点：
+## 三个数字，三种口径
 
-1. VoltAgent/awesome-agent-skills 是一个同时收录官方团队技能与社区技能的 curated index，不是单一厂商的“官方技能仓库”。
-2. README 上的 “1100+” 指仓库总收录规模；officialskills.sh 首页当天可见条目约为 581，两者统计口径不同。
-3. “兼容 Claude Code、Codex、Cursor、GitHub Copilot、Windsurf” 的核心含义，是这些工具各自提供了 skills 路径或加载约定，不等于所有 skill 都能无改动跨平台运行。
-4. 这个仓库最有价值的地方，是把 Anthropic、OpenAI、Cloudflare、Vercel、Stripe、Trail of Bits、Sentry、Microsoft 等团队的 skill 入口集中到了一个检索面上。
-5. 它更像技能导航站，不是统一安装器，更不是已经做过安全审计的应用市场；README 明确提醒，列表中的 skill 经过 curate，但不代表经过 audit。
-6. 对工程师最实用的用法，是围绕当前任务按来源、权限、依赖、维护状态和目标 Agent 逐个筛选，而不是一次性装很多 skill。
+看这个仓库最容易犯的错，是拿一个数字当全部规模。实际上有三个口径，先分清：
 
----
+| 口径 | 数值（2026-10-01） | 含义 |
+| ---- | ---- | ---- |
+| README badge | 1497+ | 仓库宣传的总收录规模 |
+| README 可数条目 | 1123 条 | 逐条可点开的收录行：官方分组 859 条 + 社区 264 条 |
+| officialskills.sh 首页 | 634 个 | 首页 HTML 里可解析到的技能详情链接，只是浏览面 |
 
-## §2 学习目标
+badge 和逐条可数条目对不上，差额主要出在集合型收录——比如一条 `gooseworks-ai/goose-skills` 写着 "125 growth and GTM skills"，一条收录背后是一整个技能仓库。badge 怎么统计的没有公开说明，引用时建议注明口径。这三个数字都会漂：文章初版写作时（2026-04-22），badge 还是 1100+、首页可见约 581 条、星标约 1.74 万；五个月过去，badge 涨到 1497+，星标 35,080、fork 3,764，翻了一倍。仓库 2025-10-28 创建，到现在 11 个月，增长曲线相当陡。
 
-读完这篇文章，以下能力应该有了：
+商业信号也出现了。README 首屏挂着三个赞助商（TestMu AI、Crawlbase、SerpApi）和一个产品推广位。一个索引仓库能卖出赞助位，说明流量已经起来了——它是很多人找 skill 的第一站。
 
-1. 准确理解 VoltAgent/awesome-agent-skills 的定位，知道它是索引仓库而不是统一运行时。
-2. 区分 README 的 “1100+” 与 officialskills.sh 首页可见的约 581 条目分别代表什么。
-3. 看懂“兼容多工具”真正指向的是 skills 路径约定，而不是功能完全对等。
-4. 用一套简单框架判断某个 skill 是否值得装、是否适合当前任务。
-5. 知道为什么 skill 的关键价值在“约束 agent 的工作方式”，不只是“提供信息”。
+## 收录地图：66 个团队分组 + 7 个社区子类
 
-### 2.1 阅读指引
+README 用 73 个折叠分组组织内容：66 个具名来源分组（几乎都是开发团队官方发布），加 Community 下的 7 个主题子类（Vector Databases、Marketing、Productivity and Collaboration、Development and Testing、Context Engineering、Specialized Domains、n8n Automation）。先看最大的几个官方分组：
 
-如果你的关注点不同，可以这样读：
+| 来源分组 | 条目数 | 方向 |
+| ---- | ---- | ---- |
+| Microsoft | 133 | Azure SDK 全家桶、Copilot SDK、Agent Framework、Foundry |
+| OpenAI | 42 | 浏览器自动化（playwright）、Figma 全套、文档、部署、安全审查 |
+| Sentry | 28 | 各语言 SDK 接入与线上问题修复 |
+| TestMu AI / Paweł Huryn / Dean Peters | 48 / 65 / 46 | 测试、产品管理、产品经理技能 |
+| Trail of Bits | 21 | 安全审计：差异审查、变体分析、规范符合性检查 |
+| Anthropic（Official Claude Skills） | 17 | docx/pptx/xlsx/pdf、MCP 构建、前端设计、Web 应用测试 |
+| Cloudflare | 9 | Workers、Agents SDK、Wrangler、Web 性能 |
 
-| 角色 | 建议重点阅读 | 你能带走什么 |
-| ---- | ------------ | ------------ |
-| 个人开发者 | §3、§5、§7、§8 | 如何避免装错 skill，如何按任务找 skill，如何看兼容边界 |
-| 技术负责人 | §3、§6、§7、§9 | 如何给团队建立技能引入标准和风险边界 |
-| 技术写作者 | §3、§4、§10 | 如何更准确地写这类仓库导读，避免把口号写成事实 |
+半年间分组扩张明显：4 月时官方分组是 37 个，现在 66 个，Supabase、Hugging Face、DuckDB、MongoDB、Redis、NVIDIA、Google Cloud、Red Hat、Binance、Coinbase、Notion、Firebase、Flutter、GSAP 都是新添的具名分组，Garry Tan（gstack 分组）和 Addy Osmani（Web Quality）则以个人名义入驻。上一版解读里抽查过的条目——`anthropics/mcp-builder`、`openai/playwright`、`cloudflare/wrangler`、`trailofbits/differential-review`、`getsentry/sentry-sdk-setup`、`stripe/upgrade-stripe`——全部还在，没有死链。
 
----
+这个分组结构本身就是一份"谁在认真做 Agent Skills"的生态名单。判断一家厂商对 agent 生态的投入程度，看它在这里有没有具名分组、条目有多少，比看营销博客可靠。
 
-## §3 信息来源与阅读边界
+## 兼容路径：趋同的是目录，不是行为
 
-在进入正文前，先把三个边界说清楚，否则很容易把这类仓库导读写偏：
-
-1. GitHub README 给的是仓库定位、来源结构、兼容路径和总量口径。
-2. officialskills.sh 更接近“技能浏览入口”，展示的是当天可浏览到的条目，不等于仓库全部条目。
-3. 仓库自身是 MIT 许可证，但被收录的 skill 由各自作者和团队维护，许可证、依赖与风险边界并不统一。
-
-为了方便理解，你可以把文中的信息分成三类：
-
-| 类型 | 该怎么理解 | 例子 |
-| ---- | ---------- | ---- |
-| 仓库事实 | 以 README 与站点可见信息为准 | 1100+ 总收录、支持多种 agent 路径 |
-| 解释判断 | 是对仓库定位的归纳 | 它更像技能导航站，而不是统一安装器 |
-| 使用建议 | 是工程实践层面的推荐 | 先看权限和依赖，再决定是否引入 |
-
-这一步很重要，因为它能帮你区分“仓库写了什么”和“我们如何正确理解它”。
-
----
-
-## §4 为什么这个仓库值得看
-
-### 4.1 它解决的是“去哪里找相对可信的 skill”，而不是“有没有 skill”
-
-Agent Skills 生态现在最大的摩擦是来源分散、命名不统一、维护状态难判断，不是完全没有技能。VoltAgent/awesome-agent-skills 值得关注，主要因为它把几类原本分散的信息合并到了一个入口里：
-
-| 维度 | 它帮你解决什么 |
-| ---- | -------------- |
-| 来源聚合 | 把 Anthropic、Google Labs、OpenAI、Cloudflare、Microsoft 等团队的 skill 入口集中起来 |
-| 兼容说明 | 给出 Claude Code、Codex、Cursor、Copilot、Gemini CLI 等工具的 skills 路径约定 |
-| 生态观察 | 让你快速看到哪些团队已经把知识沉淀成了 skill |
-| 社区补充 | 官方团队之外，还收录被社区采用的 skill |
-
-### 4.2 它的价值在“选型效率”，不在“全盘安装”
-
-很多人第一次看到这个仓库，会把它理解成“官方认证技能市场”。这其实不准确。更合理的理解是：
-
-1. 它是一个高密度索引，帮你缩短发现优质 skill 的时间。
-2. 它是一个生态横截面，帮你判断哪些团队已经开始系统性建设 Agent Skills。
-3. 它不是统一运行时，也不是统一安装器，更不是已经做过全面安全审核的应用商店。
-
----
-
-## §5 先把最容易误读的三个点说清楚
-
-### 5.1 “1100+” 和 “581” 为什么同时成立
-
-如果只看仓库标题，很容易以为“1100+” 全都是官方技能。实际情况更细一点：
-
-| 指标 | 含义 | 本文写作时看到的值 |
-| ---- | ---- | ------------------ |
-| README badge | 仓库总收录规模，包含官方团队技能与社区技能 | 1100+ |
-| officialskills.sh 首页 | 当天可浏览到的站点条目总量 | 581 |
-| GitHub 星标 | 仓库受欢迎程度的快照，不是功能指标 | 约 1.74 万 |
-
-因此，原文那种“1100+ 官方 AI Agent 技能集合”的写法太满了。更准确的表述应该是：
-
-> 这是一个收录 1100+ Agent Skills 的索引仓库，其中包含大量官方团队技能，也包含社区技能。
-
-### 5.2 “官方” 到底修饰谁
-
-README 写得很直接：仓库既收录 official skills，也收录 community-built skills。“官方”只能修饰其中一部分条目，不能一口气盖到整仓库。
-
-更准确的理解应该是：
-
-1. 有一批条目确实来自厂商或开发团队官方仓库。
-2. 还有一批条目来自社区作者或开源项目维护者。
-3. VoltAgent/awesome-agent-skills 自身承担的是 curate 和索引职责，不是所有条目的原始发布方。
-
-### 5.3 “兼容” 不等于“无脑通用”
-
-README 提供了多种 AI 编码助手的 skills 路径，例如：
+README 给出 9 个工具的 skills 路径约定，这是全文最实用的一张表：
 
 | 工具 | 项目级路径 | 全局路径 |
-| ---- | ---------- | -------- |
+| ---- | ---- | ---- |
 | Claude Code | `.claude/skills/` | `~/.claude/skills/` |
 | Codex | `.agents/skills/` | `~/.agents/skills/` |
+| Antigravity | `.agents/skills/` | `~/.gemini/config/skills/` |
 | Cursor | `.cursor/skills/` | `~/.cursor/skills/` |
 | Gemini CLI | `.gemini/skills/` | `~/.gemini/skills/` |
 | GitHub Copilot | `.github/skills/` | `~/.copilot/skills/` |
 | OpenCode | `.opencode/skills/` | `~/.config/opencode/skills/` |
 | Windsurf | `.windsurf/skills/` | `~/.codeium/windsurf/skills/` |
 
-这说明生态层面确实在趋同，但不意味着每个 skill 在所有 agent 上都能零成本复用。很多 skill 往往还隐含下面这些前提：
+两个细节藏在表里。第一，Codex 和 Google 的 Antigravity 共用同一个项目级路径 `.agents/skills/`，一套技能可以同时喂给两个工具。第二，Antigravity 这一行本身在半年内就变过：4 月的 README 写的是 `.agent/skills/` 和 `~/.gemini/antigravity/skills/`，现在已经换成 `.agents/skills/` 和 `~/.gemini/config/skills/`。目录约定还在收敛期，照抄任何一张路径表之前都该对照当时的 README。
 
-1. 目标工具支持特定的 skills 发现机制。
-2. 当前环境已经安装某些 CLI、MCP server 或配置好 API key。
-3. 作者是按照某个 agent 的工具能力和行为习惯来设计说明的。
+"兼容"这个词也别读重了。路径趋同只解决"文件放哪"，不解决"能不能跑"。一个 skill 往往还隐含三层前提：目标工具支持对应的技能发现机制；环境里装了它依赖的 CLI、MCP server 或配好了 API key；作者是按某个 agent 的工具能力和行为习惯写的说明。同一个 skill 在 Claude Code 里表现良好，换到另一个 agent 上可能静默降级。
 
----
+## 收录门槛与质量标准
 
-## §6 这个仓库里到底有什么
+这个仓库对"收什么"有明确态度，写在 CONTRIBUTING.md 里：
 
-### 6.1 既有“厂商级技能”，也有“社区级技能”
+- 只收链接，技能住在自己的仓库里，收录前先验证链接有效。
+- 描述必须 10 个词以内，不许写长段落。
+- 必须有真实社区使用——原话是"刚创建 3 小时的技能请不要提交"，品牌新技能等它被采用后再来。
 
-从 README 的结构来看，仓库先按来源组织，不是简单按主题分类。你会看到不少来自真实工程团队的 skill 分组，例如：
+README 里还有一个 Skill Quality Standards 板块，给出四条质量判据：description 用第三人称写、写明"做什么"和"何时用"、带可匹配的关键词（"PostgreSQL migration"而不是"database stuff"）；元数据控制在约 100 token 以内、正文不超过 500 行、大资源按需加载（渐进式披露）；不硬编码机器特定路径；只声明技能真正需要的工具，避免 `"tools": ["*"]` 这种全量授权。
 
-| 来源 | 代表方向 | 例子 |
-| ---- | -------- | ---- |
-| Anthropic | 文档、PDF、PPT、前端设计、MCP 构建 | `anthropics/docx`、`anthropics/pptx`、`anthropics/pdf`、`anthropics/mcp-builder` |
-| OpenAI | 浏览器自动化、Figma、部署、文档、Sentry | `openai/playwright`、`openai/figma`、`openai/vercel-deploy` |
-| Cloudflare | Workers、Durable Objects、Wrangler、Web 性能 | `cloudflare/agents-sdk`、`cloudflare/wrangler` |
-| Vercel | React / Next.js 实践建议 | `vercel-labs/react-best-practices`、`vercel-labs/next-best-practices` |
-| Trail of Bits | 安全审计、变体分析、静态分析 | `trailofbits/differential-review`、`trailofbits/variant-analysis` |
-| Sentry | 各语言 SDK 接入与问题修复 | `getsentry/sentry-sdk-setup`、`getsentry/sentry-fix-issues` |
-| Microsoft | Azure SDK、Foundry、Copilot SDK、前端模板 | `microsoft/copilot-sdk`、`microsoft/agent-framework-azure-ai-py` |
+这四条其实是 Anthropic 当初定义 Agent Skills 规范时留下的设计原则，现在被一个第三方索引仓库拿来当收录标尺，反过来约束提交者。写自己的 skill 时直接照着这四条自查，比读规范文档快。
 
-此外还有专门的 Community Skills 区域，收录的是被社区采用、但并非平台官方发布的能力。
+## 风险：curated 不是 audited
 
-### 6.2 从内容本质上看，它是“可执行知识包”
+README 的 Security Notice 值得逐句读：
 
-如果把 skill 看得更抽象一点，它本质上是把某个领域经验压缩成一份适合 agent 调用的知识包，不是普通说明文，通常会覆盖下面几类内容：
+> Skills in this list are curated, not audited.（本列表中的技能经过筛选，但未经审计。）
 
-1. 什么时候应该启用这个 skill。
-2. 完成任务时需要遵守哪些规则。
-3. 需要哪些工具、命令、依赖或外部服务。
-4. 在什么场景下应该停止、追问、降级或切换策略。
+展开说有三层：收录后技能可能被原作者随时更新、修改甚至替换，索引不锁版本；技能可能包含 prompt injection、tool poisoning、隐藏恶意载荷或不安全的数据处理模式；安装前自己审代码，风险自担。License 部分重复了同样的立场——VoltAgent 明确声明不背书、不保证安全性和正确性。这也符合仓库架构：既然只收链接、不托管代码，它对每条收录的内容自然没有任何技术约束力。
 
-skill 的价值在“约束 agent 的工作方式”，不只是“提供信息”。
+Notice 里还给了两个扫描工具：Snyk 的 agent-scan 和 Gen Digital 的 Agent Trust Hub。给团队搭技能审查流程的话，这两个可以进工具箱，但要注意它们同样年轻，别把扫描结果当安全结论。
 
----
+## 任务流：引入一个 skill 的完整路径
 
-## §7 怎么判断一个 skill 值不值得装
+拿 `stripe/upgrade-stripe`（升级 Stripe SDK 与 API 版本）走一遍完整流程：
 
-如果你只记一个实用框架，记下面这张表就够了：
+1. 在 README 的 Stripe 分组或 officialskills.sh 找到条目，顺着链接进入原始仓库——注意是 Stripe 团队的仓库，不是 awesome-agent-skills 本身。
+2. 读 SKILL.md 和 README，确认四件事：维护者是谁、声明了哪些工具依赖、会碰到什么权限（这条会调 Stripe API，涉及真实账户）、许可证是什么。
+3. 对照上面的路径表，把 skill 放进目标工具的 skills 目录，比如 Claude Code 就是项目里的 `.claude/skills/`。
+4. 找一个低风险任务试跑——用测试项目而不是生产账户，观察它是否调用了声明之外的工具。
+5. 行为符合预期再进团队工作流，并把试用结论（依赖、权限、效果）记录下来，给下一次评估用。
 
-| 检查项 | 你要看什么 | 为什么重要 |
-| ---- | ---------- | ---------- |
-| 来源 | 是官方团队、知名开源项目，还是个人仓库 | 决定可信度和维护预期 |
-| 目标 Agent | 作者是为 Claude Code、Codex、Cursor 还是通用路径写的 | 决定迁移成本 |
-| 外部依赖 | 是否依赖 MCP server、CLI、浏览器环境、API key | 决定是否真能跑起来 |
-| 权限边界 | 会不会调用 shell、网络、部署、支付、数据库 | 决定风险等级 |
-| 更新频率 | 最近是否仍在维护 | 决定陈旧风险 |
-| 适用范围 | 是 narrow skill 还是大而全 meta-skill | 决定可控性和组合性 |
+整个流程里最容易被跳过的是第 2 步和第 4 步，而官方出处恰恰不能替代它们——官方 skill 一样可能触发高权限操作或产生真实账单。
 
-### 7.1 优先装“窄而深”的 skill，而不是“大而全”的万能 skill
+## 选型与治理：窄而深优先
 
-对于真实项目，窄而深的 skill 通常更稳，原因很简单：
+筛 skill 的检查项可以压成一张表：
 
-1. 目标更清楚，agent 更不容易跑偏。
-2. 约束更明确，行为更容易审查。
-3. 一旦失效，定位问题也更容易。
+| 检查项 | 看什么 |
+| ---- | ---- |
+| 来源 | 官方团队、知名开源项目，还是个人仓库 |
+| 目标 agent | 为哪个工具写的，你的工具在不在路径表里 |
+| 外部依赖 | 要不要 MCP server、CLI、浏览器环境、API key |
+| 权限边界 | 会不会碰 shell、网络、部署、支付、数据库 |
+| 维护状态 | 最近提交时间，issue 处理是否活跃 |
+| 范围 | 窄而深的单任务技能，还是大而全的 meta-skill |
 
-比如 `cloudflare/wrangler`、`stripe/upgrade-stripe`、`trailofbits/differential-review` 这类 skill，通常就比“全能开发助手”更值得优先试用。
+窄而深的技能通常更稳：目标清楚，agent 不容易跑偏，行为好审查，失效了好定位。`cloudflare/wrangler`、`stripe/upgrade-stripe`、`trailofbits/differential-review` 这类单点技能，一般比"全能开发助手"值得先试。
 
-### 7.2 先看风险，再看效率
+团队引入比个人使用多一层治理问题：哪些技能允许进默认环境，哪些必须过内部审查，哪些只能在隔离环境跑，哪些要包一层内部 wrapper 限制权限。把 awesome-agent-skills 当收藏夹问题不大，但真要让团队用起来，值得把这四档边界写进工程规范，而不是凭感觉装。
 
-README 单独给了 Security Notice，这一点非常重要。它明确提醒：
+## 结语：发现贬值，判断升值
 
-1. 技能是 curated，不是 audited。
-2. Skill 可能包含 prompt injection、tool poisoning、隐藏恶意载荷或不安全的数据处理方式。
-3. 安装前应该自己审源代码和说明。
+回到开头的问题。这个仓库最大的价值，不是"1497 个技能随便挑"，而是把 66 个团队的工程经验集中到了一个检索面——Anthropic 教 agent 做文档，Trail of Bits 教 agent 做安全审计，Stripe 教 agent 做 SDK 升级，这些原本散在各家博客和仓库里的知识，第一次有了统一的目录。
 
-所以一个更健康的顺序应该是：
+对 Agent Skills 生态本身，这里能看到两个趋势：一是技能正在从零散技巧变成厂商正式的知识分发渠道，一家公司发布 skill 的动作越来越像发布 SDK；二是跨工具的路径约定已经出现并在收敛，skill 有潜力成为下一个跨 agent 复用的标准单元。
 
-1. 先判断它会碰到什么工具和权限。
-2. 再判断它是否真的提升当前任务效率。
-3. 最后决定是否长期纳入你的工作流。
-
----
-
-## §8 一个更实用的使用姿势
-
-### 8.1 不要从“装很多”开始，要从“当前任务缺什么”开始
-
-更推荐的顺序是：
-
-1. 先定义当前任务类型。
-2. 再去索引里找对应 skill。
-3. 看 skill 的来源、依赖、权限和目标 agent。
-4. 先在低风险任务上试跑。
-5. 验证有效后，再沉淀成团队默认工作流。
-
-### 8.2 可以按任务类型反向找 skill
-
-下面是一个更接近工程现场的映射：
-
-| 任务 | 优先看的 skill 类型 |
-| ---- | ------------------ |
-| 前端实现与设计评审 | Anthropic、OpenAI、Vercel、Microsoft 的 frontend 相关 skill |
-| 浏览器自动化与 UI 测试 | OpenAI 的 `playwright`、Anthropic 的 `webapp-testing`、Browserbase 的 `ui-test` |
-| 安全审计 | Trail of Bits 的差异审查、静态分析、变体分析相关 skill |
-| 云平台与部署 | Cloudflare、Netlify、Vercel、HashiCorp、Firebase 相关 skill |
-| 文档与演示材料 | Anthropic 的 `docx`、`pptx`、`pdf`，OpenAI 的 `slides`、`doc` |
-| 监控与生产问题处理 | Sentry、Datadog Labs、OpenAI 的 `sentry` 相关 skill |
-
-### 8.3 面向 Claude Code、Codex 和 Copilot 的最小落地流程
-
-这个仓库最直接的实用价值，是帮你确定“技能该放在哪”和“引入前先看哪些字段”。一个够用的最小流程是：
-
-1. 在 README 或 officialskills.sh 找到目标 skill。
-2. 打开原始 skill 仓库，确认维护者、说明、依赖和许可证。
-3. 根据目标 agent，把 skill 放到对应的 skills 目录。
-4. 在低风险任务上先试一次，确认它会不会调用超出预期的工具。
-5. 记录实际效果，再决定是否长期保留。
-
-### 8.4 三个最容易踩的坑
-
-| 坑 | 实际问题 | 规避方式 |
-| ---- | -------- | -------- |
-| 只看名字就装 | skill 名称听起来像实践建议，但内部可能依赖你没装的 CLI 或 MCP | 先看说明和依赖 |
-| 看到“兼容”就默认通用 | 不同 agent 的发现机制、工具权限、系统提示并不完全一样 | 先按目标 agent 小范围验证 |
-| 只看官方出处，不看权限 | 官方 skill 也可能涉及高权限操作或昂贵调用 | 先做权限和成本评估 |
-
-### 8.5 一分钟快筛清单
-
-如果你准备把某个 skill 真正装进自己的工作流，可以先用下面 5 个问题做快速筛查：
-
-1. 我能明确说出这个 skill 要解决的任务吗。
-2. 我知道它会调用哪些工具、CLI、网络能力或外部服务吗。
-3. 它的来源、维护者和最近更新时间是否清楚。
-4. 它的目标 agent 和我现在使用的工具是否匹配。
-5. 如果它行为异常，我是否有能力停用、回滚或隔离它。
-
-如果这 5 个问题里有 2 个以上答不上来，最稳妥的做法是继续审说明、看源码，而不是“先装再说”，或者换成边界更清晰的 skill。
-
----
-
-## §9 如果你是团队负责人，更该关心什么
-
-把这个仓库当收藏夹问题不大，但如果你准备把 skill 引入团队，真正要关心的是治理，而不是收藏数量：
-
-1. 哪些 skill 允许进入团队默认环境。
-2. 哪些必须先过内部审查。
-3. 哪些只能在隔离环境使用。
-4. 哪些需要补内部 wrapper 或权限限制后才能使用。
-5. 哪些 skill 的收益足够大，值得沉淀成团队标准流程。
-
-从这个角度看，awesome-agent-skills 的价值不只是帮你“发现 skill”，而是帮你建立一套更像工程体系的 skill 选型和治理视角。
-
----
-
-## §10 这篇仓库导读最值得你带走什么
-
-如果你平时已经在用 AI 编码工具，这个仓库更值得记住的是下面三点，而不是“有 1100+ skill”：
-
-1. Agent Skills 正在从零散技巧，变成厂商与团队正式发布的知识分发方式。
-2. 技能生态已经开始出现跨工具的路径约定，skill 很可能会成为下一代开发工作流的重要复用单元。
-3. 发现 skill 很容易，稀缺的是判断 skill 是否可信、是否适配、是否安全、是否值得纳入团队流程。
-
-### 10.1 给三类读者的直接建议
-
-#### 对个人开发者
-
-1. 不要一上来批量安装，先围绕一个高频任务试一个 skill。
-2. 优先选择来源清晰、依赖明确、范围可控的 skill。
-3. 把它当作“约束 agent 行为的知识包”，而不是“万能插件”。
-
-#### 对技术负责人
-
-1. 给技能引入设一个最小审查流程。
-2. 区分试验环境和生产环境的 skill 白名单。
-3. 关注权限、审计、依赖与回滚，而不是只看演示效果。
-
-#### 对技术写作者
-
-1. 写这类仓库导读时，最容易出错的是把“官方团队技能 + 社区技能”误写成“全官方”。
-2. 星标、数量和兼容性都应该用快照语言，避免写成不会变化的绝对事实。
-3. 比起罗列厂商，更有价值的是告诉读者如何筛选、如何试、如何避坑。
-
-### 10.2 自测问题
-
-如果你想确认自己有没有真正读懂这篇文章，可以用下面 4 个问题自测：
-
-1. 为什么 README 的 1100+ 不能直接等同于“1100+ 官方技能”。
-2. 为什么“兼容多工具”不等于“任意 skill 都能跨 agent 原样运行”。
-3. 为什么引入 skill 时，应该先看权限和依赖，再看效率。
-4. 如果你要给团队建立 skill 引入规则，最少应该检查哪几项。
-
----
+给两类读者的落地建议：个人开发者，从一个高频任务开始试一个技能，优先选来源清晰、依赖明确、范围可控的，别批量安装；技术负责人，先把上文的审查流程和四档治理边界立起来，再谈规模化引入。发现技能只会越来越容易，稀缺的永远是判断一个技能是否可信、是否适配、是否值得进你的工作流。
 
 ## 相关资源
 

@@ -2,201 +2,125 @@
 github_repo = "HKUDS/CLI-Anything"
 source_key = "gh:HKUDS/CLI-Anything"
 date = '2026-05-17T20:15:00+08:00'
+lastmod = 2026-10-02
 draft = false
 title = 'CLI-Anything：将任意软件变成 AI Agent 可用的 CLI 工具'
 slug = 'hkuds-cli-anything-universal-cli-ai'
-description = 'HKUDS/CLI-Anything 通过 7 阶段管道自动分析软件源代码，为 GIMP、Blender、FreeCAD 等任意软件生成完整的 CLI 接口，让 AI Coding Agent 直接调用。'
+description = 'HKUDS/CLI-Anything 用一条命令把有源码的软件改造成 Agent 可调用的 CLI。导论篇：三层结构、七个半阶段的生成管道、CLI-Hub 安装，以及 69 个 harness 的厚薄实测。'
 categories = ['技术笔记']
 tags = ['AI Agent', 'CLI', '开源']
 +++
 
-## 学习目标
-
-读完本文后，你应该能够：
-
-1. 解释 CLI-Anything 解决的是什么问题，为什么 AI Agent 需要统一的 CLI 接口
-2. 在自己的环境上跑通 `/cli-anything ./gimp`，生成第一个软件 CLI
-3. 用 `refine` 命令增量补充生成的 CLI 覆盖不全的地方
-4. 从 CLI-Hub 安装一个社区贡献的 CLI 工具，并接入 Claude Code 或 OpenClaw
-5. 判断 CLI-Anything 适不适合你当前的 AI Agent 工作流
-
-## 目录
-
-| → | [一句话概括](#一句话概括) | [核心特性](#核心特性) | [数字说话](#数字说话) | [一些典型场景](#一些典型场景) | [个人看法](#个人看法) | [自测](#自测) | [进阶路径](#进阶路径) |
-
 # CLI-Anything：将任意软件变成 AI Agent 可用的 CLI 工具
 
-在 AI coding agent 大行其道的今天，几乎所有主流平台（Claude Code、Pi、OpenClaw、OpenCode……）都在用自然语言理解代码、执行任务。但它们和"真实软件"之间的接口，却始终是个问题。
+AI coding agent 已经能读懂一个代码库并替你改代码，但它大概率操作不了 Blender——不是不会，是没有接口。桌面软件要么只有 GUI，要么有一套风格各异的 API，Agent 每换一个软件就要重学一遍。香港大学数据智能实验室（HKUDS）的 CLI-Anything 给出的答案是：只要软件有源码，就用 Agent 把它整个改造成一套命令行接口，一条 `/cli-anything ./gimp` 跑完，装进 PATH 的就是一个 Agent 能直接调用的 `cli-anything-gimp`。
 
-**HKUDS/CLI-Anything** 试图回答这个问题：如何把**任何软件**—— GIMP、Blender、FreeCAD、Zoom、Zotero、Krita——变成 AI Agent 能直接调用的命令行工具？
+这个项目上线七个月拿下 51,252 star（GitHub API，2026-10-02 读数），Apache 2.0 协议。它容易讲糊，因为实际是三层东西的合体：生成 CLI 的插件、分发 CLI 的包管理器、以及 79 个已经生成好的 CLI 本身。本文是导论——把三层各是什么、生成管道怎么跑、怎么装现成的讲清楚；七阶段方法论的深读见[姊妹篇](/posts/tech/cli-anything-universal-cli-framework/)，单个 harness 的目录结构与多平台接入细节见[产物拆解篇](/posts/tech/cli-anything-agent-native-software-harness/)。
 
-<!--more-->
+## 三层结构：生成、分发、产物
 
-## 一句话概括
+| 层 | 载体 | 谁会用 |
+|------|------|------|
+| **生成层** | `cli-anything-plugin/`（Claude Code 插件 + HARNESS.md 七阶段 SOP） | 想为新软件生成 CLI 的贡献者 |
+| **分发层** | CLI-Hub（`pip install cli-anything-hub`，PyPI v0.4.1） | 所有用户 |
+| **产物层** | 79 个 `cli-anything-<software>` 独立 CLI（registry.json，2026-06-19 更新） | 所有用户 |
 
-> **CLI-Anything**：给任意软件生成一套完整的、符合 agent 使用规范的 CLI 接口。
+多数读者的正确用法只碰后两层：先查注册表里有没有现成的，有就 `cli-hub install` 直接装；没有才轮到生成层出场。这个顺序能省大量时间——生成一个新 CLI 要 Agent 跑十来分钟乃至更久，而装现成的是秒级。
 
-你只需运行一条命令：
+## 生成管道：七个半阶段
+
+`/cli-anything` 命令背后是 HARNESS.md 定义的流水线，实际有八个节点——阶段 6 和 7 之间还插着一个 6.5：
+
+1. **Codebase Analysis** — 扫描源代码，映射可操作的 API 节点
+2. **CLI Architecture Design** — 规划命令分组、状态模型、输出格式
+3. **Implementation** — 用 Click 构建 CLI，含 REPL 与 JSON 输出
+4. **Test Planning** — 生成 TEST.md 前半部分，列出测试方案
+5. **Test Implementation** — 实现完整测试套件
+6. **Test Documentation** — 测试结果回填 TEST.md 后半部分
+6.5. **SKILL.md Generation** — 生成给 Agent 看的工具说明书
+7. **PyPI Publishing and Installation** — 发 PyPI，装进 PATH
+
+初版覆盖不全时用 refine 命令增量补充：
 
 ```bash
-/cli-anything ./gimp
+/cli-anything:refine ./gimp "all batch processing and scripting filters"
 ```
 
-背后的 7 相（7-Phase）流程就会自动完成：
+`refine` 接受一个可选的能力域描述，指定了就跳过全面缺口分析、直奔目标区域。插件一共五个命令：`cli-anything`（生成）、`refine`（增量）、`test`（跑测试）、`validate`（验证）、`list`（列出已生成的 harness）。
 
-1. **分析（Analyze）** — 扫描源代码和 GUI，映射出可操作的 API 节点
-2. **设计（Design）** — 规划命令分组、状态模型、输出格式
-3. **实现（Implement）** — 用 Click 构建 CLI，含 REPL、JSON 输出、撤销/重做
-4. **计划测试（Plan Tests）** — 生成 TEST.md，列出单元测试和 E2E 测试方案
-5. **编写测试（Write Tests）** — 实现完整测试套件
-6. **文档化（Document）** — 将测试结果回填到 TEST.md
-7. **发布（Publish）** — 生成 setup.py，安装到 PATH
+耗时有个官方口径：QUICKSTART 写明一次完整生成约 10-15 分钟，"取决于软件复杂度"。这不是秒级魔法——Agent 要读完源码、设计接口、写实现、补测试。但对比人肉给 Blender 这类软件写一套完整 CLI 的工程量，这个数仍然成立。
 
-这套流程跑完，你就能拿到一个开箱即用的 `gimp` CLI。
+## 接入你的 Agent
 
----
-
-## 核心特性
-
-### 支持平台多
-
-Claude Code、Pi、OpenCode、OpenClaw、Goose、Codex、GitHub Copilot CLI、Qodercli……基本上主流 AI coding 平台都有插件或 skill。
-
-安装方式也很简单，以 Claude Code 为例：
+支持平台在 README 里有正式清单：Claude Code、Cursor、Pi、OpenClaw、OpenCode、Codex、Hermes、Reasonix、Qodercli、GitHub Copilot CLI，另有 Goose 等社区贡献的实验性接入。以 Claude Code 为例：
 
 ```bash
 /plugin marketplace add HKUDS/CLI-Anything
 /plugin install cli-anything
 ```
 
-以 OpenClaw 为例，复制 skill 文件即可：
+OpenClaw 走 skill 文件：把仓库里的 SKILL.md 复制到 `~/.openclaw/skills/cli-anything/` 即可。注意一个坑——README 目前仍写 `cp CLI-Anything/openclaw-skill/SKILL.md`，但这个目录已经整体改名为 `macrocli`（提交记录原话 "rename openclaw-skill → macrocli throughout"），README 还没跟上；照旧路径 cp 会报文件不存在，实际应复制 `CLI-Anything/macrocli/SKILL.md`。
 
-```bash
-mkdir -p ~/.openclaw/skills/cli-anything
-cp CLI-Anything/openclaw-skill/SKILL.md ~/.openclaw/skills/cli-anything/
-```
+Windows 用户多一步前置：Claude Code 经由 bash 执行命令，README 要求装 Git for Windows（自带 bash 和 `cygpath`）或改用 WSL，否则会报 `cygpath: command not found`。
 
-然后直接喊：`@cli-anything build a CLI for ./gimp`
-
-### CLI-Hub：社区 CLI 的应用商店
-
-项目还搭了一个 [CLI-Hub](https://hkuds.github.io/CLI-Anything/)：
+## 装现成的：CLI-Hub
 
 ```bash
 pip install cli-anything-hub
-cli-hub install <name>
+cli-hub list          # 按分类浏览（image、3d、video、audio、office、ai……）
+cli-hub install gimp  # 安装单个 harness
 ```
 
-现在已经有数十个社区贡献的 CLI 工具——Blender、FreeCAD、QGIS、Godot、Zotero、Obsidian、Draw.io……直接 install 就能用，不用自己生成。
+注册表当前收录 79 个 CLI（registry.json 的 `clis` 字段，2026-06-19 更新），Blender、FreeCAD、GIMP、Godot、Krita、QGIS、Zotero、Obsidian、Draw.io、Zoom 都在里面。另有 24 个收录在 public_registry.json，偏向网络服务类（Sentry、Shopify、飞书、企业微信等）。`cli-hub` 本身只是把对应的 `cli-anything-<software>` 包从 PyPI 装进 PATH，另有 `search`/`info`/`update`/`uninstall` 子命令。
 
-### 迭代优化（Refine）
+一个隐私细节：cli-hub 默认发送匿名使用事件给 PostHog（README 自述，不收集个人数据），介意的读者可以留意。
 
-初次生成可能覆盖不全，可以用 refine 命令增量补充：
+## 69 个 harness，厚度差了两个数量级
 
-```bash
-/cli-anything:refine ./gimp "batch processing and filters"
-```
+厚薄差到什么程度，实测比印象有说服力。仓库里 69 个 agent-harness 目录（harness 是项目对单个生成产物的称呼，一套带测试和 SKILL.md 的完整 CLI 实现；68 个 Python，唯一的例外 sketch 是 JS），统计各 harness 全部 `@*.command` 装饰器，命令注册数分布极端：
 
-每次 refine 都是非破坏性的增量扩展，可以反复跑直到满意为止。
+| harness | 命令数 | 说明 |
+|------|------|------|
+| mailchimp | 292 | 最厚 |
+| freecad | 277 | 19 个分组（part/sketch/body/techdraw/fem/cam 等） |
+| firefly-iii | 106 | 记账软件，覆盖面完整 |
+| iterm2 | 73 | 中游 |
+| blender | 54 | 10 个分组（scene/objects/materials/render 等） |
+| exa | 4 | 最薄一档 |
 
-### 输出双模式
+厚度取决于两件事：目标软件的 API 面积，以及生成时的覆盖深度。FreeCAD 这类有完整 Python API 文档的软件，harness 厚得像产品；纯 GUI、接口面窄的软件，可能只有几个命令。所以"CLI-Anything 能不能用"很大程度上是"你要的那个软件的 harness 够不够厚"——装之前先跑 `cli-hub info <name>` 看一眼，或者直接查仓库对应目录。
 
-CLI 同时支持 `--json` 和人类可读文本两种输出模式。Agent 用 JSON 确保稳定性，人类查看用普通文本，两不耽误。
+典型场景核实后的真实形态：
 
----
+- **Blender**：不自己画图。CLI 生成合法的 bpy 脚本，渲染交给真实 Blender 进程执行，需要 Blender 4.2 以上。它只读写工程文件、不动软件本体，拿不准可以加 `--dry-run` 先试
+- **FreeCAD**：277 个命令覆盖 part/sketch/body/techdraw/fem/cam 等十九个分组，厚得可以做正式工作
+- **Zotero**：collection/item 两组命令覆盖条目检索、笔记、附件，`item citation` 直接出引用
+- **Krita**：project/layer/filter/canvas/export 五个分组，图层增删改查都有
+- **Godot**：自带要求 Godot 4.x 在 PATH 的 E2E 测试，二进制不可用时自动跳过
 
-## 数字说话
+## 数字与增长
 
-根据 GitHub API 数据（2026-05-17）：
-
-| 指标 | 数值 |
+| 指标 | 数值（GitHub API，2026-10-02） |
 |------|------|
-| ⭐ Stars | **35,254** |
-| 🍴 Forks | 3,465 |
-| 编程语言 | Python |
+| Stars | 51,252 |
+| Forks | 4,672 |
+| 语言 | Python |
 | 创建时间 | 2026-03-08 |
+| 最近推送 | 2026-09-22 |
 | License | Apache 2.0 |
 
-从 3 月初上线到 5 月中旬，两个多月拿下 3.5 万星，增长速度相当可观。
+2026 年 3 月 8 日创建，七个月到 51k star。增长曲线陡，但更值得注意的是 pushed_at——最近一次推送在 9 月下旬，仓库处于活跃维护状态。
 
----
+## 采用判断
 
-## 一些典型场景
+适合的情况：你要让 Agent 操作的软件有源码、且注册表里已有现成 harness（秒级接入）；或者软件 API 面积大、文档全（生成质量有保障）。不适合的情况：软件是闭源 GUI（生成层需要读源码）、或者现成 harness 太薄覆盖不了你的工作流——先用 `cli-hub info` 探底，再决定装现成还是自己生成。
 
-- **Blender**：258 个命令，覆盖渲染、建模、动画全流程
-- **FreeCAD**：258 个命令，17 个分组
-- **Zotero**：文献管理、收藏、引用生成
-- **Godot**：游戏引擎工作流，含完整 demo-game E2E 测试
-- **Krita**：数字绘画、图层管理
-- **QGIS**：GIS/地图创作工具
-
-每个生成的 CLI 都自带 SKILL.md，AI agent 可以自主发现和安装，闭环。
-
----
-
-## 个人看法
-
-CLI-Anything 解决了一个很实在的问题：AI Agent 能理解代码，但真正要和某个专业软件交互时，没有统一接口。不同软件 API 风格差异巨大，GUI 软件往往根本没有 CLI——这些问题被它用一套自动化的 pipeline 统一处理了。
-
-加上 CLI-Hub 把生态做成了"一键安装"的模式，对开发者来说省了不少重复造轮子的功夫。唯一的隐忧可能是生成的 CLI 质量参差不齐——不同软件复杂度差异太大，自动分析的效果能不能稳定还需要观察。
-
-不过开源项目才两个月就破 3.5 万星，说明社区已经在用脚投票了。如果你有需要让 AI Agent 操作某个没有 CLI 的软件，可以试试。
-
----
-
-## 常见问题
-
-**Q: 生成的 CLI 质量怎么样？**
-
-分软件。Blender、FreeCAD 这种有完整 API 文档的，生成质量很高。但如果是 GUI 为主、API 文档不全的软件，生成的 CLI 可能覆盖不全。用 `refine` 命令可以增量补充。
-
-**Q: 支持 Windows 吗？**
-
-支持。CLI-Anything 本身是 Python 写的，跨平台。生成的 CLI 也是 Python，只要目标软件能在 Windows 上跑，生成的 CLI 就能用。
-
-**Q: 如果我用的软件不在 CLI-Hub 里怎么办？**
-
-自己跑 `/cli-anything ./your-software` 生成。如果生成质量不满意，用 `refine` 增量补充，或者去 GitHub 提 Issue 让作者优先支持。
-
-**Q: 生成的 CLI 会破坏我的软件吗？**
-
-不会。生成的 CLI 只是调用软件的现有 API，不会修改软件本身。如果你想保险，先在一个测试项目上跑，确认没问题再用到生产环境。
-
-**Q: 和手动写 CLI 比，优势在哪？**
-
-速度。手动为一个大型软件（比如 Blender）写完整 CLI 可能需要几周。CLI-Anything 几分钟就能生成第一版，然后你用 `refine` 增量补充。省下的是"从零开始写"的时间。
-
----
-
-## 自测
-
-1. 你现在用的 AI Coding Agent 是什么？它能不能直接操作你常用的专业软件（Blender、FreeCAD、GIMP……）？如果不能，卡在哪？
-2. 如果你给 Agent 加一个"操作 GIMP 做批量图片处理"的能力，你会怎么实现？先写 Skill，还是先找有没有现成的 CLI？
-3. CLI-Anything 的 7 相流程里，哪一相最容易被生成的 CLI 质量卡住？如果你是自己实现，会怎么改进这一相？
-4. 你有没有试过从 CLI-Hub 安装一个社区 CLI？如果试过，哪个最好用？如果没试过，今天装一个试试（比如 `cli-hub install obsidian`）。
-5. 如果你在带团队，你会不会把 CLI-Anything 推给大家用？为什么？什么类型的团队适合，什么类型的不适合？
-
----
-
-## 进阶路径
-
-**阶段一：跑通第一个生成（今天）**
-
-装好 CLI-Anything，找一个简单的软件（比如一个你写的小脚本），跑 `/cli-anything ./your-script`。感受一下：从"没有 CLI"到"有完整 CLI"需要几分钟？
-
-**阶段二：把生成结果用进真实工作流（本周）**
-
-选一个你每天用的软件（GIMP、Blender、FreeCAD……），生成 CLI 后接进 Claude Code 或 OpenClaw。记录哪步卡住了、哪步的文档不够清楚。
-
-**阶段三：给社区贡献一个 CLI（本月）**
-
-如果你生成了一个好用的 CLI，而且它不在 CLI-Hub 里，提一个 PR 把它加进去。需要做什么：写清楚依赖、测试覆盖、使用示例。目标是让下一个人 `cli-hub install` 就能直接用。
-
-**阶段四：如果你在带团队，做一次工具选型（下个月）**
-
-用 CLI-Anything 生成你们团队最常用的 3 个软件的 CLI，然后让团队里不同的人试。记录：谁觉得好用、谁觉得不够细、哪功能生成质量不行。最后输出一份「我们团队的 AI Agent CLI 工具清单」。
+三个使用前的预期管理：其一，harness 之间厚度差两个数量级，别拿 FreeCAD 的体验预期所有软件；其二，生成耗时以 QUICKSTART 的 10-15 分钟口径为准，别信"几分钟出全套"；其三，文档滞后于代码是这个仓库的常态（OpenClaw skill 改名没同步 README、cli-hub README 还写 "40+ CLI harnesses" 而注册表已 79 条），关键路径以仓库实测为准。
 
 ---
 
 - **GitHub**：https://github.com/HKUDS/CLI-Anything
 - **CLI-Hub**：https://clianything.cc/
+- **方法论深读**：[CLI-Anything：真正的资产是七阶段方法论](/posts/tech/cli-anything-universal-cli-framework/)
+- **产物拆解**：[CLI-Anything：harness 目录结构与 SKILL.md 规范](/posts/tech/cli-anything-agent-native-software-harness/)
+- **操作指南**：[CLI-Anything 完整上手指南](/posts/tech/cli-anything-command-line-interface-ai-guide/)

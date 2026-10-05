@@ -1,681 +1,277 @@
 ---
-title: "Plausible Analytics：隐私优先的开源网站分析利器"
+title: "Plausible 拆解：隐私优先是架构约束，不是营销标签"
 date: "2026-05-18T19:56:00+08:00"
+lastmod: "2026-09-29T00:00:00+08:00"
 categories: ["技术笔记"]
-tags: ["隐私保护", "开源"]
+tags: ["隐私保护", "开源", "网站分析", "Elixir", "ClickHouse"]
 slug: "plausible-analytics-privacy-first-web-analytics"
 github_repo: "plausible/analytics"
 source_key: "gh:plausible/analytics"
-description: "Plausible Analytics 是一款开源、隐私优先的无 Cookie 网站分析工具，轻量级脚本、完全兼容 GDPR/CCPA/PECR，是 Google Analytics 的优秀替代方案，支持自托管社区版。"
+description: "对照 plausible/analytics master 分支与 v3.2.1 版安装材料拆解这个 2.9 万星的分析工具：隐私主张如何落成工程约束（不存 IP、不用 Cookie、事件表里没有用户画像字段），一次 pageview 从脚本到 ClickHouse events_v2 表的完整链路，以及云托管与社区版（CE）真实的能力分界。"
 ---
+
+> **判断**：Plausible 真正的产品不是「一个界面好看的 Google Analytics 替代品」，而是把「测量流量，不测量个人」写进了数据模型——事件表里没有 IP、没有 Cookie、没有跨站标识，隐私合规因此从法务问题变成了架构的默认行为。代价同样真实：你拿不到用户级画像，只能做聚合统计。云托管版和自托管社区版（CE）的分界也不在界面，而在两处：高级 Bot 过滤（云版默认排除约 3.2 万个数据中心 IP 段）和原始数据访问权（只有 CE 能直接查 ClickHouse）。
+>
+> **依据**：[plausible/analytics](https://github.com/plausible/analytics) `master` 分支，GitHub API 在 2026-09-29 读到 29,252 stars / 1,878 forks / AGPL-3.0，最新 release 为 v3.2.1（2026-05-15）；自托管流程出自 [plausible/community-edition](https://github.com/plausible/community-edition) v3.2.1 分支的 README 与 `compose.yml`；隐私口径出自仓库 README 与[数据政策页](https://plausible.io/data-policy)；脚本体积与定价读自 [plausible.io](https://plausible.io) 首页 2026-09-29 快照；事件接口逐字段对照[官方 Events API 文档](https://plausible.io/docs/events-api)，`events_v2` 表结构取自源码 `lib/plausible/clickhouse_event_v2.ex`。本文不覆盖 Plausible EE（企业版闭源，不在公开仓库）。
 
 ## 目录
 
-- [学习目标](#学习目标)
-- [1. 为什么需要隐私优先的分析工具](#1-为什么需要隐私优先的分析工具)
-- [2. Plausible 是什么](#2-plausible-是什么)
-- [3. 云托管版：快速上手](#3-云托管版快速上手)
-- [4. 自托管版：从零部署](#4-自托管版从零部署)
-- [5. 核心功能详解](#5-核心功能详解)
-- [6. 技术架构：Elixir + ClickHouse](#6-技术架构elixir--clickhouse)
-- [7. 云托管 vs 自托管对比](#7-云托管-vs-自托管对比)
-- [8. 常见问题](#8-常见问题)
-- [9. 总结](#9-总结)
-- [自测检查](#自测检查)
-- [进阶路径](#进阶路径)
+- [§1 项目坐标](#1-项目坐标2026-09-29-核对)
+- [§2 隐私主张怎么落到工程上](#2-隐私主张怎么落到工程上)
+- [§3 一次 pageview 的完整链路](#3-一次-pageview-的完整链路)
+- [§4 采集脚本：默认捕捉了什么，怎么接管](#4-采集脚本默认捕捉了什么怎么接管)
+- [§5 Events API：服务端发事件的正确姿势](#5-events-api服务端发事件的正确姿势)
+- [§6 存储：Postgres 管配置，ClickHouse 管事件](#6-存储postgres-管配置clickhouse-管事件)
+- [§7 报表层：渠道、来源、目标与搜索关键词](#7-报表层渠道来源目标与搜索关键词)
+- [§8 云托管 vs CE：分界在过滤和原始数据](#8-云托管-vs-ce分界在过滤和原始数据)
+- [§9 自托管 CE：v3.2.1 官方流程](#9-自托管-cev321-官方流程)
+- [§10 常见故障排查](#10-常见故障排查)
+- [§11 采用顺序与边界](#11-采用顺序与边界)
 
----
+## 1. 项目坐标（2026-09-29 核对）
 
-## 学习目标
+| 字段 | 值 |
+|---|---|
+| 仓库 | [plausible/analytics](https://github.com/plausible/analytics)，2018-12-04 建仓 |
+| 读数 | 29,252 stars / 1,878 forks / 64 open issues（GitHub API 2026-09-29） |
+| 许可 | AGPL-3.0 |
+| 语言构成 | Elixir 7.2 MB 为主，TypeScript 1.3 MB（仪表盘前端），JavaScript 0.2 MB（tracker 脚本） |
+| 最新 release | v3.2.1（2026-05-15）；前一版 v3.2.0（2026-01-26）、v3.1.0（2025-11-13） |
+| 自托管仓库 | [plausible/community-edition](https://github.com/plausible/community-edition)（原名 plausible/hosting，已随版本更名，默认分支即版本号 `v3.2.1`） |
+| 商业形态 | [云托管](https://plausible.io)付费；CE 自托管免费，由云收入资助（CE README 原话：*"Plausible CE is funded by our cloud subscribers"*） |
 
-阅读本文并完成练习后，你将能够：
+两点提醒。其一，网上大量教程（包括本文旧版）还在写 `git clone https://github.com/plausible/hosting`——这个仓库已更名为 `community-edition`，默认分支不再是 `master` 而是 `v3.2.1` 这类版本分支，旧命令会 404。其二，云托管版与 CE 不是同一份功能的两个部署：闭源 EE 模块（更细的报表与协作能力）只存在于云上，公开仓库里 `on_ee` 宏标注的位置就是两侧的分界。
 
-- 理解为什么传统网站分析工具（如 Google Analytics）存在隐私问题
-- 在网站上正确部署 Plausible 追踪脚本
-- 区分云托管版和自托管版的适用场景
-- 使用 Events API 发送自定义事件
-- 配置 Google Search Console 集成
-- 在 Docker 环境中部署自托管版 Plausible
-- 排查常见部署问题（脚本不生效、数据不显示等）
+## 2. 隐私主张怎么落到工程上
 
-**预计阅读时间**：25 分钟
-**实践时间**：40 分钟
+Plausible 的 README 第一段给出核心口径（原文直译）：**测量流量，而非个人。不存储个人数据或 IP 地址，不使用 Cookie 或持久标识符。完全符合 GDPR、CCPA 与 PECR。**
 
----
+这句口号能成立，靠的是三组工程决定：
 
-## 1. 为什么需要隐私优先的分析工具
+1. **数据模型里没有「人」这个粒度。** 访客去重靠一个由请求 IP 和 User-Agent 算出的匿名 `user_id`，原始 IP 不落库。事件表 `events_v2` 的字段清单（源码 `lib/plausible/clickhouse_event_v2.ex`）里能看到的只有 `name`、`pathname`、`referrer`、UTM 五件套、国家/城市码、屏幕尺寸、操作系统、浏览器——没有任何可以回溯到具体用户的字段。
+2. **不设 Cookie，就没有「同意」问题。** 需要同意提示的是 Cookie 类存储行为；Plausible 不设任何 Cookie 或持久标识符，官方口径因此是[不需要 Cookie 提示条](https://plausible.io/data-policy)。注意这是厂商措辞而非法律意见，不同司法辖区的执法口径有差异。
+3. **云版合规靠基础设施边界兜底。** 出于 GDPR 与 Schrems II 判决，云托管版的全部访客数据只在欧盟自有基础设施上处理，官方明确写了 *"Your website data never leaves the EU"*。
 
-### 1.1 传统分析工具的隐私困境
+理解这个架构的代价同样重要：因为没有用户标识，你做不了用户级留存、跨设备归因、再营销受众——Plausible 有意不做这些。它对标的场景是「我的网站流量怎么样、从哪来、转化了多少」，不是「这个用户是谁、下一步推什么」。
 
-Google Analytics（GA）是最流行的网站分析工具，但它有个核心问题：**它用访问者的个人数据来给自己做广告定向**。
+## 3. 一次 pageview 的完整链路
 
-具体来说：
+把一次真实访问从头走到尾，四个环节各有各的守门人：
 
-- GA 会存储访问者的 IP 地址、User-Agent、设备信息
-- 这些数据会被 Google 用来完善广告画像
-- 为了合规，网站管理员必须在页面上显示 Cookie 提示条（Cookie Banner），让用户"同意被追踪"
+```mermaid
+flowchart LR
+    B["浏览器<br/>script.js"] -->|"POST /api/event"| I["ingest 层<br/>UA 校验 · IP 判定 · Bot 过滤"]
+    I -->|"合法事件"| CH[("ClickHouse<br/>events_v2")]
+    PG[("PostgreSQL<br/>站点/用户/目标配置")] --> D["仪表盘 / Stats API<br/>聚合查询"]
+    CH --> D
+```
 
-### 1.2 隐私法规的压力
+**采集**。页面 `<head>` 里一行 `script.js`（下一节展开），把 pageview 或自定义事件发给采集端点。
 
-全球多个隐私法规对网站分析提出了严格要求：
+**ingest**。事件进入 `POST /api/event`，ingest 层做三件事：校验 User-Agent（缺失或可疑的 UA 算不出来访客 id，直接进不了库）；判定真实客户端 IP（直发时用连接来源 IP，后端转发时看 `X-Forwarded-For`，IP 属于已知数据中心段的事件会被静默丢弃）；执行 Bot 过滤。注意接口**永远返回 202**，被丢弃也返回 202——排查丢事件要靠响应头 `x-plausible-dropped: 1` 和请求头 `X-Debug-Request: true`（官方文档原话，后者会告诉你 Plausible 认定的客户端 IP）。
 
-| 法规 | 适用地区 | 核心要求 |
-|------|----------|----------|
-| **GDPR** | 欧盟 | 必须获得用户明确同意才能存储个人数据 |
-| **CCPA** | 美国加州 | 用户有权选择不出售其个人数据 |
-| **PECR** | 英国/欧盟 | Cookie 必须获得同意才能设置 |
+**存储**。合法事件写入 ClickHouse 的事件表；站点、用户、目标（Goal）定义这类低频配置放在 PostgreSQL。两条写路径分开，是后面所有查询性能讨论的基础。
 
-如果你的网站用了 Google Analytics，**大多数情况下需要显示 Cookie 提示条**，否则就违法了。
+**查询**。仪表盘和 [Stats API](https://plausible.io/docs/stats-api) 都只做聚合查询：按时间、来源、页面、地理等维度 group by。因为事件表天生没有用户粒度，这里不存在「查某人」的路径——数据边界和查询边界是同一张 schema 定的。
 
-### 1.3 Plausible 的解决思路
+健康检查端点是 `GET /api/health`，自托管部署的容器探针就用它。
 
-Plausible 的核心主张：**测量流量，而非个人**。
+## 4. 采集脚本：默认捕捉了什么，怎么接管
 
-它不存储个人数据、不记录 IP 地址、不使用 Cookie 或持久化标识符。这意味着：
-
-- **不需要 Cookie 提示条**（很多司法管辖区豁免）
-- 访问者的隐私得到尊重
-- 网站管理员不用担心合规风险
-
----
-
-## 2. Plausible 是什么
-
-[Plausible Analytics](https://plausible.io) 是一款开源、隐私优先的网站分析工具。
-
-### 2.1 核心特点
-
-| 特点 | 说明 |
-|------|------|
-| **无 Cookie** | 不使用 Cookie，不存储个人数据 |
-| **轻量级脚本** | 约 1KB（GA 约 45KB），不拖慢网站 |
-| **GDPR 合规** | 不需要 Cookie 提示条（多数地区） |
-| **开源** | 社区版基于 AGPLv3 开源 |
-| **自有数据** | 自托管版可以直接访问原始数据 |
-
-### 2.2 与 Google Analytics 的核心区别
-
-| 对比项 | Google Analytics | Plausible Analytics |
-|--------|-------------------|----------------------|
-| 数据存储 | Google 服务器 | 可选（云托管或自托管） |
-| 数据用途 | Google 用于广告定向 | 仅用于你的网站分析 |
-| Cookie | 需要 | 不需要 |
-| Cookie 提示条 | 多数情况下需要 | 多数地区不需要 |
-| 脚本大小 | ~45KB | ~1KB |
-| 定价 | 免费（有使用限制）| 云托管付费 / 自托管免费 |
-
-### 2.3 项目数据
-
-| 指标 | 数值 |
-|------|------|
-| GitHub Stars | **25,705+** |
-| 编程语言 | Elixir + TypeScript |
-| 开源许可 | AGPLv3（社区版）|
-| 最新版本 | 持续更新中 |
-
----
-
-## 3. 云托管版：快速上手
-
-### 3.1 注册账号
-
-1. 访问 [plausible.io](https://plausible.io)
-2. 点击 "Start free trial"（14 天免费试用）
-3. 填入邮箱和密码
-4. 验证邮箱后登录
-
-### 3.2 添加网站
-
-1. 登录后点击 "Add a site"
-2. 填入你的域名（如 `example.com`）
-3. 选择时区
-4. 点击 "Add site"
-
-系统会给你一段追踪代码：
+标准片段一行，放进 `<head>`（站点专属片段在设置页 Tracking → Site installation 里能拿到）：
 
 ```html
-<!-- 将以下代码放在 </head> 之前 -->
 <script defer data-domain="example.com" src="https://plausible.io/js/script.js"></script>
 ```
 
-### 3.3 部署追踪代码
+`data-domain` 决定事件归属的站点，`defer` 保证不阻塞渲染。体积方面官方不再给绝对 KB 数，2026-09-29 的[首页口径](https://plausible.io)是：脚本比 Google Analytics **小 54 倍**，每次访问**少下载 135 KB** JavaScript。（早年流传的「<1 KB」是旧口径，GA 的 gtag 这几年在膨胀，相对值随时间漂移，引用时注意时点。）
 
-**方式一：直接编辑 HTML**
+现行脚本的默认行为比很多教程写的多：
 
-将上面的 `<script>` 标签放到你网站的 `</head>` 之前。
+- **单页应用自动适配**。脚本监听 History API，`history.pushState` 触发时自动补发 pageview——旧教程里「SPA 必须手动推送」的说法对现行脚本已不成立。
+- **默认捕捉出站链接、文件下载、表单提交**，无需额外配置。
+- 新脚本提供 `plausible.init()` 配置入口：`hashBasedRouting`（hash 路由的站点）、`fileDownloads`、`outboundLinks`、`formSubmissions`、`captureOnLocalhost`、`autoCapturePageviews`（默认 `true`）等，见[脚本扩展文档](https://plausible.io/docs/script-extensions)。
 
-**方式二：用 Google Tag Manager**
-
-1. 在 GTM 中创建新的 Tag
-2. 选择 "Custom HTML"
-3. 粘贴 Plausible 提供的脚本
-4. 设置 Trigger 为 "All Pages"
-5. 保存并发布
-
-**方式三：React/Vue/Next.js（SPA）**
-
-对于单页应用，需要手动触发页面浏览事件：
-
-```javascript
-// React（使用 useEffect）
-import { useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
-
-function App() {
-  const location = useLocation();
-
-  useEffect(() => {
-    // Plausible 会自动处理 SPA 的页面切换
-    // 但如果你用了 history API，需要手动推送
-    if (window.plausible) {
-      window.plausible('pageview', { u: window.location.href });
-    }
-  }, [location]);
-}
-```
-
-### 3.4 验证部署
-
-部署后，访问你的网站，然后：
-
-1. 登录 Plausible 仪表盘
-2. 选择你的网站
-3. 应该能看到实时访问数据
-
-如果看不到数据，参考 [8. 常见问题](#8-常见问题)。
-
----
-
-## 4. 自托管版：从零部署
-
-如果你不想把数据交给第三方，可以自托管 Plausible。
-
-### 4.1 系统要求
-
-| 组件 | 最低要求 |
-|--------|----------|
-| CPU | 2 核 |
-| 内存 | 4GB RAM |
-| 存储 | 20GB（取决于流量） |
-| 操作系统 | Linux（推荐 Ubuntu 20.04+）|
-| Docker | 20.10+ |
-
-### 4.2 使用 Docker Compose 部署（推荐）
-
-**步骤 1：克隆官方自托管仓库**
-
-```bash
-git clone https://github.com/plausible/analytics.git
-cd analytics
-
-# 切换到稳定版本
-git checkout v2.0.0  # 查看最新 release
-```
-
-**步骤 2：配置环境变量**
-
-```bash
-# 复制示例配置
-cp .env.example .env
-
-# 编辑配置
-vim .env
-```
-
-关键配置项：
-
-```bash
-# 数据库连接
-DATABASE_URL=postgresql://postgres:postgres@db:5432/plausible
-
-# ClickHouse 连接
-CLICKHOUSE_DATABASE_URL=http://clickhouse:8123/plausible
-
-# 域名（重要！）
-BASE_URL=https://analytics.yourdomain.com
-
-# 邮件配置（用于发送邀请邮件）
-MAILER_EMAIL=your-email@gmail.com
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USERNAME=your-email@gmail.com
-SMTP_PASSWORD=your-app-password
-```
-
-**步骤 3：启动服务**
-
-```bash
-# 构建并启动所有服务
-docker-compose up -d
-
-# 查看日志
-docker-compose logs -f
-
-# 等待所有服务启动（约 1-2 分钟）
-```
-
-**步骤 4：创建管理员账号**
-
-```bash
-# 进入 app 容器
-docker-compose exec app /bin/sh
-
-# 在容器内执行
-/usr/bin/entrypoint.sh /app/bin/plausible create_user "admin@example.com" "your-password"
-```
-
-**步骤 5：访问仪表盘**
-
-打开浏览器，访问 `https://analytics.yourdomain.com`（需要提前配置 Nginx/Caddy 反向代理）。
-
-### 4.3 使用预构建 Docker 镜像（更简单）
-
-Plausible 社区维护了预构建的 Docker 镜像：
-
-```bash
-# 使用社区维护的 docker-compose 配置
-curl -L https://raw.githubusercontent.com/plausible/hosting/master/docker-compose.yml -o docker-compose.yml
-
-# 启动
-docker-compose up -d
-```
-
-详细文档：[Plausible Self-hosting Guide](https://plausible.io/docs/self-hosting)
-
----
-
-## 5. 核心功能详解
-
-### 5.1 实时流量监控
-
-Plausible 仪表盘首页显示：
-
-- **当前在线人数**：实时更新
-- **访问量（Visits）**：去重后的访问次数
-- **独立访客（Visitors）**：去重后的访客数
-- **页面浏览量（Pageviews）**：总页面浏览次数
-- **跳出率（Bounce Rate）**：只访问一个页面就离开的比例
-- **访问时长（Visit Duration）**：平均访问时长
-
-### 5.2 流量来源（Traffic Sources）
-
-查看访问者从哪来：
-
-| 来源类型 | 说明 |
-|----------|------|
-| **Search** | 搜索引擎（Google、Bing、DuckDuckGo 等）|
-| **Social** | 社交媒体（Twitter、Facebook、LinkedIn 等）|
-| **Referrals** | 其他网站的反向链接 |
-| **Direct** | 直接输入网址或书签访问 |
-| **Email** | 邮件中的链接 |
-
-### 5.3 页面热度（Top Pages）
-
-显示哪些页面最受欢迎，以及每个页面的：
-
-- 独立访客数
-- 页面浏览量
-- 平均停留时间
-- 跳出率
-
-### 5.4 地理位置和設備
-
-- **国家/地区**：访问者来自哪些国家
-- **设备类型**：桌面端 vs 移动端 vs 平板
-- **操作系统**：Windows、macOS、iOS、Android 等
-- **浏览器**：Chrome、Firefox、Safari、Edge 等
-
-### 5.5 目标追踪（Goals）
-
-你可以定义"目标"（Goal），追踪关键转化事件：
-
-**示例：追踪表单提交**
-
-```javascript
-// 在表单提交成功后的回调中
-window.plausible('Signup', { props: { plan: 'free' } });
-```
-
-然后在 Plausible 仪表盘中：
-
-1. 点击 "Goals" 标签
-2. 添加目标 "Signup"
-3. 查看转化漏斗和转化率
-
-### 5.6 自定义事件（Events API）
-
-除了页面浏览，你还可以追踪自定义事件：
-
-```javascript
-// 追踪按钮点击
-document.getElementById('buy-button').addEventListener('click', () => {
-  window.plausible('Buy', { props: { product: 'ebook', price: '29.99' } });
-});
-```
-
-**服务端发送事件（推荐用于关键业务事件）**：
-
-```bash
-# 使用 Events API（需要 API Key）
-curl -X POST https://plausible.io/api/event \
-  -H "Content-Type: application/json" \
-  -d '{
-    "domain": "example.com",
-    "name": "payment_completed",
-    "props": { "amount": "99.99", "currency": "USD" },
-    "api_key": "your-api-key"
-  }'
-```
-
-### 5.7 Google Search Console 集成
-
-Plausible 可以直接拉取 Google Search Console 的数据，在仪表盘中查看：
-
-1. 进入网站设置
-2. 点击 "Integrations"
-3. 选择 "Google Search Console"
-4. 授权 Plausible 访问你的 GSC 数据
-5. 在仪表盘中查看关键词排名和点击量
-
----
-
-## 6. 技术架构：Elixir + ClickHouse
-
-Plausible 使用了一套相当独特的技术栈：
-
-### 6.1 技术栈概览
-
-| 组件 | 技术 | 作用 |
-|--------|------|------|
-| **后端** | Elixir + Phoenix | 处理 HTTP 请求、Events API、仪表盘后端 |
-| **主数据库** | PostgreSQ L | 存储站点配置、用户账号、目标定义 |
-| **分析数据库** | ClickHouse | 存储访问事件，支持快速聚合查询 |
-| **前端** | React + TailwindCSS | 仪表盘 UI |
-| **缓存** | Redis（可选）| 缓存常用查询结果 |
-
-### 6.2 为什么用 ClickHouse？
-
-Plausible 需要处理的查询类型：
-
-- "过去 30 天每天有多少访客？"（时间序列聚合）
-- "哪个国家带来的流量最多？"（分组聚合）
-- "Referral 流量top 10 来源是哪些？"（排序 + 限制）
-
-这些查询在传统关系型数据库（如 PostgreSQ L）上会很慢，因为数据量会随访问量线性增长。
-
-**ClickHouse 的优势**：
-
-- 列式存储，聚合查询极快
-- 压缩率高，存储成本低
-- 水平扩展能力强
-
-对于需要承载日均百万级访问的网站来说，ClickHouse 是必需品。
-
-### 6.3 数据流示意
-
-```
-访问者浏览器
-    ↓（加载 script.js）
-    ↓（发送页面浏览事件）
-Plausible 后端（Elixir + Phoenix）
-    ↓（写入）
-ClickHouse（分析数据） + PostgreSQ L（配置数据）
-    ↓（查询）
-React 仪表盘（数据可视化）
-```
-
----
-
-## 7. 云托管 vs 自托管对比
-
-| 对比项 | Plausible Cloud | Plausible 社区版（自托管） |
-|--------|----------------|--------------------------|
-| **基础设施管理** | 官方托管，2 分钟上线，高可用 | 完全自管理，需自备服务器 |
-| **功能更新频率** | 每周多次更新，含全部高级功能 | 每年约两次更新，高级功能受限 |
-| **Bot 过滤** | 高级 Bot 过滤，排除约 32K 数据中心 IP 段 | 基础过滤，仅基于 User-Agent |
-| **数据可移植性** | 聚合数据查看，API/CSV 导出 | 可直接访问 ClickHouse 原始数据 |
-| **数据主权** | 数据留存在 EU 境内 | 可部署在任意国家/地区 |
-| **成本** | 按月付费（$9/月起，取决于流量）| 服务器成本 + 运维时间 |
-
-### 7.1 高级 Bot 过滤的价值
-
-Plausible Cloud 的算法能自动识别并排除非人类流量模式，默认排除约 32,000 个数据中心 IP 段。
-
-**为什么这很重要？** 如果你用基础过滤（只看 User-Agent），很多爬虫和bot 会混进统计数据，导致"访客数"虚高。高级过滤能显著提升数据的纯净度。
-
-### 7.2 如何选择？
-
-**选云托管，如果你：**
-
-- 不想管服务器
-- 需要最新功能
-- 流量不大（每月 10 万次页面浏览以下成本可控）
-
-**选自托管，如果你：**
-
-- 有合规要求（数据不能出境内）
-- 流量很大（云托管成本已经超过服务器成本）
-- 想完全掌控数据（直接查 ClickHouse）
-
----
-
-## 8. 常见问题
-
-### 8.1 部署后仪表盘不显示数据
-
-**症状**：已添加脚本，但 Plausible 仪表盘没有数据。
-
-**排查步骤**：
-
-1. **检查脚本是否加载成功**
-
-   在浏览器中打开你的网站，然后按 F12 打开开发者工具：
-
-   ```javascript
-   // 在 Console 中运行
-   console.log(window.plausible);
-   // 应该输出一个函数，而不是 undefined
-   ```
-
-2. **检查 AdBlock 是否拦截**
-
-   Plausible 的脚本域名（`plausible.io`）可能被某些广告拦截器屏蔽。
-
-   解决方案：使用自定义域名代理（[文档](https://plausible.io/docs/proxy/introduction)）。
-
-3. **检查 `data-domain` 是否正确**
-
-   ```html
-   <!-- 错误示例 -->
-   <script defer data-domain="wrong-domain.com" src="..."></script>
-
-   <!-- 正确示例 -->
-   <script defer data-domain="example.com" src="..."></script>
-   ```
-
-### 8.2 自托管版启动失败
-
-**症状**：`docker-compose up` 后访问 `localhost:8000` 显示 502 错误。
-
-**排查步骤**：
-
-```bash
-# 1. 检查所有容器是否正常运行
-docker-compose ps
-
-# 2. 查看 app 容器日志
-docker-compose logs app
-
-# 3. 常见错误：数据库连接失败
-# 解决方案：等待 PostgreSQ L 完全启动（约 30 秒）
-# 或者增加 app 服务的 depends_on 等待时间
-```
-
-### 8.3 想停止收集数据，如何移除脚本？
-
-直接从网站 HTML 中删除 Plausible 的 `<script>` 标签即可。不需要在 Plausible 后台做额外操作。
-
-**如果想删除已收集的数据**：
-
-1. 登录 Plausible
-2. 进入网站设置
-3. 点击 "Danger zone"
-4. 选择 "Delete site"（会删除该网站的所有历史数据）
-
-### 8.4 自托管版如何升级？
-
-```bash
-# 1. 拉取最新代码
-cd /path/to/analytics
-git pull origin master
-
-# 2. 重新构建 Docker 镜像
-docker-compose build
-
-# 3. 运行数据库迁移（如果有）
-docker-compose run --rm app /app/bin/plausible ecto.migrate
-
-# 4. 重启服务
-docker-compose down && docker-compose up -d
-```
-
-### 8.5 如何导出我的数据？
-
-**云托管版**：
-
-1. 进入网站仪表盘
-2. 点击右上角 "Export"
-3. 选择导出格式（CSV 或 JSON）
-4. 下载文件
-
-**自托管版**：
-
-直接查询 ClickHouse：
-
-```bash
-# 进入 ClickHouse 容器
-docker-compose exec clickhouse clickhouse-client
-
-# 查询过去 30 天的页面浏览
-SELECT toDate(time) as date, count(*) as views
-FROM events
-WHERE time >= now() - INTERVAL 30 DAY
-GROUP BY date
-ORDER BY date;
-```
-
----
-
-## 9. 总结
-
-Plausible Analytics 为隐私优先的网站分析提供了一个出色的解决方案。
-
-**核心价值**：
-
-- **合规**：不需要 Cookie 提示条，尊重访问者隐私
-- **轻量**：1KB 脚本，不拖慢网站
-- **开源**：社区版免费自托管，数据完全自主
-- **精准**：高级 Bot 过滤，数据纯净度高
-
-**适用场景**：
-
-- 个人博客（不想用 Google Analytics 的隐私负担）
-- 企业官网（有 GDPR 合规需求）
-- SaaS 产品（需要追踪转化漏斗）
-- 电商网站（需要自定义事件追踪）
-
-**官方资源**：
-
-- GitHub：https://github.com/plausible/analytics
-- 官方文档：https://plausible.io/docs
-- 自托管指南：https://plausible.io/docs/self-hosting
-- 社区论坛：https://github.com/plausible/analytics/discussions
-
----
-
-## 自测检查
-
-完成阅读后，请确认你能回答以下问题：
-
-- [ ] Plausible 为什么不需要 Cookie 提示条？
-- [ ] 云托管版和自托管版的核心区别是什么？
-- [ ] 如何在 React/Vue 等 SPA 中正确追踪页面切换？
-- [ ] Events API 和页面浏览自动追踪的区别？
-- [ ] ClickHouse 在 Plausible 架构中扮演什么角色？
-- [ ] 如何排查仪表盘不显示数据的问题？
-- [ ] 自托管版升级的正确步骤是什么？
-
----
-
-## 进阶路径
-
-**如果你完成了本文的学习，可以继续探索：**
-
-1. **自定义部署代理**：配置自定义域名代理 Plausible 脚本，避免被 AdBlock 拦截（[文档](https://plausible.io/docs/proxy/introduction)）
-2. **深入 ClickHouse**：学习如何直接查询 Plausible 的 ClickHouse 数据库，构建自定义报表
-3. **对比其他隐私分析工具**：了解 [Umami](https://umami.is/)、[Matomo](https://matomo.org/)、[Fathom](https://usefathom.com/) 的优缺点
-4. **集成到 CI/CD**：将 Plausible 部署自动化（Terraform、Ansible 等）
-5. **自定义仪表盘**：基于 Plausible Stats API 构建自己的数据看板
-
-**推荐阅读**：
-
-- [Plausible 官方文档](https://plausible.io/docs)
-- [ClickHouse 官方文档](https://clickhouse.com/docs)
-- [GDPR 与网站分析：合规指南](https://gdpr.eu/)
-- [为什么 Cookie 提示条是个糟糕的用户体验](https://plausible.io/blog/google-analytics-cookie-banner)
-
----
-
-## 练习
-
-### 练习 1：部署 Plausible 脚本（预计 15 分钟）
-
-在你自己的网站（或本地测试页面）上部署 Plausible 追踪脚本，然后在仪表盘中确认能看到实时访问数据。
-
-**验收标准**：
-
-- 脚本加载成功（浏览器开发者工具 Console 中 `window.plausible` 是一个函数）
-- Plausible 仪表盘显示你的访问记录
-
-### 练习 2：发送自定义事件（预计 10 分钟）
-
-在你的网站上部署后，添加一段 JavaScript 代码，在用户点击某个按钮时发送自定义事件。
+需要完全手动控制时（比如 Turbo/Turbolinks 这类自己做页面替换的框架），关掉自动捕捉、在事件里补发：
 
 ```html
-<button id="demo-button">点击我</button>
-
+<script defer data-domain="example.com" src="https://plausible.io/js/script.js"></script>
+<script>window.plausible = window.plausible || function () { (window.plausible.q = window.plausible.q || []).push(arguments); }</script>
 <script>
-document.getElementById('demo-button').addEventListener('click', () => {
-  window.plausible('DemoButtonClick', { props: { location: 'homepage' } });
-});
+  document.addEventListener("turbo:load", function () {
+    plausible("pageview");
+  });
 </script>
 ```
 
-**验收标准**：Plausible 仪表盘的 "Goals" 或 "Custom Events" 中能看到 `DemoButtonClick` 事件。
+被广告拦截器拦掉 `plausible.io` 域名的站点，官方给的是[自建代理方案](https://plausible.io/docs/proxy/introduction)：用自己的域名反代采集端点，脚本和事件同源，拦截规则就摸不到特征。
 
-### 练习 3：自托管版部署（预计 30 分钟）
+## 5. Events API：服务端发事件的正确姿势
 
-在一台 Linux 服务器（或本地虚拟机）上，用 Docker Compose 部署 Plausible 社区版。
+自定义事件在前端一行代码：
 
-**验收标准**：
-
-- `docker-compose ps` 显示所有服务正常运行
-- 能访问 Plausible 仪表盘网页
-- 能创建管理员账号并登录
-
-### 练习 4：查询 ClickHouse 原始数据（预计 10 分钟）
-
-如果你完成了练习 3，尝试直接查询 ClickHouse 数据库，获取过去 7 天的页面浏览量。
-
-```bash
-docker-compose exec clickhouse clickhouse-client
-
-# 在 ClickHouse 客户端中运行：
-SELECT toDate(time) as date, count(*) as views
-FROM events
-WHERE time >= now() - INTERVAL 7 DAY
-GROUP BY date
-ORDER BY date;
+```javascript
+plausible("Signup", { props: { plan: "free" } });
 ```
 
-**验收标准**：能成功执行查询并看到按日期聚合的页面浏览量数据。
+关键业务事件建议从服务端发（不依赖客户端 JS 是否执行成功）。这里网上教程错误最密集——**现行 Events API 不需要 API Key**，事件靠请求体里的 `domain` 字段归属到站点。下面是[官方文档](https://plausible.io/docs/events-api)的 curl 原例：
+
+```bash
+curl -i -X POST https://plausible.io/api/event \
+  -H 'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36 OPR/71.0.3770.284' \
+  -H 'X-Forwarded-For: 127.0.0.1' \
+  -H 'Content-Type: application/json' \
+  --data '{"name":"pageview","url":"http://dummy.site","domain":"dummy.site"}'
+```
+
+逐字段过一遍（全部出自官方文档）：
+
+| 字段 | 必填 | 说明 |
+|---|---|---|
+| `domain` | ✅ | 站点域名，事件归属的唯一依据 |
+| `name` | ✅ | 事件名；`pageview` 是保留名，其余为自定义事件 |
+| `url` | ✅ | 页面完整 URL，hostname 参与访客识别 |
+| `referrer` | — | 解析进来源报表 |
+| `props` | — | 自定义属性键值对，**最多 30 对** |
+| `revenue` | — | `{ "currency": "USD", "amount": 99.99 }`，配电商收入报表 |
+| `interactive` | — | 设 `false` 把事件排除出跳出率计算 |
+
+三个最容易踩的坑：**User-Agent 请求头必填**——没有它算不出访客与浏览器信息，事件等于白发；从服务器发时用 `X-Forwarded-For` 传真实客户端 IP，转发了自己机房 IP 的事件会被 Bot 过滤静默丢弃；`Content-Type` 必须是 `application/json` 或 `text/plain`（后者仍按 JSON 解析）。API Key 是 [Stats API](https://plausible.io/docs/stats-api)（读数据）的认证方式，别和发事件的接口搞混。
+
+## 6. 存储：Postgres 管配置，ClickHouse 管事件
+
+两条数据线在 schema 层面就分开了：
+
+| | PostgreSQL | ClickHouse |
+|---|---|---|
+| 存什么 | 用户、站点、目标定义、API Key 等低频配置 | 每一条访问事件（pageview 与自定义事件） |
+| 表 | 常规 Ecto schema | `events_v2`（事件）、`sessions_v2`（会话） |
+| 写模式 | 行级事务 | 批量写入，应用侧缓冲后刷盘 |
+| 查谁 | 仪表盘的配置读取 | 仪表盘全部统计指标 |
+
+`events_v2`（v3.2.1 全新安装的口径，源码 `lib/plausible/clickhouse_event_v2.ex`）每行一条事件，字段分四组：`name`/`pathname`/`timestamp` 标识「谁在哪页发生了什么」，`session_id` 串起会话，`meta.key`/`meta.value` 两个并列数组存自定义属性，其余是采集时补齐的维度（`referrer_source`、`utm_*`、`country_code`、`screen_size`、`browser`、`operating_system`）和会话快照（`scroll_depth`、`engagement_time`）。
+
+为什么必须上 ClickHouse：网站分析的全部查询都是「过去 30 天每天多少访客」这类高维聚合，数据量随流量线性涨。列式存储按列压缩、按列扫描，聚合查询快几个数量级，存储成本也低。这类查询在行式数据库上不是不能跑，是跑不便宜。
+
+自托管时这两个库就在你的 compose 栈里，所以 CE 有云版给不了的原始数据访问权。查询注意库名：应用默认连 `CLICKHOUSE_DATABASE_URL=http://plausible_events_db:8123/plausible_events_db`（`config/runtime.exs` 默认值），所以表全名是 `plausible_events_db.events_v2`，不是裸的 `events`：
+
+```sql
+SELECT toDate(timestamp) AS date,
+       countIf(name = 'pageview') AS views
+FROM plausible_events_db.events_v2
+WHERE timestamp >= now() - INTERVAL 7 DAY
+GROUP BY date
+ORDER BY date
+```
+
+```bash
+docker compose exec plausible_events_db clickhouse-client
+```
+
+## 7. 报表层：渠道、来源、目标与搜索关键词
+
+仪表盘顶栏是当前在线、独立访客、页面浏览量、每次访问页数、跳出率、访问时长六个指标。来源报表分三个标签页（[官方文档](https://plausible.io/docs/top-referrers)）：**Channels** 按 GA 对齐的高层渠道分组（Organic Search、Organic Social、Email、Direct、Referral、Paid Search……以及一个 **AI Assistants** 渠道——ChatGPT、Claude、Perplexity、Gemini、Copilot 等 AI 工具带来的引荐流量单独成组）；**Sources** 展示原始引荐域名；**Campaigns** 按 UTM 参数聚合，也识别 `gclid`/`msclkid` 付费点击参数。
+
+转化侧三件事：**目标**（[Goals](https://plausible.io/docs/goal-conversions)）把页面访问或自定义事件定义成转化；**自定义属性**（[Props](https://plausible.io/docs/custom-props/introduction)）给事件挂维度，比如 `plan=free`；**漏斗**（[Funnel analysis](https://plausible.io/docs/funnel-analysis)）把多步目标串成转化路径看流失。
+
+搜索关键词走 [Google Search Console 集成](https://plausible.io/docs/google-search-console-integration)：站点设置 → Integrations → Continue with Google 授权后，Sources 标签页里出现 Google 分组，能看到查询词、点击、展示、CTR、排名。两个官方写明的限制：数据延迟约 24–36 小时；至少有一次点击的关键词才会出现。自托管实例要用这个集成，需要先给应用配 `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET`（compose 里有对应变量位，CE wiki 有 [Google-Integration](https://github.com/plausible/community-edition/wiki/Google-Integration) 页）。
+
+## 8. 云托管 vs CE：分界在过滤和原始数据
+
+仓库 README 里的对比表是唯一权威口径，核心差异浓缩成一张表：
+
+| | 云托管 | CE（自托管） |
+|---|---|---|
+| Bot 过滤 | 算法识别非人类流量模式 + UA 过滤 + **默认排除约 3.2 万个数据中心 IP 段** + 引荐垃圾域 | 基础过滤：常见 UA 特征 + 引荐垃圾域 |
+| 数据访问 | 仪表盘聚合 + [CSV 导出](https://plausible.io/docs/export-stats) + [Stats API](https://plausible.io/docs/stats-api) + [Looker Studio 连接器](https://plausible.io/docs/looker-studio) | 以上外加**直接查 ClickHouse 原始数据**；无 Looker Studio 连接器 |
+| 数据位置 | 只在欧盟（德国）基础设施处理 | 任意国家任意服务器 |
+| 地理库 | 内置 | 开箱内置 DB-IP 国家库（镜像内 `priv/geodb/dbip-country.mmdb.gz`），配 `MAXMIND_LICENSE_KEY` 后默认升到 GeoLite2-City |
+| 功能面 | 含闭源 EE 能力 | 仅公开仓库代码 |
+| 价格 | Starter $9/月起（10k 月浏览量、单站、3 年数据留存）、Growth $14/月（3 站、3 成员）（官网 2026-09-29 读数） | 免费，自担服务器与运维 |
+
+Bot 过滤这一行要单独说：没有数据中心 IP 过滤时，爬虫和监控探针会混进「独立访客」，数字虚高且无法事后剔除。这是云版与 CE 在「数据干净度」上的实际差距，选型时按流量构成掂量——技术受众的站点爬虫占比高，差得不小。
+
+更新节奏用 release 日期说话：v3.1.0（2025-11-13）→ v3.2.0（2026-01-26）→ v3.2.1（2026-05-15），大约一季度一个版本。云版与 CE 的功能差距参考 §8 对比表。
+
+## 9. 自托管 CE：v3.2.1 官方流程
+
+先说硬件底线（CE README 原文要求）：Docker 与 Docker Compose；CPU 支持 **SSE4.2 或 NEON** 指令集（ClickHouse 的硬要求）；**内存至少 2 GB** 起步。
+
+官方路径是跑**预构建镜像**，不自己 build 源码（CE README 全流程直译如下）：
+
+```bash
+# 1. 克隆仓库——注意 -b 钉住版本分支
+git clone -b v3.2.1 --single-branch https://github.com/plausible/community-edition plausible-ce
+cd plausible-ce
+
+# 2. 建环境文件，只有两项必填
+touch .env
+echo "BASE_URL=https://plausible.example.com" >> .env   # 改成实际域名，DNS 指向本机
+echo "SECRET_KEY_BASE=$(openssl rand -base64 48)" >> .env
+
+# 3. 要直接对外提供 80/443 并自动签发 Let's Encrypt 证书时，加 override
+echo "HTTP_PORT=80" >> .env
+echo "HTTPS_PORT=443" >> .env
+cat > compose.override.yml << EOF
+services:
+    plausible:
+        ports:
+            - 80:80
+            - 443:443
+EOF
+
+# 4. 启动
+docker compose up -d
+
+# 5. 浏览器打开 $BASE_URL，在网页里创建第一个用户
+```
+
+三个和旧教程完全不同的关键点：
+
+- **没有 `create_user` 命令了**。建库和迁移由容器启动命令自动完成（`compose.yml` 里 `plausible` 服务的 command 是 `db createdb && db migrate && run`），首个账号直接在网页上注册。想关掉公开注册，先注册好管理员，再启用 `DISABLE_REGISTRATION` 变量。
+- **不用手写数据库连接**。`DATABASE_URL`/`CLICKHOUSE_DATABASE_URL` 都有 compose 内部默认值，除非你外接数据库。
+- **本地试跑时设 `BASE_URL=http://localhost:8000` 就够**，端口映射照 README 的 TIP 改成 `- 8000:80`，不必碰 TLS。
+
+栈内三个服务（`compose.yml` 原文）：`plausible`（镜像 `ghcr.io/plausible/community-edition:v3.2.1`）、`plausible_db`（postgres:16-alpine）、`plausible_events_db`（clickhouse-server:24.12-alpine），数据分别落在 `plausible-data`、`db-data`、`event-data` 三个卷里——备份就是备份这三个卷加 `.env`。
+
+可选配置都有 wiki 页背书：邮件 SMTP 一组变量的真实名字是 `SMTP_HOST_ADDR`/`SMTP_HOST_PORT`/`SMTP_USER_NAME`/`SMTP_USER_PWD`/`SMTP_HOST_SSL_ENABLED`（不是某些教程写的 `SMTP_HOST`/`SMTP_PORT`），另有 Postmark/Mailgun/SendGrid/mandrill 的 API Key 适配，见 [Configuration](https://github.com/plausible/community-edition/wiki/Configuration)；反代场景用 [Reverse-Proxy](https://github.com/plausible/community-edition/wiki/Reverse-Proxy) 页替代内置 TLS。
+
+升级按 [Upgrade wiki](https://github.com/plausible/community-edition/wiki/Upgrade)：
+
+```bash
+cd plausible-ce
+git pull origin v3.2.1    # 换成目标版本分支
+docker compose up -d
+```
+
+wiki 的两条告诫值得抄在这里：镜像 tag 按需钉住——`v3.2.1` 精确锁定，`v3.2` 跟随补丁更新；**安全修复不回补旧版本**，长周期不升级等于裸奔。跨大版本（如 v2 → v3）可能涉及数据迁移，先读 release notes。
+
+## 10. 常见故障排查
+
+**仪表盘没数据，按链路逐段查**：
+
+1. 脚本加载了吗——浏览器控制台看 `plausible.io/js/script.js` 是否 200，`data-domain` 是否与站点设置里的域名一字不差（协议、`www`、大小写都对得上）。
+2. 事件被拦了吗——被广告拦截器特征拦截是头号原因，改走[自建代理](https://plausible.io/docs/proxy/introduction)。
+3. 事件被丢了吗——对 Events API 的调用**永远返回 202**，成败要看响应头 `x-plausible-dropped`；加 `X-Debug-Request: true` 请求头能拿到 Plausible 认定的客户端 IP，多数「事件消失」都丢在这一步（UA 缺失或转发 IP 落在数据中心段）。
+
+**自托管栈起不来**：先 `docker compose ps` 看三个服务的健康状态，ClickHouse 首次启动有 1 分钟 healthcheck 宽限期（`compose.yml` 里 `start_period: 1m`）；内存不足 2 GB 时 ClickHouse 可能被 OOM kill，镜像里的 `low-resources.xml` 已经是压过的配置，再低就得加内存了。
+
+**GSC 集成不出关键词**：先等过 24–36 小时延迟窗口，再确认关键词至少有一次点击——这是官方写明的两条门槛，不是故障。
+
+**想清空某个站点的数据**：站点设置里删除站点即删除其全部历史数据；CE 环境还可以直接操作 `plausible_events_db` 库，但先备份再动手。
+
+## 11. 采用顺序与边界
+
+按场景给顺序，不按功能清单：
+
+1. **个人博客、中小站点，要合规省事**——云托管 Starter（$9/月档）直接上，当天能用，合规边界由官方背书。
+2. **数据不能出镜/出境，或流量大到云版不划算**——CE 自托管，按 §9 流程走；预算 2 GB 内存和一季度一次的升级纪律，接受基础级 Bot 过滤。
+3. **要原始数据做自己的报表**——只有 CE 给你 ClickHouse 的钥匙；云版最多到 CSV 和 Stats API。
+4. **需要用户级画像、跨设备归因、再营销**——别用 Plausible，这不是它缺功能，是它拒绝做的产品决策；这类需求看产品分析工具（PostHog、Mixpanel 这类），代价是重新把个人数据扛回合规流程里。
+5. **CE 的支持预期**——README 原话：CE 是社区支持项目，**官方不保证为自托管问题提供支持**，求助走 [discussions 的 Self-hosted Support 分区](https://github.com/plausible/analytics/discussions/categories/self-hosted-support)。把它当「免费但自己负责」的选项来预算人力。
+
+最后回到开头那句判断。Plausible 把「不存个人数据」从一个需要法务审批的承诺，变成了数据库 schema 里查无此字段的事实——这是它对网站分析这个品类真正的重构。反过来说，选它就是接受聚合统计的天花板。想清楚你要的是「流量仪表」还是「用户显微镜」，选型不会纠结超过十分钟。
+
+---
+
+*本文核对记录：GitHub API（仓库/语言/release，2026-09-29）、`community-edition` v3.2.1 README 与 `compose.yml`、`analytics` master 分支 `config/runtime.exs` 与 `lib/plausible/clickhouse_event_v2.ex`、plausible.io 首页与 docs 各页（events-api/script-extensions/top-referrers/goal-conversions/funnel-analysis/google-search-console-integration/export-stats/stats-api/proxy/self-hosting），全部链接 2026-09-29 验活 200。*

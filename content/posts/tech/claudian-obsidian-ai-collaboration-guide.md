@@ -1,598 +1,168 @@
 ---
-title: "Claudian：在Obsidian笔记库中嵌入Claude Code的AI协作插件"
+title: "Claudian：把 Claude Code、Codex 等编码 Agent 嵌入 Obsidian 笔记库"
 date: "2026-04-09T20:40:00+08:00"
+lastmod: "2026-09-29T00:00:00+08:00"
 slug: "claudian-obsidian-ai-collaboration-guide"
 github_repo: "YishenTu/claudian"
 source_key: "gh:YishenTu/claudian"
-description: "Claudian是首个将Claude Code嵌入Obsidian笔记库的插件，让笔记成为AI的工作目录。本文深入解析其核心功能、内联编辑、Skills系统、MCP服务器集成，以及在知识管理中的应用。"
+description: "Claudian 是一个把编码 Agent（Claude Code、Codex CLI、Grok Build、OpenCode、Pi）嵌入 Obsidian 笔记库的插件，笔记库即 Agent 的工作目录。本文按 2026-09-29 的仓库状态拆解它的交互机制、MCP 演进、隐私边界与维护模式。"
 draft: false
 categories: ["技术笔记"]
 tags: ["Obsidian", "Claude Code", "知识管理", "MCP", "第二大脑"]
 ---
 
-# Claudian：在 Obsidian 笔记库中嵌入 Claude Code 的 AI 协作插件
+# Claudian：把 Claude Code、Codex 等编码 Agent 嵌入 Obsidian 笔记库
 
-## 学习目标
+大多数 Obsidian AI 插件止步于"问答 + 生成文字"，笔记库对模型来说只是一段被粘贴进上下文的文本。Claudian 换了一条路：它把现成的编码 Agent（Claude Code、Codex CLI、Grok Build、OpenCode、Pi）直接嵌进 Obsidian，让笔记库成为 Agent 的工作目录——读文件、写文件、搜索、跑 shell 命令、多步工作流，开箱即用。模型对笔记的修改直接落在 vault 的文件系统里，你能用 Obsidian 本身的版本管理去审查它。
 
-阅读本文后，你将能够：
+这个定位带来的分工很清晰：Claudian 只做界面、会话管理和 Agent 适配，不实现任何模型逻辑；推理、工具调用、审批这些事全部交给底层的 Agent CLI 或 SDK。理解了这个分工，就理解了它所有的功能形态，也理解了它的边界——底层 CLI 跑不了的环境（比如移动端），它就无能为力；模型对笔记的每一处修改都直接落在 vault 的文件里，审查和回滚走你已有的文件级工具（Git、备份、Obsidian 的文件恢复快照都行）。
 
-- 理解 Claudian 的核心定位和技术架构
-- 掌握其主要功能：内联编辑、Slash Commands、@提及系统、Plan Mode
-- 了解 MCP 服务器集成和配置方式
-- 完成 Claudian 的安装和基本配置
-- 判断 Claudian 是否适合你的知识管理工作流
+> **项目地址**：[github.com/YishenTu/claudian](https://github.com/YishenTu/claudian)（MIT 许可证）
+> **安装入口**：Obsidian 社区插件市场搜索 "Claudian"（插件 id 为 `realclaudian`）
+> **数据口径**：本文数据按 2026-09-29 的仓库状态与 GitHub API 读数核实
 
-## 目录
-
-- [项目概述](#项目概述)
-- [核心功能深度解析](#核心功能深度解析)
-- [MCP 服务器集成](#mcp-服务器集成)
-- [多会话与对话管理](#多会话与对话管理)
-- [安装与配置](#安装与配置)
-- [架构解析](#架构解析)
-- [应用场景](#应用场景)
-- [隐私与安全](#隐私与安全)
-- [故障排除](#故障排除)
-- [常见问题](#常见问题)
-- [自测题](#自测题)
-- [进阶路径](#进阶路径)
-
-## §1 项目概述
-
-### 1.1 核心定位
-
-**Claudian**是首个将 AI 编程助手（Claude Code、Codex）嵌入 Obsidian 笔记库的插件，让你的笔记库成为 AI 的**工作目录**。
-
-> "An Obsidian plugin that embeds AI coding agents in your vault. Your vault becomes the agent's working directory — file read/write, search, bash, and multi-step workflows all work out of the box."
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│  Claudian 做了什么：                                       │
-├─────────────────────────────────────────────────────────────┤
-│                                                                │
-│  传统笔记系统：                                                │
-│  笔记 → 静态文字 → 无法与AI交互                                   │
-│                                                                │
-│  Claudian模式：                                               │
-│  笔记库 ←→ AI工作目录 ←→ 动态协作                                 │
-│                                                                │
-│  变化：                                                       │
-│  笔记从"记录"变成"工作空间"                                      │
-│  AI可以读取、编辑、搜索、运行命令                                   │
-│                                                                │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### 1.2 与传统笔记 AI 的对比
-
-| 维度 | 传统笔记 AI | Claudian |
-|------|------------|---------|
-| **交互方式** | 问答式 | 对话+操作双轨 |
-| **执行能力** | 仅生成文字 | 读写文件、搜索、bash |
-| **上下文** | 单次对话 | 持久化会话 |
-| **工具调用** | 无 | MCP/内置工具 |
-| **多 Agent** | 无 | 多 Tab+子 Agent |
-
-### 1.3 项目统计
+## 项目数据（2026-09-29）
 
 | 指标 | 数值 |
 |------|------|
-| **Stars** | 6.5k |
-| **Forks** | 383 |
-| **最新版本** | 2.0.1 (2026-04-06) |
-| **贡献者** | 15 |
-| **语言** | TypeScript 97.3% |
-| **许可证** | MIT |
+| Stars / Forks | 15,536 / 1,049 |
+| 社区市场下载量 | 约 225.7 万 |
+| 最新版本 | 2.3.9（2026-09-29） |
+| 2.x 系列发布数 | 69 个（2026-04-06 起，不足 6 个月） |
+| 语言构成 | TypeScript 96.9% |
+| 运行要求 | Obsidian v1.13.0+，仅桌面端（macOS/Linux/Windows） |
 
-## §2 核心功能深度解析
+这是一个创建于 2025-12-05 的年轻项目，不到一年涨到 1.5 万 Stars。发布节奏是它的显著特征：2.x 系列平均每周出两三个版本，9 月一个月就发了 10 个。喜欢快节奏迭代的人会如鱼得水，把它当稳定基础设施用的人则需要知道这个节奏的另一面——下文细说。
 
-### 2.1 内联编辑（Inline Edit）
+## 一、系统地图：两层结构，五个 Agent 入口
 
-选中文字+快捷键，直接在笔记中进行 AI 编辑，带词级别 diff 预览。
+Claudian 的代码分两层，理解这两层就够了：
 
-```markdown
-## 使用流程
+| 层 | 位置 | 职责 |
+|------|------|------|
+| 功能层 | `src/features/` | 侧边栏聊天（多 Tab）、内联编辑、设置面板——纯 Obsidian UI |
+| 适配层 | `src/providers/` | 把各 Agent 的接入协议翻译成统一的运行时接口 |
 
-1. 选中笔记中的文字（或在光标位置）
-2. 按快捷键触发
-3. AI编辑区域出现，实时预览diff
-4. 确认后替换原文
-```
+适配层现在是五个入口，各走各的协议：
 
-**Diff 预览示例**：
+| Agent | 接入方式（源码 `src/providers/`） |
+|-------|-----------------------------------|
+| Claude Code | Claude Agent SDK 适配器 |
+| Codex CLI | app-server 适配器，JSON-RPC 传输，JSONL 历史 |
+| Grok Build | ACP（Agent Client Protocol）适配器 |
+| OpenCode | 独立适配器（已支持 OpenCode v2；v1 支持将于 2026-10-30 停止） |
+| Pi | RPC 适配器，含模型发现与 JSONL 历史 |
 
-```diff
-- 传统的机器学习需要大量标注数据
-+ 传统的机器学习需要大量标注数据，
-+ 而迁移学习可以复用预训练模型的知识，
-+ 大幅减少目标任务所需的标注样本数量。
-```
+五个入口共用 `src/core/` 的与 provider 无关的执行契约和 `src/providers/acp/` 的共享 ACP 传输层。这条多 provider 架构是 2.0.0（2026-04-06）定下的，当时只有 Claude 和 Codex 两个，其余三个是之后陆续加入的。
 
-### 2.2 Slash Commands & Skills
+选哪条入口，取决于你已有的账号和模型：有 Claude 订阅，接 Claude Code 最省事；用其他模型（Kimi、GLM、DeepSeek 等兼容 OpenRouter 的提供商），Claude Code 和 OpenCode 都能通过配置切换底层模型端点；想用 OpenAI 系，走 Codex。
 
-输入`/`或`$`触发可复用的提示词模板。
+## 二、核心机制：对话之外的四条交互线
 
-```markdown
-## 触发方式
+聊天本身和用惯的编码 Agent 没有区别，真正为笔记库设计的是下面四条机制。
 
-/  → 内置Skills（如/write、/edit、/debug）
-$  → 用户自定义Skills
+### 内联编辑
 
-## 内置Skills
+选中笔记中的一段文字（或把光标放在插入点），按快捷键唤起编辑框，Agent 的修改以词级别 diff 预览呈现，确认后才落笔。这是全文里最"笔记应用"的功能：改一句话不用把整个文件丢给 Agent，也不用担心它顺手改了别处。
 
-| Skill | 用途 |
-|-------|------|
-| /write | 写作助手 |
-| /edit | 编辑修改 |
-| /debug | 代码调试 |
-| /explain | 解释代码 |
-| /summarize | 总结内容 |
+### Slash 命令与 Skills
 
-## 自定义Skills
+输入 `/` 或 `$` 会呼出两类东西，源码里分得很清楚：
 
-用户可以在 vault 级别或笔记级别定义自己的Skills。
-```
+- **内置系统命令**：`/clear`（别名 `/new`）、`/resume`、`/fork`、`/fast`、`/side`（别名 `/btw`）。源码注释特意说明这些是"执行动作的系统命令，不是提示词展开"。
+- **Skills 与提示词模板**：来自用户级和 vault 级两个作用域。vault 内的目录约定是 `.agents/skills/` 或 `.claude/skills/`，每个 Skill 一个目录、一个 `SKILL.md` 文件，设置面板里有专门的管理页。
 
-### 2.3 @提及系统
-
-`@mention`任何内容，让 AI 处理。
+注意 Skills 不是插件预置的——README 原话是 "reusable prompt templates or Skills from user- and vault-level scopes"，清单来自你自己的目录。想定制 Agent 行为，写 SKILL.md 放进 vault 即可，这和 Claude Code 的 Skills 体系是同一套约定。
 
-```markdown
-## @提及类型
+### @提及
 
-@文件 → 让AI读取并处理指定文件
-  示例: @project/proposal.md
+输入 `@` 引用 vault 内的文件和文件夹，路径解析带缓存（源码在 `src/shared/mention/`）。这是把上下文精确交给 Agent 的主要手段——与其描述"我上周写的那篇关于检索的笔记"，不如直接 @ 它。
 
-@子Agent → 委托给专门的AI处理
-  示例: @researcher 分析这个主题
+### Side Chat
 
-@MCP服务器 → 调用外部工具
-  示例: @filesystem 搜索包含关键词的文件
+`/side` 或 `/btw` 从最近一次回复发起一个独立、临时的旁路对话，可以追问、可以用工具，但主对话的状态不受影响。处理"顺手查个东西但不想污染当前任务上下文"的场景，这个设计比开新 Tab 轻。
 
-@外部目录 → 处理非笔记库的文件
-  示例: @~/projects/code 分析代码库
-```
+### 会话管理
 
-### 2.4 Plan Mode
+单栏模式下多 Tab 并存；2.1.0（2026-08-05）加入双栏模式后，聊天面板旁边有一个持久的会话管理器。会话支持历史恢复（resume）、整体分叉（fork）和上下文压缩（compact）。存储位置按 provider 各自的约定落盘：Claudian 自己的设置和会话元数据在 `vault/.claudian/`，Claude provider 的会话文件在 `vault/.claude/`，转写历史在 `~/.claude/projects/`（Claude）与 `~/.codex/sessions/`（Codex）。
 
-AI 先探索、制定计划，人工批准后再执行。
+> 2.0.x 时期的 README 还把 Plan Mode（`Shift+Tab` 切换）和 Instruction Mode（`#` 前缀）列为独立功能。现行 README 的功能列表已不再单列这两项——前者本质是底层 Agent（如 Claude Code 的 EnterPlanMode/ExitPlanMode 工具）自带的能力，Claudian 作为前端透传；后者并入了输入框的指令细化。
 
-```markdown
-## Plan Mode 工作流
+## 三、任务流案例：整理一场散落的讨论
 
-1. 用户: "帮我重构这个项目"
-2. AI (Plan Mode): 
-   - 探索代码库结构
-   - 分析依赖关系
-   - 制定重构计划
-   - 展示计划待批准
-3. 用户审查计划
-4. 用户: "批准"
-5. AI (执行 Mode): 
-   - 按计划执行重构
-   - 逐步确认
-```
+把机制串起来看一次真实使用。假设 vault 里散着三篇会议记录，你要整理成一份项目周报：
 
-**快捷键**：`Shift+Tab` 切换 Plan Mode
+1. 在侧边栏聊天里 `@` 三篇记录，让 Agent 通读并起草周报。Agent 通过文件工具直接读 vault 文件，你不需要复制粘贴任何内容。
+2. 初稿写进一篇新笔记。你对其中一段不满意，选中那段文字触发内联编辑，只改这一段，diff 确认后落笔。
+3. 想试另一种组织结构，又不想丢掉当前对话的上下文，`/fork` 把整个会话分叉出去试。
+4. 中途冒出一个无关问题，`/side` 开旁路对话问掉，主线不动。
 
-### 2.5 Instruction Mode
+这条链路里每一步都是既有机制的组合，没有一步需要离开 Obsidian。反过来说，它的能力上限也就是"文件读写 + 搜索 + shell + Agent 自带工具"——需要外部数据的地方走 MCP（下一节），除此之外没有别的魔法。
 
-从聊天输入精细化自定义指令。
-
-```markdown
-## 使用方式
-
-# 你想要的具体要求
-# 示例：
-# 用TypeScript重写
-# 添加完整的类型注解
-# 保持原有的函数签名
-```
-
-## §3 MCP 服务器集成
-
-### 3.1 支持的协议
-
-| 协议 | Claudian 支持 | 说明 |
-|------|-------------|------|
-| **stdio** | ✅ | 标准输入输出 |
-| **SSE** | ✅ | Server-Sent Events |
-| **HTTP** | ✅ | HTTP 请求 |
-
-### 3.2 MCP 配置
-
-```json
-// Claude的MCP在app内管理
-// Codex使用CLI管理的MCP配置
+## 四、MCP 的演进：从应用内管理到 CLI 托管
 
-// settings中配置示例
-{
-  "mcp": {
-    "servers": [
-      {
-        "name": "filesystem",
-        "command": "npx",
-        "args": ["-y", "@modelcontextprotocol/server-filesystem"],
-        "cwd": "/path/to/vault"
-      },
-      {
-        "name": "github",
-        "command": "npx", 
-        "args": ["-y", "@modelcontextprotocol/server-github"]
-      }
-    ]
-  }
-}
-```
+这一节值得单独写，因为它牵涉一次架构转向，老用户容易踩坑。
 
-### 3.3 内置工具
-
-| 工具 | 功能 |
-|------|------|
-| **文件读写** | 读取、创建、编辑笔记 |
-| **搜索** | 全局搜索内容 |
-| **Bash** | 执行 Shell 命令 |
-| **Web 搜索** | 搜索互联网 |
-| **MCP 工具** | 第三方扩展 |
+2.0.x 时期，Claude provider 的 vault 内 MCP 由 Claudian 在应用内管理，Codex 走自己 CLI 管的配置——两套并存。2.3.0（2026-09-18）起方向反转：MCP 设置区从 Claudian 里整体移除，所有 provider 统一改用各自 Agent 的原生 CLI 配置（比如 Claude Code 的 `claude mcp add`）；旧版留在 `.claude/mcp.json` 的遗留配置有专门的清理代码负责删除。
 
-## §4 多会话与对话管理
+现行口径下，想给 Claude Code 接外部工具，去配 Claude Code 自己的 MCP 配置；换一个 provider，就配那个 provider 的 CLI。Claudian 不再做中间层。这个取舍和它"只做界面与适配"的定位一致——MCP 配置本来就是 CLI 的领地，做一层 GUI 反而要维护两套真相。
 
-### 4.1 多 Tab 支持
-
-```markdown
-## 多会话功能
+## 五、安装与配置
 
-- 新建Tab: 创建独立的AI对话
-- 切换Tab: 快速在不同任务间切换
-- 合并Tab: 将多个对话合并
+### 安装
 
-## 对话操作
+首选社区市场：Settings → Community plugins → Browse，搜 "Claudian" 安装启用。也可以从[社区插件页面](https://community.obsidian.md/plugins/realclaudian)直达。开发者可以从源码构建——把仓库克隆进 vault 的 `.obsidian/plugins/` 目录，`npm install && npm run build` 后启用。
 
-| 操作 | 快捷键/方式 |
-|------|-------------|
-| 新建 | 工具栏+按钮 |
-| 分叉 | 从当前对话创建分支 |
-| 恢复 | 重新加载历史会话 |
-| 压缩 | 精简上下文 |
-```
+前置条件只有两条：至少装有一个上表中的 Agent CLI，以及 Obsidian v1.13.0+ 的桌面端。认证不需要在 Claudian 里填 API key——它跟随底层 CLI 的认证方式（Claude 订阅登录或 API 提供商）。设置里的 Environment 面板可以按"共享"或"单 provider"两个作用域注入环境变量，共享作用域有白名单（PATH、代理、CA 证书等），API 类的变量配在对应 provider 名下。
 
-### 4.2 会话持久化
+### CLI 找不到怎么办
 
-```markdown
-## 存储位置
-
-vault/.claudian/         # Claudian设置和会话元数据
-vault/.claude/           # Claude提供商的会话文件
-~/.claude/projects/       # Claude转录历史 (macOS/Linux)
-~/.codex/sessions/       # Codex转录历史
-
-## 数据保护
-
-- 本地存储，不上传云端
-- 加密敏感信息
-- 可配置保留策略
-```
-
-## §5 安装与配置
-
-### 5.1 系统要求
-
-| 要求 | 版本 |
-|------|------|
-| **Obsidian** | v1.4.5+ |
-| **平台** | Desktop only (macOS/Linux/Windows) |
-| **Claude CLI** | Native install (recommended) |
-| **Codex CLI** | Optional |
-
-### 5.2 安装方式
-
-**方式 1: GitHub Release（推荐）**
-
-```bash
-# 1. 下载最新release
-# 下载 main.js, manifest.json, styles.css
-
-# 2. 创建插件目录
-mkdir -p /path/to/vault/.obsidian/plugins/claudian
-
-# 3. 复制文件到目录
-
-# 4. 启用插件
-# Settings → Community plugins → Enable "Claudian"
-```
-
-**方式 2: BRAT 自动更新**
-
-```markdown
-# 1. 安装BRAT插件
-Settings → Community plugins → BRAT
-
-# 2. 添加Claudian
-Settings → BRAT → Add Beta plugin
-URL: https://github.com/YishenTu/claudian
-
-# 3. 自动更新
-# BRAT会自动检查更新
-```
-
-**方式 3: 源码开发**
-
-```bash
-# 克隆到插件目录
-cd /path/to/vault/.obsidian/plugins
-git clone https://github.com/YishenTu/claudian.git
-cd claudian
-
-# 安装依赖并构建
-npm install
-npm run build
-
-# 启用插件
-Settings → Community plugins → Enable "Claudian"
-```
-
-### 5.3 Claude CLI 配置
-
-```bash
-# 找到Claude CLI路径
-# macOS/Linux
-which claude
-# 示例: /Users/you/.volta/bin/claude
-
-# Windows
-where.exe claude
-# 示例: C:\Users\you\AppData\Local\Claude\claude.exe
-
-# 如果遇到"CLI not found"
-# 设置 → Advanced → Claude CLI path
-```
-
-## §6 架构解析
-
-### 6.1 系统架构
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                 Claudian 系统架构                                    │
-├─────────────────────────────────────────────────────────────┤
-│                                                                │
-│  ┌─────────────────────────────────────────────────────┐   │
-│  │                    Obsidian 主界面                           │   │
-│  │            侧边栏聊天 | 内联编辑 | 设置面板                  │   │
-│  └──────────────────────────┬────────────────────────────┘   │
-│                             │                                   │
-│                             ↓                                   │
-│  ┌─────────────────────────────────────────────────────┐   │
-│  │                    src/core (核心层)                        │   │
-│  │  ┌──────────┐  ┌──────────┐  ┌──────────┐             │   │
-│  │  │ Runtime  │  │Registry  │  │Security │             │   │
-│  │  │ 运行时   │  │ 注册表   │  │ 审批工具 │             │   │
-│  │  └──────────┘  └──────────┘  └──────────┘             │   │
-│  └──────────────────────────┬────────────────────────────┘   │
-│                             │                                   │
-│         ┌───────────────────┼───────────────────┐           │
-│         ↓                   ↓                       ↓           │
-│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐   │
-│  │   Claude    │    │   Codex     │    │  Features   │   │
-│  │   Provider  │    │   Provider  │    │    功能层    │   │
-│  │  Claude SDK │    │  JSON-RPC   │    │  Chat/Tabs  │   │
-│  │  MCP插件    │    │  HTTP传输   │    │Inline/Edit  │   │
-│  └─────────────┘    └─────────────┘    └─────────────┘   │
-│                                                                │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### 6.2 目录结构
-
-```typescript
-src/
-├── main.ts                 // 插件入口点
-├── app/                   // 共享默认值和插件级存储
-├── core/                  // Provider-neutral运行时
-│   ├── runtime/           // ChatRuntime接口和审批类型
-│   ├── providers/        // Provider注册和工作区服务
-│   ├── security/          // 审批工具
-│   └── ...                // commands, mcp, prompt, storage, tools, types
-├── providers/
-│   ├── claude/            // Claude SDK适配器
-│   │   ├── runtime/       // ChatRuntime实现
-│   │   ├── prompt/       // 提示词编码
-│   │   ├── storage/      // 会话存储
-│   │   └── mcp/         // MCP插件
-│   └── codex/            // Codex应用服务器适配器
-│       ├── runtime/      // JSON-RPC传输
-│       └── history/      // JSONL历史
-├── features/
-│   ├── chat/            // 侧边栏聊天
-│   │   ├── tabs/        // 多Tab管理
-│   │   ├── controllers/ // 控制器
-│   │   └── renderers/   // 渲染器
-│   ├── inline-edit/      // 内联编辑
-│   │   ├── modal/       // 编辑弹窗
-│   │   └── diff/        // Diff预览
-│   └── settings/        // 设置面板
-├── shared/                // 可复用UI组件
-├── i18n/                 // 国际化 (10种语言)
-└── utils/                // 横切工具
-```
-
-## §7 应用场景
-
-### 7.1 知识管理
-
-| 场景 | 说明 |
-|------|------|
-| **卡片笔记** | 扩展、完善卡片内容 |
-| **知识图谱** | 发现笔记间关联 |
-| **文献管理** | 总结论文要点 |
-| **概念解释** | 用上下文解释概念 |
-
-### 7.2 写作助手
-
-| 场景 | 说明 |
-|------|------|
-| **技术文档** | 生成完整文档 |
-| **博客文章** | 润色、扩展内容 |
-| **研究报告** | 整理思路 |
-| **邮件撰写** | 草拟邮件 |
-
-### 7.3 编程辅助
-
-| 场景 | 说明 |
-|------|------|
-| **代码注释** | 生成文档注释 |
-| **Bug 修复** | 分析并修复 |
-| **代码重构** | Plan Mode 确保安全重构 |
-| **代码审查** | 审查代码质量 |
-
-## §8 隐私与安全
-
-### 8.1 数据流
-
-```markdown
-## 数据流向
-
-发送至API:
-- 你的输入内容
-- 附加的文件
-- 图片
-- 工具调用输出
-- 默认: Anthropic (Claude) 或 OpenAI (Codex)
-- 可配置
-
-本地存储:
-- Claudian设置 → vault/.claudian/
-- Claude会话 → vault/.claude/
-- 转录历史 → ~/.claude/projects/ (Claude)
-- 转录历史 → ~/.codex/sessions/ (Codex)
-
-无遥测:
-- 不追踪任何分析数据
-```
-
-### 8.2 安全建议
-
-```markdown
-## 安全配置
-
-1. 敏感笔记 → 使用Obsidian加密
-2. API密钥 → 存储在环境变量
-3. 外部命令 → Plan Mode审批后再执行
-4. 文件操作 → 定期备份笔记库
-```
-
-## 故障排除
-
-### 9.1 常见问题
-
-| 问题 | 解决方案 |
-|------|----------|
-| **Claude CLI not found** | 设置 → Advanced → Claude CLI path |
-| **npm/node 路径不同** | 设置 → Environment → 添加 PATH |
-| **API 超时** | 检查网络连接 |
-| **会话丢失** | 检查 vault/.claude/目录 |
-
-### 9.2 平台路径示例
-
-```markdown
-## macOS/Linux
-which claude
-# → /Users/you/.volta/bin/claude
-
-## Windows (native)
-where.exe claude
-# → C:\Users\you\AppData\Local\Claude\claude.exe
-
-## Windows (npm)
-npm root -g
-# → {root}\@anthropic-ai\claude-code\cli.js
-```
-
----
-
-## 常见问题
-
-### Claudian 和普通 AI 笔记插件有什么区别？
-
-普通 AI 笔记插件通常是问答式，只能生成文字。Claudian 将 Claude Code 嵌入笔记库，让 AI 可以读写文件、搜索、执行 bash 命令，是一个真正的工作助手。
-
-### 使用 Claudian 需要付费吗？
-
-Claudian 插件本身是开源的（MIT 许可证），但你需要有自己的 Claude API Key（或 OpenAI API Key 如果使用 Codex）。API 调用会产生费用。
-
-### Claudian 会泄露我的笔记内容吗？
-
-不会。Claudian 将你的 API Key 存储在本地环境变量中，笔记内容通过 API 发送到 Anthropic 或 OpenAI（取决于你的配置）。会话数据存储在本地，无遥测。
-
-### Plan Mode 是什么？为什么需要它？
-
-Plan Mode 让 AI 先探索、制定计划，人工批准后再执行。这避免了 AI 直接执行可能有风险的操作（如批量修改文件、执行 bash 命令）。
-
-### Claudian 支持移动端吗？
-
-目前不支持。Claudian 需要桌面端的 Claude CLI 或 Codex CLI，只能在 macOS/Linux/Windows 桌面端使用。
-
----
-
-## 自测题
-
-1. Claudian 的核心定位是什么？它和传统笔记 AI 有什么区别？
-2. Claudian 的哪些功能让它超越了普通的 AI 问答？
-3. 什么是 Plan Mode？它解决了什么问题？
-4. 如何配置 Claudian 的 MCP 服务器？请举例说明。
-5. 如果你要在团队中推广 Claudian，你会怎么设计培训和采用路径？
-
-<details>
-<summary>参考答案</summary>
-
-1. Claudian 将 Claude Code 嵌入 Obsidian 笔记库，让笔记库成为 AI 的工作目录。区别在于：传统笔记 AI 是问答式、仅生成文字；Claudian 可以读写文件、搜索、执行 bash、有持久化会话。
-2. 内联编辑（带 diff 预览）、Slash Commands & Skills、@提及系统、Plan Mode、Instruction Mode、多 Tab 会话、MCP 服务器集成。
-3. Plan Mode 让 AI 先制定计划，人工批准后再执行。解决了 AI 直接执行可能有风险的操作的问题。
-4. 通过配置 `.mcp.json` 或使用 Claudian 的设置面板，添加 MCP 服务器（如 filesystem、github）。配置包括服务器名称、命令、参数、工作目录。
-5. 先给团队演示核心功能（内联编辑、@提及）、提供常用 Skills 模板、制定安全规范（Plan Mode 使用场景、敏感笔记处理）、收集反馈迭代。
-
-</details>
-
----
-
-## 进阶路径
-
-- **初学者**：先安装 Claudian，尝试内联编辑和 Slash Commands，感受 AI 在笔记中的基本协作。
-- **进阶使用者**：配置 MCP 服务器，让 Claudian 可以访问文件系统、GitHub 等外部工具。尝试 @提及系统，让 AI 处理复杂任务。
-- **高级用户**：编写自己的 Skills，定制 Claudian 的行为。使用 Plan Mode 处理需要多步骤执行的任务。
-- **开发者**：阅读 Claudian 源码，了解其架构设计。参考其实现思路，为自己的工具开发类似的 AI 集成。
-
----
-
----
-
-## §10 总结
-
-### 10.1 核心能力
-
-- Claude Code 嵌入笔记库，笔记即工作目录
-- 内置工具 + MCP 扩展，支持文件读写、搜索、bash
-- Plan Mode 人工审批后再执行
-- 多 Tab + 子 Agent，复杂任务多视角处理
-- 本地存储，无遥测
-
-### 10.2 适用人群
-
-| 人群 | 场景 |
-|------|------|
-| **知识工作者** | 笔记驱动知识管理 |
-| **程序员** | 文档与代码一体化 |
-| **研究者** | 论文阅读与笔记 |
-| **写作者** | AI 辅助写作 |
-
----
-
-**官方资源**：
-
-- GitHub：github.com/YishenTu/claudian
-- 最新版本：2.0.1 (2026-04-06)
-- 文档：内置于 Obsidian 设置面板
-
----
-
-文档版本：v1.0 | 写作日期：2026-04-09
+GUI 应用继承不到 shell 的 PATH，是这类插件最常见的问题。典型报错是 `spawn claude ENOENT`，用 nvm、fnm、volta 等 Node 版本管理器时尤其常见。README 给的排查顺序：
+
+1. 先把 CLI path 设置留空，让 Claudian 自动检测；
+2. 检测失败再手动填路径（Settings → Advanced → Claude Code CLI path），用 `which claude`（macOS/Linux）或 `where.exe claude`（Windows）找到可执行文件；
+3. 或者把 Node.js 的 bin 目录加进 Settings → Environment → Custom variables 的 PATH。
+
+Windows 用户注意两点：避免 `.cmd` 和 `.ps1` 包装脚本，原生安装填 `claude.exe`，npm 安装填 `cli-wrapper.cjs`（`cli.js` 只是旧版 npm 包的回退）；还要确认 `claude` 和 `node` 在同一环境里，路径不同时 GUI 应用会找不到 Node。
+
+## 六、隐私与数据边界
+
+README 的 Privacy 一节写得直接，值得照录要点：
+
+- **发给 API 的内容**：你的输入、附加文件、图片和工具调用输出。发往哪里取决于选的 provider——Anthropic（Claude）、OpenAI（Codex）、xAI（Grok），或 OpenCode/Pi 里配置的提供商。
+- **无遥测、无未请求的后台活动**：Claudian 不跑遥测信标；UI 轮询定时器只读本地 Obsidian/编辑器选区状态；网络活动限于显式的 provider 运行时工作、已配置的 MCP 端点和回答请求所需的 SDK/CLI 调用。
+- **本地落盘**：会话与设置都在本地（位置见第二节），不经过 Claudian 的服务器。
+
+要补的一句是：数据边界止步于 Claudian 本身。你接的底层模型服务（Anthropic、OpenAI 或第三方兼容端点）各有各的数据政策，那部分以各服务商的条款为准。
+
+## 七、版本节奏与维护模式
+
+| 版本 | 日期 | 关键变化 |
+|------|------|----------|
+| 2.0.0 | 2026-04-06 | 多 provider 架构，加入 Codex 运行时 |
+| 2.1.0 | 2026-08-05 | 双栏会话管理 |
+| 2.2.0 | 2026-08-21 | Collab 协作模式（现为独立插件 [claudian-collab](https://github.com/YishenTu/claudian-collab)） |
+| 2.3.0 | 2026-09-18 | 云协作与 Project Update、回复样式；移除 MCP 设置区 |
+| 2.3.9 | 2026-09-29 | 本文核实时的最新版 |
+
+两条维护层面的信息，选型时值得掂量。
+
+**单人维护，且边界划得很硬。** 作者在 CONTRIBUTING.md 里自述是唯一维护者，并明确写死一条政策：不接受新增 provider 的 PR。给的四条理由都很实际——合并后的每个集成都要自己长期维护；各 provider 必须保持一致的功能集和体验，历史上的部分集成很难追平；有些 CLI 能力不足（点名 Antigravity CLI 不暴露 ACP 或同类协议、Cursor CLI 不允许完全自定义 system prompt）；给每家模型厂商的 CLI 都做一遍集成不可持续，OpenCode 和 Pi 本身已支持多厂商。这不是不开放，是单人项目对维护成本的诚实定价。界面国际化（10 种语言）、Skills 管理这类外围改进的 PR 仍然欢迎。
+
+**商业化已经启动。** README 的赞助区有 Kimi（Moonshot AI）和贝壳（BEIKE/MOMA）两家，Kimi 的合作条款里注明 Claudian 不拿返佣。对用户来说，这意味着项目有持续投入的经费来源，也意味着 README 里有商业链接，阅读时自行分辨即可。
+
+## 八、采用建议：谁该现在用，谁该等等
+
+**适合现在就上的人**：vault 已经是主要工作区、同时重度使用编码 Agent 的人——Claudian 解决的正是"Agent 在终端里，笔记在 Obsidian 里"的割裂；想在笔记里跑多步工作流（整理、重构、批量修改）的知识工作者。五条 harness 里选一条自己已有账号的即可，成本几乎为零。
+
+**建议等等的人**：把它当关键业务基础设施的团队——每周数发的版本、单人维护、社区市场页面上"未经 Obsidian 官方人工审核"的标注（社区插件市场的自动收录说明），三件事放在一起，意味着你需要自己承担版本回滚和备份（vault 有 Git 管理的，压力小很多）。移动端用户不必尝试，`isDesktopOnly` 是硬前提。
+
+**不建议的场景**：只想在笔记里问答和生成文字——这类需求用更轻的 AI 插件更合适；指望 Claudian 替你管理 MCP 或模型路由——2.3.0 之后它明确不做这些，配置归各 CLI。
+
+一句话收束：Claudian 的价值不在"又一个 AI 插件"，而在它把成熟的编码 Agent 生态原封不动搬进了笔记库——你得到的是 Claude Code 等工具的全部能力，付出的是"信任一个快节奏的单人项目"的代价。这笔交易对个人知识工作者划算，对求稳的团队需要再评估。
+
+## 资料与口径说明
+
+- 仓库与源码：[github.com/YishenTu/claudian](https://github.com/YishenTu/claudian)（main 分支，2026-09-29 核实）；内置命令清单出自 `src/core/commands/builtInCommands.ts`，Skills 目录约定出自 `src/core/skills/AgentSkillRepository.ts`，provider 环境变量机制出自 `src/core/providers/providerEnvironment.ts`，MCP 遗留配置清理出自 `src/providers/claude/storage/LegacyMCPConfigCleanup.ts`。
+- 数据读数：Stars/Forks/贡献者/语言占比为 2026-09-29 GitHub API 读数；下载量 2,257,522 为同日 Obsidian 官方 community-plugin-stats 读数；版本时间线以 GitHub Releases 为准（共 83 个 release，其中 2.x 69 个）。
+- 功能与政策口径：以 README（main 分支）与 CONTRIBUTING.md 原文为准；2.0.1 时期的历史口径（应用内 MCP、Plan Mode 快捷键、Obsidian v1.4.5 最低版本）仅用于交代演进，不再是现行行为。

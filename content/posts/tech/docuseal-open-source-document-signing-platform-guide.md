@@ -1,608 +1,280 @@
 ---
-title: "DocuSeal：开源电子文档签署平台，DocuSign 替代方案"
+title: "DocuSeal 拆解：模板、提交、Webhook 三条主线，和一条写进许可证的署名条款"
 date: "2026-05-05T11:35:00+08:00"
+lastmod: "2026-09-30T00:00:00+08:00"
 slug: "docuseal-open-source-document-signing-platform-guide"
 github_repo: "docusealco/docuseal"
 source_key: "gh:docusealco/docuseal"
-description: "DocuSeal 是开源的电子文档签署和处理平台，提供 PDF 表单构建、数字签名、自动化邮件、API 和 Webhook 集成等功能，支持 Docker 一键部署。本文详解其功能特性、部署方式、API 集成与 Pro 版高级功能。"
+description: "对照 docusealco/docuseal 的 master 分支、GitHub Release 3.3.0 与官方 API 文档拆解 DocuSeal：Template、Submission、Submitter 三个资源如何组成签署流程，11 种 Webhook 事件与 X-Docuseal-Signature 验签怎么接，SQLite、PostgreSQL 与本地磁盘、S3 这些默认值从哪来，以及 AGPLv3 附加署名条款和 Pro 功能墙对自托管采用的实际影响。"
 draft: false
 categories: ["技术笔记"]
 tags: ["开源", "PDF", "文档处理", "Docker"]
 ---
 
-# DocuSeal：开源电子文档签署平台，DocuSign 替代方案
+# DocuSeal 拆解：模板、提交、Webhook 三条主线，和一条写进许可证的署名条款
 
-> **目标读者**：需要电子签名功能的企业、开发者、自托管爱好者
-> **核心问题**：如何在不依赖商业 SaaS 的前提下，实现专业级电子文档签署？
-> **预计时间**：约 20 分钟
-> **前置知识**：了解 Docker 基础、REST API、SMTP 配置
+> **目标读者**：正在给自己的产品或公司流程选电子签名方案的工程师——关心数据放在哪、API 能不能驱动全流程、许可证有什么实际约束。
+> **核心问题**：DocuSeal 用什么模型组织签署流程，自托管时默认值落在哪里，哪些能力开源版就有、哪些在 Pro 墙外。
+> **事实边界**：本文核对的是 `docusealco/docuseal` 的 `master` 分支（2026-09-30 浅克隆）、GitHub Release `3.3.0`（2026-09-28 发布）与官方 API 文档 [docuseal.com/docs](https://www.docuseal.com/docs)（2026-09-30 读取）。API 行为指到文档页，代码行为指到仓库内文件；仓库与文档之外的内容不写成事实。
 
----
+## 一句话判断
 
-## §1 学习目标
+DocuSeal 把电子签名拆成三个资源：**Template**（模板）定义"签什么"，**Submission**（提交）是一次具体的签署请求，**Submitter**（签署方）是请求里的每一方。Web 界面和 REST API 操作同一套模型，Webhook 把每一步状态变化推回业务系统。
 
-完成本文档后，你将能够：
+这个结构决定了它的取舍：自托管、API（应用程序接口）驱动、数据不出自己的服务器；代价写在许可证里——AGPLv3 加一条 Section 7(b) 附加条款，要求在交互界面保留 DocuSeal 署名。白标、SSO（单点登录）、批量发送、API 创建模板这些企业向能力则在 Pro 版清单里。
 
-- [ ] 理解 DocuSeal 的核心定位与解决的问题
-- [ ] 掌握 DocuSeal 的 12 种核心字段类型'
-- [ ] 熟练使用 Docker、Railway、Heroku 等平台部署 DocuSeal
-- [ ] 配置 SMTP、云存储和 REST API'
-- [ ] 基于 DocuSeal API 和 Webhook 实现自动化文档签署流程'
-- [ ] 判断何时需要升级到 Pro 版'
+## 项目坐标（2026-09-30 核对）
 
----
-
-## §2 本文目录
-
-- [项目概览](#§3-项目概览)
-- [核心功能详解](#§4-核心功能详解)
-- [部署方式](#§5-部署方式)
-- [API 与 Webhook 集成](#§6-api-与-webhook-集成)
-- [Pro 版功能](#§7-pro-版功能)
-- [与 DocuSign 对比](#§8-与-docusign-对比)
-- [适用场景](#§9-适用场景)
-- [常见问题排查](#§10-常见问题排查)
-- [实践建议](#§11-实践建议)
-- [自测问题](#§12-自测问题)
-- [进阶路径](#§13-进阶路径)
-- [总结速查](#§14-总结速查)
-
----
-
-## §3 项目概览#
-
-### 3.1 什么是 DocuSeal？
-
-[DocuSeal](https://github.com/docusealco/docuseal) 是一个**开源电子文档签署和处理平台**，可作为 DocuSign 的替代方案。用户可以通过直观的 Web 界面创建 PDF 表单、收集填写内容、数字签名，并在任何设备上完成签署流程。
-
-**官方描述**：
-
-> The #1 Open Source DocuSign Alternative. Create, send, and sign PDF documents online. Self-host or use our cloud.
-
-### 3.2 核心数据#
-
-| 指标 | 数值 |
+| 字段 | 值 |
 |------|------|
-| **Stars** | **535** |
-| **Forks** | 89 |
-| **Watchers** | 12 |
-| **贡献者** | 15 人 |
-| **最新版本** | v1.2.3 (2026-05-01) |
-| **许可证** | AGPLv3 + Section 7(b) Additional Terms |
-| **语言** | Ruby 94.2%, HTML 3.1%, JavaScript 2.7% |
+| 仓库 | [docusealco/docuseal](https://github.com/docusealco/docuseal)，默认分支 `master`，建仓 2023-07-03，最近推送 2026-09-28 |
+| 社区数据 | Stars 18,633 · Forks 1,878 · Watchers 71 · 贡献者 6 人（主要维护者 omohokcoj，2,473 次提交） |
+| 最新版本 | [3.3.0](https://github.com/docusealco/docuseal/releases)（2026-09-28），此前 3.2.6（2026-09-21） |
+| 许可证 | AGPLv3 + [Section 7(b) 附加条款](https://github.com/docusealco/docuseal/blob/master/LICENSE_ADDITIONAL_TERMS) |
+| 语言构成 | Ruby 38.1% · Vue 28.3% · HTML 20.8% · JavaScript 12.5%（GitHub Languages API） |
+| 技术栈 | Rails 单体 + Vue 3 前端 + Sidekiq（Webhook 队列）+ Redis（本机自动启动） |
+| 官方入口 | [docuseal.com](https://www.docuseal.com) · [demo.docuseal.tech](https://demo.docuseal.tech) · [Docker Hub](https://hub.docker.com/r/docuseal/docuseal) |
 
-### 3.3 核心功能#
+几个数字值得先看一眼：贡献者只有 6 人，其中一人提交了 2,473 次——这是一个典型的单一维护者主导的项目。18,633 个 Stars 说明社区需求真实存在，但也意味着深度定制前要先评估上游的响应速度。
 
-- **PDF 表单构建器**（WYSIWYG）
-- **12 种字段类型**（签名、日期、文件、复选框等）
-- **多签署方支持**
-- **自动化邮件通知**
-- **本地存储或云存储**（S3、Google Storage、Azure）
-- **API 和 Webhook 集成**
-- **Docker 一键部署**
+## 系统地图：六个部件，三条主线
 
----
+DocuSeal 是一个传统的 Rails 单体应用，没有微服务拆分。部署起来是一个容器（或 compose 里的三个），理解起来可以按六个部件走：
 
-## §4 核心功能详解#
+| 部件 | 职责 | 代码位置（master 分支） |
+|------|------|------|
+| Web 界面（Vue 3） | 模板构建器、签署页、管理后台 | `app/javascript/template_builder/`、`app/javascript/submission_form/` |
+| Rails 应用 | 页面渲染、管理端与集成 REST API | `app/controllers/`（API 路由在 `namespace :api` 下） |
+| Webhook 派发 | Sidekiq 专用队列，按事件推 HTTP 回调 | `app/jobs/send_*_webhook_request_job.rb`、`lib/send_webhook_request.rb` |
+| 文件存储 | 签署文档与附件 | `config/storage.yml`（本地磁盘 / S3 / GCS / Azure） |
+| 数据库 | 模板、提交、用户、Webhook 配置 | SQLite（默认）/ PostgreSQL / MySQL，由 `DATABASE_URL` 决定 |
+| 邮件通知 | 签署邀请、完成回执 | `config/environments/production.rb` 的 SMTP 配置块 |
 
-### 4.1 PDF 表单构建器#
+三条主线贯穿这些部件：**模板**（签什么）、**提交**（谁在签哪一份）、**Webhook**（结果怎么回来）。后面三节各拆一条。
 
-DocuSeal 提供所见即所得的表单编辑器，无需编程即可创建专业级 PDF 表单：
+## 主线一：模板——先定义"签什么"
 
-**支持的字段类型：**
+模板是一份 PDF 加一组表单字段。开源版的创建入口是 Web 构建器：把 PDF 拖进去，在页面上拖放字段，所见即所得（WYSIWYG）。
 
-| 字段类型 | 说明 |
-|---------|------|
-| **Signature** | 电子签名（核心功能） |
-| **Date** | 日期选择 |
-| **File** | 文件上传 |
-| **Checkbox** | 复选框 |
-| **Text Input** | 文本输入 |
-| **Text Area** | 多行文本 |
-| **Dropdown** | 下拉选择 |
-| **Radio** | 单选按钮 |
-| **Image** | 图片嵌入 |
-| **Drawing** | 手绘签名 |
-| **Initial** | 首字母缩写 |
-| **Stamp** | 印章 |
+字段类型按 README 的口径是 12 种（Signature、Date、File、Checkbox 等）；对照 `master` 分支的构建器源码（`app/javascript/template_builder/field_type.vue`），默认下拉实际列出 13 种：`text`、`signature`、`initials`、`date`、`number`、`image`、`checkbox`、`multiple`、`file`、`radio`、`select`、`cells`、`stamp`。另有四种类型默认隐藏、按配置开启：`payment`（收款）、`phone`（手机验证）、`verification`（证件核验）、`kba`（知识型身份验证）——后几种与身份验证相关，属于 Pro/云版的能力范围。同一文件里还有 `heading`、`strikeout`、`datenow`（签署日期）三个名字，它们是静态元素或自动填充值，不算填写字段。
 
-### 4.2 多签署方流程#
+除了在界面上画，模板还能从文档生成，三种方式按 README 都列在 Pro 功能里：
 
-支持设置多个签署方，并定义签署顺序：
+| 方式 | 做法 | 出处 |
+|------|------|------|
+| PDF + 文本标签 | 在 PDF 里写 `{{Field Name;role=Signer1;type=date}}` 形式的标签，上传时解析成字段 | [官方指南](https://www.docuseal.com/guides/use-embedded-text-field-tags-in-the-pdf-to-create-a-fillable-form) |
+| DOCX + 变量 | `[[variable_name]]` 定义动态内容变量，`{{signature}}` 定义字段 | [官方指南](https://www.docuseal.com/guides/use-dynamic-content-variables-in-docx-to-create-personalized-documents) |
+| HTML API | 用 `<text-field>`、`<signature-field>` 等 11 种自定义标签写 HTML，服务端排版成 PDF | [官方指南](https://www.docuseal.com/guides/create-pdf-document-fillable-form-with-html-api) |
 
-```bash
-# 示例：创建需要甲乙双方签署的合同
-1. 甲方先签署（自动邮件通知）
-2. 甲方签署完成后，乙方收到签署邀请'
-3. 乙方签署完成，双方均收到已签署文档副本'
-```
+HTML 方式对程序化生成模板最友好：标签支持 `role` 属性绑定签署方、`style` 属性控制字段的位置和尺寸，签名字段还能用 `drawn`（手绘）、`typed`（输入）、`upload`（上传图片）指定录入方式。对应端点是 `POST /templates/html`，请求体里 `external_id` 参数值得注意——传同一个 `external_id` 会更新既有模板而不是新建，适合"模板跟着代码走"的发布流程。
 
-### 4.3 存储选项#
+模板支持文件夹（`folder_name`）和共享链接（`shared_link`）组织，克隆与合并各有独立端点。签署完成的 PDF 会嵌入数字签名，DocuSeal 也提供对已签 PDF 的签名验证（README 列出的核心功能，对应源码 `lib/verify_pdf_signature.rb` 与 `/verify_pdf_signature` 路由）。
 
-| 存储方式 | 说明 |
-|---------|------|
-| **本地磁盘** | 默认 SQLite，适合小规模使用 |
-| **AWS S3** | 企业级对象存储 |
-| **Google Cloud Storage** | GCP 生态集成 |
-| **Azure Blob Storage** | 微软云生态集成 |
-| **PostgreSQL** | 关系型数据库（可选） |
-| **MySQL** | 关系型数据库（可选） |
+## 主线二：提交与签署——一次签署请求的生命周期
 
-### 4.4 API 与 Webhook#
+Template 是静态定义，Submission 是它的一次运行实例。从 API 创建一次提交（`POST /submissions`），核心参数只有两个：
 
-DocuSeal 提供完整的 REST API 和 Webhook，支持与企业系统深度集成：
-
-**API 端点示例：**
-
-```bash
-POST /api/v1/templates          # 创建模板'
-POST /api/v1/documents          # 创建待签署文档'
-GET  /api/v1/documents/:id      # 获取文档状态'
-POST /api/v1/documents/:id/send # 发送签署邀请'
-GET  /api/v1/documents/:id/file # 下载已签署文档'
-```
-
-**Webhook 事件：**
-
-- `document.completed` — 文档签署完成'
-- `document.signed` — 有人完成签署'
-- `template.created` — 模板创建成功'
-
----
-
-## §5 部署方式#
-
-### 5.1 Docker（推荐，最简方式）#
-
-```bash
-# 单行命令启动'
-docker run --name docuseal -p 3000:3000 -v $(pwd)/data:/data docuseal/docuseal
-```
-
-默认使用 SQLite 数据库存储在 `/data` 目录。
-
-### 5.2 Docker Compose（生产级部署，支持 HTTPS）#
-
-```bash
-# 下载 docker-compose 配置'
-curl https://raw.githubusercontent.com/docusealco/docuseal/master/docker-compose.yml > docker-compose.yml
-
-# 启动（自动通过 Caddy 申请 SSL 证书）'
-sudo HOST=your-domain-name.com docker-compose up
-```
-
-### 5.3 一键部署平台#
-
-| 平台 | 按钮 |
-|------|------|
-| **Heroku** | [点击部署](https://heroku.com/deploy?template=https://github.com/docusealco/docuseal) |
-| **Railway** | [点击部署](https://railway.app/new/template?template=https://github.com/docusealco/docuseal/raw/master/railway.json) |
-| **DigitalOcean** | [点击部署](https://cloud.digitalocean.com/apps/new) |
-| **Render** | [点击部署](https://render.com/deploy?repo=https://github.com/docusealco/docuseal) |
-
-### 5.4 环境变量配置#
-
-| 变量 | 说明 | 默认值 |
-|------|------|--------|
-| `DATABASE_URL` | 数据库连接串 | SQLite 本地文件 |
-| `SMTP_ADDRESS` | SMTP 服务器地址 | - |
-| `SMTP_PORT` | SMTP 端口 | 587 |
-| `SMTP_USERNAME` | SMTP 用户名 | - |
-| `SMTP_PASSWORD` | SMTP 密码 | - |
-| `SMTP_FROM` | 发件人地址 | - |
-| `AWS_BUCKET` | S3 桶名称 | - |
-| `AWS_REGION` | AWS 区域 | - |
-| `AWS_ACCESS_KEY_ID` | AWS 访问密钥 | - |
-| `AWS_SECRET_ACCESS_KEY` | AWS 秘密密钥 | - |
-
----
-
-## §6 API 与 Webhook 集成#
-
-### 6.1 REST API 使用示例#
-
-**创建模板：**
-
-```bash
-curl -X POST https://your-docuseal.com/api/v1/templates \
-  -H "Content-Type: application/json" \
-  -d '{
-    "title": "服务合同模板",
-    "fields": [
-      {"name": "client_name", "type": "text", "required": true},
-      {"name": "signature", "type": "signature", "required": true}
-    ]
-  }'
-```
-
-**创建待签署文档：**
-
-```bash
-curl -X POST https://your-docuseal.com/api/v1/documents \
-  -H "Content-Type: application/json" \
-  -d '{
-    "template_id": "abc123",
-    "send_email": true,
-    "recipients": [
-      {"name": "张三", "email": "zhangsan@example.com"}
-    ]
-  }'
-```
-
-### 6.2 Webhook 处理示例#
-
-```python
-# Python Flask 示例'
-from flask import Flask, request
-
-app = Flask(__name__)
-
-@app.route('/webhook/docuseal', methods=['POST'])
-def handle_webhook():
-    event = request.json
-    
-    if event['type'] == 'document.completed':
-        document_id = event['data']['id']
-        # 下载已签署文档'
-        # 更新业务系统状态'
-        pass
-    
-    return 'OK', 200
-```
-
----
-
-## §7 Pro 版功能#
-
-DocuSeal 分为**开源版**和 **Pro 版**，Pro 版提供更高级功能：
-
-| 功能 | 开源版 | Pro 版 |
-|------|--------|-------|
-| **基础表单字段** | ✅ | ✅ |
-| **多签署方** | ✅ | ✅ |
-| **PDF 导出** | ✅ | ✅ |
-| **Logo 定制** | ❌ | ✅ |
-| **白标** | ❌ | ✅ |
-| **用户角色管理** | ❌ | ✅ |
-| **自动提醒** | ❌ | ✅ |
-| **SMS 身份验证** | ❌ | ✅ |
-| **条件字段和公式** | ❌ | ✅ |
-| **CSV/XLSX 批量发送** | ❌ | ✅ |
-| **SSO/SAML** | ❌ | ✅ |
-| **HTML API 模板创建** | 基础 | 完整 |
-
-### 7.1 HTML API 创建模板#
-
-Pro 版支持通过 HTML 创建模板，精确控制表单布局：
-
-```bash
-curl -X POST https://your-docuseal.com/api/v1/templates \
-  -H "Content-Type: application/json" \
-  -d '{
-    "title": "合同模板",
-    "html": "<html><body><input type=\"text\" data-type=\"signature\"></body></html>"
-  }'
-```
-
----
-
-## §8 与 DocuSign 对比#
-
-| 维度 | DocuSeal | DocuSign |
-|------|----------|----------|
-| **部署方式** | 自托管或 SaaS | 仅 SaaS |
-| **价格** | 开源免费 / Pro 付费 | 按发送次数收费 |
-| **数据控制** | 完全自主 | 依赖第三方 |
-| **API** | 完整 REST API | 完整 API |
-| **集成方式** | 自托管灵活 | 云端集成 |
-| **合规认证** | 基础 | 高级（SOC2、HIPAA 等） |
-
----
-
-## §9 适用场景#
-
-### 9.1 适合的场景#
-
-- 企业内部合同签署流程数字化'
-- 需要多签署方的协议、合同'
-- 需要与现有业务系统（CRM、ERP）集成的文档签署'
-- 对数据主权有要求，不能使用 SaaS 服务的场景'
-
-### 9.2 边界与局限#
-
-- 电子签名合规性因国家/地区而异，需确认当地法律认可度'
-- AGPLv3 协议要求开源，介意者需购买 Pro 版'
-- 复杂表单（如嵌套条件逻辑）需要 Pro 版'
-- 企业级合规认证（SOC2、HIPAA）需要 Pro 版或自建'
-
----
-
-## §10 常见问题排查#
-
-### 问题 1：Docker 容器无法启动#
-
-**原因**：可能是端口冲突或数据目录权限问题'
-
-**解决方法**：
-
-```bash
-# 1. 检查端口占用'
-lsof -i :3000
-
-# 2. 检查数据目录权限'
-ls -la $(pwd)/data
-
-# 3. 查看容器日志'
-docker logs docuseal
-
-# 4. 重新创建容器'
-docker rm -f docuseal
-docker run --name docuseal -p 3000:3000 -v $(pwd)/data:/data docuseal/docuseal
-```
-
-### 问题 2：邮件通知未发送#
-
-**原因**：SMTP 配置错误或邮件被标记为垃圾邮件'
-
-**解决方法**：
-
-```bash
-# 1. 检查 SMTP 配置'
-echo $SMTP_ADDRESS
-echo $SMTP_PORT
-
-# 2. 测试 SMTP 连接'
-telnet $SMTP_ADDRESS $SMTP_PORT
-
-# 3. 查看 DocuSeal 日志'
-docker logs docuseal | grep -i "mail\|smtp"
-
-# 4. 检查垃圾邮件文件夹'
-```
-
-### 问题 3：API 调用返回 401 未授权#
-
-**原因**：API 密钥未配置或已过期'
-
-**解决方法**：
-
-```bash
-# 1. 在 DocuSeal 管理界面生成 API 密钥'
-# 2. 在请求头中添加 Authorization'
-curl -H "Authorization: Bearer YOUR_API_KEY" ...
-
-# 3. 检查 API 密钥权限范围'
-```
-
-### 问题 4：Webhook 未接收到事件#
-
-**原因**：Webhook URL 不可公网访问，或签名验证失败'
-
-**解决方法**：
-
-```bash
-# 1. 使用 ngrok 等工具暴露本地服务'
-ngrok http 3000
-
-# 2. 在 DocuSeal 管理界面配置 Webhook URL'
-# 3. 验证 Webhook 签名'
-# 4. 查看 Webhook 交付日志'
-```
-
-### 问题 5：SSL 证书申请失败（Docker Compose 部署）#
-
-**原因**：域名未正确解析到服务器 IP，或 80/443 端口被防火墙阻止'
-
-**解决方法**：
-
-```bash
-# 1. 检查域名解析'
-dig your-domain-name.com
-
-# 2. 检查端口开放'
-nc -zv your-domain-name.com 80
-nc -zv your-domain-name.com 443
-
-# 3. 查看 Caddy 日志'
-docker logs docuseal | grep -i "caddy\|ssl\|certificate"
-
-# 4. 临时使用 HTTP（仅测试）'
-sudo HOST=your-domain-name.com docker-compose up
-```
-
----
-
-## §11 实践建议#
-
-### 11.1 优化部署#
-
-**建议 1：根据规模选择存储**
-
-| 规模 | 推荐存储 |
-|------|----------|
-| **< 100 份/月** | 本地 SQLite |
-| **100-1000 份/月** | PostgreSQ L或 MySQL |
-| **> 1000 份/月** | PostgreSQ L + AWS S3 |
-
-**建议 2：配置自动备份**
-
-```bash
-# 每天凌晨 2 点备份 SQLite 数据库'
-0 2 * * * cp /data/docuseal.sqlite /backup/docuseal-$(date +\%Y\%m\%d).sqlite
-```
-
-**建议 3：使用 Nginx 反向代理提升性能**
-
-```nginx
-# /etc/nginx/sites-available/docuseal
-server {
-    listen 80;
-    server_name your-domain-name.com;
-
-    location / {
-        proxy_pass http://localhost:3000;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-    }
+```json
+{
+  "template_id": 123456,
+  "submitters": [
+    { "role": "Property Owner", "email": "owner@example.com" },
+    { "role": "Renter", "email": "renter@example.com" }
+  ]
 }
 ```
 
-### 11.2 团队协作#
+`role` 对应模板里字段的 `role` 属性，同一角色可以对应多个字段。签署顺序由 `order` 参数控制，**默认 `preserved`（保序）**：第一方签完，第二方才收到邀请邮件；传 `random` 则同时发给所有人。这个默认值对合同场景是正确的——保序是少数需要显式放开的能力。
 
-**共享配置**：
+每个 submitter（签署方）还有一批可选参数，常用的几个：
 
-```bash
-# 将配置文件提交到版本控制'
-cp config/storage.yml ~/projects/dotfiles/docuseal-storage.yml
-cd ~/projects/dotfiles
-git add docuseal-storage.yml
-git commit -m "Add DocuSeal storage config"
-git push
+- `require_email_2fa` / `require_phone_2fa`：打开签署链接前要求邮箱或短信验证码；
+- `completed_redirect_url`：签完跳回业务系统的地址；
+- `values`：预填字段值；
+- `completed: true`：API 直接代签，用于系统方作为签署角色的自动化；
+- `expire_at`：提交整体过期时间。
+
+一次提交的状态变化会同时体现在两个层面。单个签署方视角是 `form.viewed`（打开）→ `form.started`（开始填写）→ `form.completed`（签完）或 `form.declined`（拒签）；整单视角是 `submission.created` → `submission.completed`，中途可能 `submission.expired` 或被归档为 `submission.archived`。这两组状态名同时是 Webhook 的事件名，Web UI 里也有对应的列表页（如 `submissions/archived` 路由）。
+
+## 主线三：Webhook——把结果推回业务系统
+
+Webhook 配置在管理后台维护，每个 URL 记录可以订阅一部分事件。源码里 `WebhookUrl::EVENTS`（`app/models/webhook_url.rb`）定义了全部 11 种：
+
+| 事件 | 触发时机 |
+|------|------|
+| `form.viewed` | 签署方首次打开表单 |
+| `form.started` | 签署方开始填写 |
+| `form.completed` | 一方完成签署 |
+| `form.declined` | 一方拒签 |
+| `submission.created` | 提交创建 |
+| `submission.completed` | 全部签署方完成 |
+| `submission.expired` | 提交过期 |
+| `submission.archived` | 提交归档 |
+| `template.created` / `template.updated` / `template.archived` | 模板生命周期 |
+
+新记录默认订阅 `form.viewed`、`form.started`、`form.completed`、`form.declined` 四种。请求是 POST，载荷三个字段：
+
+```json
+{
+  "event_type": "form.completed",
+  "timestamp": "2026-09-30T12:00:00.000+08:00",
+  "data": { }
+}
 ```
 
-**团队配置规范**：
+`data` 的内容随事件而变：`form.*` 事件携带该签署方的序列化结果，`submission.*` 事件携带整单状态。每个请求带两个可识别特征——`User-Agent` 固定为 `DocuSeal.com Webhook`，签名放在 `X-Docuseal-Signature` 头里。
 
-1. 统一使用相同的存储后端（S3 或 PostgreSQL）'
-2. 统一 SMTP 配置'
-3. 统一 API 密钥权限范围'
-4. 在 README 中记录配置方法'
+验签算法在 `lib/webhook_urls/signatures.rb`，五十行不到，值得读一遍：密钥以 `whsec_` 前缀开头；签名是 `{时间戳}.{HMAC-SHA256(密钥, "{时间戳}.{请求体}")}`，时间戳参与摘要计算，容忍 ±5 分钟偏差。服务端照抄一遍就能验：
 
-### 11.3 安全优化#
+```python
+import hashlib
+import hmac
+import time
 
-**降低风险**：
-
-```bash
-# 1. 启用 HTTPS（Docker Compose 自动处理）'
-# 2. 配置防火墙规则（仅允许必要端口）'
-ufw allow 80/tcp
-ufw allow 443/tcp
-ufw enable
-
-# 3. 定期更新 DocuSeal 版本'
-docker pull docuseal/docuseal:latest
-docker-compose up -d
-
-# 4. 配置 API 密钥轮换策略'
+def verify_docuseal_signature(secret: str, body: bytes, header: str, tolerance: int = 300) -> bool:
+    ts, sig = header.split(".", 1)
+    if abs(time.time() - int(ts)) > tolerance:
+        return False
+    expected = hmac.new(secret.encode(), f"{ts}.".encode() + body, hashlib.sha256).hexdigest()
+    return hmac.compare_digest(expected, sig)
 ```
 
----
+两个工程细节影响接入设计。第一，重试机制：投递失败（4xx/5xx）后按 2^n 分钟间隔重试，源码上限 `MAX_ATTEMPTS = 12` 次，官方文档的口径是"生产账户 48 小时内多次重试"——所以接收端要做成幂等的，同一事件的 `event_uuid` 可能到达多次。第二，多租户部署（SaaS，软件即服务）下 Webhook 目标强制 HTTPS 且禁止 localhost，自托管单实例没有这个限制，本地开发可以直接回调解到自己机器上。后台还有发送测试事件的功能（对应 `send_test_webhook_request_job.rb`），接通后先发一条测试再上真流量。
 
-## §11 练习
+## 一次两方签署的完整流转
 
-完成以下练习，巩固对 DocuSeal 的理解：
+把三条主线串起来。场景：房东-租客的租房合同，模板已在 Web 构建器里画好（含双方各自的 `signature` 字段），业务系统要驱动签署并收回已签文件。
 
-### 练习 1：Docker 快速部署
-在本地机器上使用 Docker 启动 DocuSeal，配置一个 SMTP 服务（可以使用 Mailgun 或 SendGrid 的免费账户），创建一个包含签名和日期字段的 PDF 模板，并发送一份签署邀请到你的邮箱。
+**第一步，创建提交。** 业务系统调 API，`order` 用默认保序，房东先签：
 
-**目标**：掌握基础部署和邮件配置流程。
+```bash
+curl -X POST https://your-host/api/submissions \
+  -H "X-Auth-Token: API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "template_id": 123456,
+    "submitters": [
+      { "role": "Property Owner", "email": "owner@example.com" },
+      { "role": "Renter", "email": "renter@example.com" }
+    ]
+  }'
+```
 
-### 练习 2：API 集成实战
-编写一个 Python 脚本，使用 DocuSeal API 完成以下任务：
-1. 创建一个模板（包含文本输入和签名两个字段）
-2. 使用这个模板创建一份待签署文档
-3. 查询文档状态
-4. 下载已签署的文档
+DocuSeal 给房东发签署邀请邮件。房东打开链接，`form.viewed`、`form.started` 两个 Webhook 先后到达业务系统——到这里可以顺带做"客户已开始签署"的业务提醒。
 
-**目标**：理解 REST API 的完整调用流程。
+**第二步，房东签完。** `form.completed` 到达，载荷里是房东这份签署结果的序列化数据。因为默认保序，租客此时才收到邀请。
 
-### 练习 3：Webhook 集成
-使用 Flask 或 Express 创建一个简单的 Webhook 接收服务，处理 `document.completed` 事件。当文档签署完成时，自动将签署后的 PDF 保存到本地目录，并记录签署者的邮箱和签署时间到 CSV 文件。
+**第三步，整单完成。** 租客签完后 `form.completed` 与 `submission.completed` 先后到达，验签通过后，业务系统拉取已签文件：
 
-**目标**：掌握 Webhook 事件处理和自动化工作流。
+```bash
+curl -H "X-Auth-Token: API_KEY" \
+  https://your-host/api/submissions/12345/documents
+```
 
-### 练习 4：多签署方流程设计
-设计一个需要三方签署的合同流程（甲方、乙方、见证人），使用 DocuSeal API 创建这个流程，并测试签署顺序是否正确（甲方先签，然后是乙方，最后是见证人）。
+这个端点在提交未完成时返回部分签署的文档，完成后返回最终已签版本，一次调用两种语义。整个流程里业务系统只做了两次 API 调用，其余靠 Webhook 驱动——这是 DocuSeal 集成模型的典型形态：调用创建，回调收尾。
 
-**目标**：理解多签署方和签署顺序的配置。
+## API 总量与接入方式
 
-### 练习 5：生产环境部署
-使用 Docker Compose 在测试服务器上部署 DocuSeal，配置：
-- 使用 PostgreSQL 作为数据库
-- 配置 AWS S3 作为存储后端
-- 通过 Caddy 自动申请 SSL 证书
-- 设置自动备份 cron 任务
+认证用 `X-Auth-Token` 请求头携带 API 密钥（自托管实现在 `app/controllers/api/api_base_controller.rb`，密钥在管理后台的设置页生成）。云版网关是 `api.docuseal.com`（全球）与 `api.docuseal.eu`（欧洲）；自托管实例接口挂在自己的域名下，源码路由在 `/api/` 命名空间，如 `/api/submissions`。
 
-**目标**：掌握生产级部署的全流程。
+官方文档列出的端点按三个资源组织，共 22 个：
 
----
-
-## §12 自测问题#
-
-可以先用 5 个问题检验自己是否已经吃透 DocuSeal：
-
-1. **DocuSeal 的核心优势是什么？与 DocuSign 的主要区别在哪里？**
-2. **如何配置 Docker Compose 部署并自动申请 SSL 证书？**
-3. **DocuSeal API 支持哪些主要操作？如何与业务系统集成？**
-4. **开源版和 Pro 版的主要区别是什么？什么场景需要升级？**
-5. **如何配置 Webhook 实现签署完成后的自动化操作？**
-
-**参考答案**：
-
-1. DocuSeal 的核心优势是**数据自主**（自托管）、**成本可控**（开源免费）、**灵活集成**（完整 REST API）；与 DocuSign 的主要区别是部署方式（自托管 vs. SaaS）。
-2. 下载官方 `docker-compose.yml`，设置 `HOST=your-domain.com`，运行 `docker-compose up`，Caddy 会自动申请 Let's Encrypt SSL 证书。
-3. 主要操作：创建模板、创建文档、发送签署邀请、获取文档状态、下载已签署文档；通过 REST API 和 Webhook 与 CRM、ERP 等业务系统集成。
-4. Pro 版提供 Logo 定制、白标、用户角色管理、自动提醒、SMS 身份验证、条件字段和公式、SSO/SAML 等高级功能；需要企业级品牌定制、复杂表单、合规认证时需要升级。
-5. 在 DocuSeal 管理界面配置 Webhook URL，DocuSeal 会在文档签署完成后向该 URL 发送 POST 请求；服务端需要验证签名、处理事件、更新业务系统状态。
-
----
-
-## §13 进阶路径#
-
-### 13.1 基础阶段（第 1-2 周）#
-
-- [ ] 安装 DocuSeal 并熟悉基本操作'
-- [ ] 创建第一个 PDF 表单模板'
-- [ ] 配置 SMTP 并实现首次签署流程'
-- [ ] 掌握 Docker 基础操作'
-
-### 13.2 进阶阶段（第 3-4 周）#
-
-- [ ] 配置 AWS S3 或 Google Cloud Storage 云存储'
-- [ ] 集成 DocuSeal REST API 到业务系统'
-- [ ] 配置 Webhook 实现自动化工作流'
-- [ ] 排查常见问题和性能优化'
-
-### 13.3 高级阶段（第 5-8 周）#
-
-- [ ] 从源码构建 DocuSeal'
-- [ ] 贡献代码到上游（提交 PR）'
-- [ ] 开发自定义字段类型或集成插件'
-- [ ] 在企业中推广 DocuSeal 最佳实践'
-
-### 13.4 相关资源#
-
-| 资源 | 链接 |
+| 资源 | 端点（路径按官方文档原文） |
 |------|------|
-| **GitHub 仓库** | https://github.com/docusealco/docuseal |
-| **官方网站** | https://docuseal.com |
-| **在线演示** | https://demo.docuseal.tech |
-| **官方文档**（Pro 功能） | https://docuseal.com/pricing |
-| **Docker Hub** | https://hub.docker.com/r/docuseal/docuseal |
+| Submissions | `GET /submissions` · `GET /submissions/{id}` · `GET /submissions/{id}/documents` · `POST /submissions` · `POST /submissions/pdf` · `POST /submissions/docx` · `POST /submissions/html` · `PUT /submissions/{id}` · `DELETE /submissions/{id}` |
+| Submitters | `GET /submitters` · `GET /submitters/{id}` · `PUT /submitters/{id}` |
+| Templates | `GET /templates` · `GET /templates/{id}` · `POST /templates/pdf` · `POST /templates/docx` · `POST /templates/html` · `POST /templates/{id}/clone` · `POST /templates/merge` · `PUT /templates/{id}` · `PUT /templates/{id}/documents` · `DELETE /templates/{id}` |
 
----
+对照源码路由，自托管版没有 `POST /templates/pdf|docx|html` 三个模板创建端点——与 README 把"API 创建模板"划入 Pro 功能一致。开源版的 API 覆盖提交、签署方、模板管理与文档拉取，创建模板走 Web 构建器。
 
-## §14 总结速查#
+接入不限于裸 HTTP。官方维护 8 种语言的 SDK（软件开发工具包）和命令行工具：
 
-### 核心要点#
-
-1. **DocuSeal 是开源电子签名解决方案**，可作为 DocuSign 替代方案'
-2. **支持 12 种字段类型**，覆盖完整签署流程'
-3. **Docker 一键部署**，支持自托管或云平台'
-4. **完整 REST API 和 Webhook**，支持与企业系统集成'
-5. **开源版免费使用**，Pro 版提供高级功能（白标、SSO、条件字段等）'
-
-### 快速命令#
-
-| 命令 | 用途 |
+| 语言 | 安装 |
 |------|------|
-| `docker run docuseal/docuseal` | Docker 启动 DocuSeal |
-| `docker-compose up` | Docker Compose 启动（生产级）|
-| `curl /api/v1/templates` | 创建模板（API）|
-| `curl /api/v1/documents` | 创建待签署文档（API）|
+| JavaScript / TypeScript | `npm install @docuseal/api` |
+| Python | `pip install docuseal` |
+| Ruby | `gem install docuseal` |
+| PHP | `composer require docusealco/docuseal-php` |
+| Java | `implementation 'com.docuseal:docuseal-java:+'` |
+| C# | `dotnet add package Docuseal` |
+| Go | `go get github.com/docusealco/docuseal-go` |
+| CLI | `npm install -g docuseal` |
 
----
+另有 MCP（Model Context Protocol）服务器 `https://mcp.docuseal.com`，`claude mcp add --transport http docuseal https://mcp.docuseal.com/` 即可在 Claude Code 里驱动签署流程。
 
-**文档信息**
+## 部署：从单容器到带证书的生产组合
 
-难度：⭐⭐ | 类型：完全指南 | 更新日期：2026-05-05 | 预计阅读时间：20 分钟
+评估用一个容器就够：
 
+```bash
+docker run --name docuseal -p 3000:3000 -v .:/data docuseal/docuseal
+```
+
+容器里 `/data` 目录承载全部状态：默认 SQLite 数据库、自动生成的 `docuseal.env`（内含 `SECRET_KEY_BASE`，权限 0600）、本地附件。挂载它，销毁容器不丢数据。
+
+生产部署用官方 compose 文件，三个服务：
+
+```bash
+curl https://raw.githubusercontent.com/docusealco/docuseal/master/docker-compose.yml > docker-compose.yml
+sudo HOST=your-domain-name.com docker compose up
+```
+
+结构是 `docuseal/docuseal:latest` 应用 + PostgreSQL 18 数据库 + Caddy 反向代理。`HOST` 环境变量同时做两件事：传给 Caddy 签发 Let's Encrypt 证书（`caddy reverse-proxy --from $HOST --to app:3000`），传给应用启用 `FORCE_SSL`（强制 HTTPS 与安全 Cookie）。前提是域名已解析到这台服务器，且 80/443 端口可达。
+
+配置全部走环境变量，以下是源码里实际读取的常用项（`config/environments/production.rb`、`config/storage.yml`、`config/dotenv.rb`）：
+
+| 用途 | 变量 | 说明 |
+|------|------|------|
+| 数据库 | `DATABASE_URL` | 留空用 SQLite；填 PostgreSQL 或 MySQL 连接串切换 |
+| 邮件 | `SMTP_ADDRESS` | 总开关：不设置则整组 SMTP 配置不生效 |
+| 邮件 | `SMTP_PORT` / `SMTP_DOMAIN` / `SMTP_USERNAME` / `SMTP_PASSWORD` | 端口默认 587 |
+| 邮件 | `SMTP_ENABLE_STARTTLS` | 默认开启，显式传 `false` 关闭 |
+| 对象存储 | `S3_ATTACHMENTS_BUCKET` + `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` / `AWS_REGION` | S3 存储；`AWS_REGION` 默认 `us-east-1` |
+| 对象存储 | `S3_ENDPOINT` | 设置后走 path-style，可接 MinIO 等兼容存储 |
+| 对象存储 | `GCS_CREDENTIALS` / `GCS_PROJECT` / `GCS_BUCKET` | Google Cloud Storage |
+| 对象存储 | `AZURE_STORAGE_ACCOUNT_NAME` / `AZURE_STORAGE_ACCESS_KEY` / `AZURE_CONTAINER` | Azure Blob |
+| 其他 | `FORCE_SSL`、`WORKDIR`、`RUBY_YJIT_ENABLE` | 强制 HTTPS、数据目录、Ruby YJIT 加速 |
+
+不配置任何存储变量时，附件落在 `{WORKDIR}/attachments` 本地目录。密钥管理有一条捷径：设置 `AWS_SECRET_MANAGER_ID` 后，其余配置可以从 AWS Secrets Manager 拉取，避免敏感项明文进环境变量。
+
+不想自己管服务器，README 提供 4 个平台的一键部署入口，各自指向独立的模板仓库：[Heroku](https://heroku.com/deploy?template=https://github.com/docusealco/docuseal-heroku)、[Railway](https://railway.com/deploy/IGoDnc)、[DigitalOcean](https://cloud.digitalocean.com/apps/new?repo=https://github.com/docusealco/docuseal-digitalocean/tree/master&refcode=421d50f53990)、[Render](https://render.com/deploy?repo=https://github.com/docusealco/docuseal-render)。
+
+## 排查四则
+
+**邮件不发。** 先确认 `SMTP_ADDRESS` 设置了——源码里它是开关，没设置时其余 `SMTP_*` 变量根本不会被读，投递走 Rails 默认配置（本机 25 端口），通常会失败。已设置仍不发，看容器日志里 ActionMailer 的投递记录，再查 STARTTLS：默认开启，个别只收裸 SMTP 的老服务器需要显式传 `SMTP_ENABLE_STARTTLS=false`。
+
+**Webhook 收不到。** 按顺序查三处：该 URL 记录有没有订阅这个事件（默认只订阅 `form.*` 四种，`submission.*` 与 `template.*` 要手动加）；目标地址从容器内可达吗（自托管没有 localhost 限制，但防火墙挡出站会静默失败）；接收端是否返回了 4xx/5xx——返回了就会进入 2^n 分钟间隔的重试，48 小时内最多 12 次，接收端修复后不必手动补发。
+
+**API 返回 401。** 认证头是 `X-Auth-Token`，不是 `Authorization: Bearer`——这是 DocuSeal 与多数 API 习惯不同的地方。云版确认打到 `api.docuseal.com`，自托管确认打到自己的主机名而不是容器名。
+
+**证书签发失败。** Caddy 需要 DNS 已解析到本机且 80/443 从公网可达，两者缺一即失败。用 `dig your-domain-name.com` 和 `nc -zv your-domain 443` 分别验证，再看 compose 输出里 Caddy 的日志。
+
+## 许可、Pro 版与采用边界
+
+许可证是 AGPLv3 加一条 Section 7(b) 附加条款，两条约束分开看。AGPL 的网络条款意味着：改了 DocuSeal 源码并对外提供签署服务，修改部分要开源。附加条款更简单——`LICENSE_ADDITIONAL_TERMS` 只有一句话：交互界面必须保留 DocuSeal 原始署名（"Powered by DocuSeal"一类的标识）。想合法去掉它，路径是购买 Pro 的白标授权，而不是改样式表。
+
+Pro 版能力按 README 清单：公司 Logo 与白标、用户角色、自动催签、短信邀请与身份验证、条件字段与公式、CSV/XLSX 批量发送、SSO/SAML、HTML/PDF/DOCX API 创建模板、嵌入式签署表单与嵌入式表单构建器（React/Vue/Angular/JavaScript SDK）。注意嵌入式 SDK 的仓库是公开的（如 [docusealco/docuseal-react](https://github.com/docusealco/docuseal-react)），代码可见不等于授权可商用。
+
+和 DocuSign 的差异不在签名算法，而在责任与自由的分配：
+
+| 维度 | 自托管 DocuSeal | 商业签署 SaaS |
+|------|------|------|
+| 数据位置 | 签署文件与个人信息全在自己服务器 | 存在供应商云上 |
+| 集成自由 | API、Webhook、SDK 全量开放，无调用计量 | 按套餐限额，深度集成走供应商的生态 |
+| 合规责任 | 电子签名的法律效力、留存、审计由你的部署与流程负责 | 供应商提供合规框架与认证背书 |
+| 功能广度 | 核心签署流程完整，企业功能在 Pro 墙外 | 合规、身份验证、审批流成套 |
+| 成本结构 | 服务器 + 自己的运维时间 | 按量/按席位订阅 |
+
+电子签名的法律效力因国家与文件类型而异（中国《电子签名法》对"可靠电子签名"有专门要求），选择自托管方案前，这一步要按自己的辖区确认，本文不给普适结论。
+
+**采用建议**按三步走。第一步，拿 [demo.docuseal.tech](https://demo.docuseal.tech) 或 `docker run` 单容器验证表单 builder 是否够画你的业务表单——这一步不过，后面不用看。第二步，compose 部署到测试环境，配好 SMTP，跑通一次真实的两方签署和 Webhook 回调，重点验证验签代码与幂等处理。第三步，做集成设计时对照 Pro 清单盘点：需要白标、SSO、批量发送、API 建模板中任何一项，评估 Pro 或云版；一项都不需要，开源版自托管就是终态。反过来的场景也明确：如果签署是低频、内部、对品牌呈现不敏感的流程，先用现成 SaaS 的免费额度可能比维护一套自托管服务更省。
+
+## 维护指引
+
+本文全部数字与机制描述锚定在三类可复查的来源上，更新时按此核对：
+
+1. **仓库元数据**（Stars、版本、语言构成）：GitHub API，`repos/docusealco/docuseal` 与 `/releases`、`/languages` 端点；
+2. **代码行为**（字段类型、Webhook 事件与验签、环境变量、路由）：`master` 分支的 `app/javascript/template_builder/field_type.vue`、`app/models/webhook_url.rb`、`lib/webhook_urls/signatures.rb`、`lib/send_webhook_request.rb`、`config/environments/production.rb`、`config/storage.yml`、`config/routes.rb`；
+3. **API 契约**（端点、参数、SDK）：[docuseal.com/docs](https://www.docuseal.com/docs) 与各端点的 `.md` 文档页。
+
+DocuSeal 迭代较快（3.x 系列 两周内发了三个版本），涉及端点行为与 Pro 功能边界的段落，引用前先对照上述位置复核；数字变化但结构不变的，只改坐标表即可。

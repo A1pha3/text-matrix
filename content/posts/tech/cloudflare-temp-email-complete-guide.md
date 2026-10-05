@@ -1,718 +1,235 @@
 ---
-title: "Cloudflare临时邮箱：8.3K Stars·零成本临时邮件服务·Rust WASM解析"
+title: "Cloudflare 临时邮箱部署指南：零成本自建收发件服务"
 date: "2026-04-12T02:31:39+08:00"
+lastmod: "2026-10-02T00:00:00+08:00"
 slug: cloudflare-temp-email-complete-guide
 github_repo: "dreamhunter2333/cloudflare_temp_email"
 source_key: "gh:dreamhunter2333/cloudflare_temp_email"
-description: "Cloudflare 临时邮箱是一个零成本的临时邮件服务，使用 Rust 和 WASM 编写，提供 AI 智能识别功能。"
+description: "cloudflare_temp_email 部署指南：基于 Workers + D1 + Email Routing 的零成本临时邮箱，覆盖部署前提、三条部署路径、AI 验证码识别与安全配置。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Cloudflare", "Rust", "WASM"]
+tags: ["Cloudflare", "TypeScript", "自托管", "开源项目"]
 ---
 
-# Cloudflare 临时邮箱：8.3K Stars 零成本临时邮件服务
+# Cloudflare 临时邮箱部署指南：零成本自建收发件服务
 
-## 一、项目概述
+## 先给判断
 
-### 1.1 Cloudflare 临时邮箱是什么
+[dreamhunter2333/cloudflare_temp_email](https://github.com/dreamhunter2333/cloudflare_temp_email) 是一个跑在 Cloudflare 免费套餐上的临时邮箱系统：收件靠 Email Routing 转发进 Worker，邮件存 D1（SQLite），前端是 Vue 3 单页应用，验证码提取默认在 Worker 内用本地规则完成，一分钱不花也能跑起来。项目 2023 年 8 月建仓，截至 2026-10-02 已有 11,893 stars、694 次提交、33 位贡献者，最新版本 v1.12.0（2026-09-13），仍在高频迭代。
 
-**Cloudflare 临时邮箱**是一个基于 Cloudflare 免费服务构建的临时邮箱系统，邮件解析用 Rust WASM 实现，AI 识别用 Cloudflare Workers AI。
+它适合的场景：注册各类服务时要一堆一次性邮箱、想自己持有域名收发件、或者给 AI agent 配一个能收验证码的信箱。不适合的场景同样明确——你必须有一个托管在 Cloudflare 的域名（这是收件的硬前提），整套系统绑定 Workers/D1/KV/R2，迁去别的平台等于重写；另外项目的定位是"轻量收发与验证码场景"，做正式的企业邮箱或邮件营销，应该看 [listmonk](/posts/listmonk-self-hosted-email-newsletter-platform-guide/) 这类专业系统。
 
-> "一个功能完整的临时邮箱服务！完全免费 - 基于 Cloudflare 免费服务构建，零成本运行"
+读源码时把它拆成五个部件最省事：`worker/` 是 TypeScript + Hono 写的后端；`frontend/` 是 Vue 3 界面，部署到 Pages；`db/` 是 D1 的建表与迁移 SQL；`mail-parser-wasm/` 是 Rust 编译的 WASM 解析器，专门对付 Node 解析失败的怪邮件；`smtp_proxy_server/` 是一个独立的 Python 服务，给邮件客户端提供 SMTP 发信和 IMAP 收信入口。这五件里只有最后一件需要自己找台机器跑，其余全部落在 Cloudflare 上。
 
-### 1.2 核心数据
+## 项目坐标（2026-10-02 核对）
 
-| 指标 | 数值 |
+| 字段 | 值 |
 |------|------|
-| Stars | **8.3k** ⭐ |
-| Forks | 5k |
-| 贡献者 | 18 |
-| 最新版本 | v1.5.0 (2026-04-04) |
-| 提交数 | 584 commits |
+| Stars / Forks | 11,893 / 7,961 |
+| 贡献者 / 提交数 | 33 / 694 |
+| 最新 release | v1.12.0（2026-09-13）；main 分支已进入 v1.13.0 开发 |
 | 许可证 | MIT |
-| 语言 | TypeScript 48.4%, Vue 42.7%, Python 4.3% |
+| 语言占比（字节） | TypeScript 66%、Vue 25%、JavaScript 与 Python 各 4%、Rust 0.3% |
+| 在线演示 | [mail.awsl.uk](https://mail.awsl.uk/)（作者的常驻实例） |
+| 文档站 | [temp-mail-docs.awsl.uk](https://temp-mail-docs.awsl.uk/)（VitePress，中英日三语 README） |
 
-### 1.3 关键特性
+语言占比能说明一件事：Rust 代码只有几千字节，因为 WASM 解析器以 npm 包（`mail-parser-wasm`）形式发布，仓库里是壳与构建配置。真正的大头是 Worker 后端和 Vue 前端两块 TypeScript。
 
-| 维度 | 说明 |
-|------|------|
-| **零成本** | 基于 Cloudflare 免费服务 |
-| **Rust WASM** | 邮件解析 |
-| **Workers AI** | 自动识别验证码/认证链接 |
-| **完整功能** | 收发邮件、IMAP、SMTP |
-| **多集成** | Telegram Bot、Webhook、OAuth2 |
+## 部署前提：域名和 Email Routing
 
-### 1.4 在线体验
+这是全文唯一一处"没做就全盘不通"的前提，官方文档专门用一篇[快速开始](https://temp-mail-docs.awsl.uk/zh/guide/quick-start)来强调：
 
-**在线演示**: https://mail.awsl.uk/
+1. 准备一个域名（一级域名或子域名均可），DNS 托管在 Cloudflare；
+2. 在该域名上启用 Email Routing，完成电子邮件 DNS 记录下发；
+3. Worker 部署完成后，把 Email Routing 的 **Catch-all 规则绑定到这个 Worker**——邮件就是从这里进系统的。
 
-## 二、核心功能详解
+三步缺任何一步，邮箱能创建但永远收不到信。另外 `*.workers.dev` 默认域名在中国大陆无法访问，正式使用前先在 `wrangler.toml` 里配好自定义域名。
 
-### 2.1 功能矩阵
+## 三条部署路径
 
-| 类别 | 功能 |
-|------|------|
-| **邮件处理** | Rust WASM 解析、AI 识别、随机域名、发送邮件、附件 |
-| **用户管理** | 注册登录、OAuth2、Passkey、角色管理 |
-| **管理功能** | Admin 控制台、定时清理、IP 白名单 |
-| **多语言** | 中英双语、响应式 UI |
-| **集成** | Telegram Bot、SMTP Proxy、IMAP、Webhook |
+官方提供三种方式，按动手成本从低到高：
 
-### 2.2 邮件处理功能
+**一键部署**：README 的 Deploy to Cloudflare 按钮走 `deploy.workers.cloudflare.com`，适合先跑通看看，之后仍要自己补配置。
 
-| 功能 | 说明 |
-|------|------|
-| **Rust WASM 解析** | Node.js 解析失败的邮件也能解析 |
-| **AI 邮件识别** | 自动提取验证码、认证链接、服务链接 |
-| **随机二级域名** | 支持为邮箱地址创建随机二级域名 |
-| **发送邮件** | 支持 DKIM 验证、SMTP 和 Resend |
-| **附件支持** | 附件图片显示、S3 存储 |
-| **安全** | 垃圾邮件检测、黑白名单 |
-| **转发** | 全局转发地址 |
+**GitHub Actions**：fork 仓库后在 Actions 页启用 `Deploy Backend` / `Deploy Frontend` workflow，配好 `CLOUDFLARE_ACCOUNT_ID`、`CLOUDFLARE_API_TOKEN` 两个公共 secrets，再把整份 `wrangler.toml` 填进 `BACKEND_TOML`、前端环境填进 `FRONTEND_ENV`，手动 Run workflow 即可。升级时同步 fork 再跑一次，也支持定时自动更新。
 
-### 2.3 用户管理功能
+**命令行（下面的主线）**：完全可控，出问题最好排查。
 
-| 功能 | 说明 |
-|------|------|
-| **凭证登录** | 使用凭证重新登录之前的邮箱 |
-| **注册登录** | 完整用户系统，绑定邮箱获取 JWT |
-| **OAuth2** | 支持 Github、Authentik 等第三方登录 |
-| **Passkey** | 无密码登录支持 |
-| **角色管理** | 多角色域名和前缀配置 |
-| **收件箱** | 地址和关键词过滤 |
-
-### 2.4 管理功能
-
-| 功能 | 说明 |
-|------|------|
-| **Admin 控制台** | 完整后台管理界面 |
-| **创建邮箱** | Admin 可创建无前缀邮箱 |
-| **定时清理** | 多种清理策略 |
-| **IP 白名单** | 严格访问控制模式 |
-| **访问密码** | 可作为私人站点 |
-
-## 三、快速开始
-
-### 3.1 一键部署到 Cloudflare Workers
-
-[![Deploy to Cloudflare Workers](https://deploy.workers.cloudflare.com/?url=https://github.com/dreamhunter2333/cloudflare_temp_email)](https://deploy.workers.cloudflare.com/?url=https://github.com/dreamhunter2333/cloudflare_temp_email)
-
-### 3.2 GitHub Actions 部署
-
-```yaml
-# .github/workflows/deploy.yml
-name: Deploy
-on: [push]
-jobs:
- deploy:
- runs-on: ubuntu-latest
- steps:
- - uses: actions/checkout@v4
- - name: Deploy
- uses: cloudflare/pages-action@v1
-```
-
-详细部署文档：https://temp-mail-docs.awsl.uk/zh/guide/actions/github-action.html
-
-### 3.3 手动部署
+### 用 CLI 部署后端
 
 ```bash
-# 克隆仓库
+npm install wrangler -g
 git clone https://github.com/dreamhunter2333/cloudflare_temp_email
-cd cloudflare_temp_email
-
-# 安装依赖
+cd cloudflare_temp_email/worker
 pnpm install
-
-# 本地开发
-pnpm dev
-
-# 构建
-pnpm build
+cp wrangler.toml.template wrangler.toml
 ```
 
-## 四、技术架构
+编辑 `wrangler.toml`，最小可跑配置是这几项（完整变量见[官方 worker 变量说明](https://temp-mail-docs.awsl.uk/zh/guide/worker-vars)）：
 
-### 4.1 系统架构
+```toml
+name = "cloudflare_temp_email"
+main = "src/worker.ts"
+compatibility_date = "2025-04-01"
+compatibility_flags = [ "nodejs_compat" ]
+keep_vars = true
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│ Cloudflare 临时邮箱 │
-├─────────────────────────────────────────────────────────┤
-│ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ │
-│ │ Frontend │ │ Workers │ │ Pages │ │
-│ │ (Vue) │ │ (Python) │ │ (Static) │ │
-│ └──────┬──────┘ └──────┬──────┘ └─────────────┘ │
-│ │ │ │
-│ ┌──────▼──────┐ ┌──────▼──────┐ │
-│ │ IMAP │ │ Rust WASM │ │
-│ │ SMTP Proxy │ │ Mail Parse │ │
-│ └─────────────┘ └─────────────┘ │
-│ │ │ │
-│ ┌──────▼─────────────────▼──────┐ │
-│ │ Cloudflare Workers AI │ │
-│ │ (AI 邮件识别 / 验证码提取) │ │
-│ └────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────┘
+[vars]
+PREFIX = "tmp"
+DOMAINS = ["mail.example.com"]        # 必须是已启用 Email Routing 的域名
+JWT_SECRET = "openssl-rand-hex-32-的输出"  # 登录鉴权签名密钥
+ENABLE_USER_CREATE_EMAIL = true
+ENABLE_USER_DELETE_EMAIL = true
+# ADMIN_PASSWORDS = ["你的管理密码"]    # 不配置则无法进入 admin 控制台
+
+[[d1_databases]]
+binding = "DB"                        # 绑定名必须是 DB
+database_name = "your-d1-name"
+database_id = "xxxxxxxx"
 ```
 
-### 4.2 技术栈
+`DATABASE_URL` 之类的东西不存在——数据库连接全靠这个 `[[d1_databases]]` 绑定。需要注册用户邮箱验证或 Telegram Bot 时，再补一个 KV 命名空间绑定（`binding = "KV"`）；想用官方限流就加 `[[unsafe.bindings]]` 的 ratelimit 配置（默认示例是 `/api/new_address` 每分钟 10 次）。
 
-| 组件 | 技术 |
-|------|------|
-| 前端 | Vue 3 + TypeScript + Vite |
-| 后端 | Python (Cloudflare Workers) |
-| 邮件解析 | Rust WASM |
-| AI | Cloudflare Workers AI |
-| 部署 | Cloudflare Workers + Pages |
-| 数据库 | Cloudflare D1 |
-| 存储 | R2 / S3 兼容存储 |
-
-### 4.3 主要组件
-
-| 目录 | 说明 |
-|------|------|
-| `frontend/` | Vue 3 前端应用 |
-| `worker/` | Cloudflare Workers 后端 |
-| `smtp_proxy_server/` | SMTP 代理服务器 |
-| `mail-parser-wasm/` | Rust WASM 邮件解析器 |
-| `pages/` | Cloudflare Pages 函数 |
-| `db/` | 数据库 Schema |
-| `e2e/` | Playwright E2E 测试 |
-| `scripts/` | 部署脚本 |
-
-## 五、AI 邮件识别
-
-### 5.1 功能说明
-
-Cloudflare Workers AI 自动识别邮件中的重要信息：
-
-```python
-# AI 自动提取的内容
-- 验证码（6位数字/字母）
-- 认证链接
-- 服务激活链接
-- 重要文本摘要
-```
-
-### 5.2 配置启用
+部署与验证：
 
 ```bash
-# 在 Cloudflare Workers 设置中启用 Workers AI
-# 自动使用 @cf/meta/llama-3-8b-instruct 模型
+pnpm run deploy
+# 首次部署会提示创建项目，production 分支填 production
 ```
 
-## 六、邮件收发集成
+打开 Worker 的 URL，显示 `OK`、`/health_check` 也返回 `OK`，后端就通了。
 
-### 6.1 SMTP 发送
+### 部署前端：两种形态选一种
 
-```python
-# 配置 SMTP
-SMTP_HOST=smtp.example.com
-SMTP_PORT=587
-SMTP_USER=your@email.com
-SMTP_PASSWORD=xxx
-DKIM_PRIVATE_KEY=xxx
+**前后端分离**（各一个域名/子域名）：在 `frontend/` 复制 `.env.example` 为 `.env.prod`，把 `VITE_API_BASE` 指向后端地址，然后 `pnpm build` + `pnpm run deploy` 部署到 Pages。注意 Pages 是单页应用，如果在控制台手动上传，"未找到处理"必须选 **SPA 模式**，否则刷新或直接访问 `/admin` 会 404；用 `wrangler pages deploy` 则自动处理。
+
+**单 Worker 带前端**（一个域名搞定）：先在 `frontend/` 跑 `pnpm build:pages`，再在 `wrangler.toml` 里加：
+
+```toml
+[assets]
+directory = "../frontend/dist/"
+binding = "ASSETS"
+run_worker_first = true
 ```
 
-### 6.2 IMAP 接收
+还有第三种中间形态：`pages/` 目录里的 Pages Functions 可以把前端请求同域转发给 Worker，响应更快，配置见[官方文档](https://temp-mail-docs.awsl.uk/zh/guide/cli/pages)。
 
-```python
-# IMAP 配置
-IMAP_HOST=imap.example.com
-IMAP_PORT=993
-IMAP_USER=your@email.com
-IMAP_PASSWORD=xxx
-```
+### 数据库初始化与升级
 
-### 6.3 Resend 发送
+admin 控制台的"快速设置 → 数据库"页面可以一键初始化和迁移；CLI 侧对应 `admin/db_initialize` 与 `admin/db_migration` 两个接口。升级版本时先看 [CHANGELOG](https://github.com/dreamhunter2333/cloudflare_temp_email/blob/main/CHANGELOG.md)，凡标注 Breaking Changes 的版本（例如 v1.7.0 改了发信通道语义）必须执行数据库 SQL 或补配置，其余功能更新按需开启。
 
-```python
-# 使用 Resend API
-RESEND_API_KEY=re_xxx
-```
+## 核心配置：变量、后台设置与 secrets 各管一摊
 
-## 七、用户认证系统
+这个项目的配置分布在四个地方，新用户最容易在这里迷路：
 
-### 7.1 OAuth2 第三方登录
+| 位置 | 放什么 | 例子 |
+|------|--------|------|
+| `wrangler.toml` 的 `[vars]` | 部署期静态变量 | `DOMAINS`、`JWT_SECRET`、`PASSWORDS`（站点私有密码） |
+| wrangler secrets | 敏感令牌 | `TELEGRAM_BOT_TOKEN`（`wrangler secret put` 写入） |
+| admin 控制台（存 D1） | 运行时可调的策略 | 黑名单、自动清理规则、OAuth2、AI 提取白名单 |
+| 绑定（bindings） | 云资源 | D1、KV、R2/S3、Workers AI、ratelimit |
 
-支持以下 OAuth2 提供商：
+这个分层解释了为什么有的开关在配置文件里、有的在后台页面上：需要在运行中调整的（比如临时拉黑一个前缀）进了数据库设置，改了要重新部署的（比如域名列表）留在 `[vars]`。
 
-| 提供商 | 说明 |
-|--------|------|
-| 🟢 **GitHub** | GitHub OAuth |
-| 🔵 **Authentik** | 自托管 SSO |
+几个常用的安全开关：`PASSWORDS` 让整个站点变成"凭密码进入"的私人实例；`CF_TURNSTILE_SITE_KEY`/`CF_TURNSTILE_SECRET_KEY` 接 Cloudflare 人机验证，配 `ENABLE_GLOBAL_TURNSTILE_CHECK` 后所有登录表单都要过验证；v1.12.0 新增的 `ADMIN_API_IP_WHITELIST` 把全部 `/admin/*` 接口限制到指定来源 IP；v1.6.0 起后台的 IP 白名单"严格模式"则反过来，只放表白名单 IP 调用创建邮箱、发信这类被限流保护的接口。
 
-```python
-# OAuth2 配置
-OAUTH2_PROVIDERS=["github", "authentik"]
-OAUTH2_GITHUB_CLIENT_ID=xxx
-OAUTH2_GITHUB_CLIENT_SECRET=xxx
-```
+## 邮件解析与验证码提取
 
-### 7.2 Passkey 无密码登录
+**Rust WASM 解析**是收件链路的底线能力：`mail-parser-wasm` 以 WASM 形式跑在 Worker 里，官方说法是 Node 解析模块失败的邮件它也能解析。默认部署用 Worker 内置解析即可，追求更强解析能力时可以开启 `BACKEND_USE_MAIL_WASM_PARSER` 或参考文档单独配 wasm 解析 Worker。
 
-```python
-# 启用 Passkey
-ENABLE_PASSKEY=true
-```
+**验证码提取**在 v1.13.0 起分成两种模式，由 `AI_EXTRACT_MODE` 显式选择：
 
-### 7.3 JWT 凭证
+| 模式 | 提取内容 | 邮件内容去向 | 依赖 |
+|------|----------|--------------|------|
+| `local`（默认） | 仅验证码 | 不出 Worker，内置规则识别 | 无 |
+| `ai` | 验证码、认证链接、服务链接、订阅管理链接等 | 发送到你账号下的 Workers AI | `[ai]` 绑定 |
 
-```javascript
-// 登录后获取 JWT
-const token = localStorage.getItem('jwt')
-// 使用 token 访问受保护的 API
-```
+`local` 模式即使配了 AI 绑定也不会调 AI，隐私敏感的部署可以放心开总开关 `ENABLE_AI_EMAIL_EXTRACT`。`ai` 模式的默认模型是 `@cf/meta/llama-3.1-8b-instruct-fast`（支持 JSON Mode；更便宜的 `fp8-fast` 变体不在 JSON Mode 支持列表，别选），内容超过 4000 字符会截断。要注意 Cloudflare 已于 2026-05-30 弃用旧模型 `@cf/meta/llama-3.1-8b-instruct`——早期教程里写的 `@cf/meta/llama-3-8b-instruct` 更是早已过时，照抄会直接跑不通。成本敏感时，可在 admin 的"AI 提取设置"页配地址白名单（支持 `*@example.com` 这类通配符），白名单外的地址自动回退本地规则。
 
-## 八、Telegram Bot 集成
+本地规则本身比想象中能干：支持中英日韩加俄西葡法德意等十余种语言的关键词写法，能识别 `123456 是您的验证码`、`G-123456`、全角数字、分隔符验证码，并主动排除年份、电话号码、订单号这类干扰项。
 
-### 8.1 功能
+## 收发件的三条路
 
-| 功能 | 说明 |
-|------|------|
-| **邮件推送** | 新邮件推送到 Telegram |
-| **命令** | /new 生成新邮箱、/list 查看邮箱 |
-| **通知** | 自定义通知规则 |
+**发件**按优先级有三种通道，v1.7.0 起官方推荐第一种：
 
-### 8.2 配置
+1. **Cloudflare `send_email` binding**——已启用 Email Routing 的域名无需任何第三方配置即可发信，Workers Paid 套餐每月含 3000 封，超出 $0.35/1000 封；
+2. **Resend**——配 API key 走它的 API 或 SMTP；
+3. **SMTP**——通过下面的代理服务接任意 SMTP 服务商，支持 DKIM。
+
+发信默认有额度控制（send balance），`DEFAULT_SEND_BALANCE` 大于 0 时新地址自动获得额度，否则需要用户申请或 admin 授予。
+
+**IMAP 收信**不是配置出来的，而是靠一个独立的 Python 服务 `smtp_proxy_server/`：它把 Worker 的 HTTP API 翻译成标准 SMTP（端口 8025）和 IMAP（端口 11143），让 Thunderbird 这类邮件客户端能直接连。Docker 一行起来：
 
 ```bash
-# 设置 Telegram Bot Token
-TELEGRAM_BOT_TOKEN=xxx
-TELEGRAM_CHAT_ID=xxx
+cd smtp_proxy_server/
+docker-compose up -d
+# 镜像 ghcr.io/dreamhunter2333/cloudflare_temp_email/smtp_proxy_server:latest
+# 环境变量 proxy_url 指向你的 Worker 地址
 ```
 
-### 8.3 使用
+它的 `.env` 配置项很少：`proxy_url`（默认 `http://localhost:8787`）、两个端口、可选的 STARTTLS 证书路径。IMAP 的已读标记持久化在本地 SQLite（`imap_flag_db_path`），容器记得挂载 `data/` 目录，否则客户端重连后已读状态会丢——这是 v1.10.0 专门修过的问题。
 
-```
-/new - 生成新临时邮箱
-/list - 查看所有邮箱
-/delete [邮箱] - 删除邮箱
-/settings - 设置
-```
+## 用户系统与安全模型
 
-## 九、管理员功能
+匿名用户开箱即用：访问前端、创建地址、拿到一个地址级 JWT（`POST /api/new_address` 直接返回 `{ address, jwt, address_id }`），凭证存浏览器 localStorage，之后所有 `/api/*` 请求走 `Authorization: Bearer <jwt>`。在这个之上还有一层完整的注册用户体系：
 
-### 9.1 Admin 控制台
+- **注册登录**：绑定邮箱地址后可管理多个信箱，注册验证码走 KV 发信；
+- **地址密码**（`ENABLE_ADDRESS_PASSWORD`）：每个地址可生成独立密码，支持密码登录；
+- **OAuth2**：GitHub、Authentik 等第三方登录，在 admin 后台的 OAuth2 设置页配置（不在配置文件里）；GitHub 私密邮箱场景官方文档给了 `user:email` scope 的完整配置；
+- **Passkey**：WebAuthn 无密码登录，注册用户可用，无需开关变量。
 
-访问 `/admin` 进入管理后台：
+接口鉴权分四种凭证，别混用：地址 JWT（`Authorization: Bearer`）、用户 JWT（`x-user-token`）、管理密码（`x-admin-auth`）、站点密码（`x-custom-auth`）。地址 JWT 和用户 JWT 是两套体系，拿用户 JWT 调地址接口只会得到 401。
 
-| 功能 | 说明 |
-|------|------|
-| **用户管理** | 查看/编辑/删除用户 |
-| **邮箱管理** | 创建/删除邮箱 |
-| **统计** | 使用统计、活跃度 |
-| **设置** | 系统配置 |
+## 通知与集成
 
-### 9.2 IP 白名单
+**Telegram Bot** 是最常用的推送面：新邮件实时推送、`/mails` 看历史邮件，还能直接创建地址。命令共九个：`/start`、`/new`、`/address`、`/bind`、`/unbind`、`/delete`、`/mails`、`/cleaninvalidaddress`、`/lang`（最后一个需开 `TG_ALLOW_USER_LANG`）。每用户地址数默认上限 5（`TG_MAX_ADDRESS`），Bot token 用 `wrangler secret put TELEGRAM_BOT_TOKEN` 写入，另外需要 KV 绑定。v1.12.0 还支持把前端打包成 Telegram Mini App。
 
-```python
-# 启用严格模式
-ENABLE_IP_WHITELIST=true
-ALLOWED_IPS=["1.2.3.4", "5.6.7.8"]
-```
+**Webhook** 走 KV 存配置，总开关 `ENABLE_WEBHOOK`：admin 可配全局 webhook，也可开放给单个地址自配。请求体是模板变量填充的 JSON，除了 `${from}`、`${to}`、`${subject}`、`${url}` 这些基础占位符，v1.9.0 起还能用 `aiExtractType`、`aiExtractResult` 等占位符把验证码提取结果一并推走。官方用 [message-pusher](https://github.com/songquanpeng/message-pusher) 做了完整示例。
 
-### 9.3 定时清理
+**AI agent 接入**是 v1.8.0 起的显式卖点：仓库内置 `cf-temp-mail-agent-mail` skill（`npx degit dreamhunter2333/cloudflare_temp_email/skills/cf-temp-mail-agent-mail` 安装），agent 凭用户提供的地址 JWT + API 地址，调 `/api/parsed_mails`、`/api/parsed_mail/:id` 这两个服务端解析接口就能读信、轮询验证码，不需要自己带 MIME 解析库。创建地址涉及 Turnstile 人机验证，这步仍由人在前端完成——分工就是"人建信箱，agent 收信"。
 
-```python
-# 清理策略
-AUTO_CLEANUP=true
-CLEANUP_INTERVAL_HOURS=24
-MAX_EMAIL_AGE_DAYS=7
-```
+**兑换码**（v1.12.0，`ENABLE_REDEEM_CODE`）面向"站长发码、用户兑换"的运营场景，可兑换角色、发信额度和专属邮箱，admin 端支持批量生成与导出。
 
-## 十、安全功能
+## 版本演进速览（给读过旧教程的读者）
 
-### 10.1 Cloudflare Turnstile 验证
+2026 年 4 月以来的七个版本，值得单独点名的变化：
 
-```python
-# 启用人机验证
-TURNSTILE_SITE_KEY=xxx
-TURNSTILE_SECRET_KEY=xxx
-```
+- **v1.7.0（2026-04）**：唯一一个 Breaking Change——`SEND_MAIL` binding 从"仅兼容路径"变为常规兜底发信通道，升级前确认发信行为符合预期；
+- **v1.8.0（2026-04）**：前端 6 国语言（zh/en/es/pt-BR/ja/de，默认中文）；新增服务端解析邮件 API 与内置 agent skill；
+- **v1.9.0（2026-06）**：无 Workers AI 绑定时验证码提取自动回退内置正则；默认模型切到 `llama-3.1-8b-instruct-fast`；
+- **v1.10.0（2026-07）**：邮件外部图片白名单加载（DOMPurify 消毒，可整体关闭）；SPF/DKIM/DMARC 垃圾邮件判定按 RFC 修正；IMAP 已读状态持久化；
+- **v1.11.0（2026-08）**：清理任务分批执行（`CLEANUP_BATCH_SIZE`，默认 3000、上限 5000），大幅降低 D1 写入量；
+- **v1.12.0（2026-09）**：兑换码、邮件已读/未读状态、`ADMIN_API_IP_WHITELIST`、用户中心发件箱；
+- **v1.13.0（main，未发版）**：`AI_EXTRACT_MODE` 显式分 local/ai 两档，默认本地规则——从旧版升级且依赖 AI 识别的部署，必须手动设 `AI_EXTRACT_MODE = "ai"`。
 
-### 10.2 限流配置
+清理策略本身在 admin 后台配置（自动清理规则 + cron 触发器，`wrangler.toml` 里 `[triggers] crons = ["0 0 * * *"]` 一行启用），没有 `CLEANUP_INTERVAL_HOURS` 这类环境变量。
 
-```python
-# 防止滥用
-RATE_LIMIT_REQUESTS=100
-RATE_LIMIT_WINDOW_SECONDS=60
-```
+## 常见问题
 
-### 10.3 黑白名单
+**创建地址成功但收不到邮件？** 按顺序查三处：域名是否已在 Cloudflare 启用 Email Routing 并下发 DNS 记录；Catch-all 是否绑到了这个 Worker；用的随机子域名地址的话，基础域名 DNS 是否给 `*` 子域配了通配 MX——Email Routing 的子域不继承父域配置，这是官方文档反复强调的坑。
 
-```python
-# 邮箱前缀黑名单
-EMAIL_PREFIX_BLACKLIST=["spam", "temp", "disposable"]
+**前端报 Network Error？** 多半是 Cloudflare 安全挑战拦截了 API 请求，或者 `VITE_API_BASE` 配置有误（末尾不要带 `/`）。`worker.dev` 域名在大陆不可访问，先换自定义域名再排查。
 
-# 域名白名单（可选）
-EMAIL_DOMAIN_WHITELIST=["example.com"]
-```
+**Pages 刷新 404？** 手动上传时没选 SPA 模式，改设置或改用 `wrangler pages deploy`。
 
-## 十一、多语言支持
+**免费额度到底够不够？** Workers 免费档每天 10 万次请求、D1 免费 5 GB 存储、R2 免费 10 GB，个人自用绰绰有余；公开服务或高流量场景按 Cloudflare 牌价评估，收发高峰主要吃 Workers 请求数和 D1 容量（admin 数据库页可直观看到容量占比）。
 
-### 11.1 支持的语言
+**想迁移出 Cloudflare？** 收件链路依赖 Email Routing，数据库是 D1，发信推荐通道是 `send_email` binding——三者都是 Cloudflare 专属服务。迁移等于换一套技术栈重写，选型时就该想清楚。
 
-| 语言 | 代码 |
-|------|------|
-| **简体中文** | zh |
-| **English** | en |
-| **日本語** | ja |
-| **한국어** | ko |
+## 上手顺序建议
 
-### 11.2 切换语言
+第一次部署按这个顺序走，每步都有明确的验收点：域名开 Email Routing → CLI 部署后端（`/health_check` 返回 OK）→ 部署前端（能创建地址、能收到测试邮件）→ 配 `ADMIN_PASSWORDS` 进 admin 后台（初始化数据库、按需开清理和 Turnstile）→ 配 Telegram Bot 或 Webhook 做推送。跑通之后再考虑发信（binding 或 Resend）、IMAP 代理、AI 提取模式这些增量配置。
 
-```javascript
-// 前端自动检测浏览器语言
-// 或手动切换
-localStorage.setItem('language', 'zh')
-```
+---
 
-## 十二、API 参考
-
-### 12.1 关键 API
-
-| 端点 | 方法 | 说明 |
-|------|------|------|
-| `/api/emails` | GET | 获取邮箱列表 |
-| `/api/emails` | POST | 创建新邮箱 |
-| `/api/emails/:id` | DELETE | 删除邮箱 |
-| `/api/emails/:id/messages` | GET | 获取邮件列表 |
-| `/api/messages/:id` | GET | 获取邮件内容 |
-
-### 12.2 认证 API
-
-| 端点 | 方法 | 说明 |
-|------|------|------|
-| `/api/auth/login` | POST | 用户登录 |
-| `/api/auth/register` | POST | 用户注册 |
-| `/api/auth/oauth/:provider` | GET | OAuth2 登录 |
-| `/api/auth/passkey` | POST | Passkey 登录 |
-
-### 12.3 Webhook
-
-```python
-# 配置 Webhook
-WEBHOOK_URL=https://your-server.com/webhook
-WEBHOOK_EVENTS=["new_email", "email_deleted"]
-```
-
-## 十三、部署配置
-
-### 13.1 环境变量
-
-```bash
-# Cloudflare Workers
-ACCOUNT_ID=xxx
-AUTH_TOKEN=xxx
-PAGES_PROJECT_NAME=cloudflare-temp-email
-
-# 数据库
-DATABASE_URL=https://xxx.r2.cloudflarestorage.com
-
-# OAuth2
-OAUTH2_GITHUB_CLIENT_ID=xxx
-OAUTH2_GITHUB_CLIENT_SECRET=xxx
-
-# Telegram
-TELEGRAM_BOT_TOKEN=xxx
-
-# AI
-CF_ACCOUNT_ID=xxx
-CF_API_TOKEN=xxx
-```
-
-### 13.2 Docker 本地开发
-
-```bash
-# 使用 Docker Compose
-docker compose up
-
-# 或单独运行
-docker run -p 8080:8080 cloudflare_temp_email
-```
-
-## 十四、实践建议
-
-### 14.1 部署建议
-
-1. **使用 Cloudflare Workers** - 全球边缘部署，极低延迟
-2. **启用 R2 存储** - 附件存储在 Cloudflare R2
-3. **配置自动清理** - 定期清理过期邮件
-4. **启用 Turnstile** - 防止滥用
-
-### 14.2 安全建议
-
-1. **启用 IP 白名单** - 生产环境建议开启
-2. **配置限流** - 防止 API 滥用
-3. **使用 HTTPS** - Cloudflare 自动提供
-4. **定期更新** - 跟进最新版本
-
-### 14.3 性能优化
-
-| 优化项 | 说明 |
-|--------|------|
-| **Rust WASM** | 邮件解析使用 WASM |
-| **缓存** | 使用 Cloudflare Cache |
-| **边缘** | Workers 全球边缘部署 |
-
-## 十五、文档资源
-
-### 15.1 官方资源
+## 资源与口径说明
 
 | 资源 | 链接 |
 |------|------|
-| **中文文档** | https://temp-mail-docs.awsl.uk |
-| **部署文档** | https://temp-mail-docs.awsl.uk/zh/guide/actions/github-action.html |
-| **Telegram** | https://t.me/cloudflare_temp_email |
-| **问题反馈** | https://github.com/dreamhunter2333/cloudflare_temp_email/issues |
-
-### 15.2 在线体验
-
-| 体验 | 链接 |
-|------|------|
-| **在线演示** | https://mail.awsl.uk/ |
-
-## 十六、总结
-
-Cloudflare 临时邮箱的最大优势是**零成本**——整个系统跑在 Cloudflare 免费额度上（Workers + D1 + R2 + Pages），邮件解析用 Rust WASM 保证性能，Workers AI 做验证码自动提取。功能覆盖收发、IMAP/SMTP、Telegram Bot、OAuth2 登录、Admin 后台，在临时邮箱方案里算比较完整的。
-
-局限：Cloudflare 免费额度有请求限制（Workers 10 万次/天），高流量场景需要评估是否够用；Workers AI 的验证码识别准确率取决于邮件格式，复杂场景可能需要人工确认。
-
----
-
-## 🎯 学习目标
-
-读完本文，你应该能够：
-
-1. **理解 Cloudflare 临时邮箱的核心价值** — 为什么选择它，零成本的实现原理
-2. **掌握完整功能** — 邮件处理、用户管理、管理员功能
-3. **完成部署** — 一键部署到 Cloudflare Workers 或手动部署
-4. **配置高级功能** — AI 邮件识别、SMTP/IMAP、Telegram Bot、OAuth2
-5. **生产环境最佳实践** — 安全配置、性能优化、定时清理
-
----
-
-## 📋 目录
-
-- [项目概述](#一项目概述)
-- [核心功能详解](#二核心功能详解)
-- [快速开始](#三快速开始)
-- [技术架构](#四技术架构)
-- [AI 邮件识别](#五-ai-邮件识别)
-- [邮件收发集成](#六-邮件收发集成)
-- [用户认证系统](#七-用户认证系统)
-- [Telegram Bot 集成](#八-telegram-bot-集成)
-- [管理员功能](#九-管理员功能)
-- [安全功能](#十-安全功能)
-- [多语言支持](#十一-多语言支持)
-- [API 参考](#十二-api-参考)
-- [部署配置](#十三-部署配置)
-- [实践建议](#十四-实践建议)
-- [文档资源](#十五-文档资源)
-- [总结](#十六-总结)
-- [常见问题 FAQ](#-常见问题-faq)
-- [自测题](#-自测题)
-- [动手练习](#-动手练习)
-- [进阶路径](#-进阶路径)
-- [资料口径说明](#-资料口径说明)
-
----
-
-## ❓ 常见问题 FAQ
-
-### Q1: Cloudflare 免费额度够用吗？
-
-**A**: 对于个人使用或小型项目，Cloudflare 免费额度通常够用：
-- Workers: 10 万次/天
-- D1: 5 GB 存储
-- R2: 10 GB 存储/月
-
-但如果是高流量场景（如公开服务），需要评估是否够用或升级付费计划。
-
-### Q2: Rust WASM 邮件解析的优势是什么？
-
-**A**: Rust WASM 邮件解析相比纯 JavaScript 解析有两个优势：
-1. **性能**：Rust 编译的 WASM 执行速度快
-2. **兼容性**：能解析 Node.js 解析失败的邮件（如某些特殊编码的邮件）
-
-### Q3: Workers AI 的验证码识别准确率如何？
-
-**A**: 取决于邮件格式。标准验证码邮件（如"您的验证码是 123456"）准确率很高。但复杂场景（如图片验证码、交互式验证）可能需要人工确认。
-
-### Q4: 如何迁移到其他平台？
-
-**A**: 项目使用 Cloudflare 专属服务（Workers、D1、R2），迁移到其他平台需要改写：
-- Workers → 改为 Express/Fastify 等框架
-- D1 → 改为 PostgreSQL/MySQL
-- R2 → 改为 S3/MinIO
-
-建议在 Cloudflare 上运行，以充分利用其全球边缘网络和免费额度。
-
-### Q5: 支持自定义域名吗？
-
-**A**: 支持。你可以在 Cloudflare Workers 设置中绑定自定义域名，然后使用你的域名提供临时邮箱服务。
-
----
-
-## 📝 自测题
-
-### 第一题：Cloudflare 临时邮箱的核心优势是什么？
-
-<details>
-<summary>点击查看答案</summary>
-
-Cloudflare 临时邮箱的最大优势是**零成本**——整个系统跑在 Cloudflare 免费额度上（Workers + D1 + R2 + Pages），邮件解析用 Rust WASM 保证性能，Workers AI 做验证码自动提取。
-
-</details>
-
-### 第二题：Rust WASM 在项目中起什么作用？
-
-<details>
-<summary>点击查看答案</summary>
-
-Rust WASM 用于**邮件解析**。相比纯 JavaScript 解析，它能解析 Node.js 解析失败的邮件，且执行速度更快。这是项目的一个技术亮点。
-
-</details>
-
-### 第三题：如何启用 AI 邮件识别功能？
-
-<details>
-<summary>点击查看答案</summary>
-
-在 Cloudflare Workers 设置中启用 Workers AI，系统会自动使用 `@cf/meta/llama-3-8b-instruct` 模型识别邮件中的重要信息（验证码、认证链接等）。
-
-</details>
-
-### 第四题：Telegram Bot 支持哪些命令？
-
-<details>
-<summary>点击查看答案</summary>
-
-- `/new` - 生成新临时邮箱
-- `/list` - 查看所有邮箱
-- `/delete [邮箱]` - 删除邮箱
-- `/settings` - 设置
-
-</details>
-
-### 第五题：如何配置 SMTP 发送邮件？
-
-<details>
-<summary>点击查看答案</summary>
-
-在环境变量中配置：
-```bash
-SMTP_HOST=smtp.example.com
-SMTP_PORT=587
-SMTP_USER=your@email.com
-SMTP_PASSWORD=xxx
-DKIM_PRIVATE_KEY=xxx
-```
-
-也可以使用 Resend API（`RESEND_API_KEY=re_xxx`）。
-
-</details>
-
----
-
-## 🛠️ 动手练习
-
-### 练习 1：一键部署到 Cloudflare Workers
-
-**任务**：使用一键部署按钮将项目部署到 Cloudflare Workers。
-
-**步骤**：
-1. 点击文章中的"Deploy to Cloudflare Workers"按钮
-2. 登录 Cloudflare 账号
-3. 等待部署完成
-4. 访问部署的 URL，测试基本功能
-
-**预期结果**：成功部署并看到临时邮箱界面。
-
----
-
-### 练习 2：配置 Telegram Bot
-
-**任务**：配置 Telegram Bot，实现新邮件推送。
-
-**步骤**：
-1. 创建 Telegram Bot（通过 @BotFather）
-2. 获取 Bot Token
-3. 在环境变量中设置 `TELEGRAM_BOT_TOKEN` 和 `TELEGRAM_CHAT_ID`
-4. 重启 Workers
-5. 在 Telegram 中测试 `/new` 命令
-
-**预期结果**：成功接收新邮件推送。
-
----
-
-### 练习 3：启用 OAuth2 登录
-
-**任务**：配置 GitHub OAuth2 登录。
-
-**步骤**：
-1. 在 GitHub 创建 OAuth App
-2. 获取 Client ID 和 Client Secret
-3. 在环境变量中设置 `OAUTH2_GITHUB_CLIENT_ID` 和 `OAUTH2_GITHUB_CLIENT_SECRET`
-4. 重启 Workers
-5. 测试 GitHub 登录
-
-**预期结果**：成功使用 GitHub 账号登录。
-
----
-
-## 🚀 进阶路径
-
-### 初学者（0-1 个月）
-
-1. **完成一键部署**
-2. **测试基本功能**（收发邮件、查看邮件）
-3. **配置 Telegram Bot**
-
-### 进阶者（1-3 个月）
-
-1. **启用高级功能**（AI 识别、SMTP、OAuth2）
-2. **配置安全功能**（Turnstile、限流、黑白名单）
-3. **自定义域名**
-
-### 高级者（3+ 个月）
-
-1. **贡献代码到上游**
-2. **定制功能开发**
-3. **生产环境部署和优化**
-
----
-
-## 📚 资料口径说明
-
-### 本文信息来源
-
-| 来源 | 链接 | 用途 |
-|------|------|------|
-| **Cloudflare Temp Email GitHub** | https://github.com/dreamhunter2333/cloudflare_temp_email | 项目介绍、功能列表 |
-| **官方文档** | https://temp-mail-docs.awsl.uk | 部署文档、使用指南 |
-| **在线演示** | https://mail.awsl.uk/ | 功能体验 |
-
-### 时效性说明
-
-- **项目版本**：本文基于 v1.5.0 (2026-04-04) 编写
-- **GitHub Stars**：截至 2026-04，项目获得 8.3k stars
-
----
-
----
-
-**🔗 相关资源：**
-
-| 资源 | 链接 |
-|------|------|
-| GitHub | https://github.com/dreamhunter2333/cloudflare_temp_email |
+| GitHub 仓库 | https://github.com/dreamhunter2333/cloudflare_temp_email |
+| 部署文档（中文） | https://temp-mail-docs.awsl.uk/zh/guide/quick-start |
 | 在线演示 | https://mail.awsl.uk/ |
-| 文档 | https://temp-mail-docs.awsl.uk |
-| Telegram | https://t.me/cloudflare_temp_email |
+| Telegram 社区 | https://t.me/cloudflare_temp_email |
+| 站内相关 | [listmonk：自托管邮件营销系统](/posts/listmonk-self-hosted-email-newsletter-platform-guide/) · [karakeep：自托管书签库](/posts/karakeep-self-hosted-bookmark-ai-tag-guide/) |
 
----
-
-_本文基于 Cloudflare 临时邮箱 (8.3k Stars) 优化，2026-07-01 更新_
+本文数据核对于 2026-10-02：GitHub API 读数（stars/forks/提交/贡献者）、v1.12.0 release、main 分支源码（worker 路由、`wrangler.toml.template`、CHANGELOG、内置 skill 与 VitePress 文档）逐项比对。项目迭代很快，配置类细节以官方文档站的[变量说明](https://temp-mail-docs.awsl.uk/zh/guide/worker-vars)为最新口径；Cloudflare 免费额度为官方牌价，以 Cloudflare 文档为准。项目仅供学习和个人用途，请遵守当地法律，勿用于违法行为（README 原文警告）。

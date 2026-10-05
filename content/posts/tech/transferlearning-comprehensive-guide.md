@@ -10,8 +10,6 @@ tags = ['教程', '深度学习']
 
 # Transfer Learning：迁移学习全栈资源库
 
-> **学习目标**：系统了解迁移学习的研究领域、理论基础、代码库和应用场景；能够使用本资源库进行入门学习和深入研究；能够选择合适的迁移学习方法解决实际应用问题
-> **核心问题**：迁移学习有哪些核心研究领域？如何选择合适的入门路径？如何找到对应的论文、代码和数据集？
 > **难度**：⭐⭐⭐（中级，需要深度学习基础）
 > **预计阅读时间**：15 分钟
 
@@ -141,16 +139,19 @@ https://colab.research.google.com/drive/1MVuk95mMg4ecGyUAIG94vedF81HtWQAr
 
 **PyTorch 微调教程:**
 ```python
+import torch.nn as nn
 import torchvision.models as models
 
-# 加载预训练模型
-model = models.resnet50(pretrained=True)
+num_classes = 10  # 按目标任务修改
+
+# 加载预训练模型（新版 torchvision 用 weights 参数）
+model = models.resnet50(weights=models.ResNet50_Weights.IMAGENET1K_V1)
 
 # 修改最后一层适应新任务
 num_ftrs = model.fc.in_features
 model.fc = nn.Linear(num_ftrs, num_classes)
 
-# 微调
+# 微调：冻结除最后一层外的参数
 for param in model.parameters():
     param.requires_grad = False
 for param in model.fc.parameters():

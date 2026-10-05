@@ -1,260 +1,174 @@
 ---
-title: "Compound Engineering：让每次工程工作都为下一次铺路的 Agent 工作流系统"
+title: "Compound Engineering：51 个 Agent 退役之后，一套工作流协议收敛成 36 个 Skill"
 date: "2026-05-30T13:13:57+08:00"
+lastmod: "2026-10-04T00:00:00+08:00"
 slug: "compound-engineering-plugin-agent-workflow-system"
 github_repo: "EveryInc/compound-engineering-plugin"
 source_key: "gh:EveryInc/compound-engineering-plugin"
-description: "Compound Engineering 把工程工作变成复利：37 个 Skill、51 个 Agent，覆盖 brainstorm → plan → work → review → compound 完整闭环，支持 Claude Code、Cursor、Codex、Copilot、Qwen Code、OpenCode 等 10+ 平台。"
+description: "Every 的 Compound Engineering 插件四个月从 v3.9 走到 v3.30：51 个自定义 Agent 整体退役、核心环路从 5 步变 6 步、安装进入原生插件时代。本文以 2026-05-30 发文时点和 10-04 核查读数双时点拆解它的复利机制。"
 draft: false
 categories: ["技术笔记"]
 tags: ["AI Agent", "Claude Code", "Cursor", "Codex", "工作流"]
 ---
 
-Compound Engineering 的目标是让每次工程工作不仅产出一个功能，还产出了下一次更好工作的条件。
+Compound Engineering 是 Every 团队开源的一套 AI 编程工作流插件，核心主张一句话：**每一次工程工作都应该让下一次变得更容易，而不是更难。** 它把工作量倒过来分——80% 花在规划和评审，20% 花在执行——然后让每一轮留下的需求文档、计划和踩坑笔记，成为下一轮的输入。
 
-传统开发里，每加一个功能，代码库就变大一点，下一个功能更难改。Compound Engineering 把重心放在规划和评审上——执行之前的几步决定了后面返工多少。brainstorm 把需求边界和验收标准问清楚，plan 把改动路径拆到文件粒度，work 按计划执行并在隔离的 worktree 里追踪进度，review 抓模式不只是抓 bug，compound 把这次踩的坑和发现的模式固化成下次可复用的笔记。每一轮循环都在为下一轮积累起点。
+这个项目值得单独写一篇的原因，不只是它的方法论。它从 2026-05-30 本文发稿到 10-04 复核的四个月里，把自己重构了一遍：发文时官方宣称 37 个 Skill 配 51 个自定义 Agent；现在首页 badge 写的是 36 个 Skill，51 个 Agent 的独立形态整体退役，评审和研究行为内化成 Skill 内部的提示词资产。核心环路从 5 步变 6 步，安装从 Bun 转换器时代进入原生插件时代，版本从 v3.9.3 走到 v3.30.3。一个教别人「把经验固化成可复用资产」的项目，用四个月演示了自己怎么做这件事。
 
-目前插件包含 37 个 Skill 和 51 个 Agent，支持 Claude Code、Cursor、Codex、GitHub Copilot、Factory Droid、Qwen Code、OpenCode、Pi、Gemini CLI、Kiro CLI 共 10+ 个平台。
+| 字段 | 发文时点（2026-05-28 commit 85987d49） | 复核读数（2026-10-04） |
+|------|------|------|
+| Stars / Forks | 22,071 / 1,628 | 25,388 / 2,070 |
+| 版本 | v3.9.3 | v3.30.3 |
+| Skill 数 | 官方宣称 37（目录实测 38） | 36（badge 与 `skills/` 目录一致） |
+| 自定义 Agent | 官方宣称 51（目录实测 43），独立 `.md` 文件 | 无独立 Agent，行为内化进 Skill |
+| 核心环路 | 5 步 | 6 步（新增 simplify） |
+| 支持平台 | 10 个 | 官方口径 14 个 agent hosts |
 
-## 读完这篇文章你会知道
+## 核心环路：六步
 
-- Compound Engineering 的五个核心步骤是什么，每步跳过会损失什么
-- 怎么用 `/ce-brainstorm` 把模糊需求变成可执行的需求文档
-- worktree 隔离为什么能避免多任务交叉污染
-- 51 个 Agent 和 37 个 Skill 是怎么分工的，日常只用哪几个
-- 这套工作流在什么场景下 overhead 会超过收益
-
-## 项目速览
-
-| 字段 | 值 |
-|------|-----|
-| 仓库 | [EveryInc/compound-engineering-plugin](https://github.com/EveryInc/compound-engineering-plugin) |
-| Stars | 22,071+ |
-| Forks | 1,628+ |
-| License | MIT |
-| 主语言 | TypeScript |
-| 核心组件 | 37 个 Skill、51 个 Agent |
-| 支持平台 | Claude Code、Cursor、Codex、GitHub Copilot、OpenCode 等 10+ |
-
-## 目录
-
-| → | [系统地图](#系统地图) | [核心环路](#核心环路) | [一条典型循环](#一条典型循环) | [安装](#安装) | [适用边界](#适用边界) | [FAQ](#faq) | [自测](#自测)
-
-## 系统地图
-
-```mermaid
-graph TD
-    S["/ce-strategy<br/>策略锚点 STRATEGY.md"]
-
-    subgraph Loop["核心环路"]
-        B["/ce-brainstorm<br/>需求梳理 → 需求文档"]
-        P["/ce-plan<br/>需求文档 → 实现计划"]
-        W["/ce-work<br/>按计划执行<br/>worktree + 任务追踪"]
-        R["/ce-code-review<br/>多人 Agent 代码评审"]
-        C["/ce-compound<br/>经验固化为复用知识"]
-
-        B --> P --> W --> R --> C
-        C -.->|"下一轮更精准"| B
-    end
-
-    IDEATE["/ce-ideate<br/>（可选）大规模头脑风暴<br/>生成并排序想法"]
-    PULSE["/ce-product-pulse<br/>读数侧：使用/性能/错误报告<br/>存入 docs/pulse-reports/"]
-    DEBUG["/ce-debug<br/>系统性复现失败<br/>追踪根因 → 修复"]
-
-    S -.->|"作为 grounding 读取"| IDEATE
-    S -.->|"作为 grounding 读取"| B
-    S -.->|"作为 grounding 读取"| P
-    PULSE -.->|"为策略更新提供真实信号"| S
-    IDEATE -.->|"最强想法流入"| B
-```
-
-图上的核心信息：`/ce-strategy` 是上游锚点——STRATEGY.md 写下目标问题、方案、指标和追踪记录。brainstorm 和 plan 在执行前都读它，保证策略选择能流进功能构思。`/ce-product-pulse` 是读数侧配套——从真实用户数据里拉信号回到策略锚点。这两个闭合了「策略 → 执行 → 测量 → 策略」的大环。
-
-## 核心环路
-
-Compound Engineering 的核心环路只有 5 步，跳过某一步会损失对应的复利积累：
+现行版本的环路是六步：**brainstorm 想清楚需求，plan 排出实现路径，work 按计划执行，simplify 收拾刚写的代码，review 评审结果，compound 把学到的写下来**——然后带着更好的上下文进入下一轮。
 
 | 步骤 | Skill | 做什么 | 跳过会丢什么 |
 |------|-------|--------|------------|
-| 1. 需求梳理 | `/ce-brainstorm` | 交互式问答，把模糊想法变成需求文档 | 方向和边界没对齐就开始写代码，返工成本高 |
-| 2. 实现计划 | `/ce-plan` | 把需求文档转为分步骤的实现计划 | 代码改了才发现方案有问题，上下文已经耗尽 |
-| 3. 执行 | `/ce-work` | 用 worktree 隔离变更，任务追踪保证不遗漏 | 多任务交叉污染，不小心提交了未完成的代码 |
-| 4. 评审 | `/ce-code-review` | 多人 Agent 代码评审，抓模式而不只是语法错误 | bug 进了主干，下一次 debug 要重新理解上下文 |
-| 5. 知识固化 | `/ce-compound` | 把这次学到的经验文档化 | 换了个人（或同一个 Agent 的下次会话），从零开始 |
+| 1. 需求梳理 | `/ce-brainstorm` | 交互式问答，把模糊想法写成需求文档 | 方向和边界没对齐就开始写代码，返工成本高 |
+| 2. 实现计划 | `/ce-plan` | 把需求文档充实为可执行的实现计划 | 代码改了一半才发现方案有问题，上下文已经耗尽 |
+| 3. 执行 | `/ce-work` | 在隔离的 worktree 里按计划逐条执行，任务追踪保证不遗漏 | 多任务交叉污染，未完成的代码混进提交 |
+| 4. 简化 | `/ce-simplify-code` | 评审前先收拾刚写的代码：清重复、提复用 | 能跑但难改的代码进了主干，下一轮所有人一起还债 |
+| 5. 评审 | `/ce-code-review` | 多视角 Agent 评审，抓模式而不只是语法错误 | bug 进了主干，下次排查要重新理解一遍上下文 |
+| 6. 知识固化 | `/ce-compound` | 把这次的经验写进 `docs/solutions/` | 换个人（或同一个 Agent 的下次会话），从零再踩一遍坑 |
 
-`/ce-debug` 是一个独立入口——当需要系统性排查 bug 时，它走「复现失败 → 追踪根因 → 实施修复」这条线，完成后一样接 code-review 和 compound。
+第 4 步是发稿之后才进环的。`ce-simplify-code` 在发稿时点的仓库里已经存在，但官方文档的环路叙事里没有它；四个月后被官方提升为六步之一，插在执行和评审之间。这个变化本身能说明团队的取向：写完能跑不算完，写得干净才进评审。
 
-`/ce-ideate` 是环路前的一个可选拓展：在动手前让 Agent 生成并批判性评估一批想法，排完序后把最强的一个流入 brainstorm。适合「连做什么都还没想清楚」的阶段——如果你已经有明确需求，直接从 brainstorm 开始。
+`/ce-debug` 是独立入口，处理「从 bug 出发而不是从功能出发」的场景——系统性复现失败、追踪根因、实施修复，完成后一样接评审和固化。`/ce-ideate` 在环路之前，适合「连做什么都没想清楚」的阶段：生成一批想法、批判性评估、排序，把最强的那个送进 brainstorm。已有明确需求时直接从 brainstorm 开始。
+
+## 知识固化是怎么闭合的
+
+这套系统真正的杠杆不在六步本身，而在「写下来的东西下次真的会被读到」。三个机制撑住这个回路：
+
+**STRATEGY.md 是上游锚点。** `/ce-strategy` 把产品的目标问题、方案、目标用户、关键指标写成仓库根目录的一个短文件。ideate、brainstorm、plan 在执行前都会读它——策略选择由此流进每一次功能构思，而不是散落在会议记录里。Compound Engineering 仓库自己的 `STRATEGY.md` 就躺在根目录，他们用自己的方法管理自己的开发。
+
+**docs/solutions/ 是下游沉淀。** `/ce-compound` 把验证过的解法写成结构化文档：症状、根因、试过什么没用、最终怎么解决的、怎么预防。关键在后手——`ce-plan` 和 `ce-ideate` 会把这个目录当作机构记忆来读，同一个坑不用调查第二次。默认产物目录（`docs/solutions/`、`docs/plans/`）可以通过 `docs_root` 配置整体搬到别的位置，`docs/` 本身被内容占用的仓库不用让路。
+
+**Compound Packs 把规则跨仓库复用（实验性）。** 一个仓库学到的团队规范、安全策略、技术栈铁律，可以声明成规则包，规划阶段作为 grounding 读入，评审阶段强制执行，每次引用都注明出处规则文件。单仓库的复利由此扩展到整个组织。
+
+读数侧还有 `/ce-product-pulse`：按时间窗（24 小时、7 天）生成一页使用、性能、错误报告，存入 `docs/pulse-reports/`，让策略更新和下一轮 brainstorm 有真实用户信号可锚定。
 
 ## 一条典型循环
 
-这条路从「有个模糊想法」走到「经验被固化」，是日常开发里最常用的路径。
+从「有个模糊想法」到「经验被固化」，日常开发最常走的是这条路径：
 
-**Step 1: `/ce-brainstorm`**
-
-```
-/ce-brainstorm "make background job retries safer"
-```
-
-Agent 进入交互式问答——问清楚「安全」的定义是什么、当前重试策略在哪、哪些场景会出问题、有没有幂等性保证。最后产出一份 `docs/brainstorms/background-job-retry-safety-requirements.md`。
-
-**Step 2: `/ce-plan`**
-
-```
-/ce-plan docs/brainstorms/background-job-retry-safety-requirements.md
-```
-
-Agent 读需求文档，输出分步骤实现计划——先改哪里、后改哪里、每步的验证方式、可能影响的其他模块。计划本身是 markdown 文件，可以 review 后再进执行。
-
-**Step 3: `/ce-work`**
-
-```
+```text
+/ce-brainstorm make background job retries safer
+/ce-plan
 /ce-work
-```
-
-Agent 创建 worktree 隔离变更，按计划逐条执行。任务追踪保证每条计划项都被处理，遗漏的会标记出来。
-
-**Step 4: `/ce-code-review`**
-
-```
+/ce-simplify-code
 /ce-code-review
-```
-
-多个 Agent 从不同角度审查：逻辑正确性、安全漏洞、性能影响、代码风格。输出一份合并评审报告，不只是标 bug，还标出了「这次踩的坑和上次某个 compound 笔记里的坑是同一种模式」。
-
-**Step 5: `/ce-compound`**
-
-```
 /ce-compound
 ```
 
-Agent 把这次的经验写进知识库——「后台任务重试的安全边界取决于幂等性保证和死信队列的超时配置」。下一次有人（或 Agent）处理类似任务时，这条笔记会出现在上下文中。
+brainstorm 进入交互式问答——问清楚「安全」的定义、当前重试策略在哪、哪些场景会出问题、有没有幂等性保证——最后落一份需求文档。plan 读这份文档，输出按文件粒度的实现计划；计划是 markdown 文件，可以先 review 再执行。work 在隔离的 worktree 里逐条执行，simplify 收拾代码，review 出报告，compound 把「后台任务重试的安全边界取决于幂等性保证和死信队列超时配置」这类结论写进 `docs/solutions/`。
 
-重点是这步完了之后回到 Step 1：下一轮 brainstorm 会读到上次 compound 的笔记和 STRATEGY.md 里的最新指标，起点比上一轮高。
+重点是这步完了回到开头：下一轮 brainstorm 会读到这次 compound 的笔记和 `STRATEGY.md` 里的最新指标，起点比上一轮高。官方 README 放的演示 GIF 说明了这件事：一次 `ce-compound` 记下一个环境变量的坑，18 天后一次毫不相干的 `ce-plan` 把这个约束带进了新计划。他们的原话是 "Run one teaches it. Run two remembers."——第一遍教它，第二遍它记得。
+
+不想一步步走，还有自治管线 `/lfg`：交给它一个功能描述，它自己跑完整个管线——选路线、执行、简化、评审并应用修复、捕获经验、跑浏览器测试、提交；有远端就推送、开 PR、盯着 CI 做有界修复循环（不获得授权不会自己合并）。适合边界清晰、不值得人工盯全程的任务。
+
+评审本身也有值得单独说的机制：现行 `/ce-code-review` 是 report-only 模式——评审只出报告，落盘修复需要显式执行。它按变更风险挑选评审视角（persona），支持跨模型对抗评审：把代码发给一个配置好的对等模型独立审一遍，本地结论和外部结论合并去重。发给谁、发了什么，Skill 会先向用户披露。
 
 ## 安装
 
-Compound Engineering 是一个跨平台插件，不同平台的安装路径不同。核心差异：原生的 Claude Code/Cursor/Copilot 一步装完；Codex/OpenCode/Pi 等需要额外步骤注册 Agent。
+发稿时点，Codex 安装要三步——注册 marketplace、用 Bun 装自定义 Agent、再去 TUI 里装插件——因为「Codex 的插件规范还不支持自定义 Agent」。四个月后这个限制连同自定义 Agent 一起消失了：Codex CLI 原生两步装完，Codex 桌面 App 在图形界面里加自定义 marketplace 即可。Bun 安装器只在给旧安装做清理时还有用。
 
 ### Claude Code
 
-```shell
+```text
 /plugin marketplace add EveryInc/compound-engineering-plugin
 /plugin install compound-engineering
 ```
 
-### Cursor
+已装过的注意：先刷新 marketplace 再更新插件，只跑 `/plugin update` 会停在旧版本。
 
-```
+### Cursor / Grok Bot
+
+```text
 /add-plugin compound-engineering
 ```
 
-### GitHub Copilot
+Grok Bot 复用 Cursor 账号的插件库，账号上装一次即可，不要在 Grok Bot 的聊天里跑这条命令。
 
-VS Code 内：`Chat: Install Plugin from Source` → 输入 `EveryInc/compound-engineering-plugin` → 选 `compound-engineering`。
-
-Copilot CLI：
-
-```shell
-/plugin marketplace add EveryInc/compound-engineering-plugin
-/plugin install compound-engineering@compound-engineering-plugin
-```
-
-### Codex（三步）
-
-Codex 的插件系统不会自动注册自定义 Agent，需要额外一步：
+### Codex CLI
 
 ```bash
 codex plugin marketplace add EveryInc/compound-engineering-plugin
-bunx @every-env/compound-plugin install compound-engineering --to codex
+codex plugin add compound-engineering@compound-engineering-plugin
 ```
 
-然后在 Codex TUI 里运行 `/plugins`，找到 Compound Engineering marketplace，选中 `compound-engineering` 插件安装。三步都需要完成。
+Codex App 走图形界面：侧边栏 Plugins → Create 旁的箭头 → Add marketplace，Source 填 `EveryInc/compound-engineering-plugin`，然后搜索安装。
 
-### Qwen Code / Factory Droid
+### GitHub Copilot
 
-```shell
-qwen extensions install EveryInc/compound-engineering-plugin:compound-engineering
+VS Code 里走命令面板 `Chat: Install Plugin from Source`，仓库填 `EveryInc/compound-engineering-plugin`。Copilot CLI：
 
+```bash
+copilot plugin marketplace add EveryInc/compound-engineering-plugin
+copilot plugin install compound-engineering@compound-engineering-plugin
+```
+
+### Factory Droid / Qwen Code
+
+```bash
 droid plugin marketplace add https://github.com/EveryInc/compound-engineering-plugin
 droid plugin install compound-engineering@compound-engineering-plugin
+
+qwen extensions install EveryInc/compound-engineering-plugin:compound-engineering
 ```
 
-### OpenCode / Pi / Gemini / Kiro
+两者都直接读 Claude 兼容的插件清单并自动转换格式。
 
-通过 Bun 安装器转换格式：
+### OpenCode / Pi / oh-my-pi
 
-```shell
-bunx @every-env/compound-plugin install compound-engineering --to opencode
-bunx @every-env/compound-plugin install compound-engineering --to pi
-bunx @every-env/compound-plugin install compound-engineering --to gemini
-bunx @every-env/compound-plugin install compound-engineering --to kiro
+OpenCode 在 `opencode.json` 的 `plugins` 数组里加 `compound-engineering@git+https://github.com/EveryInc/compound-engineering-plugin.git`（1.x 的键名是单数 `plugin`）。Pi：
+
+```bash
+pi install git:github.com/EveryInc/compound-engineering-plugin
+pi install npm:pi-subagents   # 派发子 Agent 的 Skill 必需
+pi install npm:pi-ask-user    # 推荐：让提问可以阻塞等待回答
 ```
 
-Pi 需要额外安装 `pi-subagents`（必需）和 `pi-ask-user`（推荐），因为 Pi 不自带 subagent 原语。
+oh-my-pi 走 marketplace 流程装，建议 `omp config set marketplace.autoUpdate auto` 开自动更新——默认的 notify 模式只写调试日志，不提示。
 
-### 安装后第一件事
+### 其他
 
-```
+Kimi Code CLI、Cline、Grok Build CLI（`grok`）、Devin CLI、Antigravity CLI（`agy`，Google 已用其替代消费级 Gemini CLI）都有原生安装路径，见仓库 README 的 More Install Options 一节。发稿时点文档里的 Gemini CLI 和 Kiro CLI 两条路径已不在现行安装文档中。
+
+### 装完第一件事
+
+```text
 /ce-setup
 ```
 
-检查环境、安装缺失工具、初始化项目配置。任何一个平台装完后都应该先跑这一步。
+检查环境、报告可选工具能力、创建 `.compound-engineering/config.yaml` 项目配置。任何平台装完都先跑这一步。
+
+## 四个月演变说明了什么
+
+把发文时点和现状并排看，有三件事值得记：
+
+**Agent 数量不是能力。** 发稿时 51 个自定义 Agent 听起来阵容豪华，其中不乏以知名工程师命名的评审视角（DHH 风格 Rails、Ankane 式 README 写作）。四个月后这些独立文件全部退役，评审视角收进 `references/persona-catalog.md` 由 Skill 按风险动态挑选。官方当时自己的文档就没对齐过：主 README 写 37 Skill/51 Agent，组件参考表写 38+/50+，仓库目录实测是 38 个 Skill 和 43 个 Agent。数字在涨的清单不如机制收敛来得可信。
+
+**平台适配在收敛，不在扩散。** 发稿时适配 10 个平台靠一个 Bun/TypeScript 转换器逐个翻译格式；现在官方口径 14 个 agent hosts，靠的是各平台原生插件机制加仓库里的原生清单文件（`.kimi-plugin/`、`.grok-plugin/`、`.devin-plugin/`、`.omp-plugin/`）。维护一个转换器矩阵和维护一组声明文件，工作量不是一个量级。
+
+**贡献政策反转。** 发稿时 README 里有一大段 Kieran Klaassen 的个人声明：不接受任何外部贡献，原因是「没有精力 review，署的是我的名字，风险收益不对称」，PR 只会被 AI 审阅后参考。现在 README 写的是欢迎贡献，维护者变成 Kieran Klaassen 和 Trevin Chow 两个人，立场是「插件有明确主见，不是所有改动都会收」。从独写到双维护者，这个项目把「一个人怎么用 Agent 保持高速」走成了「两个人怎么维护一个有主见的开源项目」。
 
 ## 适用边界
 
-**适合的场景：**
+**适合：** 持续迭代的产品项目——复利需要时间积累；写代码前愿意先把需求想清楚——brainstorm 的问答省的是返工时间；团队里有人做完功能从不总结——compound 把口头经验变成下个会话能读到的文件。
 
-- 团队在做一个持续迭代的产品，不是一次性项目——复利需要时间积累
-- 每次写代码前需要先把需求想清楚——brainstorm 的交互式问答比「对着空白的 cursor 发呆」省下的是决策时间
-- 团队里有人做完功能就忘了总结——compound 把口头经验变成 51 个 Agent 都能读到的文件
-- 代码评审不只是找语法错误，而是抓模式——多人 Agent 评审的覆盖角度比单人 review 宽
+**不适合：** 一次性脚本和原型验证——走完六步的开销可能超过编码本身；单人小任务量——compound 笔记没有第二个读者；已有运转良好的评审和知识管理流程——这套插件带着自己的工作流主见，会和现有流程打架。
 
-**不适合的场景：**
-
-- 一次性脚本或原型验证——走完整个环路的 overhead 超过实际编码时间
-- 团队只有一个人且任务量小——compound 笔记的受益者太少
-- 已有成熟的 CI/代码审查/知识管理流程且运转良好——Compound Engineering 会和你现有的工具打架
-
-## FAQ
-
-**Q1: 37 个 Skill 和 51 个 Agent，是不是堆数量？**
-
-每个 Skill 和 Agent 有明确的职责边界。核心环路只用到 5 个 Skill（brainstorm / plan / work / code-review / compound），剩下的 32 个是覆盖不同领域的高阶能力——比如 `/ce-doc-review` 审查文档、`/ce-cross-artifact-review` 跨产物一致性检查。日常 80% 的场景用 5 个核心 Skill 就够了。
-
-**Q2: 80% 规划 20% 编码，会不会变成过度设计？**
-
-Compound Engineering 里的「规划」不是写 50 页设计文档。brainstorm 产出的需求文档是「刚好够」的——回答清楚边界、约束和验收标准就停。plan 产出的实现计划是按文件粒度的改动列表，不是架构设计图。真正花时间的不是写文档，而是「提问 → 回答 → 澄清」这个过程——这个过程省掉了后面「写了一半发现方向错了」的返工。
-
-**Q3: 和 Harness / Archon 的关系？**
-
-不同层。Compound Engineering 是一套工作流协议——定义「怎么做事」。Harness 和 Archon 是 L3 层的配置工厂——定义「Agent 团队怎么组」。Compound Engineering 的 Agent 可以在 Harness 生成的团队结构里跑。
-
-## 自测
-
-1. 你上次修完一个 bug 或做完一个功能后，有没有把经验写下来？如果换了个人来做同样的事，他能从你的笔记里省多少时间？
-2. 你的团队现在是「先写代码再想方案」还是「先想方案再写代码」？如果是前者，选一个中等复杂度的任务，用 brainstorm → plan → work 走一遍，比较一下和原来流程的时间差。
-3. 你的团队在用哪个平台？Claude Code 和 Cursor 是一步安装，Codex 和 OpenCode/Pi 需要多一步 Agent 注册。先确认安装复杂度能不能接受。
-4. 把你的代码审查记录翻出来看——这半年里，有多少次评审只是标了语法问题和拼写错误？多少次抓到了「这个模式和上次出过的 bug 是同一种」？
-
-## 进阶路径
-
-**阶段 1：跑通核心环路（1-2 周）**
-只装 5 个核心 Skill（brainstorm / plan / work / code-review / compound），在一个中等复杂度的功能上走完整个环路。重点不是写出完美代码，而是感受「先想清楚再写」和「写完再返工」的时间差。
-
-**阶段 2：建立团队 STRATEGY.md（2-4 周）**
-把你们项目的真实目标、约束和指标写进 `STRATEGY.md`。让整个团队 brainstorm 和 plan 都读这个文件，你会发现不同人产出的方案开始有共同的锚点。
-
-**阶段 3：定制化 Skill（1-2 个月）**
-读 `SKILL.md` 的格式，为你们团队特有的审查标准、代码风格、业务领域写一两个自定义 Skill。Compound Engineering 的 Skill 协议是开放的，不需要等官方支持。
-
-**阶段 4：多项目复利（持续）**
-当一个项目结束时，把 `compound` 产出的笔记迁移到下一个项目的 `references/` 目录。真正让 Compound Engineering 值钱的不是某个单次执行，而是跨项目的知识积累。
+还有一个前置判断：这套插件的 Skill 都是提示词工程，质量取决于模型对长指令的遵循度。六步环路在能力强的模型上是流程保障，在弱模型上可能变成六次走样的模仿。先在一个不重要的仓库跑通一轮，再决定要不要进团队流程。
 
 ## 参考
 
-- [Compound Engineering GitHub](https://github.com/EveryInc/compound-engineering-plugin)
-- [完整组件参考（所有 Agent 和 Skill 清单）](https://github.com/EveryInc/compound-engineering-plugin/blob/main/plugins/compound-engineering/README.md)
+- [EveryInc/compound-engineering-plugin](https://github.com/EveryInc/compound-engineering-plugin)
+- [Skill 文档目录（每技能一页）](https://github.com/EveryInc/compound-engineering-plugin/blob/main/docs/guides/README.md)
 - [Compound engineering: how Every codes with agents](https://every.to/chain-of-thought/compound-engineering-how-every-codes-with-agents)
 - [The story behind compounding engineering](https://every.to/source-code/my-ai-had-already-fixed-the-code-before-i-saw-it)
-

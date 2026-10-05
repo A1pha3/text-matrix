@@ -1,242 +1,221 @@
 ---
-title: "UAD-ng 深度拆解：7K Stars 的开源 Android 卸载神器，跨平台 ADB 工具怎么把 bloatware 一键清理干净"
+title: "UAD-ng 深度拆解：9.3K Stars 的开源 Android 卸载工具，跨平台 ADB 工具怎么把 bloatware 一键清理干净"
 date: "2026-06-16T21:03:41+08:00"
 slug: universal-android-debloater-next-generation
-github_repo: "MuntashirAkon/AppManager"
-source_key: "gh:MuntashirAkon/AppManager"
-description: "UAD-ng 是 Rust + Iced 跨平台 ADB debloat 工具，覆盖三星 / 华为 / 小米 / OPPO / vivo / 一加等 OEM 的数据驱动包名清单。"
+github_repo: "Universal-Debloater-Alliance/universal-android-debloater-next-generation"
+source_key: "gh:Universal-Debloater-Alliance/universal-android-debloater-next-generation"
+description: "UAD-ng 是 Rust + Iced 跨平台 ADB debloat 工具，用社区维护的 5,381 条包名清单（含卸载风险分级）让非 root 用户也能停用 OEM 预装应用，GUI 与 CLI 双入口。"
 tags: ["Android", "Rust"]
 categories: ["技术笔记"]
 author: 钳岳星君
 ---
 
-# UAD-ng 深度拆解：7K Stars 的开源 Android 卸载神器，跨平台 ADB 工具怎么把 bloatware 一键清理干净
+# UAD-ng 深度拆解：9.3K Stars 的开源 Android 卸载工具，跨平台 ADB 工具怎么把 bloatware 一键清理干净
 
-**判断**：UAD-ng 不是"又一个 ADB 包装器"，也不是"为了 Rust 写的 Rust 桌面玩具"。它精确卡在两个空白里：① 手机厂商（OEM）预装的"全家桶"应用无法直接卸载，要么 root 要么写一堆 adb 命令；② 现有 Android debloat 工具要么只支持 root，要么数据驱动弱（每次 OEM 升级都要改代码）。UAD-ng 用 **"纯 ADB + 数据驱动包名清单（uad_lists.json）"** 的极简架构，配合 Rust + Iced 跨平台 GUI，让非 root 用户也能干净卸载。**2 年半（2023-10-26 创建）斩获 7,096 stars、308 forks**，并且被 [AppManager](https://github.com/MuntashirAkon/AppManager)、[Canta](https://github.com/samolego/Canta) 等多个开源项目反向依赖——说明它踩在了"反 OEM 锁定 + 隐私保护"的真实需求上。
+UAD-ng 解决的不是一个问题，而是两个卡在一起的死结。第一，厂商（OEM）预装的应用不给卸载入口，不想 root 就只能手敲一串串 `adb shell pm uninstall`，敲错包名还可能让系统功能异常。第二，就算你愿意敲，也无从判断哪些包能删、删了会坏什么——这些知识散落在各个机型的论坛帖里，没人维护成一份可更新的数据。UAD-ng 把这份知识收进一个 JSON 清单（`uad_lists.json`），程序本身只做两件事：读清单、发 ADB 命令。知识在数据里更新，代码不用动。
 
-如果你属于下面任何一种，这篇值得读：
+这套"代码与清单分离"的架构让它活了下来。项目 2023-10-26 从已停维的 [0x192/universal-android-debloater](https://github.com/0x192/universal-android-debloater) fork 出来，到 2026-09-30 拿到 **9,300 stars、392 forks**（GitHub API 读数），最新版本 v1.2.0（2026-01-12）。README 的 Friends 一节列了它的生态位：Android 端的 [Canta](https://github.com/samolego/Canta) 直接集成这份清单做无 PC debloat，[android-debloat-list](https://github.com/MuntashirAkon/android-debloat-list) 以它为基础扩展——一份清单成了 Android debloat 社区的公共数据源。
 
-- 想清理三星 / 小米 / 华为 / OPPO / vivo / 一加等手机预装的应用
-- 想用 ADB 但不想每次手敲 `pm uninstall` 命令
-- 关心数据驱动的"包名清单"怎么维护（社区 + 自动同步）
-- 想了解 Rust + Iced GUI 在桌面工具里的实战
-- 在 Mac / Windows / Linux 上给 Android 设备做批处理
-
----
-
-## 阅读导航
-
-- **5 分钟判断值不值得用**：看「先看结论」
-- **理解它的生态卡位**：看「为什么 debloat 工具还差一块"非 root + 数据驱动"」
-- **想了解核心架构**：看「架构分层：ADB 客户端 + 数据驱动 + Iced GUI」
-- **想了解数据驱动模型**：看「uad_lists.json：包名清单 + 危险等级 + 描述」
-- **想知道怎么用**：看「快速上手 + 常见操作」
-- **想评估适用边界**：看「适用边界 / 限制」
-
----
+如果你正被三星 / 小米 / OPPO / vivo 等厂商的预装应用困扰，或者关心"社区数据 + 纯 ADB"这类工具的架构怎么设计，往下读。
 
 ## 先看结论
 
 | 维度 | 实际情况 |
 |------|----------|
-| Stars | 7,096+（2026-06-16） |
-| Forks | 308+ |
-| 主语言 | Rust（核心 + GUI） |
-| GUI 框架 | [Iced](https://github.com/iced-rs/iced)（Rust 原生） |
+| Stars | 9,300（2026-09-30 GitHub API 读数） |
+| Forks | 392 |
+| 主语言 | Rust |
+| GUI 框架 | [Iced](https://github.com/iced-rs/iced) 0.14（Rust 原生，wgpu 渲染） |
 | 协议 | GPL-3.0 |
 | 仓库 | <https://github.com/Universal-Debloater-Alliance/universal-android-debloater-next-generation> |
 | 创建时间 | 2023-10-26 |
 | 最新版本 | v1.2.0（2026-01-12） |
 | 前身 | [0x192/universal-android-debloater](https://github.com/0x192/universal-android-debloater)（已停止维护，本项目为 detached fork） |
-| 平台 | macOS / Linux / Windows（Rust + Iced 跨平台） |
-| 依赖 | 仅 Android 设备 + USB 调试（不需 root） |
-| 数据集 | `resources/assets/uad_lists.json`（覆盖三星 / 华为 / 小米 / OPPO / vivo / 一加 / Sony / LG 等数十个 OEM） |
-| 隐私声明 | 不收集 / 传输用户数据，唯一外部请求是 GitHub 拉清单 + 检查更新 |
+| 平台 | macOS（ARM / Intel）/ Linux / Windows |
+| 前置条件 | Android 设备 + ADB + USB 调试，不需要 root |
+| 数据集 | `resources/assets/uad_lists.json`：5,381 个包名，按 Oem / Misc / Aosp / Carrier / Google 五类组织，每条带卸载风险分级 |
+| 隐私 | 不收集 / 传输用户数据，唯一外部请求是 GitHub 拉清单 + 检查更新 |
 
-一句话：**它是 Rust + Iced 写的跨平台 ADB debloat 工具，用数据驱动的包名清单让非 root 用户也能干净卸载 OEM 预装应用，2 年半 7K Stars**。
+一句话：**Rust + Iced 写的跨平台 ADB debloat 工具，GUI 和 CLI 双入口，靠社区维护的风险分级包名清单，让非 root 用户停用 OEM 预装应用**。
 
 ---
 
 ## 为什么 debloat 工具还差一块"非 root + 数据驱动"
 
-把当前主流 Android debloat 方案并列看：
+debloat（给系统瘦身）指的是清理厂商塞进手机的预装应用，英文里叫 bloatware。把当前主流方案并列看：
 
-| 方案 | 是否需要 root | 数据驱动 | GUI | 跨平台 | 维护状态 |
+| 方案 | 是否需要 root | 数据驱动 | 入口 | 跨平台 | 维护状态 |
 |------|---------------|----------|-----|--------|----------|
-| Magisk + 模块 | ✅ root | ❌（手敲） | ❌ | ✅ | 活跃 |
-| pm uninstall 手敲 | ❌ | ❌（手敲） | ❌ | ✅ | 永远 |
-| ADB AppControl | ❌ | ⚠️ | ✅ | Windows | 闭源 + 付费 |
-| Canta (Shizuku) | ⚠️（Shizuku 半 root） | ⚠️ | ✅ | Android | 活跃 |
-| AppManager | ⚠️ | ⚠️ | ✅ | Android | 活跃 |
-| Universal Debloater (原版) | ❌ | ✅ | ✅ | 跨平台 | ❌（已停维） |
-| **UAD-ng** | **❌** | **✅（JSON 清单）** | **✅（Iced）** | **✅** | **活跃** |
+| Magisk + 模块 | ✅ root | ❌（手敲） | 命令行 | ✅ | 活跃 |
+| 手敲 `pm uninstall` | ❌ | ❌ | 命令行 | ✅ | 永远可用 |
+| ADB AppControl | ❌ | ⚠️ | GUI | Windows | 闭源 |
+| Canta (Shizuku) | ❌（走 Shizuku） | ✅（集成 UAD 清单） | Android GUI | Android | 活跃 |
+| AppManager | ⚠️（支持 ADB / Shizuku / root） | ⚠️ | Android GUI | Android | 活跃 |
+| Universal Debloater (原版) | ❌ | ✅ | GUI | 跨平台 | ❌（已停维） |
+| **UAD-ng** | **❌** | **✅（JSON 清单 + 风险分级）** | **GUI + CLI** | **✅** | **活跃** |
 
-UAD-ng 的独特定位：**"非 root + 数据驱动 + 跨平台 GUI + GPL 开源"四角合一**。
+UAD-ng 占的位置：**非 root、清单驱动、跨平台、GPL 开源**，四项同时满足的只有它。
 
 具体痛点：
 
-1. **手敲 `pm uninstall` 烦且危险**：每个 OEM 有几十到几百个预装应用，每个包名都要查、每个命令都要确认（错删系统应用可能变砖）。
-2. **AppControl 闭源 + Windows only**：社区里很多人用，但 Windows 专属、闭源付费。
-3. **原版 UAD 已停维**：[0x192/universal-android-debloater](https://github.com/0x192/universal-android-debloater) 多年没更新，作者把项目交给 Universal-Debloater-Alliance 社区接手，重写为 UAD-ng。
-4. **数据驱动缺失**：很多 debloat 工具硬编码包名清单，OEM 升级后失效。UAD-ng 把所有包名放到 `uad_lists.json`，独立维护、可热更新。
-5. **GUI 框架跨平台**：用 Rust 的 [Iced](https://github.com/iced-rs/iced) GUI 库，一份代码跑 macOS / Linux / Windows，比 Electron 小一个数量级。
+1. **手敲 `pm uninstall` 烦且危险**：每个 OEM 有几十到几百个预装应用，每个包名都要查、每个命令都要确认（错删有依赖关系的系统应用可能导致功能异常）。
+2. **ADB AppControl 闭源 + Windows only**：用的人不少，但 Windows 专属、闭源。
+3. **原版 UAD 已停维**：[0x192/universal-android-debloater](https://github.com/0x192/universal-android-debloater) 多年没更新，Universal-Debloater-Alliance 社区接手重写为 UAD-ng。
+4. **包名知识没有载体**：哪些预装应用能删、删了会坏什么，散落在论坛帖里。UAD-ng 把这些收进 `uad_lists.json`，每条带风险分级和依赖说明，社区成员直接提 PR 更新，用户点一下同步就能拉到，不用升级程序。
 
 ---
 
-## 架构分层：ADB 客户端 + 数据驱动 + Iced GUI
+## 架构：一个 Cargo workspace，三个 crate
 
-UAD-ng 是典型的 **"三层架构"**：
+UAD-ng 在 2026 年已经从早期的单 `src/` 结构重构成 Cargo workspace，拆成三个 crate，各管一层：
 
 ```mermaid
 flowchart TB
-  A["GUI 层（Iced + Rust）<br/>src/gui/<br/>视图、组件、主题"] --> B["业务逻辑层<br/>src/core/<br/>adb.rs / uad_lists.rs / save.rs / sync.rs"]
-  B --> C["数据层<br/>resources/assets/uad_lists.json<br/>社区维护的包名清单"]
-  B --> D["Android 设备<br/>通过 adb server / USB 调试"]
-  C --> E["GitHub<br/>通过 GET 拉最新清单"]
-  C --> F["本地缓存<br/>~/.config/uad-ng/"]
+  A["uad-gui（Iced 桌面界面）<br/>views: list / settings / about<br/>widgets: package_row / modal …"] --> B["uad-core（业务逻辑）<br/>sync.rs 命令编排<br/>uad_lists.rs 清单解析<br/>adb.rs ADB 通信 / update.rs 自更新"]
+  C["uad-cli（命令行入口）<br/>devices / list / uninstall / enable<br/>repl / completions"] --> B
+  B --> D["uad_lists.json<br/>5,381 条包名清单<br/>编译期内置 + GitHub 同步"]
+  B --> E["Android 设备<br/>adb server / USB 或无线调试"]
+  B --> F["本地缓存<br/>系统缓存目录 / uad/"]
 ```
 
-### src/gui/：Iced 跨平台界面
+三层的边界很干净：`uad-core` 不依赖任何界面，`uad-gui` 和 `uad-cli` 都是它的客户端。这也是为什么 CLI 能加进来——底层命令编排本来就在核心层，GUI 和 CLI 只是两种触发方式。
+
+### uad-gui：Iced 跨平台界面
 
 ```text
-src/gui/
-├── mod.rs        # GUI 入口
-├── style.rs      # 主题
-├── views/        # 主页 / 详情 / 设置等视图
-└── widgets/      # 自定义控件
+crates/uad-gui/src/
+├── main.rs        # 入口：日志初始化 + 启动 GUI
+├── gui.rs         # UadGui 状态机
+├── views/         # list（主列表）/ settings / about 三个视图
+└── widgets/       # package_row、modal、navigation_menu 等控件
 ```
 
-Iced 是 Rust 生态里 Elm 风格的 GUI 库，跨平台支持 macOS / Linux / Windows。UAD-ng 选它的原因是：
-
-- Rust 原生，无 Electron 的运行时包袱
-- 单一二进制，分发简单
-- 渲染质量好（用了 wgpu / Metal）
-
-### src/core/：业务逻辑
-
-```text
-src/core/
-├── adb.rs            # 16KB：ADB 客户端，封装 pm uninstall / install / list 等命令
-├── uad_lists.rs      # 7.2KB：加载 + 解析 uad_lists.json
-├── sync.rs           # 24KB：从 GitHub 同步最新清单
-├── save.rs           # 6KB：本地状态保存（卸载记录、过滤条件）
-├── update.rs         # 9.3KB：检查更新
-├── theme.rs          # 6KB：主题
-├── helpers.rs        # 423B
-└── utils.rs          # 8.5KB
-```
-
-`adb.rs` 是核心，封装了所有与 Android 设备的交互：
-
-```rust
-// 简化版：列已安装应用
-adb shell pm list packages
-
-// 卸载指定包
-adb shell pm uninstall -k --user 0 <package_name>
-
-// 恢复（用 --user 0 卸载的应用可重新安装）
-adb shell cmd package install-existing <package_name>
-```
-
-注意：UAD-ng 用 `pm uninstall -k --user 0`，**只卸载当前用户的 app**，**不真删系统分区**——这是非 root 设备的极限。这意味着：
-
-- 重启或恢复出厂 → 应用回来（但 OEM 一般不会主动恢复）
-- 不破坏 OTA 升级
-- 出现变砖可以恢复（`pm install-existing`）
-
-### src/main.rs：入口
+Iced 是 Rust 生态里 Elm 风格的 GUI 库，用 wgpu 渲染，跨 macOS / Linux / Windows。UAD-ng 选它的理由写在依赖关系里：Rust 原生、单二进制分发、没有 Electron 的运行时包袱。`main.rs` 里有个细节值得注意——启动时设置 `WGPU_POWER_PREF=high` 强制走独立 GPU（双显卡机器上不这么做会崩溃，对应 issue #848）：
 
 ```rust
 fn main() -> iced::Result {
-    let state = load_state();
-    UadGui::run(Settings::with_flags(state))
+    // Force WGPU/Iced to use discrete GPU to prevent crashes on PCs with two GPUs.
+    std::env::set_var("WGPU_POWER_PREF", "high");
+    setup_logger().expect("setup logging");
+    UadGui::start()
 }
 ```
 
-极简，启动直接进 GUI。
+日志用 fern 写进系统缓存目录的 `uadng.log`，Windows 上还会附着控制台输出，方便排障。
+
+### uad-core：业务逻辑与 ADB 交互
+
+```text
+crates/uad-core/src/
+├── sync.rs        # 命令编排：按包状态和 SDK 版本生成 ADB 命令
+├── adb.rs         # ADB 进程通信
+├── uad_lists.rs   # 清单解析：类型定义 + 加载 + 三级兜底
+├── save.rs        # 本地状态保存（卸载记录）
+├── update.rs      # 自更新（feature 开关，可编译为 noselfupdate）
+├── config.rs      # 配置
+└── utils.rs       # 目录设置等工具函数
+```
+
+卸载命令不是固定的 `pm uninstall` 一条走到底，而是按设备的 Android SDK 版本分级——这是 UAD-ng 对老设备兼容的解法（`sync.rs` 的 `apply_pkg_state_commands`）：
+
+| 操作 | SDK ≥ 23（Android 6.0+） | SDK 21 / 22（5.x） | SDK 19 / 20（4.4） |
+|------|--------------------------|--------------------|---------------------|
+| 停用包 | `pm uninstall` | `pm hide` | `pm block` |
+| 恢复包 | `cmd package install-existing` | `pm unhide` | `pm unblock` |
+| 禁用（不卸载） | `pm disable-user` + `am force-stop` + 清数据 | 同左（不支持则跳过） | 同左 |
+
+多用户设备上会拼上 ` --user <id>`，默认操作 user 0。对老设备降级到 `hide` / `block` 而不是硬发 `pm uninstall`，是因为那两个 ADB 命令在旧系统上需要 root。还有一个防御细节：`request_builder` 对包名做合法性校验，非法包名直接拒绝生成命令，保证插进来的名字不可能拼出注入性的 shell 字符串。
+
+三星设备上有额外一道检测：Knox 或类似机制限制的包，卸载请求会被识别并明确报"该包被厂商限制"，而不是返回一个莫名其妙的失败。
+
+### uad-cli：命令行入口
+
+现在的仓库里还有一个完整的 CLI crate（基于 clap），和 GUI 共用 `uad-core`：
+
+```bash
+# 列出连接的设备
+uad-ng devices
+
+# 列出包，支持按状态 / 风险分级 / 清单分类 / 关键词过滤
+uad-ng list --removal recommended --search bixby
+
+# 卸载，--dry-run 先看会执行什么
+uad-ng uninstall com.samsung.android.bixby.agent --dry-run
+
+# 交互式 shell 和自动补全生成
+uad-ng repl
+uad-ng completions zsh
+```
+
+对想批量处理或者把 debloat 写进脚本的人来说，这比早期"只有 GUI"的形态实用得多。
 
 ---
 
 ## 数据驱动：uad_lists.json 怎么设计
 
-UAD-ng 的最大特色是 **所有包名清单都放 JSON**：
+UAD-ng 的核心资产是一个 JSON 文件，程序能用它做什么，全由数据说了算：
 
 ```bash
-# 拉取最新清单
+# 直接查看最新清单
 curl -L https://raw.githubusercontent.com/Universal-Debloater-Alliance/universal-android-debloater-next-generation/main/resources/assets/uad_lists.json
 ```
 
-`uad_lists.json` 数据结构：
+拿 2026-09-30 的仓库快照统计，这份清单收录 **5,381 个包名**，按五个类别组织：
+
+| 类别 | 条目数 | 收什么 |
+|------|--------|--------|
+| Oem | 4,251 | 三星、小米、OPPO、vivo 等厂商的预装应用 |
+| Carrier | 242 | 运营商塞进来的应用 |
+| Google | 183 | Google 自家可精简的应用 |
+| Aosp | 272 | AOSP 系统组件 |
+| Misc | 433 | 不好归类杂项 |
+
+每条记录长这样（真实条目，出自清单本身）：
 
 ```json
-{
-  "com.miui.analytics": {
-    "list": "MIUI",
-    "description": "MIUI Analytics - tracks usage",
-    "dependencies": [],
-    "neededBy": [],
-    "labels": ["bloatware", "tracker"]
-  },
-  "com.samsung.android.bixby.agent": {
-    "list": "Samsung",
-    "description": "Samsung Bixby voice assistant",
-    "dependencies": [],
-    "neededBy": ["com.samsung.android.bixby.wakeup"],
-    "labels": ["bloatware", "ai-assistant"]
-  }
+"org.lineageos.jelly": {
+  "list": "Oem",
+  "description": "LineageOS Browser App, based on chromium.\nSafe to remove if you don't need it or have replaced it with another app.\nOtherwise there will be no browser app on your device.",
+  "dependencies": [],
+  "neededBy": [],
+  "labels": [],
+  "removal": "Recommended"
 }
 ```
 
-每个包名对象包含：
-
 | 字段 | 含义 |
 |------|------|
-| `list` | 所属 OEM 分组（Samsung / MIUI / EMUI / Sony / LG …） |
-| `description` | 包的用途说明 |
-| `dependencies` | 这个应用依赖谁（要先卸载依赖才能卸它） |
-| `neededBy` | 谁依赖这个应用（卸它可能让依赖它的应用报错） |
-| `labels` | 标签（bloatware / tracker / essential / safe-to-remove …） |
+| `list` | 五类归属（Oem / Carrier / Google / Aosp / Misc） |
+| `description` | 包的用途说明，含删掉后果的提示 |
+| `removal` | 卸载风险分级，程序按这个分级过滤展示 |
+| `dependencies` | 这个应用依赖谁 |
+| `neededBy` | 谁依赖这个应用（卸它前先看这里） |
+| `labels` | 标签，实际用得极少（全库只有 3 条带 `mim` 标签） |
 
-**这个数据驱动的两个好处**：
+关键是 `removal` 字段。它把"这个包能不能删"变成四个离散等级，程序据此决定默认展示什么：**Recommended**（3,003 条，放心删）、**Advanced**（1,158 条，懂行再删）、**Expert**（923 条，删前确认自己在做什么）、**Unsafe**（297 条，删了大概率出问题）。GUI 默认按 Recommended 过滤；Unsafe 包虽然能搜到，但在设置里打开 expert mode 之前，勾选框和操作按钮都是禁用的——把风险控制做在了数据模型里，而不是靠用户自觉。
 
-1. **OEM 升级后只需加 JSON 条目**，不需改 Rust 代码——社区成员可以直接 PR。
-2. **依赖图自动处理**：`dependencies` + `neededBy` 字段让 GUI 能排序推荐顺序。
+依赖字段则是第二道保护。`description` 告诉你删了会怎样，`neededBy` 告诉你谁还在用它，两者配合能挡掉大部分"删了一个看起来没用的包、结果相机打不开"这类事故。
 
-实际数据规模：
-
-```bash
-# 2026-06 当前 uad_lists.json 包名数（仅做量级估计）
-jq 'keys' resources/assets/uad_lists.json | wc -l
-# → 数以千计的包，覆盖 30+ 个 OEM 厂商
-```
-
-这个量级意味着 **任何主流 Android 手机的预装应用都有覆盖**。
+这个设计的实际效果：OEM 升级带来新预装应用时，社区成员给 JSON 加条目提 PR 即可，Rust 代码一行不动。清单是数据，更新频率和发布节奏解耦——用户点一下同步就拉到新清单，不用等新版本程序。
 
 ---
 
-## 同步策略：从 GitHub 拉最新清单
+## 清单加载：三级兜底，离线也能跑
 
-```mermaid
-sequenceDiagram
-    participant GUI as UAD-ng GUI
-    participant GH as GitHub Raw
-    participant Local as Local Cache
+清单从哪来、断了网怎么办，`uad-core` 的 `load_debloat_lists` 给了三级答案（按顺序降级）：
 
-    GUI->>GH: GET raw.githubusercontent.com/.../uad_lists.json
-    GH-->>GUI: 最新清单
-    GUI->>Local: 保存 ~/.config/uad-ng/uad_lists.json
-    GUI->>GUI: 对比本地 / 远端 diff
-    Note over GUI: 显示 "X 包新增 / Y 包删除 / Z 包更新"
+```text
+1. 远端拉取   GET raw.githubusercontent.com/.../uad_lists.json
+             失败重试 60 次，每次间隔 1 秒；单次下载上限 8 MiB
+2. 本地缓存   读取系统缓存目录下的 uad_lists.json（上次拉取的副本）
+3. 内置快照   都没有时，读编译进二进制的清单副本（include_str!）
 ```
 
-具体策略（`src/core/sync.rs`）：
+第三级是容易被忽略但最关键的一层：发布时仓库里的 `uad_lists.json` 会被 `include_str!` 直接编进二进制。也就是说，一个刚下载、从未联网的 UAD-ng，手里也有一份发布时点的完整清单——离线环境照样能工作，只是数据可能旧一些。
 
-1. **首次启动** → 从 GitHub 拉清单，存到 `~/.config/uad-ng/`
-2. **后续启动** → 后台检查更新（不阻塞 UI），有更新就提示
-3. **离线模式** → 用本地缓存启动，UI 顶部显示"清单可能过期"
+缓存目录跟随系统约定（Rust `dirs::cache_dir()`）：macOS 在 `~/Library/Caches/uad/`，Linux 在 `~/.cache/uad/`，Windows 在 `%LOCALAPPDATA%\uad\`。原版 UAD 时代文档里那个 `~/.config/` 路径已经不再使用。
 
-这是用户友好的渐进同步，避免每次启动都阻塞。
+自更新也是同样的克制风格：默认构建带 self-update 功能，检查更新只向 `api.github.com` 发一个 GET 请求比对版本号；不想要这个行为，可以选 release 里提供的 `noselfupdate` 变体。
 
 ---
 
@@ -244,53 +223,45 @@ sequenceDiagram
 
 ### 准备
 
-1. **手机开启 USB 调试**（开发者选项 → USB 调试）
-2. **USB 连接电脑**，首次连接会弹出"允许 USB 调试"授权
-3. **下载 UAD-ng**：<https://github.com/Universal-Debloater-Alliance/universal-android-debloater-next-generation/releases>
-   - macOS：`.dmg` 或 raw 二进制
-   - Linux：`AppImage` 或 raw 二进制
-   - Windows：`.msi` 或 raw 二进制
+1. **手机开启 USB 调试**（设置 → 开发者选项 → USB 调试），首次连接电脑时在手机上确认授权。Android 11+ 也可以用无线调试配对，wiki 里有单独说明。
+2. **电脑装 ADB**：
+   - macOS：`brew install android-platform-tools`
+   - Windows：`winget install --id Google.PlatformTools`
+   - Linux：用发行版包管理器装 `android-tools` 或 `adb`
+3. **备份数据**。wiki Getting-started 第一条就是这句：*"Do a proper backup of your data! You can never be too careful!"* 虽然 `--user 0` 卸载可恢复，但备份永远是第一步。
+4. **下载 UAD-ng**（[Releases 页面](https://github.com/Universal-Debloater-Alliance/universal-android-debloater-next-generation/releases)）：
+   - Linux：`uad-ng-linux`（单文件二进制）或 `.tar.gz`，下载后 `chmod +x`
+   - macOS：分 ARM 和 Intel 两个版本，同样需要 `chmod +x`
+   - Windows：`uad-ng-windows.exe`
+   - 每种都附 checksum 文件，另有 `noselfupdate` 变体（不带自更新功能）
 
-### 主界面
+注意 v1.2.0 的 release 资产里没有 `.msi`、`.AppImage` 这类打包格式，就是裸二进制加压缩包——单文件即下载即用，这也是选 Iced 而不是 Electron 的红利之一。
+
+### 卸载一个应用的完整流程
+
+以三星手机上的 Bixby 语音助手为例，走一遍从打开程序到确认结果的完整链路：
 
 ```text
-┌─────────────────────────────────────────────────┐
-│  UAD-ng  [Refresh] [Sync] [Settings]            │
-├─────────────────────────────────────────────────┤
-│  Device: Pixel 7 (Android 14, user 0)           │
-│  Packages: 1,247 installed / 412 in uad_lists   │
-├─────────────────────────────────────────────────┤
-│  Filter: [All] [Safe] [Advanced] [Expert]       │
-│  Search: [bixby_______________]                 │
-├─────────────────────────────────────────────────┤
-│  ☐ com.samsung.android.bixby.agent [Samsung]    │
-│     "Samsung Bixby voice assistant"             │
-│     Labels: bloatware, ai-assistant             │
-│     [Uninstall] [Restore]                       │
-│  ☑ com.miui.analytics [MIUI]                    │
-│     "MIUI Analytics - tracks usage"             │
-│     Labels: bloatware, tracker                  │
-│     [Uninstall] [Restore]                       │
-└─────────────────────────────────────────────────┘
+1. 启动 UAD-ng，自动执行 adb devices 找到手机，加载包列表
+2. 在主列表按 Recommended 分级过滤，搜索框输入 bixby
+3. 选中 com.samsung.android.bixby.agent，
+   界面显示清单里的描述、依赖关系和风险分级
+4. 点 Uninstall → 确认弹窗 →
+   程序向设备发送：adb shell pm uninstall --user 0 com.samsung.android.bixby.agent
+5. 列表里该包状态变为 Uninstalled；
+   反悔的话点 Restore，对应命令是
+   adb shell cmd package install-existing --user 0 com.samsung.android.bixby.agent
 ```
 
-### 卸载流程
+GUI 里做的事，本质就是第 4 步那一条 ADB 命令。它只作用于 user 0（当前用户），不碰系统分区——APK 文件仍留在 `/system`，所以 OTA 升级不受影响，误删也能恢复。这是非 root 设备的能力边界，UAD-ng 没有也没有必要越过它。
 
-```text
-1. 选中要卸载的应用
-2. 点击 [Uninstall]
-3. 弹出确认对话框（显示警告 + 依赖关系）
-4. 确认 → 后台跑 adb shell pm uninstall -k --user 0 <pkg>
-5. UI 实时更新状态（卸载中 → 已卸载）
-```
+拿不准能不能删的包，还有个中间档：Enabled 状态的包会同时提供 Disable 和 Uninstall 两个按钮，前者走 `pm disable-user`，应用不运行但数据还在，出问题随时 `pm enable` 恢复。先禁用观察几天，再决定卸不卸，是最稳的操作顺序。
 
-### 恢复
+同样的操作用 CLI 也能完成，而且可以先空跑验证：
 
-```text
-1. 切换到 "Removed" 标签
-2. 找到误删的应用
-3. 点击 [Restore]
-4. 后台跑 adb shell cmd package install-existing <pkg>
+```bash
+uad-ng uninstall com.samsung.android.bixby.agent --dry-run
+uad-ng uninstall com.samsung.android.bixby.agent
 ```
 
 ---
@@ -303,27 +274,28 @@ README 里的隐私声明非常明确：
 
 具体含义：
 
-- ✅ 唯一外部请求是 `GET raw.githubusercontent.com` 拉清单（只发包名查询，不带设备信息）
-- ✅ 唯一外部请求是 `GET api.github.com/repos/.../releases/latest` 检查更新（只发版本号）
+- ✅ 拉清单是向 `raw.githubusercontent.com` 发 GET 请求取一个静态文件，不带设备信息或用户参数
+- ✅ 检查更新是向 `api.github.com` 发 GET 请求比对版本号
 - ❌ 不上传设备列表 / 包名 / 用户行为
 - ❌ 不发 telemetry / analytics
 
-对一个要拿到 `pm uninstall` 权限的工具，这是**必须的信任前提**——UAD-ng 的开源 + 最小化网络策略让它在隐私社区有口皆碑。
+一个能对手机执行 `pm uninstall` 的工具，用户首先要问的就是"它会把什么传出去"。UAD-ng 的回答写在源码里：全部对外请求就这两类 GET，代码可以逐行复核；不放心自更新机制，release 里还有编译时去掉该功能的 `noselfupdate` 变体。
 
 ---
 
 ## 相关项目：UAD-ng 的生态位
 
-UAD-ng 不是孤立的项目，它是一个生态的一部分：
+README 的 Friends 一节给出了它和周边项目的关系，纽带是同一份清单数据：
 
-| 项目 | 关系 | 特点 |
+| 项目 | 与 UAD-ng 的关系 | 特点 |
 |------|------|------|
-| [AppManager](https://github.com/MuntashirAkon/AppManager) | 反向依赖 UAD-ng 的清单 | Android 端多功能 app 管理，支持 root / Shizuku / ADB |
-| [Canta](https://github.com/samolego/Canta) | 整合 UAD-ng 清单 | Android 端 debloater，用 Shizuku 不需 PC |
-| [android-debloat-list](https://github.com/MuntashirAkon/android-debloat-list) | 基于 UAD-ng 扩展 | 社区维护的更全包名清单 |
-| [0x192/universal-android-debloater](https://github.com/0x192/universal-android-debloater) | UAD-ng 的前身 | 已停止维护，作者移交社区 |
+| [Canta](https://github.com/samolego/Canta) | 集成 UAD 清单 | Android 端 debloater，走 Shizuku 提权，不需要 PC |
+| [android-debloat-list](https://github.com/MuntashirAkon/android-debloat-list) | 基于 UAD 清单扩展 | AGPL-3.0，独立维护的包名清单项目 |
+| [AppManager](https://github.com/MuntashirAkon/AppManager) | 同作者生态项目 | Android 端应用管理器，带强大的 debloat 功能 |
+| [De-Bloater](https://github.com/sunilpaulmathew/De-Bloater) | 同一社区的另一条路线 | 用 Magisk 做 debloat |
+| [0x192/universal-android-debloater](https://github.com/0x192/universal-android-debloater) | 前身 | 已停止维护，作者移交社区 |
 
-这种"开源清单 + 多端实现"的模式让 UAD-ng 的数据资产成为 Android debloat 社区的事实标准。
+分工很清楚：UAD-ng 占 PC 端，Canta 占手机端，共享同一份清单；android-debloat-list 把清单本身独立成项目继续扩展。数据层成了公共品，实现层各走各路——这份 JSON 清单的影响力，比 UAD-ng 这个程序本身更广。
 
 ---
 
@@ -332,43 +304,39 @@ UAD-ng 不是孤立的项目，它是一个生态的一部分：
 ### ✅ 适合
 
 - **非 root 设备用户**：不想 root 但想清理预装
-- **OEM 锁定严重**：三星 / 华为 / 小米 / OPPO / vivo 等
-- **保护隐私**：卸载 analytics / tracker / ads
-- **释放存储空间**：预装 app 占空间 + 后台耗电
-- **跨平台**：在 Mac / Linux / Windows 上批量处理
+- **OEM 定制系统**：三星 / 小米 / OPPO / vivo 等预装应用多的机型
+- **保护隐私**：停用 analytics / tracker / 广告类预装
+- **多设备批量处理**：CLI 支持指定设备与 user，可写进脚本
 
 ### ❌ 不适合
 
-- **需要彻底卸载**：`--user 0` 不能从系统分区真删，重启 / 恢复出厂可能回滚。要彻底删需 root + Magisk。
-- **大版本 OTA 升级后**：OEM 升级后 UAD-ng 清单可能没及时同步，需要手动 sync 或等社区更新。
-- **企业设备 MDM 管控**：被 MDM 管控的设备可能禁用 `pm uninstall`，UAD-ng 会失败。
-- **Android TV / Wear OS**：UAD-ng 主要针对手机/平板，TV / Wear 兼容性未保证。
-- **需要 GUI 自动化**：UAD-ng 没有 CLI 入口（只有 GUI），想做 CI/CD 集成请用 AppManager / ADB 直敲。
+- **需要彻底删除 APK**：`--user 0` 方式不删系统分区里的文件，恢复出厂后全部回滚。要真删需要 root + Magisk。
+- **刚发的大版本 OTA**：新固件带来的新预装包，要等社区先把条目录进清单；程序本身可以在线拉最新清单，不用升级。
+- **企业 MDM 管控设备**：管控策略会拒绝 `pm uninstall`，程序对 Knox 类限制会明确报"厂商限制"，但结果就是删不掉。
+- **Android TV / Wear OS**：面向手机 / 平板，TV 和穿戴设备的兼容性官方没有承诺。
 
 ### 评估建议
 
 | 需求 | 推荐方案 |
 |------|----------|
-| 非 root + 一次性清理 | UAD-ng |
-| Root + 深度清理 + 系统分区 | Magisk + 模块 |
-| Android 端本地清理（无 PC） | Canta (Shizuku) |
-| 高级 app 管理（权限 / 组件） | AppManager |
-| 大规模批量处理 | adb 脚本 + uad_lists.json |
+| 非 root + 一次性清理 | UAD-ng（GUI） |
+| 非 root + 脚本化批量处理 | UAD-ng（CLI） |
+| Root + 彻底删除系统应用 | Magisk + 模块 |
+| 无 PC，手机上直接清理 | Canta（Shizuku） |
+| 应用权限 / 组件级管理 | AppManager |
 
 ---
 
-## 为什么数据驱动是 UAD-ng 的核心
+## 数据为什么是这个项目的护城河
 
-很多 debloat 工具死在"包名清单维护"上——OEM 一升级，应用包名变了或新增了一堆预装，工具立刻过时。
+很多 debloat 工具死在清单维护上——OEM 一升级，包名变了、预装多了一批，硬编码清单的工具立刻过时。UAD-ng 把维护成本转移到了数据层：
 
-UAD-ng 的解法：
+1. **清单放仓库**：包名知识集中在 `uad_lists.json`，加一个条目就是一个 PR，不碰代码
+2. **风险分级在数据里**：`removal` 字段决定程序展示策略，Unsafe 默认隐藏，不靠用户自觉
+3. **依赖关系自描述**：`dependencies` / `neededBy` 让程序能提示"删这个会坏什么"
+4. **清单更新与发版解耦**：在线同步拉最新清单，程序版本升级只服务功能变化
 
-1. **清单放仓库**：每个 OEM 的预装清单都在 `uad_lists.json`，社区成员可以直接 PR
-2. **依赖图自描述**：`dependencies` + `neededBy` 让工具能自动排序推荐
-3. **GUI 透明**：UI 显示每个包的 `list`（OEM 分组） + `description` + `labels`，用户能学到为什么某个包该不该卸
-4. **可热更新**：用户点 [Sync] 立刻拉到最新清单，不需升级应用
-
-这种 **"代码与数据分离"** 的设计哲学让 UAD-ng 在 2026 年还能保持活跃——2 年半 7K Stars 主要靠社区维护包名清单，而不是靠功能堆叠。
+回看它的增长曲线——从 2023-10 fork 至今近三年攒下 9,300 stars——驱动力不是功能堆叠，而是社区持续给清单供数：机型越新、收录越全，工具就越好用，越好用越多人贡献条目。数据飞轮转起来了，代码只是那个足够可靠的轮轴。
 
 ---
 
@@ -376,23 +344,23 @@ UAD-ng 的解法：
 
 ### Q1: 用 UAD-ng 卸载应用安全吗？
 
-安全，但要有心理准备。`pm uninstall -k --user 0` 只卸载当前用户的 app，不删系统分区。如果卸错了，用 `pm install-existing <pkg>` 就能恢复。但有些系统应用被其他应用依赖，卸了可能导致功能异常——UAD-ng 的 `dependencies` / `neededBy` 字段会提示你。
+可恢复，但不是零风险。`pm uninstall --user 0` 只影响当前用户，APK 还在系统分区，卸错了用 `cmd package install-existing` 就能恢复。真正的风险在依赖关系上：删了别的应用依赖的组件，可能导致功能异常。所以按 Recommended 分级走；Unsafe 级的包在打开 expert mode 前根本无法操作，这道锁别轻易解开。三星设备上被 Knox 限制的包，程序会直接报厂商限制，试都试不了。
 
 ### Q2: 重启手机后卸载的应用会回来吗？
 
-OEM 通常不会主动恢复，但恢复出厂设置会清空所有卸载记录。如果你经常恢复出厂设置，需要重新卸载。
+正常重启不会。OEM 一般也不会主动恢复，但恢复出厂设置会把所有 `--user 0` 卸载全部清零，应用全部回来。经常恢复出厂的话，把卸载脚本用 CLI 存一份，恢复后一键重打。
 
 ### Q3: UAD-ng 支持所有 Android 手机吗？
 
-理论上支持 Android 5.0+，但实际覆盖取决于 `uad_lists.json` 里有没有你的 OEM 包名清单。主流厂商（三星、小米、华为、OPPO、vivo、一加、Sony）都覆盖了，冷门厂商可能缺条目。
+程序层面按 Android SDK 分级适配：Android 6.0+ 走 `pm uninstall`，5.x 走 `pm hide`，4.4 走 `pm block`——越老的系统卸载能力越弱（本质是 ADB 命令的限制）。实际好不好用，还要看 `uad_lists.json` 里有没有你机型的条目：三星、小米、OPPO、vivo 等主流厂商覆盖较全，冷门机型可能缺条目，缺了可以自己提 PR。
 
 ### Q4: 为什么用 GPL-3.0 协议？
 
-GPL-3.0 要求衍生项目也开源，这保证了 UAD-ng 的社区属性——没人能把它闭源商业化。如果你不喜欢 GPL-3.0，可以用 MIT 协议的 Canta（但功能弱一些）。
+GPL-3.0 要求衍生项目继续开源，这守住了 UAD-ng 的社区属性——没人能拿它闭源商业化。周边项目的协议选择也值得看一眼：Canta 用 LGPL-3.0，android-debloat-list 用 AGPL-3.0，都是 copyleft 系。
 
 ### Q5: 怎么贡献包名清单？
 
-直接去 [uad_lists.json](https://github.com/Universal-Debloater-Alliance/universal-android-debloater-next-generation/blob/main/resources/assets/uad_lists.json) 提 PR。格式很简单：包名做 key，value 里写 `list`（OEM）、`description`、`labels`。社区维护者会 review 后合并。
+直接向 [uad_lists.json](https://github.com/Universal-Debloater-Alliance/universal-android-debloater-next-generation/blob/main/resources/assets/uad_lists.json) 提 PR：包名做 key，value 里写 `list`（五类归属）、`description`（说明用途和删除后果）、`removal`（Recommended / Advanced / Expert / Unsafe 四级）和依赖字段。字段细则见 wiki 的 How-to-contribute，[CONTRIBUTING](https://github.com/Universal-Debloater-Alliance/universal-android-debloater-next-generation/blob/main/CONTRIBUTING.md) 对批量修改有额外要求（比如用自动化脚本改的，要把命令贴进 PR 描述）。
 
 ---
 

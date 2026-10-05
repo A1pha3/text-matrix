@@ -1,22 +1,23 @@
 ---
 title: "Bun：让你可以放弃 npm/yarn/vite/jest 的 JavaScript 运行时"
 date: "2026-05-16T15:10:00+08:00"
+lastmod: "2026-09-28T00:00:00+08:00"
 slug: "bun-javascript-runtime-all-in-one"
 github_repo: "oven-sh/bun"
 source_key: "gh:oven-sh/bun"
-description: "Bun 是用 Zig 编写的高性能 JavaScript 运行时、bundler、测试框架和包管理器。本文从核心概念、安装配置、运行时、包管理、打包、测试、框架集成六个维度，对这个 2021 年起步、如今已全面生产可用的项目做完整技术解读。"
+description: "Bun 把运行时、bundler、测试框架和包管理器收进一个可执行文件：2021 年开源，最初用 Zig 编写，2026 年 8 月的 1.4 起核心重写为 Rust。本文从运行时、包管理、打包、测试到框架集成做完整技术解读，并给出适用场景与采用顺序建议。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Bun", "JavaScript", "TypeScript", "测试框架", "Zig", "Node.js", "性能优化"]
+tags: ["Bun", "JavaScript", "TypeScript", "测试框架", "Rust", "Node.js", "性能优化"]
 ---
 
 # Bun：让你可以放弃 npm/yarn/vite/jest 的 JavaScript 运行时
 
-2021 年起步的 Bun，到 2024 年起进入多家头部公司的生产环境，早已不是"值得关注的实验品"。它把运行时、bundler、测试框架和包管理器收进一个可执行文件，工程界也因此开始重算前端与后端工具链的搭建方式。Bun 迭代很快，本文写于 2026 年 5 月，涉及的具体版本号以 [官方发布页](https://github.com/oven-sh/bun/releases) 为准。
+Bun 从 2021 年 4 月首个公开版本走到今天，早已不是"值得关注的实验品"。它把运行时、bundler、测试框架和包管理器收进一个可执行文件——你不再需要 node + npm + vite + jest 四件套，只需要 `bun`。
 
-Bun 是一个可执行文件，同时是运行时、bundler、测试框架和包管理器。你不再需要 node + npm + vite + jest，只需要 `bun`。
+三件版本大事值得先知道：2025 年 1 月的 1.2 把锁文件从二进制换成文本格式，并加入内置 S3 与 SQL 客户端；2025 年 10 月的 1.3 补上 Redis 客户端、把 SQL 客户端统一到四种数据库、给 `Bun.serve` 加了声明式路由；2026 年 8 月的 1.4 用 Rust 重写了核心（最初用 Zig 编写），新增 `Bun.cron`、`Bun.WebView`、`Bun.Image` 等一批内置 API。本文初稿写于 2026 年 5 月（Bun 1.3 时代），同年 9 月末对照 1.4 复核更新，涉及的具体版本号以 [官方发布页](https://github.com/oven-sh/bun/releases) 为准。
 
-本文从运行时、包管理、打包、测试、框架集成五个维度，对 Bun 做一次系统性的技术解读，并在结尾给出适用场景与采用顺序建议。
+下面按"先是什么、再分工具看、最后怎么用起来"的顺序做解读，结尾给出适用场景与采用顺序建议。
 
 ## 目录
 
@@ -46,26 +47,26 @@ Bun 是一个可执行文件，同时是运行时、bundler、测试框架和包
 
 ## 什么是 Bun：定位与技术栈
 
-Bun 是一个用 **Zig** 编写、底层基于 **JavaScriptCore**（WebKit 引擎，与 Node.js 使用的 V8 不同）的 JavaScript 运行时。它的设计目标是成为 Node.js 的**直接替代品**，同时内置打包、测试和包管理功能。
+Bun 是一个底层基于 **JavaScriptCore**（WebKit 引擎，与 Node.js 使用的 V8 不同）的 JavaScript 运行时，最初用 Zig 编写，1.4 起核心重写为 **Rust**。它的设计目标是成为 Node.js 的**直接替代品**，同时内置打包、测试和包管理功能。
 
 三个差异让 Bun 与众不同：
 
-**第一，启动速度和内存占用远低于 Node.js。** JavaScriptCore 比 V8 轻量，加上 Zig 的系统级控制，Bun 的冷启动时间通常是 Node.js 的 1/4 到 1/10。这对 CLI 工具和 Serverless 场景尤其重要。
+**第一，启动速度和内存占用低于 Node.js。** JavaScriptCore 的初始化开销比 V8 小，加上系统级的内存控制，空脚本的冷启动差距可以达到数倍。官方在 1.4 发布时给出的可比数字是：Linux 启动快约 50%，Windows 上 15.5 ms 对 Node.js 的 39.0 ms，空闲 CPU 降低到 1/5。这对 CLI 工具和 Serverless 这类进程频繁拉起的场景尤其重要。
 
 **第二，所有工具共用一个进程。** 不需要为 npm 创建一个进程，再为 vite 创建另一个进程。包解析、文件监听、HTTP 服务都在同一个可执行文件里，省掉了进程间通信的开销。
 
-**第三，Node.js 兼容性开箱即用。** 大部分 npm 包不需要修改即可在 Bun 上运行，包括 Express、Fastify、Prisma、Next.js 等主流框架。
+**第三，Node.js 兼容性开箱即用。** 大部分 npm 包不需要修改即可在 Bun 上运行，包括 Express、Fastify、Prisma、Next.js 等主流框架。Bun 从 1.2 起每次改动都跑一遍 Node.js 官方测试套件，1.4 一举新增 1,517 个通过用例，`node:events`、`node:sqlite`、`node:trace_events` 已 100% 通过。
 
 技术栈概览：
 
 | 层级 | 技术选型 |
 |------|---------|
-| 语言 | Zig |
+| 语言 | Zig（1.3 及之前）→ Rust（1.4 起首个 Rust 版本） |
 | 引擎 | JavaScriptCore（WebKit） |
-| 包管理器 | 自研，与 npm 完全兼容 |
+| 包管理器 | 自研，与 npm 生态兼容 |
 | 构建工具 | 自研，打包速度对标 esbuild |
 | 测试框架 | 自研，与 Jest API 高度兼容 |
-| 系统 | macOS（x64 + Apple Silicon）、Linux（x64 + arm64）、Windows |
+| 系统 | macOS（x64 + Apple Silicon）、Linux（x64 + arm64）、Windows（x64 + ARM64）、FreeBSD；另有实验性 Android 构建 |
 
 ## 安装与快速开始
 
@@ -92,7 +93,7 @@ bun upgrade
 bun upgrade --canary
 ```
 
-版本号变化很快，具体值以官方发布页为准；安装后可用 `bun --version` 确认本机版本。
+版本号变化很快（截至 2026-09-28，最新稳定版为 1.4.2），具体值以官方发布页为准；安装后可用 `bun --version` 确认本机版本。
 
 ### 快速上手
 
@@ -192,7 +193,8 @@ const server = Bun.serve({
 - `development: true` 会在响应里带上带源码位置的错误页，适合本地调试；生产环境记得关掉。
 - `idleTimeout` 对长连接、WebSocket 场景要按需调整，默认行为以[官方 `serve` 文档](https://bun.sh/docs/api/http)为准。
 - `onError` 统一兜底未捕获异常，配合日志中间件能收敛线上错误面。
-- 相对路径可配 `static` 托管静态资源、`fetch` 兜底其余请求，几个处理器可以同时存在。
+- 同一份配置里，`static` 托管静态资源、`routes` 处理 API 路由、`fetch` 兜底其余请求，三者可以共存。
+- 1.4 起 `Bun.serve` 还提供实验性的 HTTP/3 支持，`fetch()` 同样支持 HTTP/2/3，生产启用前先在测试环境验证。
 
 ### Web API 全覆盖
 
@@ -234,7 +236,7 @@ import { EventEmitter } from 'node:events'
 
 ### 内置 API：Bun.*
 
-Bun 在全局对象上提供了一组高性能原生 API。下表列出的是官方文档确认存在的 API（截至 1.3.x），具体用法以 [bun.sh/docs](https://bun.sh/docs/runtime/bun-apis) 官方文档为准。
+Bun 在全局对象上提供了一组高性能原生 API。下面列出的是官方文档确认存在的 API（截至 1.4.x），具体用法以 [bun.sh/docs](https://bun.sh/docs/runtime/bun-apis) 官方文档为准。
 
 ```typescript
 // 文件 I/O（比 node:fs 快）
@@ -246,10 +248,14 @@ import { Database } from 'bun:sqlite'
 const db = new Database('app.db')
 const rows = db.query('SELECT * FROM users').all()
 
-// 统一 SQL 客户端（Bun.SQL，支持 PostgreSQL/MySQL/SQLite）
+// 统一 SQL 客户端（Bun.SQL，支持 PostgreSQL/MySQL/MariaDB/SQLite）
 import { sql, SQL } from 'bun'
-const pg = new SQL('postgres://user:pass@localhost/db')
+
+// sql 直接可用，连接串从 DATABASE_URL / POSTGRES_URL 等环境变量读取
 const users = await sql`SELECT * FROM users WHERE active = ${true}`
+
+// 也可以显式传入连接串
+const db = new SQL('postgres://user:pass@localhost/db')
 
 // Redis 客户端（内置，Bun 1.3+）
 import { redis } from 'bun'
@@ -262,12 +268,12 @@ const s3 = new S3Client({ bucket: 'my-bucket' })
 await s3.file('data.json').write(JSON.stringify({ ok: true }))
 // const data = await s3.file('data.json').json()
 
-// Cron 定时任务
+// Cron 定时任务（Bun 1.4 起，进程内回调；还能注册成 OS 级任务，重启后仍生效）
 // Bun.cron('*/5 * * * *', () => {
 //   console.log('Runs every 5 minutes')
 // })
 
-// 无头浏览器（Bun.WebView，macOS，实验性）
+// 无头浏览器（Bun.WebView，实验性：macOS 用系统 WKWebView，Linux/Windows 经 CDP 驱动本机 Chrome 系浏览器）
 // import { WebView } from 'bun'
 ```
 
@@ -277,7 +283,9 @@ await s3.file('data.json').write(JSON.stringify({ ok: true }))
 - `bun:sqlite` 是独立模块，API 更接近 `better-sqlite3` 的同步风格（`.query(...).all()`），`Bun.SQL` 返回 Promise，风格更现代。两者 SQLite 能力有重叠，按项目习惯二选一。
 - `Bun.S3`（`S3Client` / `s3`，Bun 1.2+）是内置的 S3 兼容对象存储客户端，可用于 AWS S3、Cloudflare R2、DigitalOcean Spaces、MinIO 等，无需引入 `@aws-sdk`。
 - `Bun.redis`（Bun 1.3+）是内置 Redis 客户端，覆盖常用命令；Bun 官方基准称其明显快于 `ioredis`，但集群、流和 Lua 脚本仍待后续版本补齐。
-- `Bun.cron`、`Bun.WebView`（macOS）等较新 API 仍在演进，使用前以 [官方文档](https://bun.sh/docs/runtime/bun-apis) 为准。
+- `Bun.cron`（1.4 起）除了进程内定时回调，还能把脚本注册成操作系统级任务（Linux 用 crontab、macOS 用 launchd、Windows 用任务计划程序），进程退出后任务继续执行。
+- `Bun.WebView` 是内置的无头浏览器，定位是替代 Puppeteer/Playwright 的轻量场景：导航、点击、执行 JS、截图。1.4 起可用，目前仍是实验性 API。
+- 1.4 一批新内置 API 值得关注：`Bun.Image`（图像处理）、`Bun.markdown`（Markdown 解析）、`Bun.Terminal`（PTY）、`Bun.JSON5/JSONL/JSONC/XML/TOML`、`Bun.Archive` 等，官方称可以替换约 15 个常用 npm 依赖。较新的 API 仍在演进，使用前以 [官方文档](https://bun.sh/docs/runtime/bun-apis) 为准。
 
 ### Bun.shell：把 Shell 脚本写进 JavaScript
 
@@ -341,24 +349,26 @@ bun add -d <pkg>        # 添加 devDependency
 bun remove <pkg>        # 移除依赖
 bun update <pkg>        # 更新依赖
 bun outdated           # 检查过时依赖
-bun audit              # 安全审计
+bun audit              # 安全审计（1.4 起还支持 bun audit fix 自动修复）
 bun why <pkg>           # 解释为什么某个包被安装
 bun info <pkg>         # 查看包信息
+bun dedupe             # 去除重复依赖（1.4 新增）
+bun prune              # 清理不在 package.json 里的包（1.4 新增）
 bun pm                  # 包管理器子命令（清理缓存、查看全局缓存等）
 ```
 
 ### 速度对比
 
-Bun 的包管理器用 Zig 重写，安装速度比 npm 快 **5-20 倍**，比 pnpm 快 **2-5 倍**。原因：
+Bun 的包管理器用系统级语言实现，安装速度明显快于 npm 与 pnpm——官方不再维护固定的倍数声明，因为数值随网络、缓存和依赖树形状浮动。有官方数字可引的是 1.4 引入的全局 virtual store：[1.4 发布说明](https://bun.com/blog/bun-v1.4)称 monorepo 里各隔离环境的安装最多可快 7 倍。速度快的原因：
 
 1. **并行下载**：同时下载多个文件
 2. **全局缓存**：已下载的包永不重复下载
-3. **锁文件优化**：`bun.lockb` 格式支持增量更新
+3. **文本锁文件**：1.2 起默认生成 `bun.lock`（JSONC 文本格式，git 友好），并能直接读取 `package-lock.json`、`yarn.lock`、`pnpm-lock.yaml` 完成迁移
 4. **跳过元数据解析**：直接读取 npm registry 的 tarball URL
 
 ### Workspaces 支持
 
-```json
+```jsonc
 // package.json
 {
   "workspaces": ["packages/*"]
@@ -426,7 +436,7 @@ await build({
 
 ```bash
 bun build --compile --outfile myapp src/index.ts
-# 输出一个 ~50MB 的独立可执行文件，不需要 Node.js 或任何运行时
+# 输出一个独立的可执行文件（内含整个运行时，几十 MB 量级；1.4 起官方称产物最多可小 17%），不需要 Node.js 或任何其他运行时
 ```
 
 ### 热模块替换（HMR）
@@ -527,12 +537,15 @@ test('snapshot', () => {
 
 | 特性 | Bun test | Jest |
 |------|---------|------|
-| 启动速度 | <100ms（冷启动） | 3-10 秒 |
-| 运行速度 | 快 5-10 倍 | 较慢 |
+| 启动速度 | 亚秒级 | 通常要数秒 |
+| 运行速度 | 明显更快，主要省在启动与转译 | 较慢 |
 | Jest 兼容性 | 极高 | — |
 | 内置 DOM 测试 | 是（happy-dom） | 需要 jsdom |
 | 覆盖率报告 | 内置 | 需要 jest-coverage |
 | 配置文件 | bunfig.toml | jest.config.js |
+| 并行与分片 | 1.4 起支持 `--parallel`、`--shard`、`--changed`、`--isolate` | 需要额外配置 |
+
+启动速度是两者体感差距的主要来源：Jest 每次跑起来都要经过自己的模块系统和转译管线，Bun 直接复用运行时的转译器，省掉的就是这一段。具体倍数随项目规模浮动，用自己最大的那个包跑一次就有数了。
 
 ## 框架与工具链集成
 
@@ -565,10 +578,12 @@ export default {
 Bun 可以运行 Next.js 应用：
 
 ```bash
-# Next.js 14+ 兼容 Bun
+# 用 Bun 负责依赖安装与脚本执行
 bun add next react react-dom
-bun run next dev  # 仍使用 Next.js 的打包器，但 Bun 处理依赖安装
+bun run dev  # 仍使用 Next.js 自带的打包器
 ```
+
+日常使用中 Bun 主要承担包管理角色；Bun 1.4 起官方对 Next.js 16 做了适配，兼容性问题在持续收敛。
 
 ### 数据库集成
 
@@ -607,34 +622,31 @@ const db = new Database('blog.db')
 
 ## 配置文件：bunfig.toml
 
-Bun 的全局配置通过 `~/.bunfig` 或项目根目录的 `bunfig.toml` 管理：
+Bun 的全局配置通过 `~/.bunfig` 或项目根目录的 `bunfig.toml` 管理。下面的示例只保留常用且文档确认的选项（选项归属以 [bunfig 官方文档](https://bun.com/docs/runtime/bunfig) 为准）：
 
 ```toml
-# 日志级别
+# 日志级别（顶层选项）："debug" | "warn" | "error"
 logLevel = "debug"
 
-# 安装相关
 [install]
-registry = "https://registry.npmjs.org/"
-# 离线模式
-# offline = true
-# 全局缓存目录
-# cacheDir = "~/.bun/install/cache"
+registry = "https://registry.npmmirror.com/"   # 镜像源
+# offline = true                                # 离线模式：只从缓存装
+# peer = true                                   # 自动安装 peerDependencies（默认 true）
 
-# 运行相关
-[run]
-# 自动安装缺失的包
-autoInstallPeers = true
-# watch 模式
-# watch = true
+[install.cache]
+# disable = false                               # 禁用全局缓存
 
-# 测试相关
 [test]
-# 覆盖率阈值
-coverageThreshold = 80
-# 并发数
-concurrency = 8
+# coverage = true                               # 默认开启覆盖率
+# coverageThreshold = 0.8                       # 覆盖率阈值是比例值（0.8 = 80%），
+                                                # 也支持 { lines = 0.7, functions = 0.8 }
+
+[run]
+# shell = "bun"                                 # "bun" | "system"：bun run 执行脚本时用的 shell
+# silent = false                                # 不回显脚本命令
 ```
+
+两个容易踩的点：`coverageThreshold` 写比例值而不是百分数（`0.8`，不是 `80`）；`bun run` 的 watch 模式没有配置项，只能用 `bun --watch` 命令行参数开启。
 
 ## 性能基准：测的是什么，不能说明什么
 
@@ -648,6 +660,8 @@ concurrency = 8
 | HTTP QPS（空响应） | Bun 更高 | 事件循环 + HTTP 解析器 |
 | 测试运行（纯断言） | Bun 更快 | 测试框架启动 + 用例调度 |
 | 打包（纯转译） | 与 esbuild 接近 | 解析 + 转译 + 写盘 |
+
+想要有出处的锚点数字，官方 1.4 发布说明给过一组：空闲 CPU 降至 1/5、内存最多省 35%、Linux 启动快约 50%、打包产物最多小 17%。这些是官方自测的最优场景数字，当参考线可以，当承诺不行。
 
 这些量级只反映各自最容易命中"快"的那一段，别外推到别的场景：
 
@@ -663,22 +677,22 @@ concurrency = 8
 以下场景需要注意：
 
 **1. V8 特有功能缺失**
-Bun 使用 JavaScriptCore，不是 V8。如果你的代码依赖 `v8.*` API（如 `v8.Serializer`），会不兼容。大部分 npm 包不受影响，但某些 Node.js 内部工具链可能有问题。
+Bun 使用 JavaScriptCore，不是 V8。如果你的代码依赖 `v8.*` API（如 `v8.Serializer`），会不兼容——不过 1.2 起 Bun 在 JavaScriptCore 上桥接了部分 V8 C++ API 和 `node:v8` 的堆快照能力，覆盖面在扩大。大部分 npm 包不受影响。
 
-**2. Native Addon 支持有限**
-`node-gyp` 编译的 C++ addon 支持还不完整。使用 `better-sqlite3`、`sharp` 这类 native addon 时，建议先测试。
+**2. Native addon 优先选 N-API**
+1.4 起 N-API 编写的 native addon 已能跨文件正常工作，自带预编译二进制的包（如 esbuild）也可以通过 `nativeDependencies` 直接链接，不再依赖 postinstall 脚本。仍有风险的是依赖 Node.js 内部 API 的老式 `node-gyp` addon，使用 `better-sqlite3`、`sharp` 这类包前建议先在 Bun 下跑一遍关键路径。
 
-**3. Windows 生态相对不成熟**
-macOS 和 Linux 仍然是 Bun 的最佳运行环境。Windows 版本虽然可用，但部分边缘功能可能有 bug。
+**3. Windows 可用但仍是第二梯队**
+macOS 和 Linux 仍然是 Bun 的最佳运行环境。Windows 支持在快速改善——1.4 加了 ARM64 原生构建，Windows 上启动比 Node 快 2.5 倍——但边缘功能（如部分 addon 预编译产物）仍可能缺位。
 
 **4. 生态仍在成熟**
 npm 上的包大多数可以在 Bun 上运行，但某些包的特定功能（如 Vite 的某些插件）可能需要调整。查阅 [Bun 兼容性列表](https://bun.sh/docs/runtime/nodejs-apis) 确认。
 
 **5. 版本稳定性**
-Bun 仍在活跃开发中，版本之间可能有 breaking change。使用 `bun.lockb` 锁定依赖版本，避免升级导致的不兼容。
+Bun 仍在活跃开发中，版本之间可能有 breaking change。用 `bun.lock`（1.2 起的默认文本锁文件）锁定依赖版本，老项目里遗留的 `bun.lockb` 可用 `bun install --save-text-lockfile --frozen-lockfile --lockfile-only` 迁移后删除。
 
-**6. Bun.SQL 的批量插入在某些数据形态下开销大**
-`sql(rows)` 批量插入若含可空列，Bun 会对不同 null 组合各编译预编译语句，数据库端语句可能不断累积，极端情况推高内存。真实命中过的话，可在项目 issue 里搜 `Bun.SQL batch nullable` 确认当时是否已修复。批量写入的列含可空字段时，先小批量压测再上生产。
+**6. Bun.SQL 的批量插入在含可空列时开销大**
+`sql(rows)` 批量插入若含可空列，Bun 会对不同 null 组合分别编译预编译语句，语句缓存可能持续膨胀，极端情况下拖垮数据库端（[issue #28980](https://github.com/oven-sh/bun/issues/28980)，截至 2026-09 仍开放，修复 PR #28981、#33244 尚未合并）。批量写入的列含可空字段时，先小批量压测，或升级前在 issue 里确认修复进度。
 
 ## FAQ：常见问题与错误排查
 
@@ -722,7 +736,7 @@ Bun 的 mock API 与 Jest 高度兼容但不完全一致。常见差异：`jest.
 3. `bun install` 比 `npm install` 快的四个原因是什么？其中哪些优势在冷缓存（首次安装）场景下会减弱？
 4. `Bun.SQL` 和 `bun:sqlite` 在 API 风格和适用场景上有什么区别？如果你要连 PostgreSQL，应该用哪个？
 5. Bun 的 `bun:test` 与 Jest 在 mock API 上有哪些已知差异？迁移时如何快速定位不兼容的断言？
-6. `bun build --compile` 生成的单文件可执行文件大小约 50MB，这个体积主要来自什么？这种打包方式适合什么场景，不适合什么场景？
+6. `bun build --compile` 生成的单文件可执行文件体积在几十 MB 量级，这个体积主要来自什么？这种打包方式适合什么场景，不适合什么场景？
 7. 在什么情况下你应该**不**用 Bun 替换 Node.js？至少给出三个具体场景。
 
 ## 进阶路径
@@ -733,9 +747,9 @@ Bun 的 mock API 与 Jest 高度兼容但不完全一致。常见差异：`jest.
 
 **CLI 工具**：用 `bun build --compile` 把 CLI 工具打包成单文件可执行文件，分发给没有 Node.js 环境的用户。配合 `Bun.spawn` 调用子进程，`Bun.file` 读写配置，能做出比 Node.js + pkg 更轻量的 CLI。
 
-**CI/CD 加速**：在 GitHub Actions 里用 `bun install --frozen-lockfile` 替换 `npm ci`，用 `bun test` 替换 `jest`。大型 monorepo 的 CI 时间通常能缩短 30-50%。注意先在本地跑通 `bun test`，确认没有兼容性问题再上 CI。
+**CI/CD 加速**：在 GitHub Actions 里用 `bun install --frozen-lockfile` 替换 `npm ci`，用 `bun test` 替换 `jest`。CI 耗时里依赖安装和测试启动占的比重越大，收益越明显——先跑一次对比，再决定要不要全量切换。注意先在本地跑通 `bun test`，确认没有兼容性问题再上 CI。
 
-**Edge Function 与 Serverless**：Bun 的冷启动优势在 Serverless 场景下最明显。Bun 官方提供了 `bun deploy` 命令部署到 Bun Edge，Cloudflare Workers、Vercel Edge Functions 等平台也在逐步支持 Bun 运行时。
+**Serverless 与短生命周期进程**：Bun 的冷启动优势在进程频繁拉起的场景里最明显——FaaS、定时任务、CLI 脚本，进程每次冷启动省下的几百毫秒会乘以调用次数。`bun build --compile` 产出的单文件可执行文件可以直接放进精简容器镜像分发，镜像里不必再装一遍运行时。
 
 **插件与工具链**：学习 `Bun.plugin` 的 API，为自定义文件类型（如 `.graphql`、`.vue`）写加载器。如果你维护一个内部工具链，可以用 Bun 的插件系统替换 Webpack loader 或 Vite plugin。
 
@@ -749,7 +763,7 @@ Bun 的 mock API 与 Jest 高度兼容但不完全一致。常见差异：`jest.
 1. 备份现有的 `node_modules` 和 `package-lock.json` / `yarn.lock`
 2. 删除 `node_modules` 目录
 3. 运行 `bun install`
-4. 对比安装时间和生成的 `bun.lockb` 文件大小
+4. 对比安装时间和生成的 `bun.lock` 文件（老项目若还在用二进制 `bun.lockb`，可用 `bun install --save-text-lockfile --frozen-lockfile --lockfile-only` 迁移）
 5. 运行 `bun run dev`（或你的启动命令），检查是否正常工作
 
 **练习 2：用 Bun.serve 替换 Express**
@@ -836,9 +850,9 @@ console.log(users)
 
 这个顺序的好处是每一步都可回滚，且每一步都能拿到性能收益。反过来，如果你一开始就把生产服务从 Node.js 切到 Bun，遇到兼容性问题时的回滚成本会很高。
 
-Bun 能走到这一步，有几个具体原因：创始人 **Jarred Sumner**（前 Stripe 工程师）深知大型项目里 npm 的痛点；用 Zig 编写给了团队对性能的极致控制；JavaScriptCore 的选择避开了 V8 的许可问题，同时获得了更好的启动性能；渐进式兼容策略让它在 Node.js 兼容性上逐步完善。
+Bun 能走到这一步，有几个具体原因：创始人 **Jarred Sumner**（前 Stripe 工程师）带着大型代码库的包管理痛点来做这个项目；JavaScriptCore 启动快、内存省，而且是 WebKit 的一部分，和 Bun 一样开源（Bun 采用 MIT 许可）；渐进式兼容策略让它在 Node.js 兼容性上逐步完善——1.2 起每次提交都跑 Node.js 官方测试套件的做法，把"兼容性"变成了可度量的指标。
 
-如果你还没用过 Bun，可以从今天开始：
+如果你还没用过 Bun，可以先在一个玩具项目里跑一圈：
 
 ```bash
 curl -fsSL https://bun.sh/install | bash
@@ -850,11 +864,9 @@ bun run src/index.ts
 ```
 
 **仓库链接**：https://github.com/oven-sh/bun
-**文档地址**：https://bun.sh/docs
-**版本**：以 [Bun 发布页](https://github.com/oven-sh/bun/releases) 为准
+**文档地址**：https://bun.com/docs
+**版本**：以 [Bun 发布页](https://github.com/oven-sh/bun/releases) 为准（本文复核时最新稳定版为 1.4.2，2026-09-05 发布）
 
 ---
 
----
-
-_本文基于 Bun 文档（bun.sh/docs）整理。API 名称、模块路径与版本以 [Bun 官方文档](https://bun.sh/docs) 为准。文中涉及的具体版本能力（如 Bun 1.2/1.3 新增的内置客户端）请以对应版本号查证。_
+_本文基于 Bun 文档（bun.com/docs）整理，初稿写于 Bun 1.3 时代，2026 年 9 月末对照 1.4 复核。API 名称、模块路径与版本以 [Bun 官方文档](https://bun.com/docs) 为准；文中涉及的具体版本能力（如 1.2 的 S3/SQL 客户端与文本锁文件、1.3 的 Redis 与统一 SQL、1.4 的 Rust 重写与内置 Cron/WebView）请以对应版本的发布说明查证。_

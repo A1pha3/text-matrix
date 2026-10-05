@@ -1,11 +1,11 @@
 ---
 title: "Prefect 把编排塞进装饰器，代价是缓存与结果要按 3.x 重学一遍"
 date: "2026-07-13T03:01:47+08:00"
-lastmod: "2026-09-20T01:10:00+08:00"
+lastmod: "2026-09-29T14:00:00+08:00"
 slug: "prefecthq-prefect-python-workflow-orchestration-framework"
 github_repo: "PrefectHQ/prefect"
 source_key: "gh:PrefectHQ/prefect"
-description: "按 PyPI 上的 Prefect 3.8.6 实机核查：装饰器到底接管了什么、cache_policy 与 persist_result 的真实命中条件、run 历史写进哪个 SQLite、work pool 与 worker 的分工、17 类自动化动作，以及 2.x 那套心智里已经失效的写法。"
+description: "按 PyPI 上的 Prefect 3.8.7 实机核查：装饰器到底接管了什么、cache_policy 与 persist_result 的真实命中条件、run 历史写进哪个 SQLite、work pool 与 worker 的分工、18 类自动化动作，以及 2.x 那套心智里已经失效的写法。"
 draft: false
 categories: ["技术笔记"]
 tags: ["Python", "工作流编排", "数据工程", "开源"]
@@ -15,7 +15,7 @@ Prefect 的 README 对自己的定位只有一句话：把脚本升级成生产�
 
 这笔交易里划算的部分很好理解：本地 `python script.py` 和生产上的 deployment（部署）跑同一份函数体，没有 DAG 文件、没有第二套调度语义。需要付学费的部分，多数二手资料讲错了。Prefect 3 换掉了 2.x 的记录模型：缓存、结果持久化、「默认能拿到上一次的返回值」这三件事的语义全变了，而流传最广的示例代码还停在 2.x。
 
-所以本文的判断钉在两份证据上：一份是 PyPI 上的 3.8.6，本机装完真跑过，命令与行数都记在文中；另一份是 GitHub `main` 分支 2026-09-18 的提交，用来读结构与实现。凡是只有 README 口径或只有我推断的，都在原位标出来。
+所以本文的判断钉在两份证据上：一份是 PyPI 上的 3.8.7，本机装完真跑过，命令与行数都记在文中；另一份是 GitHub `main` 分支 2026-09-29 的提交，用来读结构与实现。凡是只有 README 口径或只有我推断的，都在原位标出来。
 
 ## 目录
 
@@ -59,16 +59,16 @@ Prefect 的 README 对自己的定位只有一句话：把脚本升级成生产�
 
 ## 2. 仓库现状与核实口径
 
-下表数字采于 2026-09-20，方法写在第 20 节。
+下表数字采于 2026-09-29，方法写在第 20 节。
 
 | 项 | 值 | 来源口径 |
 |---|---|---|
-| star / fork（派生） | 23 869 / 2 526 | GitHub REST（表述性状态转移）API 的 `repos/PrefectHQ/prefect` |
-| open issues | 860 | 同上 |
+| star / fork（派生） | 23 947 / 2 546 | GitHub REST（表述性状态转移）API 的 `repos/PrefectHQ/prefect` |
+| open issues | 853 | 同上 |
 | 仓库创建 | 2018-06-29 | 同上，`created_at` |
-| 最近 push（推送） | 2026-09-19 | 同上，`pushed_at` |
-| 最新 release | 3.8.6，发布于 2026-09-14 | GitHub `releases/latest`，标题「3.8.6 - Pause for cancellation」 |
-| PyPI 版本 | 3.8.6 | `pypi/prefect/json` |
+| 最近 push（推送） | 2026-09-28 | 同上，`pushed_at` |
+| 最新 release | 3.8.7，发布于 2026-09-26 | GitHub `releases/latest`，标题「3.8.7 - There's no place like local」 |
+| PyPI 版本 | 3.8.7 | `pypi/prefect/json` |
 | Python 支持 | `>=3.10,<3.15` | `pyproject.toml` 的 `requires-python`，与 README 「requires Python 3.10+」一致 |
 | 许可证 | Apache-2.0 | `LICENSE` 文件正文 |
 | 默认分支 / 主语言 | `main` / Python | GitHub API |
@@ -111,15 +111,14 @@ flowchart LR
 
 ## 5. 运行历史从哪来：本机实测
 
-不设 `PREFECT_API_URL`、不启任何服务，直接跑一个流。3.8.6 的实际输出：
+不设 `PREFECT_API_URL`、不启任何服务，直接跑一个流。3.8.7 的实际输出：
 
 ```text
-00:21:55.114 | INFO    | prefect - Starting temporary server on http://127.0.0.1:8936
-00:22:02.911 | INFO    | Flow run 'righteous-doberman' - Beginning flow run 'righteous-doberman' for flow 'probe-flow'
-00:22:02.942 | INFO    | Task run 'gt-869' - RUNBODY 5
-00:22:02.944 | INFO    | Task run 'gt-869' - Finished in state Completed()
-00:22:03.932 | INFO    | Flow run 'righteous-doberman' - Finished in state Completed()
-00:22:03.952 | INFO    | prefect - Stopping temporary server on http://127.0.0.1:8936
+13:48:40.582 | INFO    | prefect - Starting temporary server on http://127.0.0.1:8807
+13:48:44.696 | INFO    | Flow run 'unique-gopher' - Beginning flow run 'unique-gopher' for flow 'probe-flow'
+13:48:44.711 | INFO    | Task run 'probe-ef4' - Finished in state Completed()
+13:48:45.717 | INFO    | Flow run 'unique-gopher' - Finished in state Completed()
+13:48:45.738 | INFO    | prefect - Stopping temporary server on http://127.0.0.1:8807
 ```
 
 它替你拉起了一个临时 server（随机端口），进程退出时关掉。落盘位置由 `PREFECT_HOME` 决定，默认 `~/.prefect`，数据库是其中的 `prefect.db`。跑完一次最小流之后直接查库：
@@ -134,9 +133,9 @@ sqlite3 ~/.prefect/prefect.db \
    union all select 'deployment', count(*) from deployment;"
 ```
 
-本机实测结果：`flow_run` 1、`task_run` 1、`flow_run_state` 3、`task_run_state` 3、`log` 4、`deployment` 0。也就是说本地直接跑并非「只在屏幕上打日志」，历史确实进了 SQLite；用同一个 `PREFECT_HOME` 起 `prefect server start`（默认 4200 端口），上面这几条就会出现在 UI 里。`deployment` 为 0 说明另一件事：没有 `serve()` 或 `deploy()` 就不会有部署。
+本机实测结果：`flow_run` 1、`task_run` 1、`flow_run_state` 3、`task_run_state` 3、`log` 3、`deployment` 0。也就是说本地直接跑并非「只在屏幕上打日志」，历史确实进了 SQLite；用同一个 `PREFECT_HOME` 起 `prefect server start`（默认 4200 端口），上面这几条就会出现在 UI 里。`deployment` 为 0 说明另一件事：没有 `serve()` 或 `deploy()` 就不会有部署。
 
-这里有一个即将到来的破坏性变更值得预警。3.8.6 里 `PREFECT_SERVER_EPHEMERAL_ENABLED` 的默认值是 `True`，而 `main` 分支已把它改成 `False`，同时 `get_client()` 在没有 `PREFECT_API_URL` 时直接抛 `ValueError: No Prefect API URL provided.`。升级前如果依赖「裸跑也能留痕」，需要先起服务或显式打开该开关。
+「裸跑能拉起临时 server」不是代码里的默认值，而是一份 profile 给的。`ServerEphemeralSettings` 里 `enabled` 的代码默认值是 `False`（`src/prefect/settings/models/server/ephemeral.py`），随包分发的 `profiles.toml` 却把 `ephemeral` 设为激活 profile，并在其中显式写 `PREFECT_SERVER_EPHEMERAL_ENABLED = "true"`。`get_client()` 的分支逻辑因此有三条路：设了 `PREFECT_API_URL` 直接用；没设且该开关为真就拉临时 server；没设且开关为假，抛 `ValueError: No Prefect API URL provided.`。3.8.6、3.8.7 与 `main` 在这套机制上逐字节一致（本机 diff 过），所以依赖「裸跑也能留痕」的脚本，真正的失效条件是切换 profile 或显式关掉这个开关，而不是升级版本。
 
 自托管 server 的组成按 `prefect server start --help` 的参数看得最清楚：API、UI（`--ui`）、一组后台服务（`--scheduler`、`--late-runs`，可用 `--no-services` 只留 API 与 UI），以及 `--workers`（默认 1）与 `--background`。数据库支持两种，官方文档 `docs/v3/concepts/server.mdx` 写得明确：SQLite 为默认、建议单机轻量场景；生产与多实例用 PostgreSQL，且要求 14.9 以上并启用 `pg_trgm` 扩展。迁移由 Alembic 管理，server 启动时自动执行，也可以手工执行 `prefect server database upgrade` 升级数据库。
 
@@ -144,7 +143,7 @@ sqlite3 ~/.prefect/prefect.db \
 
 ## 6. 装饰器具体替你做了什么
 
-`@flow` 与 `@task` 的参数就是它的全部承诺。3.8.6 的 `Task.__init__` 签名里与执行相关的项：
+`@flow` 与 `@task` 的参数就是它的全部承诺。3.8.7 的 `Task.__init__` 签名里与执行相关的项：
 
 - `retries`、`retry_delay_seconds`、`retry_jitter_factor`、`retry_condition_fn`
 - `timeout_seconds`、`log_prints`、`tags`、`task_run_name`、`version`
@@ -176,9 +175,9 @@ if __name__ == "__main__":
     ingest([1, 2])
 ```
 
-实测这份代码（3.8.6）：`flaky(1)` 共失败 5 次，日志按「Retry 1/4 will start 0.5 second(s) from now」一路写到「4.0 second(s)」，正是 `exponential_backoff(0.5)` 给出的 0.5、1、2、4 秒；`page 2` 从未被执行，因为异常在列表推导第一步就抛出。外层 `@flow(retries=1)` 把整段流体重跑一次（`Encountered exception during execution` 出现两遍），最后 flow run 以 `Failed('Flow run encountered an exception: ValueError: page 1 unavailable')` 结束，异常原样向上传播。也就是说「任务失败会不会把流拖成 CRASHED」这个常见担心，在同步调用的写法下不成立——CRASHED 是引擎没机会写终态时（进程被杀、worker 掉线）才会出现的状态。`StateType` 在 3.8.6 一共九个值：`SCHEDULED`、`PENDING`、`RUNNING`、`COMPLETED`、`FAILED`、`CANCELLED`、`CANCELLING`、`CRASHED`、`PAUSED`，其中终态为 `COMPLETED`、`FAILED`、`CANCELLED`、`CRASHED` 四个。
+实测这份代码（3.8.7）：`flaky(1)` 共失败 5 次，日志按「Retry 1/4 will start 0.5 second(s) from now」一路写到「4.0 second(s)」，正是 `exponential_backoff(0.5)` 给出的 0.5、1、2、4 秒；`page 2` 从未被执行，因为异常在列表推导第一步就抛出。外层 `@flow(retries=1)` 把整段流体重跑一次（`Encountered exception during execution` 出现两遍），最后 flow run 以 `Failed('Flow run encountered an exception: ValueError: page 1 unavailable')` 结束，异常原样向上传播。也就是说「任务失败会不会把流拖成 CRASHED」这个常见担心，在同步调用的写法下不成立——CRASHED 是引擎没机会写终态时（进程被杀、worker 掉线）才会出现的状态。`StateType` 在 3.8.7 一共九个值：`SCHEDULED`、`PENDING`、`RUNNING`、`COMPLETED`、`FAILED`、`CANCELLED`、`CANCELLING`、`CRASHED`、`PAUSED`，其中终态为 `COMPLETED`、`FAILED`、`CANCELLED`、`CRASHED` 四个。
 
-超时这一项有个必须知道的边界。官方 `docs/v3/how-to-guides/workflows/write-and-run.mdx` 与 `task_engine.py` 里的告警文本一致：同步任务经 `ThreadPoolTaskRunner`（默认）提交时跑在工作线程，`timeout_seconds` **不能打断** `time.sleep()`、网络请求或文件 I/O，只能在阻塞调用自然返回后生效；需要真打断得用 async 任务。引擎会明确打告警，而不是静默失效。
+超时这一项的边界取决于任务体跑在哪个线程。官方 `docs/v3/how-to-guides/workflows/write-and-run.mdx` 按「怎么调用」分了三种情况，源码与实测都对得上。直接调用的同步任务跑在主线程，`cancel_sync_after` 在这种条件下用 SIGALRM 信号实现（`src/prefect/_internal/concurrency/cancellation.py`），阻塞调用会被硬切断——本机实测 `time.sleep(6)` 配 `timeout_seconds=2`，2 秒时限一到即抛 `TaskRunTimeoutError`，终态是 `TimedOut`（type 仍为 FAILED）。经 `.submit()` 交给默认 `ThreadPoolTaskRunner` 的任务跑在工作线程，`task_engine.py` 对这种情况会打告警——「Timeouts in worker threads cannot interrupt blocking operations like `time.sleep()`, network requests, or file I/O」——超时只能等阻塞调用自然返回后生效，引擎明说而不是静默失效。async 任务则在 `await` 点协作取消。还有一个平台边界：信号方案在 Windows 上不生效，`cancel_sync_after` 对 win 平台直接返回空 scope。
 
 ## 7. 缓存：3.x 换了实现，也换了命中条件
 
@@ -207,11 +206,13 @@ with transaction(
 | `@task(cache_policy=INPUTS, persist_result=True)` | 3 | 1 | 跨进程仍命中，说明记录已落盘 |
 | `@task(cache_policy=TASK_SOURCE + INPUTS)` | 2 | 1 | 同上，且函数体一改就会失效 |
 
-要点三条。给 `cache_policy` 而不给 `persist_result` 时，`Task.__init__` 会隐含打开持久化，所以第二行不需要额外参数就能跨进程命中。反过来显式写 `persist_result=False`，构造时策略被强制改成 `NO_CACHE`，并在日志里给出原文 `Ignoring 'cache_policy' because 'persist_result' is False`——静默失效至少留了警告，别忽略。第三，默认策略含 `RUN_ID`，所以第一行看起来「缓存粒度最粗」其实是完全不缓存。
+这张表有一个隐含前提：任务得带参数。`INPUTS` 对无参任务算出的 key 是空串，而 `transaction()` 对空 key 不落记录（`transactions.py` 里的原话是「if there is no key, we won't persist a record」），表中第二种配置在无参任务上一次都不会命中——本机实测如此。
+
+要点三条。给 `cache_policy` 而不给 `persist_result` 时，`Task.__init__` 会隐含打开持久化，所以第二行不需要额外参数就能跨进程命中。反过来显式写 `persist_result=False`，构造时策略被强制改成 `NO_CACHE`，并在日志里给出原文 ``Ignoring `cache_policy` because `persist_result` is False``——静默失效至少留了警告，别忽略。第三，默认策略含 `RUN_ID`，所以第一行看起来「缓存粒度最粗」其实是完全不缓存。
 
 旧写法仍然可用，但会被翻译成策略对象：`cache_key_fn=task_input_hash` 在构造时被 `CachePolicy.from_cache_key_fn()` 包成 `CacheKeyFnPolicy`；若同时给了 `cache_policy` 与 `cache_key_fn`，日志警告 `cache_key_fn will be used`，即新参数被旧的覆盖。`cache_expiration` 是另一种机制：`task_engine.py` 在任务成功时把它换算成绝对时间写入 state details（状态详情），服务端 `core_policy.py` 的缓存查找按 `cache_key` 相等且（无过期时间或 `cache_expiration > now()`）取最近一条命中。想按「数据版本」而非「时间」失效，更稳的做法是把日期或文件指纹拼进 key，或直接用 `@flow` 参数 + `FLOW_PARAMETERS`。
 
-缓存记录与结果默认落在 `$PREFECT_HOME/storage/` 下按 key 哈希命名的文件里（本机实测单条约 273 字节）。需要跨机器共享时，官方文档给的写法是把 key 存储指到对象存储块，并且要区分两件事：缓存记录的位置用 `configure(key_storage=…)`，结果的位置用 `result_storage`：
+缓存记录与结果默认落在 `$PREFECT_HOME/storage/` 下按 key 哈希命名的文件里（本机实测单条约 275 字节）。需要跨机器共享时，官方文档给的写法是把 key 存储指到对象存储块，并且要区分两件事：缓存记录的位置用 `configure(key_storage=…)`，结果的位置用 `result_storage`：
 
 ```python
 from prefect import task
@@ -235,7 +236,7 @@ def build(dataset: str) -> int:
 
 ## 8. 结果与事务：默认什么都不存
 
-3.x 里「把返回值存下来」是显式行为。`PREFECT_RESULTS_PERSIST_BY_DEFAULT` 默认 False，`PREFECT_TASKS_DEFAULT_PERSIST_RESULT` 默认 None（跟随前者）。因此下面两件事在 3.8.6 上不成立：流的返回值会被自动持久化、下游运行能读到上游运行的结果。要跨运行取结果，就在源头打开持久化：
+3.x 里「把返回值存下来」是显式行为。`PREFECT_RESULTS_PERSIST_BY_DEFAULT` 默认 False，`PREFECT_TASKS_DEFAULT_PERSIST_RESULT` 默认 None（跟随前者）。因此下面两件事在 3.8.7 上不成立：流的返回值会被自动持久化、下游运行能读到上游运行的结果。要跨运行取结果，就在源头打开持久化：
 
 ```python
 from prefect import flow, task
@@ -269,7 +270,7 @@ def nightly(day: str) -> int:
 
 ## 9. 并发有四条线，各管一层
 
-**进程内怎么并发**：`@flow(task_runner=...)`。3.8.6 核心提供三个：`ThreadPoolTaskRunner`、`ProcessPoolTaskRunner`，以及提交后返回 `PrefectDistributedFuture` 的 `PrefectTaskRunner`（它只出现在 API 参考里，概念文档没有使用指引）；`ConcurrentTaskRunner` 作为兼容名保留。跨机器的 `DaskTaskRunner` 与 `RayTaskRunner` 不在核心包，来自 `src/integrations/` 下的 `prefect-dask`、`prefect-ray`。默认线程池的 `max_workers` 实测是 `sys.maxsize`，也就是**不设上限**；`ProcessPoolTaskRunner` 默认 10。类文档串里点名了风险：频繁提交且每个任务改上下文（例如循环里用 `prefect.tags`）会让线程与文件描述符一起涨，撞上 `OSError: Too many open files`。另一个坑在显式设了上限之后：`_warn_if_nested_submit_would_deadlock` 专门检测「父任务在工作线程里提交子任务并同步等结果，而线程池已满」，命中就告警一次，对应的正是 issue #17060；三条出路写在告警文本里——抬高 `max_workers`、把子任务的提交提到流这一级、或者改用 `.delay()` 交给 task worker 执行。
+**进程内怎么并发**：`@flow(task_runner=...)`。3.8.7 核心提供三个：`ThreadPoolTaskRunner`、`ProcessPoolTaskRunner`，以及提交后返回 `PrefectDistributedFuture` 的 `PrefectTaskRunner`（它只出现在 API 参考里，概念文档没有使用指引）；`ConcurrentTaskRunner` 作为兼容名保留。跨机器的 `DaskTaskRunner` 与 `RayTaskRunner` 不在核心包，来自 `src/integrations/` 下的 `prefect-dask`、`prefect-ray`。默认线程池的 `max_workers` 实测是 `sys.maxsize`，也就是**不设上限**；`ProcessPoolTaskRunner` 的取值链是 `max_workers or 设置 or multiprocessing.cpu_count()`，设置项默认 None，所以不传参时就是 CPU 核数——本机 10 核实测 10，这个数字别当成固定值。类文档串里点名了风险：频繁提交且每个任务改上下文（例如循环里用 `prefect.tags`）会让线程与文件描述符一起涨，撞上 `OSError: Too many open files`。另一个坑在显式设了上限之后：`_warn_if_nested_submit_would_deadlock` 专门检测「父任务在工作线程里提交子任务并同步等结果，而线程池已满」，命中就告警一次，对应的正是 issue #17060；三条出路写在告警文本里——抬高 `max_workers`、把子任务的提交提到流这一级、或者改用 `.delay()` 交给 task worker 执行。
 
 ```python
 from prefect import flow, task
@@ -372,7 +373,7 @@ async def deploy_fixer(deployment_id: str) -> Automation:
     ).acreate()
 ```
 
-动作侧在 3.8.6 一共 17 个类，按用途看更清楚：跑流 `RunDeployment`；处置运行 `CancelFlowRun`、`DeleteFlowRun`、`ChangeFlowRunState`、`SuspendFlowRun`；掐流量 `PauseDeployment` / `ResumeDeployment`、`PauseWorkPool` / `ResumeWorkPool`、`PauseWorkQueue` / `ResumeWorkQueue`、`PauseAutomation` / `ResumeAutomation`；对外 `SendNotification`、`CallWebhook`；事故 `DeclareIncident`；空转 `DoNothing`。想在部署侧而不是自动化侧挂触发，用 `serve(triggers=[...])` / `deploy(triggers=[...])` 接 `DeploymentEventTrigger` 等四个类，Webhook 触发也是这一路（文档有 `docs/v3/concepts/webhooks.mdx`）。
+动作侧在 3.8.7 一共 18 个类，按用途看更清楚：跑流 `RunDeployment`；处置运行 `CancelFlowRun`、`DeleteFlowRun`、`ResumeFlowRun`、`ChangeFlowRunState`、`SuspendFlowRun`；掐流量 `PauseDeployment` / `ResumeDeployment`、`PauseWorkPool` / `ResumeWorkPool`、`PauseWorkQueue` / `ResumeWorkQueue`、`PauseAutomation` / `ResumeAutomation`；对外 `SendNotification`、`CallWebhook`；事故 `DeclareIncident`；空转 `DoNothing`。想在部署侧而不是自动化侧挂触发，用 `serve(triggers=[...])` / `deploy(triggers=[...])` 接 `DeploymentEventTrigger` 等四个类，Webhook 触发也是这一路（文档有 `docs/v3/concepts/webhooks.mdx`）。
 
 指标型触发是另一条线，值得单独看：`MetricTrigger` 的 `metric` 字段接 `MetricTriggerQuery(name=…, threshold=…, operator=…, window=…)`，`name` 只支持 `lateness`、`duration`、`successes` 三个指标，`operator` 为 `<`、`<=`、`>`、`>=`。这三个恰好对应数据管道最该被叫醒的三种情况：来晚了、跑太久、成功率掉。
 
@@ -424,12 +425,12 @@ SLA 目前在文档里带实验标记，且只给 Prefect Cloud，客户端要�
 
 | 现象 | 更可能的原因 | 依据与处置 |
 |---|---|---|
-| 升级到新版后裸跑报 `No Prefect API URL provided.` | 不再默认拉起临时 server | 见第 5 节的 `main` 分支变更；起服务或显式开 `PREFECT_SERVER_EPHEMERAL_ENABLED` |
+| 切了 profile 后裸跑报 `No Prefect API URL provided.` | 当前 profile 没开临时 server 开关（代码默认 False，靠 `ephemeral` profile 显式开启） | 第 5 节的三条分支；起服务、切回 `ephemeral` profile 或显式开 `PREFECT_SERVER_EPHEMERAL_ENABLED` |
 | `prefect` CLI 连不上、UI 空白 | 4200 被占或 API 未起 | `prefect server status`；`prefect config view` 看 `PREFECT_API_URL` 指向 |
 | 客户端一调用就 422 | 客户端比服务端新 | 文档 `server.mdx` 的明确警告；对齐版本，服务端不降级时锁客户端 |
 | 给了 `cache_policy` 却每次都重跑 | 默认策略含 `RUN_ID`，或显式 `persist_result=False` | 第 7 节实测表；日志里搜 `Ignoring` |
 | 下游运行读不到上游返回值 | 3.x 默认不持久化结果 | `persist_result=True` 或全局 `PREFECT_RESULTS_PERSIST_BY_DEFAULT` |
-| 任务超时不生效 | 同步任务在工作线程里跑，阻塞调用不可打断 | 第 6 节告警文本与 how-to 文档；改 async 任务 |
+| 任务超时不打断阻塞调用 | 任务经 `.submit()` 提交到线程池，跑在工作线程 | 第 6 节的三分法与 how-to 文档；直接调用走主线程信号方案，或改 async、换 `ProcessPoolTaskRunner` |
 | 告警写明「…while all N worker threads are busy」 | 父任务在工作线程里 submit 子任务并同步等结果，线程池已被占满 | `ThreadPoolTaskRunner._warn_if_nested_submit_would_deadlock`（对应 issue #17060）；提高 `max_workers`、把子任务提到流一级提交，或改用 `.delay()` 交给 task worker |
 | 长跑容器数增多、文件描述符耗尽 | 线程池无上限叠加上下文变化 | 类文档串点名 `OSError: Too many open files`；显式设上限 |
 | 停掉本地 `serve()` 后端上不再排期 | `pause_on_shutdown` 默认 True | 第 10 节；要留存排期改用 `deploy()` + worker |
@@ -448,18 +449,18 @@ SLA 目前在文档里带实验标记，且只给 Prefect Cloud，客户端要�
 1. 同一个流里连续两次调用 `@task()`（不给任何缓存参数），任务体会执行几次？为什么不是 1 次？
 2. `cache_policy` 与 `cache_key_fn` 同时给，最终生效的是哪个？`persist_result=False` 时又是什么行为？
 3. `serve()` 与 `deploy()` 谁会在服务端留下 deployment 记录？进程退出后排期分别怎么变？
-4. 任务运行在默认 task runner 上，`timeout_seconds=30` 而函数里有一个 120 秒的阻塞读文件，会发生什么？
+4. 同一个任务带 `timeout_seconds=30`，函数里有一个 120 秒的阻塞读文件：直接调用与经 `.submit()` 提交分别会发生什么？
 5. `- Push` 类工作池与 Process/Docker/Kubernetes 池在运维负担上的关键差别是什么？
 
 答案分别对应第 7、7、10、6、10 节的实测与签名，不必背，能定位到那一节即可。
 
 ## 19. 下一步读哪份代码
 
-按「一次调用如何变成一条记录」的顺序读，行数为 2026-09-18 `main` 分支：
+按「一次调用如何变成一条记录」的顺序读，行数为 2026-09-29 `main` 分支：
 
 1. `src/prefect/flows.py`（3 698 行）与 `src/prefect/tasks.py`（2 272 行）：先看 `__init__` 参数如何被消化，尤其 `tasks.py` 第 528 到 560 行那段——缓存策略与是否持久化在这里互相牵制。
-2. `src/prefect/flow_engine.py`（2 388 行）与 `src/prefect/task_engine.py`（1 916 行）：`FlowRunEngine` / `AsyncFlowRunEngine`、`SyncTaskRunEngine` / `AsyncTaskRunEngine`，以及任务侧的 `transaction_context`。
-3. `src/prefect/cache_policies.py`、`src/prefect/transactions.py`（763 行）、`src/prefect/results.py`（1 371 行）：缓存三件套的真实实现。
+2. `src/prefect/flow_engine.py`（2 410 行）与 `src/prefect/task_engine.py`（1 917 行）：`FlowRunEngine` / `AsyncFlowRunEngine`、`SyncTaskRunEngine` / `AsyncTaskRunEngine`，以及任务侧的 `transaction_context`。
+3. `src/prefect/cache_policies.py`、`src/prefect/transactions.py`（763 行）、`src/prefect/results.py`（1 377 行）：缓存三件套的真实实现。
 4. `src/prefect/server/orchestration/core_policy.py`：服务端策略，`CacheKeyLookup` 一段解释了 `cache_expiration` 到底在哪被比较。
 5. `src/prefect/runner/` 与 `src/prefect/workers/`：`_scheduled_run_poller.py`、`_flow_run_executor.py`、`_limit_manager.py` 三个文件足够看懂 runner；worker 侧从 `workers/process.py` 起步，再看 `prefect-docker`。
 6. `src/prefect/server/events/` 与 `src/prefect/cli/`：自动化流水线与所有 CLI 的入口。
@@ -472,13 +473,13 @@ SLA 目前在文档里带实验标记，且只给 Prefect Cloud，客户端要�
 
 ```bash
 git clone --depth 1 https://github.com/PrefectHQ/prefect.git   # 读结构与文档
-uv venv pf_env && uv pip install --python pf_env/bin/python "prefect==3.8.6"
+uv venv pf_env && uv pip install --python pf_env/bin/python "prefect==3.8.7"
 HOME=/tmp/pf_home PREFECT_HOME=/tmp/pf_home/.prefect pf_env/bin/python probe.py
 ```
 
-失效条件按强弱排：签名类事实（参数名、字段名、枚举值、设置项默认值）绑定 3.8.6，小版本内一般不会动，跨大版本要重查；默认值类事实（`PREFECT_SERVER_EPHEMERAL_ENABLED`）已经出现从 `True` 改向 `False` 的既成提交，属于最易过期的一类，文中已就地标注；厂商口径类数字（2 亿任务、25 000 社区人数）只在「README 这么写」的意义上成立；GitHub 的 star/fork 与日期是快照，重新请求第 2 节表里那几个 API 字段即可刷新。
+失效条件按强弱排：签名类事实（参数名、字段名、枚举值、设置项默认值）绑定 3.8.7，小版本内一般不会动，跨大版本要重查；裸跑行为类事实（临时 server 能否拉起）绑定 `profiles.toml` 里 `ephemeral` profile 的显式设置与激活态，上游若调整这份模板或 settings 拆分方式就会变，是最易过期的一类，文中第 5 节已就地标注；厂商口径类数字（2 亿任务、25 000 社区人数）只在「README 这么写」的意义上成立；GitHub 的 star/fork 与日期是快照，重新请求第 2 节表里那几个 API 字段即可刷新。
 
-下面这些写法在旧文章与旧教程里仍在流传，在 3.8.6 上已不成立，接手同类文档时先逐条查一遍：
+下面这些写法在旧文章与旧教程里仍在流传，在 3.8.7 上已不成立，接手同类文档时先逐条查一遍：
 
 - `cache_key_in`、`load_flow_from_result()`：`Task` 与 `prefect` 包都没有这个名字。
 - `from prefect.events import listen_event`：不存在，事件驱动改用 `Automation` 或 `DeploymentEventTrigger`。
@@ -494,4 +495,4 @@ HOME=/tmp/pf_home PREFECT_HOME=/tmp/pf_home/.prefect pf_env/bin/python probe.py
 - 源码：`src/prefect/{flows,tasks,task_runners,task_engine,flow_engine,cache_policies,transactions,results,automations,engine}.py`、`src/prefect/client/schemas/objects.py`、`src/prefect/server/orchestration/core_policy.py`、`src/prefect/server/database/configurations.py`、`src/prefect/settings/models/**`、`src/prefect/cli/{server,flow_run,task_run,global_concurrency_limit,work_pool}.py`、`src/prefect/deployments/templates/prefect.yaml`、`src/integrations/*`
 - PyPI 与 GitHub 元数据：<https://pypi.org/p/prefect/>、<https://github.com/PrefectHQ/prefect>
 - 官方文档站：<https://docs.prefect.io/>
-- 本机实测：`prefect==3.8.6` 在 macOS / Python 3.13 下的四个探针脚本（缓存计数、临时 server 落盘、SQLite 行数、失败传播），日志与行数原文已在正文引用
+- 本机实测：`prefect==3.8.7` 在 macOS / Python 3.13 下的探针脚本（最小流落盘、缓存计数、失败传播、超时、警告文本、key_storage 路径），日志与行数原文已在正文引用

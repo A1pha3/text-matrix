@@ -7,6 +7,7 @@ description: "jellium-desktop 是非官方 Jellyfin 桌面客户端，用 CEF �
 slug: andrewrabert-jellium-desktop-jellyfin-client
 github_repo: "andrewrabert/jellium-desktop"
 source_key: "gh:andrewrabert/jellium-desktop"
+lastmod: "2026-09-27T12:00:00+08:00"
 aliases:
  - "/posts/tech/andrewrabert-jellium-desktop-jellyfin-client/"
 ---
@@ -24,7 +25,7 @@ aliases:
 - **UI 用 CEF 完整嵌入**，不是"原生控件 + WebView"的凑合方案，jellyfin 的网页界面开箱即用；
 - **播放交给 mpv**，且 mpv 是播放状态的唯一权威源——快进、暂停、进度都由 mpv 报出来，网页端只是消费者。
 
-这种"薄壳 + 深度播放"的组合，在自托管媒体客户端里并不多见。官方 `jellyfin/jellyfin-desktop`（Qt 6 + MpvQt）和 `jellyfin/jellyfin-media-player`（Qt WebEngine + libmpv）走的是另一条路线。所以这篇文章的重点，是把这个双引擎架构讲清楚，再告诉你它适合谁、什么时候不必用。
+这种"薄壳 + 深度播放"的组合，在自托管媒体客户端里并不多见。官方桌面客户端已经统一为 `jellyfin/jellyfin-desktop`（Qt WebEngine + libmpv，由原 jellyfin-media-player 更名而来，仓库 ID 未变），走的是另一条路线。所以这篇文章的重点，是把这个双引擎架构讲清楚，再告诉你它适合谁、什么时候不必用。
 
 ## 快速信息卡
 
@@ -32,21 +33,21 @@ aliases:
 >
 > | 指标 | 数值 |
 > |------|------|
-> | ⭐ Stars | 约 1.8K |
-> | 🍴 Forks | 139 |
+> | ⭐ Stars | 1855 |
+> | 🍴 Forks | 143 |
 > | 📜 License | GPL-2.0 |
-> | 💻 主要语言 | Rust（占 89%） |
-> | ⚙️ 内核 | CEF + mpv（fork） |
+> | 💻 主要语言 | Rust（占约 95%） |
+> | ⚙️ 内核 | CEF 151 + mpv（fork） |
 > | 📦 Release | 无正式发布，走 nightly.link |
-
-数据截至 2026-09-03，通过 GitHub API 核实。
+>
+> 数据截至 2026-09-27，通过 GitHub API 核实。
 
 ## 学习目标
 
 读完本文应能：
 
 - 说清 jellium-desktop 的 CEF + mpv 双引擎如何分工，为什么 mpv 是播放状态唯一权威源
-- 区分它和官方 jellyfin-desktop / jellyfin-media-player 的实现路线差异
+- 区分它和官方 jellyfin-desktop（Qt WebEngine + libmpv）的实现路线差异
 - 完成一次"下载对应平台产物 → 启动 → 配服务器 → 播放"的完整流程
 - 判断自己的场景（Linux 用户、mpv 播放质量、跨平台一致性）是否值得从官方客户端切换过来
 
@@ -101,17 +102,17 @@ graph TB
 
 ## 和官方客户端的关系
 
-常有人把 jellium-desktop 定位成"官方没有桌面端时的替代"，但这个前提已经过时。Jellyfin 官方有两个桌面客户端：
+常有人把 jellium-desktop 定位成"官方没有桌面端时的替代"，但这个前提并不成立。Jellyfin 官方只有一个桌面客户端 `jellyfin/jellyfin-desktop`：由原 `jellyfin/jellyfin-media-player` 更名而来（两个名字指向同一个仓库），技术栈是 Qt WebEngine + libmpv，主打音频直通、硬件解码和少转码播放。此前"两个官方桌面端并存"的局面已不存在。
 
-| | jellyfin-desktop（官方） | jellyfin-media-player（官方） | jellium-desktop（非官方） |
-|------|------|------|------|
-| UI 承载 | Qt 6 WebEngine | Qt WebEngine | CEF（Chromium） |
-| 播放内核 | MpvQt / libmpv | libmpv | mpv fork |
-| 实现语言 | C++（Qt） | C++（Qt） | Rust |
-| 更新节奏 | 有版本发布 | 有版本发布 | nightly（无正式 release） |
-| 定位 | 官方主力桌面端 | 同窗口内嵌播放 | 薄壳 + 深度播放 |
+| | jellyfin-desktop（官方） | jellium-desktop（非官方） |
+|------|------|------|
+| UI 承载 | Qt WebEngine | CEF（Chromium） |
+| 播放内核 | libmpv | mpv fork（`third_party/mpv`） |
+| 实现语言 | C++（Qt） | Rust |
+| 发布形态 | Flathub + 正式版（最新 v1.12.0，2025-03）+ nightly | 仅 nightly（nightly.link） |
+| 定位 | 官方主力桌面端 | 薄壳 + 深度播放 |
 
-一句话总结：**官方走 Qt，jellium 走 Chromium + mpv**。前者与 Jellyfin 生态绑定更深、发布更稳；后者用更薄的壳换来更贴近原生 Chromium 的渲染和 mpv 的完整播放能力，代价是没有正式版本、维护集中于 andrewrabert 一人。选型时先想清楚要"稳定跟随官方"还是"追求播放深度"。
+一句话总结：**官方走 Qt，jellium 走 Chromium + mpv**。前者与 Jellyfin 生态绑定更深、有正式版本可装；后者用更薄的壳换来更贴近原生 Chromium 的渲染和 mpv 的完整播放能力，代价是只有 nightly、维护集中于 andrewrabert 一人。选型时先想清楚要"稳定跟随官方"还是"追求播放深度"。
 
 ## 核心机制一：CEF 壳与多进程
 
@@ -121,7 +122,7 @@ CEF 不是简单的"把网页塞进一个 WebView"。项目直接嵌入 Chromium
 - **renderer 进程**：跑 V8 / Blink，执行 jellyfin-web 的 JS；
 - **GPU 进程**：负责合成。
 
-三层之间用 `CefProcessMessage` 做 IPC。项目把 UI 渲染成一张 **overlay 纹理**，叠在视频层之上——这是"CEF + mpv 双引擎"能共存的关键：视频由 mpv 独占自己的窗口和 GPU 渲染，网页 UI 叠在上面，互不抢绘制权。
+三层之间用 `CefProcessMessage` 做 IPC。Rust 侧的 CEF 绑定走 `cef-dll-sys`，项目自己的胶水层在 `src/jfn_cef`。项目把 UI 渲染成一张 **overlay 纹理**，叠在视频层之上——这是"CEF + mpv 双引擎"能共存的关键：视频由 mpv 独占自己的窗口和 GPU 渲染，网页 UI 叠在上面，互不抢绘制权。
 
 Linux 下视频层走 Wayland subsurface；macOS / Windows 各有独立平台 crate（`src/macos`、`src/windows`，Linux 下还有 X11 路径）。
 
@@ -136,7 +137,9 @@ Linux 下视频层走 Wayland subsurface；macOS / Windows 各有独立平台 cr
 
 网页端和系统会话只做"反映"，从不回写状态。这样做的好处是状态只有一份真相，不会出现"网页说播了、mpv 其实没播"的分裂。
 
-实现上还有一个硬性约定：**不要在事件回调里调用同步 mpv API**（`mpv_get_property` 等），否则视频初始化时会死锁；要用属性观察或异步变体。这条写在项目自己的开发笔记里，是踩过坑之后沉淀的。
+还有一个边界值得知道：jellium 内置的 mpv 是作者维护的 fork（`third_party/mpv`，指向 `andrewrabert/mpv` 的 `jellium-desktop` 分支），视频渲染走 mpv 自己的窗口和 GPU；libmpv 只用来做控制面——属性、命令、事件。渲染面和控制面是分开的。
+
+实现上还有一个硬性约定：**不要在事件回调里调用同步 mpv API**（`mpv_get_property` 等），否则视频初始化时会死锁；要用属性观察或异步变体。这条写在项目自己的 AGENTS.md 开发笔记里，是踩过坑之后沉淀的。
 
 ## 一次播放请求如何穿过双引擎
 
@@ -171,11 +174,11 @@ macOS 安装后需要移除 quarantine：
 sudo xattr -cr /Applications/Jellium\ Desktop.app
 ```
 
-AUR 用户直接 `yay -S jellium-desktop-git`。Windows 解压 zip 即可运行。
+AUR 用户直接 `yay -S jellium-desktop-git`——注意这个包的依赖是系统仓库里的 `cef` 和 `mpv`，构建时用系统库而不是仓库内的 mpv fork。Windows 解压 zip 即可运行。
 
 ## 构建与开发体验
 
-项目用 [just](https://github.com/casey/just) 而非 Makefile 作为命令运行器，recipe 按 OS 门控（`[macos]` / `[linux]` / `[windows]`），同一套命令三平台一致：
+项目用 [just](https://github.com/casey/just) 而非 Makefile 作为命令运行器，recipe 按 OS 门控（`[macos]` / `[linux]` / `[windows]`），同一套命令三平台一致。整个 workspace 拆成 26 个 crate（`jfn_cef`、`mpv`、`playback`、`mpris`、`wayland`、`x11`……），按职责而非平台聚合：
 
 ```makefile
 # 一次性环境准备
@@ -192,12 +195,14 @@ just lint        # fmt-check + clippy（-D warnings）
 just strict-lint # lint + clippy pedantic/nursery
 
 # 打包
-just appimage    # [linux] AppImage
-just flatpak     # [linux] Flatpak bundle
-just dmg         # [macos] DMG
+just appimage build  # [linux] AppImage
+just flatpak build   # [linux] Flatpak bundle
+just dmg             # [macos] DMG
 ```
 
-工程约束值得留意：clippy 开了 `-D warnings` 且禁用 `unwrap` / `expect` / `panic`，`strict-lint` 再叠 `pedantic` / `nursery`。对"错误处理必须显式"有要求的读者，这套门槛是加分项。
+Linux 开发还有一个顺手的调试入口：`run-niri`、`run-hyprland`、`run-cage` 三个 recipe 能在嵌套的 Wayland 合成器会话里启动应用，不用污染当前桌面环境就能复现视频层问题。
+
+工程约束值得留意：clippy 开了 `-D warnings` 且禁用 `unwrap` / `expect` / `panic`，`strict-lint` 再叠 `pedantic` / `nursery`。AGENTS.md 里还有一条更根本的纪律——所有时序、间隔、阈值必须来自系统上报的值或需求记录，"发明一个数值再为它写一段理由"被明确定为失败模式。对"错误处理必须显式、参数不能拍脑袋"有要求的读者，这套门槛是加分项。
 
 ## 适用边界与采用顺序
 
@@ -212,11 +217,11 @@ just dmg         # [macos] DMG
 
 - **要稳定正式版的用户**：项目没有 release，全是 nightly，`jellium-desktop-git` 直接跟踪 main 分支。
 - **要商业级 SLA 的人**：无商业支持，问题只能走 GitHub Issues。
-- **深度绑定官方生态的人**：官方 Qt 客户端发布更稳、跟进 Jellyfin 新特性更快。
+- **深度绑定官方生态的人**：官方 Qt 客户端有正式版本和 Flathub 分发，跟进 Jellyfin 新特性更快。
 
 **采用顺序建议：**
 
-1. 官方客户端（jellyfin-desktop 或 jellyfin-media-player）先用起来，它最稳；
+1. 官方客户端 jellyfin-desktop 先用起来，它有正式版本可装；
 2. 如果遇到官方客户端的播放能力瓶颈（编码、HDR、字幕），再装 jellium-desktop 对比；
 3. 确认 nightly 节奏可接受、播放提升明显，再切换到 jellium 作为主力；
 4. 贡献代码前先跑 `just strict-lint`，保持环境干净。
@@ -233,7 +238,7 @@ just dmg         # [macos] DMG
 **A**: 状态一律以 mpv 为准。先确认是否触发了"同步 API 死锁"陷阱（项目开发笔记明确禁止在事件回调里调同步 mpv API）；仍异常就去仓库 Issues 搜对应平台关键词。
 
 ### Q4: 和官方客户端能共存吗？
-**A**: 能。两者配置文件与安装路径各自独立，可并行安装对比，不必二选一。
+**A**: 能。两者安装来源互不冲突（官方走 Flathub / 官方构建，jellium 走 AUR / nightly.link），包名也不同，可并行安装对比，不必二选一。
 
 ## 自测题
 
@@ -266,7 +271,7 @@ just dmg         # [macos] DMG
 
 ### 阶段一：理解双引擎架构（1 周）
 - 目标：说清 CEF 多进程与 mpv 状态权威流的协作
-- 行动：阅读 [CLAUDE.md](https://github.com/andrewrabert/jellium-desktop/blob/main/CLAUDE.md) 的 Architecture 与 mpv Integration 小节，对照 `src/jfn_cef`、`src/mpv` 源码
+- 行动：阅读 [AGENTS.md](https://github.com/andrewrabert/jellium-desktop/blob/main/AGENTS.md) 的 Architecture 与 mpv Event Flow 小节，对照 `src/jfn_cef`、`src/mpv` 源码
 - 验收：能解释"命令下行、状态上行"为什么能避免状态分裂
 
 ### 阶段二：本地构建（2-4 周）
@@ -276,7 +281,7 @@ just dmg         # [macos] DMG
 
 ### 阶段三：深入 mpv 集成（1-3 个月）
 - 目标：理解 libmpv 控制面与渲染面的分离
-- 行动：`just run-mpv` 直接调试 mpv，观察属性观察流；读 `third_party/mpv` fork 与上游差异
+- 行动：`just run-mpv` 直接调试 mpv，观察属性观察流；读 `third_party/mpv`（`andrewrabert/mpv` 的 `jellium-desktop` 分支）与上游的差异
 - 验收：能定位播放状态流的中断点
 
 ### 阶段四：贡献（长期）
@@ -286,14 +291,12 @@ just dmg         # [macos] DMG
 
 ## 资料口径说明
 
-1. **信息来源与时效性**：本文基于 `andrewrabert/jellium-desktop` 的 GitHub README、CLAUDE.md、justfile 与仓库元数据。Stars / Forks / License 等数据通过 GitHub API 于 2026-09-03 核实。
+1. **信息来源与时效性**：本文基于 `andrewrabert/jellium-desktop` 的 GitHub README、AGENTS.md、justfile（含 `dev/` 下的平台配方）与仓库元数据。Stars / Forks / License 等数据通过 GitHub API 于 2026-09-27 核实。
 
-2. **技术细节验证**：架构描述（CEF 多进程、overlay 纹理、mpv 状态权威源、Wayland subsurface、同步 API 死锁约束）均来自仓库 CLAUDE.md 与源码目录结构。项目处于活跃开发状态，细节可能随提交变化。
+2. **技术细节验证**：架构描述（CEF 151 多进程、overlay 纹理、mpv 状态权威源、Wayland subsurface、同步 API 死锁约束、libmpv 仅控制面）均来自仓库 AGENTS.md 与源码（workspace Cargo.toml、`src/paths`、`dev/*.just`）。项目处于活跃开发状态，细节可能随提交变化。
 
-3. **对比口径**：官方客户端信息（Qt 6 / Qt WebEngine / libmpv）来自 `jellyfin/jellyfin-desktop` 与 `jellyfin/jellyfin-media-player` 仓库 README 与 release 说明，截至 2026-09-03。
+3. **对比口径**：官方客户端信息来自 `jellyfin/jellyfin-desktop` 仓库 README 与 GitHub API（原 `jellyfin/jellyfin-media-player` 已更名为 `jellyfin-desktop`，两者为同一仓库；正式版 v1.12.0 发布于 2025-03），截至 2026-09-27。
 
 4. **判断与建议的边界**：本文的选型建议基于"稳定性 vs 播放深度"这一维度，不构成对两项目维护质量的评判；nightly 更新的稳定性风险由读者自行评估。
 
 5. **未覆盖的内容**：本文未深入 jellyfin-web 与 mpv 之间 IPC 的协议细节、各平台 GPU 渲染管线的具体实现，也未评测实际播放性能，这些需要读者在本地验证。
-
-6. **更新记录**：本文于 2026-07-20 撰写，2026-09-03 依据最新仓库信息修订（修正仓库标识与官方客户端现状，补充架构机制）。

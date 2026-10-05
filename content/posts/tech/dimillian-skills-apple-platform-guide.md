@@ -1,687 +1,136 @@
 ---
-title: "Dimillian/Skills：Apple 平台智能体技能集合完全指南"
+title: "Dimillian 的 16 个 Codex 技能停在 3 月：成色、坑与能搬走的东西"
 date: "2026-04-01T01:21:00+08:00"
+lastmod: "2026-10-05T00:00:00+08:00"
 slug: "dimillian-skills-apple-platform-guide"
 github_repo: "Dimillian/Skills"
 source_key: "gh:Dimillian/Skills"
-description: "深度解析 Dimillian/Skills (3.3k Stars)：专注于 Apple 平台开发的可复用智能体技能集合，包含16个核心技能，覆盖App Store发布、SwiftUI重构、代码审查、bug调查等领域，采用自包含设计，每个技能独立完整可单独使用。"
+description: "Dimillian/Skills 是 Ice Cubes 作者 Thomas Ricouard 的个人 Codex 技能库：16 个 Apple 平台技能、49 份参考文档、两个只读多智能体 swarm。仓库最后提交停在 2026-03-29，本文基于该最终状态逐一核实，并指出官网索引滞后、作者本机绝对路径泄漏等安装前须知。"
 draft: false
 categories: ["技术笔记"]
 tags: ["Skills", "Apple", "iOS", "macOS", "Codex", "代码审查"]
 ---
 
-# Dimillian/Skills：Apple 平台智能体技能集合完全指南
+# Dimillian 的 16 个 Codex 技能停在 3 月：成色、坑与能搬走的东西
 
-## §1 学习目标
+[Dimillian/Skills](https://github.com/Dimillian/Skills) 是 Thomas Ricouard（GitHub ID Dimillian，开源 Mastodon 客户端 Ice Cubes 的作者）维护的个人 Codex 技能库：16 个覆盖 SwiftUI、Swift 并发、macOS 打包、iOS 调试、代码审查的技能文件夹，放进 `$CODEX_HOME/skills` 就能用。仓库描述只有四个词——"My Codex Skills"。它不是框架，没有安装器，也没有版本号。
 
-完成本文档后，你将能够：
+看这个仓库，有三件事值得先说清楚。第一，它已经停更：最后提交停在 2026-03-29，此后包括 issue 和 PR 在内无人回应，所以本文核查的是它的最终状态，不存在"文章发表后项目又变了"的问题。第二，它的重心不在那 16 个 SKILL.md 提示词上，而在 49 份参考文档里——最大的技能 `swiftui-ui-patterns` 一个就带 30 份组件级 SwiftUI 参考，这批文档才是抄作业的主要对象。第三，配套的 GitHub Pages 官网展示的技能列表滞后于仓库：索引文件停在 8 技能时代，里面还列着一个早已删除的技能。
 
-- ✅ 理解 Dimillian/Skills 的定位与设计理念
-- ✅ 掌握 16 个核心技能的功能与用途
-- ✅ 安装与配置 Dimillian/Skills
-- ✅ 在 Codex 环境中使用各类技能
-- ✅ 根据项目需求选择合适的技能
-- ✅ 为团队创建自定义技能
+这三点决定了它的用法：拿它当"一个成熟独立开发者怎么拆解日常工作流"的样本，价值很高；拿它当持续维护的依赖，就得接受自己接手维护。
 
-## 目录
+## 项目坐标
 
-1. [学习目标](#§1-学习目标)
-2. [项目概述](#§2-项目概述)
-3. [核心技能详解](#§3-核心技能详解)
-4. [安装与配置](#§4-安装与配置)
-5. [使用方法](#§5-使用方法)
-6. [技能开发指南](#§6-技能开发指南)
-7. [Apple 平台开发技能](#§7-apple-平台开发技能)
-8. [代码审查技能](#§8-代码审查技能)
-9. [DevOps 技能](#§9-devops-技能)
-10. [实践建议](#§10-实践建议)
-11. [自测题](#自测题)
-12. [进阶路径](#进阶路径)
+| 项 | 值 | 出处 |
+|------|------|------|
+| 定位 | 面向 Codex 的 Apple 平台开发技能集合 | README 首段 |
+| 作者 | Thomas Ricouard（Ice Cubes for Mastodon 开发者） | LICENSE 版权行、提交作者字段 |
+| 星标 / 复刻 / 关注 | 3,987 / 206 / 43 | GitHub 仓库接口，2026-10-05 取 |
+| 发文时点星标 | 约 3,051 | Wayback Machine 2026-04-01 快照实拍 |
+| 提交数 / 贡献者 | 55 次：作者 53 次，popey 与 musiienko 各 1 次 | contributors 接口 |
+| 技能规模 | 16 个技能目录，SKILL.md 合计 1,905 行 | 仓库 main 分支实测 |
+| 参考文档 | 49 份，集中在 8 个技能的 `references/` 下 | 同上 |
+| 开放 issue / PR | 4 个 issue、7 个 PR，发文后新增的均无人处理 | GitHub 接口，2026-10-05 取 |
+| 许可证 | MIT（2026-01-07 才补上） | `LICENSE`、提交 `c8310b3` |
+| 语言占比 | Shell 84.6%、Python 12.8%、Swift 2.6% | languages 接口 |
+| 配套站点 | [dimillian.github.io/Skills](https://dimillian.github.io/Skills/)（在线，索引滞后） | Pages badge、HTTP 200 实测 |
 
----
+发文时点的星标值得单独说明：仓库 4 月 1 日的 Wayback 快照记录是 3,051，两天后是 3,084，现在是 3,987——停更半年还在自然增长，说明它的参考文档确实有人在用。
 
-## §2 项目概述
+## 三个月建成，之后零提交
 
-### 2.1 什么是 Dimillian/Skills？
+55 个提交的分布讲了一个完整的故事：2025 年 12 月 30 日一天之内建仓、迁移存量技能、上线 Pages 站点；1 月上旬集中扩写参考文档；3 月中旬开始把审查类技能改造成多智能体形态；3 月 29 日完成最后三个提交后彻底停笔。
 
-**Dimillian/Skills**（[GitHub 仓库](https://github.com/Dimillian/Skills)）是由开发者 Dimillian 创建的 **Codex 技能集合**，用于 Apple 平台开发、GitHub 工作流、重构、代码审查和 bug 调查等场景。
+| 时间 | 事件 | 锚点 |
+|------|------|------|
+| 2025-12-30 | 建仓，首批技能入库，同日上线文档站 | 提交 `052112b`、`0ac245e` |
+| 2025-12-31 | 加入 gh-issue-fix-flow 技能；动态索引 + pre-commit hook | `271249b`、`26e23c0` |
+| 2026-01-04~07 | SwiftUI UI Patterns 及 30 份参考文档；SwiftPM 打包模板；补 LICENSE | `70a15d0`、`f07d884`、`c8310b3` |
+| 2026-03-04 | 删除 gh-issue-fix-flow（提交信息只写了 "Update"） | `343f5b3`，-52 行 |
+| 2026-03-16 | 加 project-skill-audit；全库补 OpenAI agent 元数据 | `7c43dba`、`1d09141` |
+| 2026-03-19~28 | 审查技能加并行 sub-agent，随后改为只读约束 | `bc7f788`、`23e5213` |
+| 2026-03-29 | 最后三连：simplify-code 改名、加 review-swarm、加 bug-hunt-swarm | `4537667`、`56d971f`、`05ba982` |
+| 2026-04-01 | 被收录进 Awesome Codex CLI（即本文发表当天） | issue #12 |
+| 2026-05~07 | 社区提了 3 个 PR（iOS 调试加固、Software Graph Analysis、SwiftData Testing），全部无人合并 | PR #15/#16/#17 |
 
-**官方描述**：
+两个时间点之间的对比很说明问题：3 月 29 日下午 5 点 28 分，作者还在给 README 更新 swarm 技能的描述；5 月 6 日有人提议做成 Claude 的 marketplace（`/plugin` 一键安装），零回复。停止维护这件事本身，成了这个仓库现状的一部分。
 
-> A collection of reusable development skills for Apple platforms, GitHub workflows, refactoring, diff review swarms, bug investigation swarms, code review, React performance work, and skill curation.
+## 一个技能目录里有什么
 
-**官网**：[dimillian.github.io/Skills/](https://dimillian.github.io/Skills/)
+每个技能文件夹的结构是固定的三层，理解这三层比记住 16 个技能名更重要：
 
-### 2.2 核心数据
+| 层 | 内容 | 现状 |
+|------|------|------|
+| `SKILL.md` | 技能本体：frontmatter 的 `description` 写明触发条件，正文是工作流指令 | 16 个技能全有，最短 51 行（ios-debugger-agent），最长 202 行（swiftui-view-refactor） |
+| `agents/openai.yaml` | Codex 的 agent 接口元数据：显示名、一句话描述、默认提示词 | 15 个技能有；review-and-simplify-changes 是唯一没有的 |
+| `references/` | 按主题拆分的参考文档，SKILL.md 按需引用 | 8 个技能共 49 份，其余 8 个技能为零 |
 
-| 指标 | 数值 |
-|------|------|
-| **Stars** | 3.3k (3,323) |
-| **Forks** | 144 |
-| **Watchers** | 31 |
-| **提交数** | 55 |
-| **Issues** | 1 |
-| **Pull Requests** | 4 |
-| **许可证** | MIT |
-| **语言** | Shell 84.6%, Python 12.8%, Swift 2.6% |
+`openai.yaml` 的默认提示词展示了 Codex 的技能引用语法，比如 review-swarm 的是："Use $review-swarm to review the current diff with four focused read-only reviewers and summarize the highest-signal issues."。这层元数据是 3 月 16 日一次性补齐的，说明作者在乎这套库在 Codex 界面里的呈现，而不只是文件能跑。
 
-### 2.3 设计理念
+规模分布也能看出侧重：审查和诊断类技能的 SKILL.md 普遍在 170 行上下（指令密度高），而 swiftui-ui-patterns 的 SKILL.md 只有 95 行——因为它把内容都拆进了 30 份参考文档，正文只负责路由。
 
-Dimillian/Skills 的设计遵循以下原则：
+## 三条主线
 
-| 原则 | 说明 |
-|------|------|
-| **聚焦性** | 每个技能有清晰、单一的目的 |
-| **自包含** | 每个技能独立完整，可单独使用 |
-| **可复用** | 设计为通用场景，方便复用 |
-| **文档完善** | 每个技能包含详细的 SKILL.md |
+把 16 个技能按"它替你做什么"分组，比按字母排序更接近作者的实际用法。
 
-### 2.4 与其他 Skills 项目的区别
+### Apple 平台知识线：49 份参考文档的大头
 
-| 项目 | 特点 |
-|------|------|
-| **alirezarezvani/claude-skills** | 通用型，覆盖多个 AI 平台 |
-| **slavingia/skills** | Minimalist Entrepreneur 风格 |
-| **Dimillian/Skills** | 专注 Apple 平台和 SwiftUI |
+这条线覆盖 SwiftUI 开发的日常循环，也是这个仓库区别于普通提示词合集的地方。
 
----
+**swiftui-ui-patterns** 是最大的一个：30 份参考文档覆盖 NavigationStack、sheets、deeplinks、焦点、网格、TabView 等具体组件，SKILL.md 本体只保留两条路由（已有项目找最近邻示例，新项目按 app-wiring 骨架起手）和一张状态归属矩阵。那张矩阵值得单独看：它按"谁拥有这个状态"给出 `@State`、`@Binding`、`@Observable`、`@Environment` 的选择路径，并明确 iOS 16 及以下回退到 `ObservableObject` 家族——这种把版本边界写死在规则里的做法，比一句"优先用新 API"实用得多。
 
-## §3 核心技能详解
+**swiftui-performance-audit** 的 7 份参考里有 4 份是 WWDC 会话与 Apple 官方指南的摘要稿（Demystify SwiftUI Performance、Instruments 优化、卡顿识别、SwiftUI 性能模式），外加代码坏味清单、性能剖析接谈清单和报告模板。它的设计分两层：代码审查能定位的就直接给结论，定位不了的引导用户自己跑 Instruments——不假装 agent 能替代采样分析。
 
-### 3.1 App Store Changelog
+**swift-concurrency-expert** 针对 Swift 6.2+ 并发，参考文档包含 Swift 6.2 approachable concurrency 和 WWDC SwiftUI 并发专场摘要，具体动作从修 actor isolation 到把 completion handler 迁到 async/await。
 
-**文件夹**: `app-store-changelog`
+**swiftui-liquid-glass** 处理 iOS 26+ 的 Liquid Glass API 采用（modifier 顺序、分组、交互性、回退）；**swiftui-view-refactor** 把大视图文件拆成小子视图，明确偏好 MV 数据流而非 MVVM；**macos-spm-app-packaging** 附带一整套可执行模板——从 SwiftPM 脚手架、`.app` 组装、签名公证到 Sparkle 更新的 appcast 生成脚本；**macos-menubar-tuist-app** 约束 Tuist 清单归属和 store 层架构；**ios-debugger-agent** 依赖 XcodeBuildMCP 在已启动的模拟器上构建、启动、检查 UI、截图、抓日志。
 
-**功能**: 从 git 历史创建用户友好的 App Store 发布说明。
+### 多智能体 swarm 线：只读约束是设计核心
 
-**工作流程**:
-1. 收集自上次 tag 以来的更改
-2. 过滤用户可见的工作
-3. 重写为简洁的"What's New"要点
+review-swarm 和 bug-hunt-swarm 是 3 月下旬改造的产物，也是这个仓库里最有模式感的设计。
 
-**使用场景**: 自动化发布说明生成，减少手动编写工作量。
+两个 swarm 共享同一套骨架。入口先建"包"：review-swarm 组装意图包（预期改变什么、什么必须不变、有哪些约束），bug-hunt-swarm 组装 bug 包（症状、期望与实际行为、复现步骤、影响面、已有证据六项）。然后并行发四个只读 sub-agent，每个拿到相同的包，各自盯一个切面——review-swarm 的四个角色是行为回归、安全与隐私、性能与可靠性、契约与测试覆盖；bug-hunt-swarm 的是复现与范围、代码路径追踪、回归源定位、最快证明步骤。
 
----
+只读不是口号，每个 sub-agent 的指令里都重复了同一组禁令：不许编辑文件、不许 `apply_patch`、不许 stage、不许 commit。发现只汇报不落地，主 agent 拥有唯一的综合权：去重、丢弃弱声明和风格评论、把幸存的发现规范成六字段（位置、类别、严重度、理由、建议、置信度），按严重度排序后给出 fix now / fix soon / optional follow-up 三档路径。bug-hunt-swarm 还额外要求按"最快证明步骤"排序——先验证哪个假设最便宜。
 
-### 3.2 GitHub
+这套设计里有一条容易被忽略的指令："如果没有实质问题，直说，不要制造反馈。"多智能体审查最常见的失败模式是四个 agent 为了交差凑出 20 条噪音，这条指令是对症下药的。
 
-**文件夹**: `github`
+### 工程流程线：把重复劳动脚本化
 
-**功能**: 使用 `gh` CLI 检查和操作 GitHub issues、pull requests、workflow runs 和 API 数据。
+剩余六个技能处理开发流程本身。**github** 封装 `gh` CLI 的 issue、PR、workflow runs 和 API 查询；**app-store-changelog** 带一个 bash 脚本从 git 历史收集变更——`git describe --tags --abbrev=0` 找最近 tag，找不到就回退全历史，然后过滤出用户可见的变化重写成 "What's New" 要点；**orchestrate-batch-refactor** 用工作包模板把大重构拆给多个 sub-agent，附依赖感知的并行分析；**project-skill-audit** 反过来分析项目的历史 Codex 会话和 memory，推荐该造什么新技能、该更新哪些旧的——这是写给自己技能库的维护工具；**review-and-simplify-changes** 是唯一允许改代码的审查技能（安全、保持行为的修复）；**react-component-performance** 是全库唯一的非 Apple 技能，处理 React 重渲染抖动和列表瓶颈。
 
-**能力**:
-- CI checks 检查
-- Run logs 获取
-- 高级查询
+## 一次 review-swarm 的完整流转
 
-**使用场景**: 自动化 GitHub 管理和 CI/CD 监控。
+用一个具体场景把这套机制串起来：改动了两个文件——`PaywallView.swift` 和 StoreKit 封装——已 stage，准备合并前跑一次审查。
 
----
+第一步是范围判定。按技能定义的优先级，用户没指定文件，就取当前改动；因为改动已 stage，选 `git diff --cached` 而不是 `git diff`——技能文档专门强调要选"最小正确的 diff 命令"，混合改动时两个都要看。发 sub-agent 之前，主 agent 先读 `AGENTS.md` 和涉及的架构文档，组装意图包：这次改的是解锁逻辑，付费墙的展示行为必须不变，StoreKit 版本兼容是显式约束。
 
-### 3.3 iOS Debugger Agent
+第二步是四个只读 reviewer 并行开工。行为回归角色检查调用方与被调用方的契约漂移；安全角色盯 entitlement 和收据校验；性能角色看有没有把 I/O 加进启动路径；契约角色发现 StoreKit 封装的测试没跟上。每个都只回报"文件加行号、问题、为什么重要、建议、置信度"。
 
-**文件夹**: `ios-debugger-agent`
+第三步综合权回到主 agent。四个 reviewer 各报了三五条，重复的被合并，"建议把这个 computed property 改成函数"这类风格评论被丢弃，幸存的六条按严重度排好：两条 high（一条行为回归、一条测试缺口）进 fix now，两条 medium 进 fix soon，两条 low 挂 optional follow-up。全程没有任何文件被改动——审查的产出是排序后的判断，不是补丁。
 
-**功能**: 使用 XcodeBuildMCP 构建、启动和调试当前 iOS 应用。
+如果四个 agent 一无所获呢？按指令直说"没有实质问题"，然后收工。
 
-**能力**:
-- UI 检查
-- 交互操作
-- 截图捕获
-- 日志获取
+## 安装之前要知道的四件事
 
-**使用场景**: iOS 应用调试和 UI 检查。
+停更仓库照用不误，但这四件事值得在拷文件之前知道。
 
----
+**官网的技能列表是过时的。** Pages 站点靠 `docs/skills.json` 渲染，这份索引最后一次生成停留在 8 技能时代：它还列着 3 月 4 日已删除的 gh-issue-fix-flow，却缺后来加入的 8 个技能（含两个 swarm）。根因是那个 pre-commit hook——它会在每次提交时自动重建索引——需要手动启用，clone 下来的仓库并不会自动跑。想核对技能清单，以仓库目录和 README 为准，别信官网。
 
-### 3.4 macOS Menubar Tuist App
+**有一处作者本机的绝对路径没清干净。** `project-skill-audit/SKILL.md` 第 182 行链接指向 `/Users/dimillian/.codex/skills/.system/skill-creator/SKILL.md`，这只在作者机器上有效。5 月 9 日有外部用户提了 issue 指出可移植性问题，同样零回复。拷贝这个技能后需要自己把那行改成相对引用或直接删掉。
 
-**文件夹**: `macos-menubar-tuist-app`
+**Claude Code 用户要自己做适配。** SKILL.md 的结构（frontmatter + 工作流正文）是通用格式，参考文档与 agent 无关，直接可用；但 `agents/openai.yaml` 是 Codex 特有的接口元数据，Claude Code 不会读。3 月 30 日就有人在 issue 里问能否用于 Claude Code，5 月又有人提议做 marketplace 格式，都没有回应——适配的成本由使用者自己承担。
 
-**功能**: 构建、重构或审查使用 Tuist 和 SwiftUI 的 macOS menubar 应用。
+**三个社区 PR 停在门外。** 6 到 7 月陆续有 PR 提交：加固 ios-debugger-agent 的安装指引、新增 Software Graph Analysis 技能、新增 SwiftData Testing 技能。全部 open 状态。它们的内容质量未经验证，但如果你想自己接手维护这个库，这是现成的起点。
 
-**重点**:
-- Manifest ownership
-- Store-layer architecture
-- 可靠的本地启动脚本
+## 谁该怎么用
 
-**使用场景**: macOS menubar 应用开发。
+**Codex + Apple 平台开发者**：这是库的目标用户。整库拷进 `$CODEX_HOME/skills`——按 README 的原话是"place these skill folders under `$CODEX_HOME/skills`"，注意拷的是技能文件夹本身，别把 README、LICENSE、docs 一起塞进去。装完顺手修掉上面那处绝对路径。
 
----
+**其他 AI 编程工具用户**：SKILL.md 里的规则和 49 份参考文档与具体 agent 解耦，价值最大的是 swiftui-ui-patterns 的组件参考和状态归属矩阵、swiftui-performance-audit 的 WWDC 消化稿。当文档库读，比当工具装更划算。
 
-### 3.5 macOS SwiftPM App Packaging (No Xcode)
+**想搭自己技能库的人**：这个仓库的结构本身就是答案。`project-skill-audit` 先回答"该写什么技能"，SKILL.md 保持百行以内的指令密度，知识重的地方拆 `references/` 按需加载，需要界面呈现的补一份 `openai.yaml`，最后用索引脚本生成站点。12 月 30 日一天建成、三个月迭代出 49 份参考文档的节奏，说明这套结构撑得起真实使用。
 
-**文件夹**: `macos-spm-app-packaging`
+## 结语
 
-**功能**: 搭建、构建、打包、签名和可选地公证 SwiftPM 基础的 macOS 应用。
-
-**优势**: 无需 Xcode 项目即可完成打包。
-
-**使用场景**: SwiftPM 项目的自动化打包。
-
----
-
-### 3.6 Orchestrate Batch Refactor
-
-**文件夹**: `orchestrate-batch-refactor`
-
-**功能**: 规划和执行大型重构或重写工作。
-
-**特点**:
-- 依赖感知的并行分析
-- 使用明确范围的工作数据包
-- 并行实现
-
-**使用场景**: 大型代码库的重构管理。
-
----
-
-### 3.7 Project Skill Audit
-
-**文件夹**: `project-skill-audit`
-
-**功能**: 分析项目的 Codex 会话、memory、现有本地技能和约定。
-
-**输出**: 推荐最高价值的新技能或对现有技能的更新建议。
-
-**使用场景**: 技能优化和团队效率提升。
-
----
-
-### 3.8 React Component Performance
-
-**文件夹**: `react-component-performance`
-
-**功能**: 诊断慢速 React 组件性能问题。
-
-**诊断范围**:
-- Re-render churn（重新渲染抖动）
-- Expensive render work（昂贵渲染工作）
-- Unstable props（不稳定 props）
-- List bottlenecks（列表瓶颈）
-
-**输出**: 有针对性的优化建议和验证步骤。
-
-**使用场景**: React 应用性能优化。
-
----
-
-### 3.9 Bug Hunt Swarm
-
-**文件夹**: `bug-hunt-swarm`
-
-**功能**: 运行只读四智能体 bug 调查。
-
-**调查重点**:
-- 复现（Reproduction）
-- 代码路径追踪（Code-path tracing）
-- 回归者（Regressors）
-- 最快证明步骤（Fastest proof step）
-
-**输出**: 排名靠前的根因路径。
-
-**使用场景**: 复杂 bug 的系统性调查。
-
----
-
-### 3.10 Review and Simplify Changes
-
-**文件夹**: `review-and-simplify-changes`
-
-**功能**: 审查 git diff 或显式文件范围。
-
-**审查维度**:
-- 复用性（Reuse）
-- 代码质量（Code quality）
-- 效率（Efficiency）
-- 清晰度（Clarity）
-- 标准问题（Standards issues）
-
-**可选**: 应用安全的、保留行为的修复。
-
-**使用场景**: 代码审查和重构。
-
----
-
-### 3.11 Review Swarm
-
-**文件夹**: `review-swarm`
-
-**功能**: 运行只读四智能体 diff 审查。
-
-**审查重点**:
-- 行为回归（Behavioral regressions）
-- 安全风险（Security risks）
-- 性能或可靠性问题（Performance/reliability issues）
-- 合同或测试覆盖差距（Contract/test coverage gaps）
-
-**输出**: 优先级修复路径。
-
-**使用场景**: 自动化代码审查。
-
----
-
-### 3.12 Swift Concurrency Expert
-
-**文件夹**: `swift-concurrency-expert`
-
-**功能**: 审查和修复 Swift 6.2+ 并发问题。
-
-**问题类型**:
-- Actor isolation problems
-- Sendable violations
-- Main-actor annotations
-- Data-race diagnostics
-
-**使用场景**: Swift 并发代码审查。
-
----
-
-### 3.13 SwiftUI Liquid Glass
-
-**文件夹**: `swiftui-liquid-glass`
-
-**功能**: 实现、审查或重构 SwiftUI 功能以正确使用 iOS 26+ Liquid Glass API。
-
-**重点**:
-- 正确的 modifier 顺序
-- 分组（Grouping）
-- 交互性（Interactivity）
-- 回退（Fallbacks）
-
-**使用场景**: iOS 26+ 新 API 采用。
-
----
-
-### 3.14 SwiftUI Performance Audit
-
-**文件夹**: `swiftui-performance-audit`
-
-**功能**: 从代码和架构审核 SwiftUI 运行时性能。
-
-**审核重点**:
-- Invalidation storms（失效风暴）
-- Identity churn（身份抖动）
-- Layout thrash（布局抖动）
-- Heavy render work（重型渲染工作）
-- Profiling guidance（性能分析指导）
-
-**使用场景**: SwiftUI 性能诊断。
-
----
-
-### 3.15 SwiftUI UI Patterns
-
-**文件夹**: `swiftui-ui-patterns`
-
-**功能**: 为构建 SwiftUI 屏幕和组件提供实践建议和示例驱动的指导。
-
-**覆盖范围**:
-- 导航（Navigation）
-- Sheets
-- App wiring
-- Async state
-- 可复用 UI 模式
-
-**使用场景**: SwiftUI 开发规范。
-
----
-
-### 3.16 SwiftUI View Refactor
-
-**文件夹**: `swiftui-view-refactor`
-
-**功能**: 将 SwiftUI 视图文件重构为更小的子视图。
-
-**目标**:
-- 更小的子视图（Smaller subviews）
-- MV 风格数据流
-- 稳定视图树（Stable view trees）
-- 显式依赖注入（Explicit dependency injection）
-- 正确的 Observation 使用
-
-**使用场景**: SwiftUI 代码重构。
-
----
-
-## §4 安装与配置
-
-### 4.1 安装方式
-
-**方式一：复制到 CODEX_HOME**
-
-```bash
-# 克隆仓库
-git clone https://github.com/Dimillian/Skills.git
-
-# 复制技能文件夹到 Codex skills 目录
-cp -r Skills/* $CODEX_HOME/skills/
-```
-
-**方式二：直接使用**
-
-每个技能文件夹都是独立的，可以直接复制需要的使用。
-
-### 4.2 环境要求
-
-| 要求 | 说明 |
-|------|------|
-| **Codex** | 需要 Codex 环境 |
-| **gh CLI** | GitHub 技能需要 |
-| **XcodeBuildMCP** | iOS Debugger Agent 需要 |
-| **Swift 6.2+** | Swift Concurrency Expert 需要 |
-
-### 4.3 目录结构
-
-```
-Skills/
-├── app-store-changelog/       # App Store 发布说明生成
-├── bug-hunt-swarm/           # Bug 调查 Swarm
-├── docs/                       # 文档
-├── github/                    # GitHub CLI 集成
-├── ios-debugger-agent/        # iOS 调试 Agent
-├── macos-menubar-tuist-app/   # macOS Menubar 应用
-├── macos-spm-app-packaging/   # SwiftPM 打包
-├── orchestrate-batch-refactor/ # 批量重构编排
-├── project-skill-audit/        # 技能审计
-├── react-component-performance/ # React 性能
-├── review-and-simplify-changes/ # 代码审查简化
-├── review-swarm/              # 审查 Swarm
-├── scripts/                   # 脚本
-├── swift-concurrency-expert/  # Swift 并发专家
-├── swiftui-liquid-glass/     # SwiftUI Liquid Glass
-├── swiftui-performance-audit/  # SwiftUI 性能审核
-├── swiftui-ui-patterns/       # SwiftUI UI 模式
-└── swiftui-view-refactor/    # SwiftUI 视图重构
-```
-
----
-
-## §5 使用方法
-
-### 5.1 基本使用
-
-每个技能都是自包含的，参考每个技能目录中的 `SKILL.md` 文件获取：
-
-- 触发器（Triggers）
-- 工作流程指导（Workflow guidance）
-- 示例（Examples）
-- 支持参考资料（Supporting references）
-
-### 5.2 技能选择指南
-
-| 任务类型 | 推荐技能 |
-|----------|----------|
-| **App Store 发布** | App Store Changelog |
-| **GitHub 管理** | GitHub |
-| **iOS 调试** | iOS Debugger Agent |
-| **macOS Menubar 开发** | macOS Menubar Tuist App |
-| **SwiftPM 打包** | macOS SwiftPM App Packaging |
-| **大型重构** | Orchestrate Batch Refactor |
-| **技能优化** | Project Skill Audit |
-| **React 性能** | React Component Performance |
-| **Bug 调查** | Bug Hunt Swarm |
-| **代码审查** | Review and Simplify Changes |
-| **Diff 审查** | Review Swarm |
-| **Swift 并发** | Swift Concurrency Expert |
-| **iOS 26 API** | SwiftUI Liquid Glass |
-| **SwiftUI 性能** | SwiftUI Performance Audit |
-| **SwiftUI 规范** | SwiftUI UI Patterns |
-| **SwiftUI 重构** | SwiftUI View Refactor |
-
----
-
-## §6 技能开发指南
-
-### 6.1 设计原则
-
-添加新技能时，确保：
-
-| 原则 | 说明 |
-|------|------|
-| **清晰单一目的** | Have a clear, single purpose |
-| **全面文档** | Include comprehensive documentation |
-| **一致模式** | Follow consistent patterns with existing skills |
-| **参考材料** | Include reference materials when applicable |
-
-### 6.2 技能结构
-
-每个技能应包含：
-
-```
-skill-name/
-├── SKILL.md          # 核心文档
-├── triggers.md       # 触发器（可选）
-├── references/        # 参考资料（可选）
-└── scripts/          # 支持脚本（可选）
-```
-
-### 6.3 SKILL.md 结构
-
-```markdown
-# Skill Name
-
-## Purpose
-[清晰描述技能目的]
-
-## Triggers
-[触发条件]
-
-## Workflow
-[工作流程]
-
-## Examples
-[使用示例]
-
-## References
-[参考资料]
-```
-
----
-
-## §7 Apple 平台开发技能
-
-### 7.1 SwiftUI 相关技能
-
-| 技能 | 用途 |
-|------|------|
-| SwiftUI Liquid Glass | iOS 26+ 新 API |
-| SwiftUI Performance Audit | 性能诊断 |
-| SwiftUI UI Patterns | 实践建议 |
-| SwiftUI View Refactor | 代码重构 |
-| Swift Concurrency Expert | 并发问题 |
-
-### 7.2 macOS 相关技能
-
-| 技能 | 用途 |
-|------|------|
-| macOS Menubar Tuist App | Menubar 应用开发 |
-| macOS SwiftPM App Packaging | 无 Xcode 打包 |
-
-### 7.3 iOS 相关技能
-
-| 技能 | 用途 |
-|------|------|
-| iOS Debugger Agent | iOS 应用调试 |
-
----
-
-## §8 代码审查技能
-
-### 8.1 单一审查
-
-| 技能 | 用途 |
-|------|------|
-| Review and Simplify Changes | diff 审查和简化 |
-| React Component Performance | React 性能审查 |
-
-### 8.2 Swarm 审查
-
-| 技能 | 用途 |
-|------|------|
-| Review Swarm | 四智能体 diff 审查 |
-| Bug Hunt Swarm | 四智能体 bug 调查 |
-
----
-
-## §9 DevOps 技能
-
-### 9.1 GitHub 集成
-
-| 技能 | 用途 |
-|------|------|
-| GitHub | GitHub CLI 操作 |
-
-### 9.2 发布自动化
-
-| 技能 | 用途 |
-|------|------|
-| App Store Changelog | 发布说明生成 |
-
----
-
-## §10 实践建议
-
-### 10.1 技能选择
-
-| 实践 | 说明 |
-|------|------|
-| **按需选择** | 根据任务类型选择合适的技能 |
-| **组合使用** | 多个技能可以组合使用 |
-| **自定义** | 根据团队需求修改技能 |
-
-### 10.2 技能维护
-
-| 实践 | 说明 |
-|------|------|
-| **定期更新** | 保持技能与最新工具同步 |
-| **文档完善** | 更新 SKILL.md |
-| **反馈改进** | 根据使用反馈优化 |
-
-### 10.3 团队协作
-
-| 实践 | 说明 |
-|------|------|
-| **共享技能库** | 在团队中共享自定义技能 |
-| **规范命名** | 使用清晰的命名规范 |
-| **版本控制** | 跟踪技能变更历史 |
-
----
-
-## §11 常见问题
-
-### Q1：如何选择技能？
-
-根据任务类型选择合适的技能，参考第 5.2 节的技能选择指南。
-
-### Q2：技能需要特殊配置吗？
-
-大多数技能开箱即用，部分技能需要额外工具（如 gh CLI、XcodeBuildMCP）。
-
-### Q3：可以自定义技能吗？
-
-可以。每个技能都是自包含的，可以根据需求修改。
-
-### Q4：支持其他平台吗？
-
-Dimillian/Skills 主要专注 Apple 平台和 SwiftUI，社区可能有其他平台的技能。
-
-### Q5：如何贡献新技能？
-
-参考第 6 节的设计指南，确保技能有清晰目的、完善文档和一致模式。
-
----
-
-## §12 总结
-
-### 12.1 核心优势
-
-| 优势 | 说明 |
-|------|------|
-| **专注 Apple** | 深度集成 Apple 平台开发 |
-| **多智能体** | Review Swarm 和 Bug Hunt Swarm |
-| **自包含** | 每个技能独立完整 |
-| **可复用** | 设计为通用场景 |
-
-### 12.2 适用场景
-
-| 场景 | 适用技能 |
-|------|----------|
-| **iOS 开发** | iOS Debugger Agent, SwiftUI 系列 |
-| **macOS 开发** | macOS Menubar Tuist App, SwiftPM Packaging |
-| **代码审查** | Review Swarm, Review and Simplify Changes |
-| **Bug 调查** | Bug Hunt Swarm |
-| **性能优化** | React Component Performance, SwiftUI Performance Audit |
-| **发布准备** | App Store Changelog |
-| **GitHub 管理** | GitHub |
-
-### 12.3 项目信息
-
-| 项目 | 信息 |
-|------|------|
-| **Stars** | 3.3k |
-| **Forks** | 144 |
-| **许可证** | MIT |
-| **语言** | Shell 84.6%, Python 12.8%, Swift 2.6% |
-
-## 自测题
-
-完成本文阅读后，请尝试回答以下问题：
-
-1. **Dimillian/Skills 的核心定位是什么？它解决了什么问题？**
-   - 参考答案：它是专为 Apple 平台开发设计的 Codex 技能集合，解决了 AI Coding Agent 在 Apple 平台开发中缺少专业技能的问题。
-
-2. **如何安装 Dimillian/Skills？有哪些安装方式？**
-   - 参考答案：可以通过 Git 克隆仓库、手动下载、或使用 Codex 的技能管理命令安装。每个技能是自包含的，可以单独使用。
-
-3. **16 个核心技能分别覆盖哪些场景？如何根据需求选择合适的技能？**
-   - 参考答案：覆盖 App Store 发布、SwiftUI 重构、代码审查、Bug 调查等场景。根据当前任务选择对应技能，如 iOS 调试用 iOS Debugger Agent，代码审查用 Review Swarm。
-
-4. **如何为团队创建自定义技能？需要遵循哪些设计原则？**
-   - 参考答案：参考现有技能的结构，创建包含 SKILL.md、触发条件、工作流的完整技能包。遵循聚焦性、自包含、可复用、文档完善的原则。
-
-5. **Review Swarm 和 Bug Hunt Swarm 有什么区别？分别适用于什么场景？**
-   - 参考答案：Review Swarm 用于代码审查，多个 Agent 协作审查代码；Bug Hunt Swarm 用于 Bug 调查，自动追踪问题根源。
-
-## 练习题
-
-1. **配置并使用 Dimillian/Skills**：在你的 Codex 环境中安装配置 Dimillian/Skills，然后使用 SwiftUI Refactor 技能重构一个现有视图。
-   - 提示：参考"快速开始"部分的安装步骤，确保 Codex skills 目录路径正确。
-
-2. **创建自定义技能**：为你的团队创建一个自定义技能，解决一个特定的开发痛点（如代码规范检查、性能分析等）。
-   - 提示：参考现有技能的结构，确保包含 SKILL.md、触发条件说明和完整工作流。
-
----
-
-## 进阶路径
-
-如果你希望深入掌握 Dimillian/Skills，可以参考以下进阶路径：
-
-1. **基础使用**：安装并配置 Dimillian/Skills，在 Codex 中使用核心技能完成日常开发任务
-   - 实践任务：为你的 iOS/macOS 项目配置 Dimillian/Skills，并使用 SwiftUI Refactor 技能重构一个视图
-   - 学习目标：能够独立安装、配置和使用 Dimillian/Skills
-
-2. **技能开发**：学习如何开发自定义技能，理解技能的结构和设计原则
-   - 实践任务：为你的团队创建一个自定义技能，解决特定的开发痛点
-   - 学习目标：能够设计并实现符合设计原则的自定义技能
-
-3. **多智能体协作**：深入理解 Review Swarm 和 Bug Hunt Swarm 的工作原理，优化协作流程
-   - 实践任务：配置和优化 Swarm 技能，提升代码审查和 Bug 调查的效率
-   - 学习目标：能够设计并优化多智能体协作流程
-
-4. **生态贡献**：参与 Dimillian/Skills 社区，贡献代码或文档，或构建自己的技能集合
-   - 实践任务：为 Dimillian/Skills 提交 PR，或在 GitHub 上发布自己的技能集合
-   - 学习目标：能够为开源项目做出贡献，或构建自己的技能生态
-
-### 12.4 相关链接
-
-| 资源 | 链接 |
-|------|------|
-| **GitHub** | https://github.com/Dimillian/Skills |
-| **官网** | https://dimillian.github.io/Skills/ |
-
----
-
----
-
-*文档版本 1.0 | 撰写日期：2026-04-01 | 基于 Dimillian/Skills (3.3k Stars)*
+Dimillian/Skills 的样本价值大于依赖价值。一个把 SwiftUI 日常循环拆成 16 个技能、给审查装上只读护栏和置信度过滤、给性能调优配上 WWDC 讲义的做法，是可以整体搬走的工程判断；而它停更之后暴露的问题——索引不同步、绝对路径泄漏、社区贡献无人接——同样是一份现成的"个人技能库维护成本"清单。抄它的结构，接住它的维护，这两件事都不需要它继续更新。

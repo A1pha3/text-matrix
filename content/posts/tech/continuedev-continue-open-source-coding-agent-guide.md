@@ -1,262 +1,258 @@
 ---
-title: "Continue 终版回顾：把 33k Stars 的开源 Coding Agent 留在 2.0.0 的现场"
+title: "Continue 终局观察：README 写着 read-only，仓库却从未挂上 Archived 标志"
 date: "2026-06-17T21:05:57+08:00"
+lastmod: "2026-10-04"
 slug: "continuedev-continue-open-source-coding-agent-guide"
-description: "continuedev/continue 是早期最具影响力的开源 AI 编程助手之一，已发布 Final 2.0.0 并归档为只读。本文解读其三端形态与仓库结构。"
+description: "continuedev/continue 以一句 README 斜体宣告终结：Final 2.0.0 三端收尾、移除遥测、剥离认证。但仓库既未归档，main 分支在声明之后又维护了五周。本文核对声明与仓库实况的差距，并拆解它留下的两层安全模型与 CLI 架构。"
 draft: false
 categories: ["技术笔记"]
 tags: ["Coding Agent", "TypeScript", "VS Code", "CLI"]
 ---
 
-# Continue 终版回顾：把 33k Stars 的开源 Coding Agent 留在 2.0.0 的现场
+# Continue 终局观察：README 写着 read-only，仓库却从未挂上 Archived 标志
 
-Continue 是一段值得记录的开源 AI 编程助手史。仓库 README 在开头用一行斜体写下了它今天的状态：
+2026 年 6 月，Continue 团队在仓库 README 开头放了一句斜体：
 
 > _Note: The `continuedev/continue` repository is no longer actively maintained and is read-only for all users._
 
-这句话与 GitHub 上接近 **3.4 万 Stars、4,700 Forks** 的体量形成强烈对比——团队把产品打磨到 Final 2.0.0 后关上了门，代码、决策记录与社区贡献都留在仓库里，任何人可以 clone、fork、读源码，但不会再有新功能合入主线。本文帮助读者快速理解 Continue 的三端形态、Final 2.0.0 的边界，以及仓库内还能读到什么。
+同一个 README 里，团队宣布做了 "a final 2.0.0 release"，移除匿名遥测、剥离认证、集中修 Bug，然后感谢社区：**"We hope this codebase continues to serve as a foundation for others."** 一段开源 AI 编程助手的早期历史，就这样用 63 行 README 收了尾。
 
-## 目录
+有意思的是声明与仓库实况的差距。GitHub API 显示 `continuedev/continue` 的 `archived` 字段是 `false`——仓库从未挂上 Archived 标志；main 分支在声明发布之后又接了五周提交，最后一次停在 2026-07-21，内容是撤掉登录入口和迁移文档站域名。这是一种"软退出"：功能开发停止，README 承担了归档公告的职能，而仓库本身保持可写、可 fork、可克隆。
 
-- [一、项目定位：先驱与终版](#一项目定位先驱与终版)
-- [二、三种使用形态](#二三种使用形态)
-- [三、仓库结构：一图看懂 monorepo](#三仓库结构一图看懂-monorepo)
-- [四、Final 2.0.0 的实际边界](#四final-200-的实际边界)
-- [五、任务流案例：一次 `cn` 调用如何穿过 Core](#五任务流案例一次-cn-调用如何穿过-core)
-- [六、为什么仓库仍值得读](#六为什么仓库仍值得读)
-- [七、给三类读者的建议](#七给三类读者的建议)
-- [八、FAQ 与常见排查](#八faq-与常见排查)
-- [九、自测题](#九自测题)
-- [十、采用顺序与决策建议](#十采用顺序与决策建议)
-- [十一、小结](#十一小结)
+本文基于 2026-10-04 的仓库状态（36,102 Stars、5,445 Forks、Apache-2.0）与源码核对，回答三个问题：这次终版发布到底交付了什么、仓库里还剩哪些值得读的工程资产、以及现在拿它应该怎么用。
 
-## 学习目标
+## 一、三端形态：一个 Core，三种壳
 
-读完本文后，你应当能够：
+Continue 自述为 "pioneering open-source coding agent"。从 2023 年 5 月建仓到终版，它一直是三端并行的结构：CLI、VS Code 扩展、JetBrains 插件共享同一份 `core/` 代码与模型抽象，靠一个 monorepo 统一管理。终版时三端的状态并不对称：
 
-1. 说出 Continue 三端（CLI、VS Code、JetBrains）的当前状态与推荐顺序，并解释为什么 CLI 取代了 JetBrains 的演进优先级。
-2. 在 `continuedev/continue` 仓库里定位到 Provider 抽象、Config YAML、终端安全校验、上下文工程这四块代码的具体目录。
-3. 描述 Final 2.0.0 做了哪四件事、没做哪三件事，并据此判断自己 fork 时需要补哪些层。
-4. 跟着"任务流案例"复述一次 `cn` 调用从命令行到模型 Provider 再到终端执行的关键路径。
-5. 根据团队情况选择"继续用 2.0.0"、"fork 扩展"或"参考结构搭新项目"三种姿态之一，并知道各自的风险点。
+| 形态 | 入口包 | 终版版本 | 分发渠道 | 现状 |
+|------|--------|----------|----------|------|
+| **CLI**（`cn`） | `@continuedev/cli`（npm） | 1.5.47（2026-06-18） | npm + 官方 install 脚本 | README 建议的默认入口 |
+| **VS Code 扩展** | `Continue.continue` | 2.1.0（2026-06-19） | Marketplace + Open VSX | 随 Final 2.0.0 一并收尾 |
+| **JetBrains 插件** | 仓库内 `extensions/intellij` | v1.0.67-jetbrains（2026-03-27） | JetBrains Marketplace（120.9 万次下载） | 官方建议改用 CLI |
 
-## 一、项目定位：先驱与终版
+两个容易读错的细节：
 
-Continue 自述为"pioneering open-source coding agent"。从 2023 年 5 月仓库创建到 2026 年 6 月，它经历了三波重要节点：VS Code 扩展起步、JetBrains 插件补齐、CLI 单独抽出来作为"官方推荐使用方式"。这三端背后是同一套 Core 代码与同一份模型 Provider 抽象，靠一个 monorepo（单一代码仓库）统一管理。
+**"Final 2.0.0" 是对终版发布的统称，不是三端共同的版本号。** README 原话是 "did a final 2.0.0 release of the VS Code extension, CLI, and JetBrains plugin"，落到具体版本上，只有 VS Code 扩展拿到了 2.x 号（GitHub Releases 里 `v2.0.0-vscode` 与 `v2.1.0-vscode` 同在 2026-06-19 发布），CLI 停在 npm 的 1.5.47，JetBrains 停在 3 月底的 v1.0.67。如果你在 fork 里找"2.0.0 的 CLI"，找不到。
 
-2026 年发布的 **Final 2.0.0** 是一次"收尾式"发布，做了四件事：
+**JetBrains 插件一直在 JetBrains Marketplace 正常分发。** README 的 JetBrains 一节只给了 GitHub Releases 徽章，容易被读成"不走 Marketplace、本地安装为主"——实际插件 ID 22707 在 Marketplace 在架，截至 2026-10-04 累计约 120.9 万次下载；仓库的 `jetbrains-release.yaml` 工作流至今保留着完整的 Marketplace 发布流程（`PUBLISH_TOKEN` 加 Apple 签名证书全套，支持 EAP 和 Stable 双通道）。徽章只是 README 的展示选择。
 
-1. **移除匿名遥测**（anonymous telemetry）—— 把"默认上报"改回"默认不上报"，让仓库在只读后不再有任何对外网络行为。
-2. **剥离认证模块**（pulling out authentication）—— 登录态、Token 管理从核心代码里独立出去，用户自己掌控身份链路，方便企业内网或私有部署替换。
-3. **批量修 Bug**（squashing bugs）—— 把历次迭代遗留的边界问题做一次集中清理。
-4. **明确只读**（read-only）—— 仓库不再接受新功能合入，GitHub 上不再有活跃开发。
+## 二、终版发布与"软退出"时间线
 
-从结果看，Continue 把"它是什么"和"它不是什么"切干净：它是一份**可运行的代码参考**，不再是一个被持续迭代的产品。
+把 main 分支的提交按时间排开，能看到一次收尾是如何执行的：
 
-## 二、三种使用形态
+| 时间 | 动作 |
+|------|------|
+| 2026-06-15 | "Final release cleanup"：移除 CLI 横幅与 Generate Rule，默认配置改为显式模型定义 |
+| 2026-06-15 | 同日修复：删除死掉的登录强制逻辑与 Login Required UI、隔离 GlobalContext 修复测试抖动 |
+| 2026-06-18 | `fix(cli)`：默认配置改用显式模型定义，替代 Hub slug |
+| 2026-06-18/19 | `fix(gui)` 两笔：移除 GitHub issue 反馈入口、修 onboarding 卡片滚动 |
+| 2026-06-19 | `v2.0.0-vscode` 与 `v2.1.0-vscode` 同日发布；npm 发布 CLI 1.5.47 |
+| 2026-07-21 | 三笔 docs 提交：文档站迁至 docs.continue.dev 根路径（`basePath ""` + CNAME）、移除 Sign in 链接（提交信息原话 "login flow retired"） |
+| 此后 | main 分支静默；仓库 `archived` 保持 `false` |
 
-README 在发布渠道上给得很克制，CLI 是当前推荐入口，VS Code 是历史核心载体，JetBrains 不再是首选。三者关系如下：
+三条值得记下的观察：
 
-| 形态 | 入口包 | 状态 | 适用场景 |
-|------|--------|------|----------|
-| **CLI**（`cn`） | `@continuedev/cli`（npm） | ✅ 推荐 | 终端优先、脚本化、可与编辑器解耦 |
-| **VS Code 扩展** | `Continue.continue`（Marketplace + OpenVSX） | ✅ 仍在用 | IDE 内联体验、习惯 GUI 的开发者 |
-| **JetBrains 插件** | 仓库内 `extensions/intellij` | ⚠️ 维护但不推荐 | IntelliJ 生态用户，README 建议改用 CLI |
+**移除遥测和剥离认证是真实动作。** 提交历史里能看到对应的痕迹——登录强制逻辑在 6-15 被当作"dead login requirement"删掉，7-21 连文档站的 Sign in 链接都撤了。README 说的 "removing anonymous telemetry, pulling out authentication" 不是修辞。（CLI 里仍保留 `cn login` 命令和 WorkOS 认证模块，用于对接 Continue Hub 的场景，详见下文。）
 
-CLI 是最值得优先了解的一端。它的 `package.json` 暴露了 `cn` 二进制名，注册在 `extensions/cli/package.json` 的 `bin` 字段里。`build` 流程用 `build:validate` + `build:bundle` 两步走，前者跑 `node validate-aliases.mjs` 校验模块别名，后者用 `node build.mjs` 打包。开发期用 `tsx src/index.ts` 直跑，测试用 `vitest`，e2e 用单独 `vitest.e2e.config.ts`，smoke 测试有 `smoke-test.mjs` 与 `vitest.smoke-api.config.ts` 两套——把 contract / unit / e2e / smoke 拆成四套配置，对应四种触发环境（CI、本地、长链路、API 烟测），后续要补测试时能直接落到对应配置里，不用从一堆混跑的用例里挑。
+**"Final" 之后仍有五周维护。** 声明是 6 月上旬写进 README 的（era 快照与当前 README 逐字一致），但 6 月中下旬还有一批 GUI/CLI 修复，7 月还有文档站迁移。这不是"声明造假"，而是收尾工程的自然延续——但读者要知道"read-only"描述的是维护姿态，不是仓库的物理状态。
 
-VS Code 扩展保留了"老牌 AI 编程助手"的所有肌肉记忆：补全、聊天面板、内联编辑、上下文选择器。它在 Marketplace 与 OpenVSX 两处都有发布，README 显式标注了 `extensions/vscode` 源码位置。
+**fork 时没有单一锚点。** 三端版本号各异，"基于 2.0.0 tag 切分支"的说法不成立。更稳的做法是直接基于当前 main 末端的 commit（2026-07-21 的 `5522c6f4`）切分支——它就是事实上的终线。
 
-JetBrains 插件没有走 Marketplace，而是通过 GitHub Releases 分发，本地安装为主。README 给出的态度很明确："我们推荐使用 Continue CLI 而不是 JetBrains 插件"——JetBrains 端会继续维护已有用户的基础体验，但新功能不会再先落到这一端。
+## 三、仓库地图：哪些目录还在干活
 
-## 三、仓库结构：一图看懂 monorepo
+根目录共 27 项。核心分层是 `core/`（共享内核）、`extensions/`（三端壳）、`packages/`（七个小包）：
 
-Continue 是一个典型的"**单仓多产物**"项目，根目录的 `tsconfig.json` 是 TypeScript 工程的统一入口，`package.json` 用 `concurrently` 并行驱动 `gui / vscode / core / binary` 四组 `tsc --watch`：
-
-```
+```text
 continuedev/continue/
-├── core/                    # 核心逻辑：模型抽象、上下文工程、Agent 循环
+├── core/                    # 共享内核：llm / context / edit / tools / config / indexing …
 ├── extensions/
 │   ├── vscode/              # VS Code 扩展
-│   ├── cli/                 # CLI（cn 二进制）
-│   └── intellij/            # JetBrains 插件（维护但不推荐）
-├── gui/                     # 独立 GUI（可能用于桌面端或共享组件）
-├── packages/                # 共享子包（config-types、fetch、llm-info、
-│                            #   terminal-security、config-yaml、openai-adapters 等）
-├── binary/                  # 预编译二进制发布件
-├── actions/                 # GitHub Actions 自定义动作
-├── eval/                    # 评估/基准测试代码
-├── docs/                    # 文档源
-├── skills/                  # 仓库级 Skills（与 core 解耦）
-├── sync/                    # 内部同步脚本
-├── scripts/                 # 杂项脚本
-├── manual-testing-sandbox/  # 手动测试沙盒
-├── media/                   # 仓库展示资源
-├── CLA.md                   # 贡献者协议
-└── CODE_OF_CONDUCT.md
+│   ├── cli/                 # CLI（cn 二进制，@continuedev/cli）
+│   └── intellij/            # JetBrains 插件
+├── packages/                # 七个独立小包（见下表）
+├── gui/                     # React 界面包（VS Code 侧的 webview 前端）
+├── binary/                  # Node 打包产物（bin: out/index.js）
+├── sync/                    # Rust 原生模块（cdylib），代码库同步/索引
+├── docs/                    # Mintlify 风格文档源（docs.json + mdx）
+├── docs-site/               # Next.js 文档站（docs.continue.dev）
+├── eval/                    # 已清空，仅剩 .gitignore
+├── skills/                  # cn-check（仓库自带的 CLI 检查 skill）
+├── actions/  scripts/  manual-testing-sandbox/  media/
+├── BUILD_DEPENDENCIES.md    # 全部构建密钥与发布令牌清单
+├── TESTING.md  SECURITY.md  CONTRIBUTING.md  CLA.md  CODE_OF_CONDUCT.md
+├── LICENSE  README.md  tsconfig.json  worktree-config.yaml
+└── package.json             # 根编排：concurrently 并行四路 tsc --watch
 ```
 
-**`core/` 是整个项目的"事实来源"**：CLI、VS Code、JetBrains 三端共享同一份模型 Provider 抽象、上下文检索与 Agent 循环逻辑。`packages/` 下都是被 `core` 复用的小型独立包，例如 `config-types`（配置类型定义）、`fetch`（统一 HTTP 客户端）、`llm-info`（模型能力元数据）、`terminal-security`（终端命令安全校验）、`config-yaml`（YAML 配置解析）、`openai-adapters`（OpenAI 兼容协议适配）。`build:local-deps` 脚本会显式按依赖顺序构建这些子包——先 `config-types`，再 `fetch`、`llm-info`，最后才是依赖它们的 `core` 与各端扩展，这种"先子后父"的显式顺序能避免并行 `tsc` 时偶发的类型找不到问题。
+`packages/` 下七个包的分工：
 
-`gui/`、`vscode/`、`core/`、`binary/` 四组并行 `tsc --watch` 通过 `concurrently` 启动，配色 `cyan, magenta, yellow, green` 让本地开发一眼分清四个进程的输出——四个进程同时跑时，颜色区分比加 `[gui]` 前缀更省眼力。
+| 包 | 职责 |
+|------|------|
+| `config-types` | 配置类型定义（被其余包依赖的根） |
+| `config-yaml` | `config.yaml` 的 Zod schema 解析与校验 |
+| `fetch` | 统一 HTTP 客户端 |
+| `llm-info` | 模型能力元数据 |
+| `openai-adapters` | OpenAI 兼容协议适配 |
+| `terminal-security` | 终端命令安全评估（下文详解） |
+| `continue-sdk` | Continue 平台 SDK（API key 认证、assistant slug、组织支持） |
 
-## 四、Final 2.0.0 的实际边界
+三个和预期不符的地方，值得在克隆之前知道：
 
-Final 2.0.0 是一次**有取舍**的发布。理解它"不做什么"和理解它"做什么"同样重要。
+**`eval/` 已经空了。** 一些旧介绍把 `eval/` 描述为"团队的评估集，值得研究"——当前 HEAD 里它只剩一个 `.gitignore`，内容已在终版前清空。
 
-**做了什么：**
+**`sync/` 不是脚本，是 Rust。** `Cargo.toml` 显示它是个 cdylib 原生模块（"Continue Codebase Syncing"），承担代码库同步/索引的性能敏感部分，不是 shell 脚本合集。
 
-- 移除匿名遥测：默认不上报任何使用数据。
-- 剥离认证：身份与会话管理从核心代码解耦，方便用户在企业内网、私有部署场景里替换。
-- 集中修 Bug：把历次迭代遗留的边界问题做一次清理。
+**构建编排比典型 monorepo 手工。** 根目录没有 npm workspaces，根 `package.json` 里主要值得看的是 `tsc:watch`：用 `concurrently -n gui,vscode,core,binary -c cyan,magenta,yellow,green` 并行跑四路 `tsc --watch`，用颜色区分输出。真正的依赖顺序构建脚本 `build:local-deps` 在 `extensions/cli/package.json` 里，按 `config-types → fetch → llm-info → terminal-security → config-yaml → openai-adapters → core → cli` 的顺序逐包 `npm i && npm run build`——先子后父，避免并行编译时的类型找不到。各包独立维护 `package-lock.json`，每个小包有自己的 semantic-release 发布流水线（`release-fetch.yml`、`release-config-yaml.yml` 等）。
 
-**没做什么：**
+## 四、CLI 架构：一个二进制，三种运行模式
 
-- 没有引入新的模型 Provider 适配——这一层的扩展空间被留给了 fork。
-- 没有继续强化 GUI 客户端——`gui/` 目录存在但已不作为产品方向。
-- 没有在 JetBrains 端追加投入——CLI 取代了它的"演进优先级"。
+`extensions/cli` 是终版时最活跃的一端，`AGENTS.md`（写给 AI 编码代理的开发指引，也是目前最准确的架构自述）把它拆成五块：
 
-对于想要"继续往里加东西"的开发者，Final 2.0.0 的边界就是 fork 起点。仓库明确写道："We hope this codebase continues to serve as a foundation for others." 这句话与"pioneering"的标题呼应——Continue 把自己的角色从"被持续迭代的产品"切换到"可被 fork 与参考的代码底座"，新功能、新 Provider、新 GUI 都需要后来者在 fork 里完成。
+1. **入口** `src/index.ts`：三种模式——Headless（无 TTY 自动化）、TUI（Ink/React 终端界面）、Standard（readline 聊天）。
+2. **认证** `src/auth/`：WorkOS 体系（`workos.ts` 管配置与 token）。这就是"剥离认证"的落点：与 Continue Hub 相关的身份链路被隔离在这个目录与 `continue-sdk` 包里，不与 Agent 执行路径纠缠。
+3. **SDK 集成** `src/continueSDK.ts`：API key 认证、assistant slug、组织支持。
+4. **终端 UI** `src/ui/`：React/Ink 组件（`TUIChat.tsx` 等）。
+5. **工具系统** `src/tools/`：文件读写、搜索、终端执行、diff 查看，外加一个只在 headless 模式存在的 Exit 工具。
 
-## 五、任务流案例：一次 `cn` 调用如何穿过 Core
+命令面（出自 CLI README）：
 
-光看目录结构还不足以理解 Continue 三端如何共享同一份 Core。下面追踪一次 `cn "把 README 里的命令改成 uv run"` 调用从命令行到模型返回再到终端执行的关键路径，把抽象的"Core 是事实来源"落到具体模块上。
+```bash
+# 安装（官方主推脚本，npm 需 Node.js 20+）
+curl -fsSL https://raw.githubusercontent.com/continuedev/continue/main/extensions/cli/scripts/install.sh | bash
+npm i -g @continuedev/cli   # 备选
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│ 1. extensions/cli/src/index.ts                                  │
-│    解析 argv → 构造 Session → 读 ~/.continue/config.yaml         │
-│                         │                                       │
-│ 2. packages/config-yaml                                         │
-│    把 config.yaml 解析成 config-types 里的强类型 Config          │
-│    （models / contextProviders / allowlist / ui 等）             │
-│                         │                                       │
-│ 3. core/llm/                                                    │
-│    按 Config.models 选中 Provider（openai / anthropic / ollama） │
-│    走 packages/openai-adapters 把请求归一成 OpenAI 兼容协议      │
-│                         │                                       │
-│ 4. core/context/                                                │
-│    收集上下文：当前目录文件、打开的编辑器、@-mention 的符号      │
-│    走 Token 预算裁剪，超出部分按相关性丢弃                       │
-│                         │                                       │
-│ 5. core/agent/                                                  │
-│    Agent 循环：LLM 返回 tool_call → 路由到对应工具               │
-│    若 tool_call 是 run_command，先过 terminal-security          │
-│                         │                                       │
-│ 6. packages/terminal-security                                   │
-│    检查命令是否命中 denylist、是否需要用户确认                   │
-│    通过则交回 agent 执行，未通过则把拒绝原因回喂给 LLM           │
-│                         │                                       │
-│ 7. core/edit/                                                   │
-│    若 LLM 返回 file_edit，落到 core/edit/ 应用 diff             │
-│    若返回 final_answer，CLI 把文本打到 stdout 后退出             │
-└─────────────────────────────────────────────────────────────────┘
+cn                      # 交互式聊天
+cn -p "…"               # headless 模式（无 TUI，适合脚本/CI/Docker）
+cn -p "…" --format json # JSON 输出，供脚本消费
+cn --resume             # 恢复本终端最近一次会话
+cn ls [--json]          # 列出会话
+cn login / cn logout    # Continue Hub 认证
+cn serve                # HTTP 服务器模式
+cn remote               # 远程实例
 ```
 
-几个值得注意的细节：
+两个容易被忽略的环境变量：`FORCE_NO_TTY` 强制无 TTY 模式（测试与自动化用）；`CONTINUE_CLI_DISABLE_COMMIT_SIGNATURE` 关闭 CLI 给生成 commit 信息追加的 Continue 签名。默认模型在 `src/services/ConfigService.ts` 里定义为一个 Hub slug：`anthropic/claude-sonnet-4-6`。
 
-- **Provider 切换不动 Agent 循环**：第 3 步换 Provider 只影响请求格式，第 5 步的 Agent 循环、第 6 步的安全校验、第 7 步的 edit 落地都不感知具体模型。这是 `core/` 能被三端共享的关键。
-- **terminal-security 是同步阻塞点**：Agent 在执行 `run_command` 前必须等 `terminal-security` 返回，确认结果会决定是直接执行、要求用户确认还是拒绝。CLI 模式下用户确认走 stdin；VS Code 模式下走 QuickPick 弹窗，但底层是同一个 `terminal-security` 包。
-- **Config YAML 是唯一的运行时配置入口**：第 2 步解析出的 `Config` 对象会被 3、4、5、6 步共享读取。想加新 Provider 或新 context provider，改 `~/.continue/config.yaml` 即可，不需要改 Core 代码。
-- **三端共享 2-7 步**：VS Code 扩展与 JetBrains 插件只是把第 1 步的入口从 CLI argv 换成 IDE 命令，第 2 步之后的链路完全一致。这就是为什么 Final 2.0.0 能在剥离认证后同时让三端受益——认证模块被独立出去后，三端都从同一个 `core/auth/` 接口拿身份。
+`spec/` 目录下还有 12 篇设计文档（permissions、modes、shell-mode、tty-less-support、otlp-metrics、config-loading 等），是理解 CLI 设计取舍的最短路径——比读源码快得多，而且大多短小。
 
-## 六、为什么仓库仍值得读
+## 五、两层安全模型：permissions 管工具，terminal-security 管命令
 
-虽然项目不再迭代，但 `continuedev/continue` 仓库里仍然有相当多值得借鉴的工程产物：
+Continue 的 Agent 安全控制分两层，各自的粒度和机制完全不同。这是仓库里最值得精读的部分。
 
-1. **Provider 抽象层**：`packages/openai-adapters` 与 `core` 内部的 Provider 路由是少数能在 VS Code、CLI、JetBrains 三端共享同一份适配的开源实现，研究 LLM 工具链如何做到"模型无关"绕不开它。
-2. **终端安全校验**：`packages/terminal-security` 是 Agent 在执行 Shell 命令前做权限/危险评估的一类工具，Continue 的实现属于早期开源参考。
-3. **上下文工程**：`core/` 内对"如何把仓库内容切成 Agent 可消费的上下文"做了一整套实现，含检索、引用追溯、Token 预算控制。
-4. **Config YAML 体系**：`packages/config-yaml` 是 `config.yaml` 配置的强类型解析层，是少有的把"配置即代码"做到位的小型工具库。
-5. **测试分层**：`extensions/cli` 内部把 contract / unit / e2e / smoke 拆成四套配置，对想写"可验证 AI 工具"的人是个现成范式。
-6. **Eval 体系**：`eval/` 目录是 Continue 团队用于回归测试的实验性评估集，本身也值得作为研究材料。
+**第一层：工具级 permissions 系统。** 每个工具有三态权限——`allow`（自动执行）、`ask`（先问用户）、`exclude`（对模型完全隐藏）。优先级五层，从高到低：
 
-## 七、给三类读者的建议
+1. 模式策略（`plan` / `auto`，绝对覆盖，见下）
+2. 命令行旗标：`--allow` / `--ask` / `--exclude`，支持 glob 匹配（如 `Read(**/*.ts)` 只匹配读 `*.ts` 文件的调用）
+3. `config.yaml` 配置
+4. `~/.continue/permissions.yaml`
+5. 内置默认策略
 
-**还在用 Continue 的用户：** Final 2.0.0 之后不必担心"明天变没"。VS Code 扩展仍可在 Marketplace 与 OpenVSX 拉到，CLI 仍可 `npm i -g @continuedev/cli` 后 `cn` 进入。JetBrains 端有历史用户基础但官方已建议切到 CLI。
+默认策略（`src/permissions/defaultPolicies.ts`）的真实取值：写工具（`Edit` / `MultiEdit` / `Write`）默认 `ask`；读工具（`Read` / `List` / `Search` / `Fetch` / `Diff` 等）默认 `allow`；`Bash` 和其余所有工具在 TUI 模式默认 `ask`，**在 headless 模式默认 `allow`**——官方为自动化场景选择了放行，把这个默认值当作采用决策的一部分来评估，是必要的。
 
-**想搭一套 Coding Agent 基础设施的人：** 把 `core/` 与 `packages/` 读一遍是最快的学习路径。`Provider 抽象 + Config YAML + 终端安全校验 + 上下文工程` 这四件套基本构成了"可运行 Agent 工具链"的最小集合。
+三个模式里，`normal` 走上述配置；`plan`（`--readonly`）绝对覆盖为只读——`Edit` / `MultiEdit` / `Write` 全部 `exclude`，但保留 `Bash`（源码注释里写着 "TODO address bash read only concerns"，官方自己承认这不算严格的只读）；`auto`（`--auto`）绝对放行一切。聊天中用 Shift+Tab 切换。
 
-**想借鉴 monorepo 结构的团队：** `extensions/{vscode,cli,intellij}` + `core` + `packages/*` 的分层把"业务壳 + 共享核 + 原子包"三段切得很干净——业务壳只管入口与 UI，共享核管 Agent 循环与上下文，原子包管可被复用的单一职责（HTTP、YAML、安全校验）。配合 `build:local-deps` 这种显式依赖顺序脚本，能在多端交付场景里少踩类型找不到、循环依赖这类坑。
+**第二层：命令字符串级 terminal-security。** `packages/terminal-security` 的输入不是工具名，而是待执行的命令行文本。它用 `shell-quote` 做分词（正确处理管道、`&&`、glob、注释），多行命令逐行评估后取最严格的结论，对每个子命令给出三态结论：
 
-## 八、FAQ 与常见排查
+- `disabled`：命中 critical 模式。实际判断是组合式的——`mkfs` 系命令；`rm` 配上 `-rf`/`-fr`/任何同时含 r 和 f 的 flag，且路径落在 `/`、`~`、`/usr`、`/etc`、`/bin`、`/sbin` 等危险目标上。
+- `allowedWithPermission`：高风险命令，或 `$var` 开头的变量命令（内容不可预判，一律升权）。
+- `allowedWithoutPermission`：其余命令按基础策略放行。
 
-**Q1: `npm i -g @continuedev/cli` 后 `cn` 命令找不到？**
+一个容易低估的设计：**变量展开会被双重评估**。`shell-quote` 分词遇到空 token 时（往往是 `$VAR` 展开的结果），实现会按"有变量"和"无变量"两种解释各评一遍，再取更严格的一个——防止 `rm $HOME/...` 这类命令借着变量绕过静态检查。
 
-先确认 `npm bin -g` 在 `PATH` 里。macOS 上用 nvm 安装的 Node 经常出现全局 bin 没进 `PATH` 的情况，可以执行 `echo $(npm bin -g)` 看实际路径，再补到 shell 配置。如果用的是 pnpm，需要 `pnpm setup` 一次让全局 bin 生效。
+两层的衔接点在 `src/tools/runTerminalCommand.ts`：permissions 系统决定 `Bash` 工具是否可调用，工具执行前再把具体命令交给 `evaluateTerminalCommandSecurity` 评估。工具级放行了，命令级仍可能拦下。
 
-**Q2: VS Code 扩展装上后报"Continue server crashed"？**
+## 六、任务流案例：一次 `cn -p` 调用穿过哪些层
 
-绝大多数情况是 `~/.continue/config.yaml` 解析失败。`packages/config-yaml` 用的是严格 schema，多一个缩进或少一个冒号都会让进程在启动期退出。把 `config.yaml` 复制到 `~/.continue/config.yaml.bak`，再换一个最小配置（只留一个 model）逐步加回去，能定位到哪一段触发了 parse error。
+以一条真实的自动化调用为例：
 
-**Q3: 想加一个新 Provider（比如本地的 vLLM），需要改哪些文件？**
+```bash
+cn -p "把 README 里的安装命令改成 uv" --allow Read --ask Bash
+```
 
-Final 2.0.0 之后建议走 fork 路径。需要改的位置：
+```text
+1. src/index.ts 入口
+   检测到 -p 走 headless 模式；解析 --allow Read / --ask Bash
+   追加进权限策略表（仅次于模式策略）
+        │
+2. ConfigService 加载配置
+   无自定义配置时落到默认模型 slug（anthropic/claude-sonnet-4-6）
+   config.yaml 存在时经 packages/config-yaml 的 Zod schema 校验解析
+        │
+3. 会话循环（src/ 内，SDK 客户端对接模型）
+   按 config.models 的 provider 定义路由请求
+   core/llm/llms/ 下 62 个 provider 实现覆盖
+   OpenAI / Anthropic / Ollama / Gemini / vLLM 等主流形态
+        │
+4. 模型返回工具调用（CLI 层 src/tools/ 执行）
+   BUILT_IN_TOOL_NAMES 列出 17 个 CLI 工具（Read / Write /
+   Bash / Search / Subagent …）；core 层另有 core/tools/
+   definitions/ 的 20 个共享工具定义
+        │
+5. 权限检查（src/permissions/）
+   Read 按 --allow Read 直接放行；
+   Bash 按 --ask Bash 需要用户确认
+        │
+6. 命令级评估（packages/terminal-security）
+   runTerminalCommand 执行前调 evaluateTerminalCommandSecurity：
+   shell-quote 分词 → 逐行评估 → 变量展开双解释 → 三态结论
+        │
+7. 结果落地
+   文件编辑经 core/edit/（streamDiffLines 流式应用 diff）
+   命令输出回喂模型；模型给出最终答复后，
+   headless 模式把文本打到 stdout 退出
+```
 
-- `packages/config-types/src/`：加 Provider 的类型定义。
-- `core/llm/`：加 Provider 的 LLM 类，继承基类并实现 `streamChat` / `streamFim`。
-- `packages/openai-adapters/`：如果 vLLM 走 OpenAI 兼容协议，可以直接复用，不需要新写。
-- `~/.continue/config.yaml`：在 `models` 数组里加一条，`provider` 字段填新 Provider 名。
+这条链路解释了"Core 是事实来源"的具体含义：第 3、4、6、7 步对三端完全共享——VS Code 和 JetBrains 换掉的只是入口（IDE 命令而非 argv）与 UI 载体（webview / Swing 而非 Ink）。provider 怎么换，Agent 循环、工具路由、命令安全评估都不感知具体模型。
 
-**Q4: JetBrains 插件还能用吗？为什么 README 建议改用 CLI？**
+另外注意 headless 模式与 TUI 模式在默认策略上的分岔（第五节）：同一条 Bash 命令，交互式终端里要确认，进了 CI 就默认放行。把 Continue 放进自动化流水线之前，这个差异值得专门过一遍。
 
-能装能跑，但新功能不会再先落到这一端。README 的建议基于维护成本：JetBrains 插件没有走 Marketplace，分发靠 GitHub Releases，迭代节奏跟不上 CLI。如果你已经在 IntelliJ 生态里深度依赖 Continue，可以继续用 2.0.0；如果是新接入，直接走 CLI 更省事。
+## 七、这个仓库今天还值得读什么
 
-**Q5: fork 之后想自己合上游修复，怎么处理？**
+功能上它已经不是选项，但作为"一个跑完完整产品周期的开源 Coding Agent"样本，几块资产仍然有参考价值：
 
-仓库已设为只读，不会有新 commit 进 `main`，所以 fork 后不需要每天 rebase 上游。Final 2.0.0 发布时的 tag 是稳定的同步点，fork 时基于这个 tag 切分支即可。如果发现 2.0.0 里有未修的 Bug，要么自己在 fork 里修，要么去社区 fork 网络（GitHub 上 `continuedev/continue` 的 fork 数已经过万）里找有没有人已经修过。
+1. **两层安全模型的完整实现。** permissions 的三态 × 五层优先级 × 三模式，加上 terminal-security 的分词评估与变量展开防御，是 Agent 命令执行安全的少见的完整开源参考——两层粒度（工具级/命令级）的分工尤其清楚。
+2. **CLI 工程化范式。** contract / unit / e2e / smoke 四套测试配置（`vitest.config.ts`、`vitest.e2e.config.ts`、`smoke-test.mjs`、`vitest.smoke-api.config.ts`）各自对应一种触发环境；`spec/` 目录把设计决策写成短文档；`AGENTS.md` 展示了如何给 AI 编码代理写仓库指引。
+3. **多端共享内核的 monorepo 切法。** 业务壳（`extensions/`）+ 共享核（`core/`）+ 原子包（`packages/`）三段清晰，`build:local-deps` 的显式构建顺序可直接抄。
+4. **发布基建清单。** `BUILD_DEPENDENCIES.md` 把三个端所有发布密钥列成表——VS Code/Open VSX 的发布 token、JetBrains 的签名证书与 `PUBLISH_TOKEN`、各 npm 包的 semantic-release 凭证、Continue API 的环境变量。给"发布一个多端产品需要哪些凭证"这个问题提供了一份现成答案。
+5. **退场姿势本身。** 用 README 承担归档公告、保留可写仓库、发布终版后维护到文档站迁移完毕——对比常见的"直接 archived"或"无声烂尾"，这是一种对 fork 者更友好的收尾。
 
-**Q6: `terminal-security` 把我想要的命令拦了，怎么放行？**
+## 八、采用建议
 
-`~/.continue/config.yaml` 里有 `allowlist` 字段，可以加命令前缀白名单。注意 `terminal-security` 的判断是前缀匹配，写 `rm` 会放行所有 `rm` 开头的命令，建议写得更具体（如 `rm -rf ./node_modules`）。
+**只是想找个能用的 Coding Agent：** 不要从 Continue 开始。终版之后没有新功能、没有模型适配更新、没有安全修复，社区 issue 也不再有人处理。同类活跃项目很多，选一个还在演进的。
 
-## 九、自测题
+**在生产环境已经依赖 Continue：** 三端安装物仍在原渠道可下载（npm / Marketplace / Open VSX / JetBrains Marketplace），现有部署不会"明天失效"，但要把"永无更新"当作前提重新评估风险敞口——尤其当你的用法涉及自动执行命令时。长期看，要么 fork 自维护，要么规划迁移。
 
-下面 5 题用来检验读完本文后是否真的能上手仓库。答案在仓库源码里都能找到，建议先自己查再对答案。
+**想 fork 或参考着搭自己的 Agent：** 按 `BUILD_DEPENDENCIES.md` 备齐密钥；基于 main 末端 commit（2026-07-21 的 `5522c6f4`）切分支；先跑通 `build:local-deps` 再动代码。要接自己公司的认证，改造点在 `extensions/cli/src/auth/`（WorkOS）与 `packages/continue-sdk`，`core/` 里没有认证模块需要绕开。第五节的两层安全模型建议原样保留——terminal-security 的变量展开防御在自研时非常容易漏。
 
-1. **三端共享**：VS Code 扩展、CLI、JetBrains 插件三端，哪一步开始共享同一份 Core 代码？请用第五节任务流案例里的步骤编号回答。
-2. **Provider 切换**：把 `config.yaml` 里的 `provider` 从 `openai` 改成 `anthropic`，Agent 循环、terminal-security、edit 落地这三段哪一段会感知到变化？为什么？
-3. **Final 2.0.0 边界**：如果你想在 fork 里加一个新的 GUI 客户端，Final 2.0.0 的"没做什么"清单里哪一条提示你需要从零开始？
-4. **测试分层**：`extensions/cli` 里 contract / unit / e2e / smoke 四套配置，分别对应什么触发环境？如果你要加一个"验证 Provider 返回流式格式"的测试，应该落到哪一套？
-5. **monorepo 构建**：`build:local-deps` 为什么要按"先子后父"的顺序构建？如果跳过这一步直接 `tsc`，最可能报什么错？
+**想研究 Agent 安全设计：** 直接读四个文件——`extensions/cli/spec/permissions.md`、`src/permissions/defaultPolicies.ts`、`packages/terminal-security/src/evaluateTerminalCommandSecurity.ts`、`spec/modes.md`。加起来不到一千行，覆盖了大部分设计决策。
 
-## 十、采用顺序与决策建议
+## 九、FAQ 与常见排查
 
-不同读者拿到 Continue 仓库的姿势不一样，下面按"用 / 改 / 学"三种姿态给采用顺序。
+**Q1：`npm i -g @continuedev/cli` 后 `cn` 找不到？**
 
-### 10.1 想继续用 2.0.0 的用户
+先确认 npm 全局 bin 目录在 `PATH` 里（`npm config get prefix` 看前缀，bin 在其 `bin/` 子目录）。nvm 用户切换 Node 版本后全局包不跟随，需要重装。更省事的办法是改用官方 `install.sh`，它不依赖 Node 环境。
 
-1. 第一周：CLI 装 `@continuedev/cli`，VS Code 装 `Continue.continue`，跑通一次 `cn "hello"` 与一次 IDE 内聊天，确认 `~/.continue/config.yaml` 被正确读取。
-2. 第二周：把常用 Provider 配进 `config.yaml`，加 `allowlist` 让 terminal-security 不再拦常用命令。
-3. 长期：关注 fork 网络，挑一个活跃 fork 作为"如果 2.0.0 出了未修 Bug 时的备选"。
+**Q2：headless 模式跑 Bash 命令没有弹出确认？**
 
-### 10.2 想 fork 扩展的开发者
+这是默认策略的刻意行为：`defaultPolicies.ts` 里 headless 模式下 `Bash` 与其余工具默认 `allow`。要收紧，用 `--ask Bash`（或 `--exclude Bash`）显式覆盖，别依赖模式记忆。交互式 TUI 里默认是 `ask`，两种环境行为不同。
 
-1. 第一周：clone 仓库，跑通 `build:local-deps` + `build:bundle`，确认 `cn` 能从本地构建产物启动。
-2. 第二周：在 `core/llm/` 加一个新 Provider，跑 `vitest` 与 `vitest.e2e.config.ts`，确认改动没破坏三端共享链路。
-3. 第三周起：评估是否需要动 `terminal-security` 的 denylist——动这一层会影响三端所有用户，建议先在 fork 里加配置开关，而不是改默认行为。
-4. 风险点：Final 2.0.0 剥离了认证，如果你的 fork 要重新接认证（比如接公司 SSO），需要自己实现 `core/auth/` 接口，这一层没有官方参考实现。
+**Q3：想加一个本地模型（如 vLLM），改哪里？**
 
-### 10.3 想参考结构搭新项目的团队
+多数情况不用改代码。`config.yaml` 的 `models` 数组加一条即可——`core/llm/llms/` 里现成有 `Vllm.ts`、`Ollama.ts` 和 OpenAI 兼容适配（`packages/openai-adapters`），OpenAI 兼容端点直接复用。只有协议不兼容的 provider 才需要在 `core/llm/llms/` 新增一个类（继承基类并实现 `streamChat` / `streamFim`，基类在 `core/llm/index.ts`）。
 
-1. 先抄 `extensions/{vscode,cli,intellij}` + `core` + `packages/*` 的分层，但不要照搬 `packages/` 里的具体包——Continue 的 `terminal-security`、`config-yaml` 是为 AI 编程助手场景写的，你的场景未必需要。
-2. 抄 `build:local-deps` 的"先子后父"构建顺序，这一条在任意 monorepo 里都适用。
-3. 抄 `extensions/cli` 的四套测试配置（contract / unit / e2e / smoke），但触发环境要按你的 CI 调整。
-4. 不要抄 `gui/`——Final 2.0.0 已经把它从产品方向里拿掉，说明这一层的 ROI 不高。
+**Q4：JetBrains 插件还能装吗？**
 
-### 10.4 何时不必上 Continue
+能。JetBrains Marketplace（插件 ID 22707）和 GitHub Releases 都有终版安装物，官方建议新用户走 CLI。已在 IntelliJ 生态深度使用的可以继续用 v1.0.67，同样永无更新。
 
-- 你的场景是纯代码补全（不需要 Agent 循环、不需要终端执行）：直接用 IDE 自带的 LSP + Copilot 类补全即可，Continue 的 Agent 链路是额外复杂度。
-- 你的团队已经深度用 Cursor / Cline / 其他 Agent IDE：Continue 2.0.0 只读后没有新功能，迁移成本换不到新能力。
-- 你需要的是"模型服务"而不是"Agent 工具链"：Continue 的价值在 Agent 循环与上下文工程，不在模型 serving，后者应该看 vLLM / SGLang。
+**Q5：fork 之后怎么跟上游？**
 
-## 十一、小结
+跟不了——上游已停。基线选定 main 末端 commit（`5522c6f4`，2026-07-21），之后当自己的项目维护。遇到 Bug 只能自己修，或在 fork 网络里找现成修复（GitHub 上已有 5,400+ fork，但活跃度需逐一甄别）。
 
-Continue 在 2023–2026 这三年里，是开源 AI 编程助手最具影响力的项目之一。Final 2.0.0 做了三件收尾动作：把匿名遥测拿掉、把认证解耦、把残留 Bug 集中清理，然后把仓库设为只读。代码、决策记录与社区贡献都留在仓库里，任何人可以 clone、fork、读源码，但不会再有新功能合入主线。
+**Q6：`plan` 模式真的只读吗？**
 
-今天再来看这个仓库，三端都还能用，但更值得花时间的是它的工程资产：`core/` 的 Provider 抽象让三端共享同一份 Agent 循环，`packages/` 下的工具集把配置、安全、HTTP 拆成可复用的原子包，CLI 的四套测试配置把 contract / unit / e2e / smoke 拆到不同触发环境，monorepo 的"先子后父"构建顺序避免了多端并行编译时的类型漂移。这些资产在 Final 2.0.0 之后仍然在被新项目参考。
-
-如果想认真研究一个"曾经跑过完整产品周期"的开源 Coding Agent 模板，Continue 仓库仍然是 2026 年最值得读完的那一份。
+对文件写工具是真的——`Edit` / `MultiEdit` / `Write` 被 `exclude`。但 `Bash` 在 plan 模式下是 `allow` 的，模型仍然可以执行 shell 命令（源码注释自认 "TODO address bash read only concerns"）。把它当"防误写"而不是"安全沙箱"来用。
 
 ---
 
+> 核对基准：仓库结构、权限策略、安全机制引自 2026-10-04 的 main 分支（commit `5522c6f4`）；Stars/Forks/下载量为 2026-10-04 GitHub API 与 JetBrains Marketplace 读数；era 读数（34,210 Stars）取自 Wayback Machine 2026-06-17 快照。该项目已停止维护，使用前请以仓库当前状态为准。

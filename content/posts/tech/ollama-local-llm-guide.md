@@ -1,6 +1,7 @@
 ---
 title: "Ollama 本地大模型完全指南"
 date: "2026-04-06T22:18:00+08:00"
+lastmod: "2026-09-29"
 slug: "ollama-local-llm-guide"
 github_repo: "ollama/ollama"
 source_key: "gh:ollama/ollama"
@@ -9,6 +10,8 @@ draft: false
 categories: ["技术笔记"]
 tags: ["Ollama", "本地大模型", "LLM", "隐私计算", "开源", "GPU加速"]
 ---
+
+Ollama 是最受欢迎的本地大模型运行平台之一：一条命令把开源模型跑起来，自带模型管理、Modelfile 自定义和 OpenAI 兼容 API。本文的命令、参数默认值和模型库名单，以 Ollama v0.34.4（2026-09-23 发布）与官方文档为口径，2026-09-29 逐项核实。
 
 ## 学习目标
 
@@ -36,7 +39,7 @@ tags: ["Ollama", "本地大模型", "LLM", "隐私计算", "开源", "GPU加速"
 
 ### 1.1 云服务的问题
 
-2026 年，大多数开发者第一次接触 LLM 是通过云 API（OpenAI、Anthropic、Google）。云 API 的优点很明显：开箱即用，不需要管基础设施。但它有几个结构性的问题：
+2026 年，不少开发者第一次接触 LLM 是通过云 API（OpenAI、Anthropic、Google）。云 API 的优点很明显：开箱即用，不需要管基础设施。但它有几个结构性的问题：
 
 **数据隐私**
 
@@ -44,7 +47,7 @@ tags: ["Ollama", "本地大模型", "LLM", "隐私计算", "开源", "GPU加速"
 
 **成本结构**
 
-云 API 按 token 收费。对于一个每天要处理 100 万 token 的应用，一个月的 API 费用可能超过 1000 美元。而如果模型能在本地跑，边际成本趋近于零（只考虑电费和硬件摊销）。
+云 API 按 token 收费。算一笔账：一个每天处理 100 万 token 的应用，一个月就是 3000 万 token。主流旗舰模型的单价在每百万 token 几美元到几十美元之间（输入便宜、输出贵），月账单从几百美元起步，输出占比高的场景更高。换成本地模型，边际成本只剩电费和硬件摊销。
 
 **可用性依赖**
 
@@ -54,7 +57,7 @@ tags: ["Ollama", "本地大模型", "LLM", "隐私计算", "开源", "GPU加速"
 
 Ollama 不是「本地版的 GPT-4」。它的定位是：**让开源大模型能在本地跑起来，且尽可能地好用**。
 
-| 维度 | 云 API（GPT-4o） | Ollama（Qwen3:8b） | 说明 |
+| 维度 | 云 API（旗舰模型） | Ollama（qwen3:8b） | 说明 |
 |-------|-----------------|--------------------|------|
 | 模型能力 | 最强 | 差一到两代 | 日常任务够用，复杂推理仍有差距 |
 | 响应延迟 | 低（服务端 GPU 集群） | 取决于本地硬件 | 7B 级模型在 Apple Silicon、消费级 GPU 上可交互 |
@@ -66,9 +69,9 @@ Ollama 不是「本地版的 GPT-4」。它的定位是：**让开源大模型�
 
 说清楚边界和说清楚能力一样重要：
 
-- **你的应用需要 GPT-4o 级别的多模态能力**（图像+视频理解）→ Ollama 的多模态模型（llava 等）能力和 GPT-4o 有差距
+- **你的应用需要云端旗舰的多模态能力**（精细图表解读、长视频理解）→ 本地多模态模型（qwen3-vl、llava 等）与云端旗舰有差距
 - **你的用户量很大，且需要极低的响应延迟** → 需要考虑 vLLM 或云服务
-- **你没有合适的硬件**（< 8GB 内存，没有 GPU）→ 本地跑不起来有意义的模型
+- **你想跑 30B 级以上的模型，但内存或显存跟不上**（§2.1 的估算表可以先算一笔）→ 硬件差距靠换小模型补不齐时，直接用云端 API
 
 ---
 
@@ -143,7 +146,7 @@ ollama run llama3.2
 
 ### 2.4 GPU 加速验证
 
-安装完成后，确认 Ollama 在用 GPU（而不是纯 CPU，那样会慢 10-50 倍）：
+安装完成后，确认 Ollama 在用 GPU 而不是纯 CPU——模型一旦回落到 CPU 推理，速度会明显变慢，官方文档也建议尽量让模型完整驻留 GPU（`ollama ps` 的 PROCESSOR 列出现 `XX% CPU` 就说明发生了 offload）：
 
 ```bash
 # 运行一个模型，然后在另一个终端查看 GPU 使用情况
@@ -173,16 +176,16 @@ system_profiler SPDisplaysDataType | grep "Metal"
 
 ### 3.1 模型库概览与选择建议
 
-Ollama 支持 100+ 开源模型，但大多数用户只需要了解几个主要系列：
+Ollama 模型库（ollama.com/library）收录了 200 多个模型，但大多数用户只需要了解几个主要系列：
 
 | 模型系列 | 代表模型 | 规模 | 适合场景 | 备注 |
 |---------|----------|------|---------|------|
 | **Qwen** | qwen3, qwen3-coder | 0.6B-235B | 中文、代码、推理 | 中文能力最强的开源系列之一 |
-| **Llama** | llama4-scout, llama3.3, llama3.2 | 1B-405B | 通用对话、Agent | Scout 为 MoE，超大上下文 |
+| **Llama** | llama4, llama3.3, llama3.2 | 1B-405B | 通用对话、Agent | llama4 为 MoE：Scout（16 专家）/ Maverick（128 专家），原生长上下文 |
 | **DeepSeek** | deepseek-r1 | 1.5B-671B | 数学、推理 | R1 及其蒸馏小模型 |
-| **Gemma** | gemma3 | 1B-27B | 轻量、端侧 | 部分版本带视觉 |
+| **Gemma** | gemma4, gemma3 | gemma4: 12B-31B | 轻量、端侧 | gemma4 提供 12b/26b/31b 三档，26b 有 MoE 变体（26b-a4b），也是官方文档的示例模型 |
 | **Mistral** | mistral-small, mixtral | 7B-8x22B | 推理、结构化输出 | 擅长 function calling |
-| **多模态** | llama3.2-vision, qwen3-vl | 2B-90B | 图像理解 | 已取代老牌 llava |
+| **多模态** | qwen3-vl, llama3.2-vision | 2B-90B | 图像理解 | llama3.2-vision 在升级 Ollama 后旧下载不兼容，按运行时提示重新 pull 即可 |
 | **Embedding** | nomic-embed-text, bge-m3 | - | RAG 向量化 | 不对话，只产出向量 |
 
 **选择建议：**
@@ -198,7 +201,7 @@ Ollama 支持 100+ 开源模型，但大多数用户只需要了解几个主要�
 ```bash
 # 下载指定版本
 ollama pull qwen3:8b         # 8B 参数，中文与通用能力均衡
-ollama pull qwen3:30b        # 30B 参数（MoE），需要 16GB+ 内存
+ollama pull qwen3:30b        # MoE：总参 30B、每 token 激活 3B；Q4 权重即 18-21 GB（见 §2.1 估算表），16 GB 内存跑不动
 ollama pull llama3.1:70b     # 70B 参数，需要 40GB+ 内存
 
 # 查看已下载的模型
@@ -237,18 +240,20 @@ C:\Users\你的用户名\.ollama\models\
 
 ### 4.1 Modelfile 是什么
 
-Modelfile 是 Ollama 的模型配置文件，类似于 Dockerfile。它定义了：
+Modelfile 是 Ollama 的模型配置文件，类似于 Dockerfile。官方支持的指令有 FROM（必填）、PARAMETER、TEMPLATE、SYSTEM、LICENSE、MESSAGE、REQUIRES，本文用到其中三个：
+
 - 基础模型（FROM）
 - 系统提示词（SYSTEM）
 - 模型参数（PARAMETER）
-- 可用的工具（TOOL）
+
+注意工具调用（function calling）不走 Modelfile——工具清单在 API 请求的 `tools` 参数里传入（§5.2 的 OpenAI 兼容层和原生 API 都支持）。
 
 ### 4.2 创建一个自定义模型
 
 ```bash
 # 创建 Modelfile
 cat > Modelfile << 'EOF'
-FROM qwen2.5:7b
+FROM qwen3:8b
 
 # 系统提示词：定义模型的行为
 SYSTEM """
@@ -274,7 +279,7 @@ ollama run code-helper
 
 ### 4.3 参数详解：每个参数在控制什么
 
-这部分是大多数教程一笔带过、但实际应用中最重要的内容。
+参数本身不难，难的是知道每个值往哪个方向调。
 
 **temperature（温度）**
 
@@ -308,11 +313,11 @@ top_p = 0.5  → 只考虑累计概率前 50% 的词元（更保守）
 
 **num_ctx（上下文长度）**
 
-模型一次能「看到」多少 token。Ollama 现在按显存动态设置默认值：显存 < 24 GiB 默认 4096，24-48 GiB 默认 32768，≥ 48 GiB 默认 262144。
+模型一次能「看到」多少 token。Ollama 现在按显存动态设置默认值：显存 < 24 GiB 默认 4096，24-48 GiB 默认 32768，≥ 48 GiB 默认 262144（官方 context length 文档与源码口径一致；源码里的实际判断阈值是 23/47 GiB，比整数略低，以吸收显存读数的零头）。只要你显式指定了上下文——请求参数、Modelfile 或下面的环境变量——就以显式值为准，不再走这套分档。
 
 - 处理长文档、跑 Agent 或代码工具时，官方建议至少 64000
 - 通过 `OLLAMA_CONTEXT_LENGTH=8192 ollama serve` 改全局默认
-- **代价**：上下文越长，KV Cache 占用越大，响应越慢；超过模型原生上限无效
+- **代价**：上下文越长，KV Cache 占用越大，响应越慢；设置超过模型训练时的上限没有意义，实际生效的是训练上限（服务端加载时会把请求值截到训练上下文）
 
 **repeat_penalty（重复惩罚）**
 
@@ -372,11 +377,22 @@ OLLAMA_HOST=0.0.0.0:11434 ollama serve
 
 默认端口是 11434。启动后，可以通过以下端点调用：
 
-| 端点 | 功能 | 对应 OpenAI API |
+| 端点 | 功能 | 对应客户端 |
 |-------|------|-----------------|
-| `/v1/chat/completions` | 对话生成 | `client.chat.completions.create()` |
+| `/v1/chat/completions` | 对话生成（OpenAI 兼容） | `client.chat.completions.create()` |
+| `/v1/responses` | OpenAI Responses API 兼容 | `client.responses.create()` |
+| `/v1/messages` | Anthropic Messages API 兼容 | anthropic SDK、Claude Code |
 | `/v1/embeddings` | 文本向量化 | `client.embeddings.create()` |
 | `/v1/models` | 列出可用模型 | `client.models.list()` |
+
+除了 OpenAI 兼容层，Ollama 还实现了 Anthropic Messages API 的子集。把 Claude Code 指向本地模型只需两个环境变量：
+
+```bash
+export ANTHROPIC_AUTH_TOKEN=ollama   # 必填但被忽略
+export ANTHROPIC_BASE_URL=http://localhost:11434
+```
+
+Ollama 也有自己的原生端点（`/api/chat`、`/api/generate`、`/api/embed` 等），功能与兼容层重叠，但支持一些 OpenAI 语义之外的参数；常用参数如 `keep_alive` 在 OpenAI 兼容层同样可用（见 §10.2）。
 
 ### 5.2 用 OpenAI SDK 调用本地模型
 
@@ -390,7 +406,7 @@ client = OpenAI(
 )
 
 response = client.chat.completions.create(
-    model="qwen2.5:7b",
+    model="qwen3:8b",
     messages=[
         {"role": "system", "content": "你是一个 Python 代码助手"},
         {"role": "user", "content": "写一个快速排序"}
@@ -413,7 +429,7 @@ from langchain_core.prompts import ChatPromptTemplate
 
 # 初始化模型
 llm = ChatOllama(
-    model="qwen2.5:7b",
+    model="qwen3:8b",
     temperature=0.7,
     base_url="http://localhost:11434"
 )
@@ -437,7 +453,7 @@ print(response.content)
 
 1. 没有认证机制（任何能访问 11434 端口的人都能调用）
 2. 没有速率限制
-3. 没有健康检查
+3. 没有专门的健康检查端点——探活只能请求根路径 `GET /`，服务正常时返回字符串 `Ollama is running`
 
 **推荐的生产部署架构：**
 
@@ -477,14 +493,14 @@ server {
 
 ### 6.1 什么是多模态
 
-多模态模型可以「看懂」图片，然后回答关于图片的问题。Ollama 库里这类模型从早期的 LLaVA，到现在的 llama3.2-vision、qwen3-vl，选择比两年前多得多。
+多模态模型可以「看懂」图片，然后回答关于图片的问题。Ollama 库里这类模型从早期的 LLaVA 到现在的 qwen3-vl，选择比两年前多得多。
 
 ### 6.2 使用视觉模型
 
 ```bash
 # 按能力和硬件选一个
 ollama pull llava              # 老牌轻量视觉模型
-ollama pull llama3.2-vision    # 11B 视觉模型
+ollama pull llama3.2-vision    # 11B 视觉模型（升级 Ollama 后旧下载不兼容，首次运行会提示重新 pull）
 ollama pull qwen3-vl           # 阿里视觉模型，中文更好
 ```
 
@@ -516,13 +532,13 @@ print(response.choices[0].message.content)
 
 ### 6.3 多模态的边界
 
-LLaVA 的能力边界：
+本地视觉模型的共同边界：
 
 - ✅ 能描述图片内容、回答关于图片的问题
 - ✅ 能读懂图片里的文字（OCR 能力）
 - ⚠️ 对复杂图表的数据提取不够精确（会「幻觉」数据）
 - ❌ 不能理解视频（需要视频多模态模型）
-- ❌ 能力和 GPT-4o 有差距，特别是对细节的观察
+- ❌ 整体能力和云端旗舰模型有差距，特别是对细节的观察
 
 ---
 
@@ -536,10 +552,10 @@ LLaVA 的能力边界：
 
 ```bash
 # 1. 换用更小的模型
-ollama pull qwen2.5:3b   # 而不是 7b 或更大
+ollama pull qwen3:4b   # 而不是 8b 或更大
 
 # 2. 减少上下文长度（进入对话后设置）
-ollama run qwen2.5:7b
+ollama run qwen3:8b
 >>> /set parameter num_ctx 2048
 
 # 3. 查看内存使用情况
@@ -557,8 +573,8 @@ free -h     # Linux
 nvidia-smi
 # 如果报错：NVIDIA-SMI has failed... → 重新安装驱动
 
-# 检查 CUDA 可用性
-python -c "import torch; print(torch.cuda.is_available())"
+# 看 Ollama 自己的判断：以 DEBUG 级别启动服务，日志会列出探测到的 GPU
+OLLAMA_DEBUG=1 ollama serve
 ```
 
 **Apple Silicon：**
@@ -582,9 +598,9 @@ brew reinstall ollama
 ollama ps
 # 如果 PROCESSOR 是 CPU → 检查 GPU 配置
 
-# 2. 检查模型大小是否超出内存
-ollama show qwen2.5:72b | grep "size"
-# 如果 size > 可用内存 → 换小模型
+# 2. 检查模型大小是否超出内存（SIZE 列在 ollama list 里）
+ollama list | grep qwen3
+# 如果 SIZE > 可用内存 → 换小模型
 
 # 3. 检查是否有其他进程占用了 GPU
 nvidia-smi          # NVIDIA
@@ -604,12 +620,28 @@ sudo powermetrics --samplers gpu  # macOS，需要 sudo
 
 ### 8.2 Ollama 不适合你，如果：
 
-- **你的应用需要最强的多模态能力** → 用 GPT-4o API 或 Claude API
+- **你的应用需要最强的多模态能力** → 用云端 API（GPT、Gemini、Claude 的多模态模型）
 - **你的流量很大（> 1000 请求/秒）** → 需要 vLLM 或自建推理集群
 - **你的用户通过公网访问你的服务** → 你需要在服务器上部署 Ollama，并确保服务器硬件足够（这通常比直接用云 API 更贵，除非用量非常大）
 - **你没有合适的硬件** → 本地跑不起来有意义的模型，直接用云 API
 
-### 8.3 Ollama vs vLLM：该用哪个
+### 8.3 本地之外还有一个中间态：Ollama Cloud
+
+「本地 vs 云 API」之外，Ollama 自己提供了第三条路：同一套 CLI 和 API，可以调用 Ollama 官方云端的模型（如 `gemma4:cloud`）。云模型不需要下载，默认以模型的最大上下文运行；本地模型照常跑。
+
+```bash
+# 首次使用按提示登录 Ollama 账号，云模型带 :cloud 后缀、无需下载权重
+ollama pull gemma4:cloud
+
+# 也可以把编码 agent 直接连上云端模型
+ollama launch claude   # 同样支持 codex、opencode
+```
+
+用 REST API 直连云端（不经本地服务）时，在 [ollama.com](https://ollama.com/settings/keys) 创建 API key，请求 `https://ollama.com/api/chat` 并带 `Authorization: Bearer` 头。官方文档说明云端只处理请求内容用于完成回答、不用于训练模型。
+
+适合的场景：本地硬件跑不动的模型偶尔要用，或者想在购买硬件前先试模型上限。要完全离线，仍然走 §8.1 的本地路线。
+
+### 8.4 Ollama vs vLLM：该用哪个
 
 | 维度 | Ollama | vLLM |
 |-------|--------|------|
@@ -628,7 +660,7 @@ sudo powermetrics --samplers gpu  # macOS，需要 sudo
 
 1. **硬件评估**：你的机器有多少内存？根据本文的估算公式，你能跑多大的模型？实际下载一个对应大小的模型，用 `ollama ps` 验证实际内存占用和估算是否接近。
 
-2. **参数实验**：用同一个模型（比如 qwen2.5:7b），分别用 temperature=0.1 和 temperature=1.5 问同一个问题（「用 Python 写一个快速排序」），观察输出差异。解释为什么某些任务适合低 temperature。
+2. **参数实验**：用同一个模型（比如 qwen3:8b），分别用 temperature=0.1 和 temperature=1.5 问同一个问题（「用 Python 写一个快速排序」），观察输出差异。解释为什么某些任务适合低 temperature。
 
 3. **上下文长度实验**：创建一个 `num_ctx=2048` 的自定义模型和一个 `num_ctx=8192` 的自定义模型。向两者输入一个超长 prompt（> 3000 个 token），观察哪个能完整处理，哪个会截断。
 
@@ -649,16 +681,16 @@ Ollama 默认 `OLLAMA_NUM_PARALLEL=1`，同一模型一次只处理一个请求�
 OLLAMA_NUM_PARALLEL=4 ollama serve
 ```
 
-**代价**：每个并行槽位都会额外占用 KV Cache 显存。经验上每加一个槽位，7B 模型约多占基础显存的 15-25%。显存有余量再往上加。
+**代价**：并行不是免费的。官方 FAQ 给的算法是内存按 `OLLAMA_NUM_PARALLEL × OLLAMA_CONTEXT_LENGTH` 扩展——比如 2K 上下文开 4 路并行，实际按 8K 上下文分配显存。显存有余量再往上加。
 
-如果多个模型经常切换，用 `OLLAMA_MAX_LOADED_MODELS` 控制同时驻留内存的模型数，避免频繁换入换出。
+如果多个模型经常切换，用 `OLLAMA_MAX_LOADED_MODELS` 控制同时驻留内存的模型数，默认 3 × GPU 数（纯 CPU 推理为 3），避免频繁换入换出。
 
 ### 10.2 模型常驻与上下文延续
 
 每次新请求如果模型已卸载，都要重新加载权重，这是最慢的一步。Ollama 默认把模型在内存里保留 5 分钟（`keep_alive`），期间后续请求直接复用已加载的模型和 KV Cache，首 token 延迟大幅下降。
 
 ```python
-# 请求级控制常驻时间（秒）：-1 表示常驻不卸载
+# 请求级控制常驻时间（单位秒；-1 表示常驻不卸载，0 表示请求完立即卸载）
 client.chat.completions.create(
     model="qwen3:8b",
     messages=[{"role": "user", "content": "什么是 Python？"}],
@@ -673,16 +705,14 @@ client.chat.completions.create(
 )
 ```
 
-服务端可用 `OLLAMA_KEEP_ALIVE` 设置全局默认值。`ollama ps` 的 `UNTIL` 列会显示模型预计驻留到什么时候，据此判断是否需要调大 `keep_alive`。
+服务端可用 `OLLAMA_KEEP_ALIVE` 设置全局默认值，单个请求里的 `keep_alive` 参数优先于它。`ollama ps` 的 `UNTIL` 列会显示模型预计驻留到什么时候，据此判断是否需要调大 `keep_alive`。
 
 ---
 
 **参考资源：**
 
 - 官网：https://ollama.com
+- 官方文档站：https://docs.ollama.com （FAQ、上下文长度、Cloud、故障排查都在这里；其中[上下文长度](https://docs.ollama.com/context-length)一页是 §4.3 默认值分档的出处）
 - 模型库：https://ollama.com/library
-- GitHub：https://github.com/ollama/ollama
-- API 文档：https://github.com/ollama/ollama/blob/main/docs/api.md
-- LangChain + Ollama 集成指南：https://python.langchain.com/docs/integrations/llms/ollama/
-
-> **每日 GitHub 趋势榜自动分析 | 数据来源：GitHub Trending**
+- GitHub：https://github.com/ollama/ollama （API 文档：`docs/api.md`，OpenAI/Anthropic 兼容说明：`docs/api/openai-compatibility.mdx`）
+- langchain-ollama 包（LangChain 集成）：https://pypi.org/project/langchain-ollama/

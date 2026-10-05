@@ -1,56 +1,58 @@
 ---
-title: "Dify：开源 Agentic Workflow 开发平台从入门到精通指南"
+title: "Dify 拆解：把 LLM 应用的工程外围收进一个可视化平台"
 date: "2026-05-02T10:12:21+08:00"
+lastmod: 2026-10-02T00:00:00+08:00
 slug: "dify-agentic-workflow-development-platform-guide"
 github_repo: "langgenius/dify"
 source_key: "gh:langgenius/dify"
-description: "Dify 把 AI 工作流、RAG 管道、Agent 和模型管理整合到一个可视化平台，从原型到生产不需切换工具。目前 151K+ Stars。"
+description: "Dify 把工作流编排、RAG 管道、Agent 和模型接入收进一个可视化平台。本文基于 v1.17 拆它的服务构成、调用链与部署路径，并用 license 条款和对比表划清适用边界。"
 draft: false
 categories: ["技术笔记"]
 tags: ["LLM", "AI Agent", "RAG", "工作流", "Python"]
 ---
 
-# Dify：开源 Agentic Workflow 开发平台从入门到精通指南
+# Dify 拆解：把 LLM 应用的工程外围收进一个可视化平台
 
-## 目录
+一个 LLM（Large Language Model，大语言模型）应用要上线，真正花在模型调用上的代码往往不多，大头是流程编排、知识检索、日志、权限、多环境配置这些工程外围。[Dify](https://github.com/langgenius/dify) 把这堆外围收进一个可视化平台：工作流编排、RAG（Retrieval-Augmented Generation，检索增强生成）管道、Agent、模型管理，从原型到生产在一个界面里完成。
 
-1. 平台定位与整体架构
-2. 原理分析
-3. 架构分析
-4. 安装配置
-5. 实战演示
-6. 开发扩展
-7. 采用顺序与适用边界
-附录：术语速查
+它的规模不小：约 15.8 万 Stars、2.5 万 Forks（2026 年 10 月，GitHub 实时数据），当前最新版本 v1.17.1（2026 年 9 月发布）。官方对模型支持的口径是「数十个推理提供商、数百个模型」，覆盖 GPT、Mistral、Llama3 等闭源与开源模型，以及任何 OpenAI API 兼容的服务。
 
-## 1. 平台定位与整体架构
+这篇拆解写给已经调过模型 API、但被多步流程、日志、权限这类活拖住的开发者。读完你能判断三件事：Dify 和直接调 API、LangChain 各自适合什么场景；一套 Docker Compose 怎么从零跑到可用；真出问题时去哪查。
 
-[Dify](https://github.com/langgenius/dify) 把 AI 工作流、RAG 管道、Agent、模型管理整合到一个可视化界面里，开发者从原型到生产可以在一个平台上完成。
+一个提醒：Dify 迭代很快，1.x 全面插件化之后，模型接入方式、`.env` 变量都和 0.x 时代不同。本文以 v1.17.x 为基准，配置项以你所用版本的 `docker/.env.example` 注释为准。
 
-这篇指南写给已经调过模型 API、但被「多步流程、日志、权限」这类与模型无关的活拖住的开发者。看完你应当能独立完成四件事：用 Docker Compose 部署一套可用的 Dify；把知识库问答和多步骤 Agent 工作流推到线上；用日志、标注和 A/B 对比持续改进 Prompt；在选型时能说清 Dify 和 LangChain 各自该什么时候用。
+## 平台定位：它替你做了什么
 
-取舍很清楚：Dify 的定制化上限受平台约束，极致灵活的团队更适合 LangChain/LangGraph。多数团队如果需求落在「快速验证 + 生产可观测」这个区间，Dify 效率更高。
+Dify 的核心抽象是「应用（Application）」。聊天助手、文本生成、Chatflow、工作流、Agent 都归到这个概念下，区别只在执行模型和编排方式。你在同一个界面里完成从简单对话机器人到复杂多步骤工作流的全部开发。
 
-下面依次拆平台的内部结构、部署方式和扩展点。
+三个设计决策值得注意：
 
----
+**提示词编排即开发界面。** 每个应用都有可视化编排页：写 Prompt、挂上下文和变量、调模型参数、试运行。工作流的改动是草稿态，点「发布」才对外生效——生产环境不会因为你保存了一下就变了行为。
+
+**BaaS（Backend-as-a-Service，后端即服务）优先。** 每个 App 发布后自带 REST API 和 Web App 地址，前端通过 API 调用所有能力，不依赖 Dify 自己的界面。已有业务系统可以把 Dify 当后端用。
+
+**可观测内置。** 每条对话的完整链路——用户输入、实际发给模型的 Prompt、模型输出、Token 消耗、响应时间——都记录在日志页，可以加人工标注反馈，标注数据能导出用于微调或做评估集。
+
+上限也说清楚：Dify 的定制化受平台约束，工作流节点能力之外的需求要靠插件或外部服务补。极致灵活的团队更适合 LangChain/LangGraph 这类代码框架。
+
+## 系统地图：服务构成与调用链
 
 ```mermaid
 flowchart TB
     subgraph UI["Web UI · React"]
         UI1["工作流画布 / Prompt IDE / 日志查看"]
     end
-    subgraph SVC["服务层"]
-        API["API Server<br/>Flask + Gunicorn + Nginx<br/>鉴权 · 路由 · 租户隔离"]
-        WORKER["Worker · Celery<br/>异步任务 · 日志写入"]
-        SANDBOX["Sandbox<br/>用户代码隔离执行"]
-        PLUGIN["Plugin Engine<br/>扩展机制"]
+    subgraph SVC["服务层（docker compose 服务名）"]
+        API["api · Flask + Gunicorn<br/>鉴权 · 路由 · 租户隔离"]
+        WORKER["worker · Celery<br/>文档索引 · 导出等异步任务"]
+        SANDBOX["sandbox<br/>用户代码隔离执行"]
+        PLUGIN["plugin_daemon<br/>插件运行时"]
     end
     subgraph DATA["数据层"]
-        DB[("PostgreSQL<br/>元数据 / 应用配置")]
-        REDIS[("Redis<br/>缓存 / 消息队列")]
+        DB[("db_postgres · PostgreSQL<br/>元数据 / 应用配置 / 日志")]
+        REDIS[("redis<br/>缓存 / Celery 消息队列")]
     end
-    MODELS["100+ 模型提供商<br/>OpenAI / Anthropic / 本地模型"]
+    MODELS["模型供应商插件<br/>数百个模型 / OpenAI 兼容接入"]
 
     UI <--> API
     API --> WORKER
@@ -63,164 +65,69 @@ flowchart TB
     API --> MODELS
 ```
 
-Dify 的核心是 API Server，所有用户操作经过它；Worker 承担异步任务；Sandbox 隔离执行不可信代码；PostgreSQL 和 Redis 分别存元数据和缓存。
+`api` 服务是核心，用 Python/Flask 实现，Gunicorn + Nginx 做生产部署。几乎所有用户可见的功能——应用管理、API 调用、日志读取——都经过它；租户隔离和成员角色控制也在这层。`worker` 基于 Celery，承担知识库文档的切片与向量化、数据导出这类重活，通过 Redis 收任务，可以水平扩容。`sandbox` 是独立容器，隔离执行用户上传的代码片段，主进程不把文件系统暴露给它。`plugin_daemon` 是 1.x 插件化的运行时，模型供应商和工具插件都跑在这里。可选向量库服务（Weaviate、pgvector、Qdrant、Milvus 等）按需启用。
 
-## 2. 原理分析
-
-### 2.1 什么是 Agentic Workflow
-
-LLM 应用的常规用法是**单轮问答**：用户给一段 Prompt，模型返回一个答案。简单场景够用，但面对复杂业务流程时有两个问题——任务无法在单次调用中完成，需要拆成多步；决策需要根据执行结果动态调整。
-
-Agentic Workflow 把 AI 任务的执行单元从单次调用扩展到多步循环，每个步骤可以由 LLM、其他模型或传统代码共同完成，步骤之间通过状态传递形成有向图结构。
-
-拿「分析竞品报告」来说。传统 Prompt 大概长这样：
+一次对话请求的链路：
 
 ```text
-请分析以下竞品信息，输出优劣势分析报告。
+用户消息 → api（校验 API Key，读应用配置）
+         → 命中标注回复？（配置了标注回复且问题匹配 → 直接返回固定答案）
+         → 组装 Prompt（变量替换 + 上下文 + 知识库检索结果）
+         → 经模型供应商插件调用模型
+         ← 流式返回（SSE）
+         → 对话记录、Token 消耗写入 PostgreSQL
+         → 触发 Webhook（如配置）
 ```
 
-用 Agentic Workflow 拆开：
+工具节点的外呼请求走 `ssrf_proxy` 出网——这是刻意设计，防止工作流被指向内网地址。
 
-1. **信息提取**（LLM）：从原始文本中提取竞品名称、关键指标
-2. **并行查询**（Tool）：针对每个竞品查询最新市场数据
-3. **综合分析**（LLM）：将提取信息与查询结果合并，生成结构化报告
-4. **质量校验**（LLM）：检查报告逻辑完整性，决定是否需要补充查询
+拿「分析竞品报告」工作流看一次完整执行：
 
-这四个步骤构成一个有向无环图（DAG）：每个节点可以独立替换，可以并行执行，失败时只重跑受影响的分支。Dify Workflow 的核心抽象就是这张图。
+1. 前端发 `POST /v1/workflows/run`，api 校验 API Key，从 PostgreSQL 读该工作流的图结构和当前发布版本
+2. 工作流引擎按图执行节点：LLM 节点同步调模型；工具节点的外呼经 SSRF 代理；含用户代码的工具调度到 sandbox
+3. 流式响应（SSE，Server-Sent Events，服务器推送事件）经 api 逐 chunk 返回前端；完整运行记录、Token 消耗、各节点耗时异步落库
 
-### 2.2 Dify 的设计决策
+三个设计点：同步链路只做模型调用和流式返回，重活异步化；不可信代码隔离在独立容器；模型调用经过统一的插件层，切换供应商不改工作流定义。
 
-**抽象层次的一致性。** 聊天助手、Agent、工作流、RAG 应用都统一到「应用（Application）」这个概念下，区别只在于执行模型和流程编排方式。开发者在同一个界面里完成从简单对话机器人到复杂多步骤工作流的全部开发，不用在多个工具间切换。
+## 核心概念：应用类型、工作流与知识库
 
-**提示词即资产。** Prompt、上下文和对话历史是 Dify 的第一等公民。每次对话、每个工作流节点都有版本记录，可以回滚和对比。模型能力的差异根子在 Prompt 工程，而 Prompt 工程需要版本管理。
+**应用类型。** 当前版本的 App 模式有六种：`chat`（聊天助手）、`completion`（文本生成，一次性任务）、`advanced-chat`（Chatflow，多轮对话 + 流程编排）、`workflow`（工作流，单次运行出结果）、`agent`（新式 Agent，带独立 sandbox，能跑命令、装软件、处理文件）和 `agent-chat`（传统 Agent，官方标记为 legacy）。Agent 节点也能作为工作流中的一个步骤嵌入。传统 Agent 和 Agent 节点支持两种推理策略：Function Calling（模型原生工具调用，适合 GPT-4、Claude 这类支持好的模型）和 ReAct（Thought → Action → Observation 循环，适合不支持原生函数调用的模型）。
 
-**BaaS 优先。** 所有功能都配有 REST API 和 Webhook，天然嵌入已有业务系统。平台本身是 Backend-as-a-Service，前端通过 API 调用所有能力，不依赖 Dify 的前端界面。
+**工作流。** 由节点（Node）和边（Edge）组成的有向图。节点覆盖 LLM 调用、知识检索、条件分支（IF/ELSE）、并行分支、迭代（Iteration，对数组变量逐项处理）、代码执行、HTTP 请求等。每个节点的输出是变量，供下游节点引用——工作流编程的实质就是这张变量传递图。
 
-### 2.3 Dify 与其他开发方式的对比
+**知识库（Dataset）。** RAG 能力的载体。文档上传后经过清洗、分段（Chunking）、向量化入库。分段有两种模式：
 
-有些场景直接调 API 或 LangChain 更合适。下表按维度对比。
+- **通用（General）**：所有分段同一套设置（分隔符、最大长度、重叠），命中的分段直接作为检索结果；
+- **父子（Parent-child）**：先切大块（父），再切小块（子），检索匹配子块、返回整个父块。小块匹配得准，大块上下文全，这个模式就是为解决「准与全不可兼得」设计的。
+
+注意：分段模式在知识库创建后**不可更改**，能随时调的只有分隔符、长度、重叠这些参数。文件存储默认走 OpenDAL 的本地盘（`STORAGE_TYPE=opendal`，`OPENDAL_SCHEME=fs`），向量库默认 Weaviate，都可以在 `.env` 里切换。
+
+## 设计取舍：与直接调 API、LangChain 的对比
 
 | 维度 | 直接调用 API | LangChain / LangGraph | Dify |
 |------|------------|----------------------|------|
 | 上手难度 | 低 | 高 | 中 |
-| 快速原型 | 极快 | 大量胶水代码 | 拖拽即可 |
-| Workflow 编排 | 需自建 | 灵活 | 可视化 + 代码 |
-| 生产可观测性 | 自建 | 部分 | 内置 |
+| 快速原型 | 极快 | 大量胶水代码 | 画布上拖拽 |
+| 流程编排 | 自建 | 代码级灵活 | 可视化 + 节点能力上限 |
+| 生产可观测 | 自建 | 部分 | 内置日志、标注 |
 | 多租户/权限 | 自建 | 自建 | 开箱即用 |
-| 定制化上限 | 最高 | 最高 | 中（受限于平台能力） |
+| 定制化上限 | 最高 | 最高 | 中，节点和插件之外要绕路 |
 
-快速验证 AI 概念并进入生产时，Dify 效率更高。追求极致定制化或已有成熟基础设施的团队，LangChain/LangGraph 是更灵活的底层框架。Dify 的自定义工具机制可以接入 LangChain Chain。
+需求落在「快速验证 + 生产可观测」区间，Dify 效率最高；需要节点能力之外的深度定制，或者已有成熟 LLMOps（LLM Operations，大模型应用运维）基础设施，再套一层 Dify 反而多一套要维护的东西。两者不互斥：Dify 的自定义工具可以包一层 HTTP 服务，把 LangChain 写的逻辑接进来。
 
-## 3. 架构分析
+## 部署：Docker Compose 从零到可用
 
-### 3.1 整体架构
+### 环境要求
 
-Dify 由多个职责独立的组件组成，全部通过 Docker 容器化部署。从功能层次上分四层：
+官方最低要求：CPU ≥ 2 核，内存 ≥ 4 GiB。软件要求：Linux 装 Docker 19.03+ 和 Docker Compose 2.24.0+；macOS 用 Docker Desktop，虚拟机至少配 2 vCPU 和 8 GiB 内存。磁盘看知识库规模，起步 20 GiB 是稳妥值。
 
-```text
-┌─────────────────────────────────────────────────────────┐
-│                    Web UI (React)                       │
-│              提示词 IDE / 工作流画布 / 日志              │
-├─────────────────────────────────────────────────────────┤
-│                      API Server                         │
-│          (Flask + Nginx + Gunicorn)                     │
-│     应用管理 / 鉴权 / 租户隔离 / API 路由 / 事件分发     │
-├─────────────┬──────────────┬───────────────────────────┤
-│  Worker     │  Plugin      │  Sandbox                  │
-│  (Celery)   │  Engine      │  (代码执行隔离)            │
-│  异步任务   │  扩展机制    │  用户自定义代码安全执行     │
-├─────────────┴──────────────┴───────────────────────────┤
-│                PostgreSQL        Redis                  │
-│              (元数据/应用配置)   (缓存/消息队列)         │
-├─────────────────────────────────────────────────────────┤
-│           支持 100+ 模型提供商（OpenAI / Anthropic /     │
-│           本地模型 / Azure / Gemini 等）                 │
-└─────────────────────────────────────────────────────────┘
-```
+模型推理由外部服务承担——云 API 或本地 Ollama 之类——Dify 容器本身开销不大，机器规格主要看知识库和并发量。
 
-**Web UI** 层是 React 单页应用，负责用户交互、工作流可视化编排、提示词调试、日志查看。
-
-**API Server** 是 Dify 的核心，用 Python/Flask 实现，通过 Gunicorn + Nginx 做生产部署。几乎所有用户可见的功能——应用的创建、版本管理、API 调用、日志读取——都经过这一层。它还负责租户隔离、访问控制（基于 RBAC）和审计日志。
-
-**Worker** 层基于 Celery 实现异步任务系统。LLM 推理调用、日志写入、数据导出等耗时操作以异步任务方式执行，通过 Redis 做消息队列。Worker 支持水平扩展，可根据负载增加节点。
-
-**Sandbox** 是一个隔离执行环境，用于安全运行用户上传的自定义 Python 代码片段和部分工具逻辑，防止恶意代码影响主机系统。
-
-**数据库层** 使用 PostgreSQL 存储应用元数据、用户配置、对话历史和日志。Redis 承担缓存、Session 存储和 Celery 消息队列角色。
-
-### 3.2 核心数据模型
-
-Dify 的核心实体有以下几类：
-
-**Tenant（租户）** 是 Dify 的顶级隔离单位。每个租户拥有独立的用户体系、应用配置、积分制度和用量统计。多租户设计意味着 Dify 可以直接用于 SaaS 化运营。
-
-**App（应用）** 是 Dify 的核心工作单元，分为四种类型：
-
-- **chatApp**：对话类应用，支持多轮对话和上下文记忆
-- **completionApp**：补全类应用，适用于一次性生成任务
-- **workflowApp**：工作流应用，基于有向图编排的复杂任务
-- **agentApp**：Agent 应用，基于 ReAct 或 Function Calling 的智能体
-
-**Conversation（会话）** 关联一个 App 和一个终端用户，记录完整的多轮对话历史。每个 Message 属于一个 Conversation，支持人工标注和反馈。
-
-**Workflow（工作流）** 是 Dify 编排复杂任务的核心能力，由多个 **Node（节点）** 和 **Edge（边）** 组成，Node 代表一个处理单元（如 LLM 调用、条件分支、数据转换），Edge 代表数据流向。工作流支持条件分支、并行执行、循环等复杂控制流。
-
-**Dataset（知识库）** 是 Dify 的 RAG 能力载体。每个 Dataset 包含多个 Document，文档经过切片（Chunking）处理后存进向量数据库。Dify 支持 pgvector、Weaviate、Qdrant、Milvus 等向量库，容器内默认用 pgvector（PostgreSQL 的向量扩展）。Dify 支持从 PDF、PPT、Word、Markdown 等格式直接导入。
-
-### 3.3 推理调用链路
-
-一次 LLM 调用的完整链路：
-
-```text
-用户请求 → API Server（鉴权+路由）
-         → 检查缓存（Redis）
-         → 构造 Prompt（含上下文+变量替换）
-         → 调用模型提供商 API（OpenAI兼容格式）
-         ← 接收模型响应
-         → 流式/非流式返回
-         → 记录日志（PostgreSQL + S3/本地）
-         → 触发 Webhook（如果配置了）
-```
-
-Dify 对模型调用做了两层抽象：底层是 **Model Runtime**，对接各提供商的具体 API 实现；上层是 **Model Config**，保存每个租户的配置（API Key、base URL、模型参数等）。切换模型提供商对上层应用透明，也支持在同一应用内做 A/B 模型对比。
-
-### 3.4 一个任务如何流过系统
-
-拿「分析竞品报告」工作流举例，追踪一次完整调用经过的组件：
-
-1. 用户在 Web UI 输入「分析 Notion 的最新动态」，前端把请求发到 `POST /v1/workflows/run`
-2. API Server 接收请求，校验 API Key，从 PostgreSQL 读取该工作流的图结构（节点 + 边）和当前版本
-3. 工作流引擎按拓扑序执行节点：
-   - **LLM 节点（提取竞品名称）**：API Server 同步调用模型提供商，构造 Prompt（含变量替换），等待响应
-   - **工具节点（搜索）**：自定义 HTTP 工具由 API Server 直接发请求；包含用户上传代码片段的工具调度到 Sandbox 隔离执行
-   - **LLM 节点（综合报告）**：再次调用模型，把前序节点的输出拼进 Prompt
-4. 长耗时副作用（日志写入、Webhook 触发）通过 Celery 投递到 Redis，Worker 异步消费
-5. 流式响应经 API Server 逐 chunk 返回前端；Worker 同时把完整对话记录、Token 消耗、各节点耗时写入 PostgreSQL，上传文件存到 S3 或本地卷
-
-这条路径上有三个设计点：同步链路只做模型调用和流式返回，副作用全部异步化；Sandbox 把不可信代码隔离在独立容器，主进程不暴露文件系统；模型调用经过 Model Runtime 抽象层，切换提供商不需要改工作流定义。
-
-## 4. 安装配置
-
-### 4.1 环境要求
-
-Dify 对硬件的要求因规模和功能而异。单机体验和功能验证的推荐配置：
-
-| 资源 | 最低要求 | 推荐配置 |
-|------|---------|---------|
-| CPU | 2 核 | 4 核以上 |
-| 内存 | 4 GiB | 8 GiB 以上 |
-| 磁盘 | 20 GiB | 50 GiB 以上（视文档量） |
-| Docker | 20.x + Compose V2 | 最新稳定版 |
-
-需要跑较大的开源模型（如 Llama3 70B）时，内存建议 16 GiB 以上，或者使用 Ollama 等本地推理服务通过 OpenAI-compatible API 接入 Dify。
-
-### 4.2 Docker Compose 快速部署
-
-Docker Compose 是推荐的安装方式，一条命令启动完整服务。
+### 快速部署
 
 ```bash
-# 克隆仓库
-git clone https://github.com/langgenius/dify.git
+# 克隆仓库（官方建议锁定最新 release 分支，而非 main）
+git clone --branch "$(curl -s https://api.github.com/repos/langgenius/dify/releases/latest | jq -r .tag_name)" https://github.com/langgenius/dify.git
 cd dify/docker
 
 # 复制环境变量配置
@@ -230,70 +137,38 @@ cp .env.example .env
 docker compose up -d
 ```
 
-启动完成后，打开浏览器访问 `http://localhost/install`，按引导创建管理员账号。部署是否健康，看三处：
+启动后访问 `http://localhost/install` 创建管理员账号。部署是否健康，看三处：
 
-- `docker compose ps`：所有服务应为 `running`，没有 `Restarting` 或 `Exited`。
-- 首次访问 `/install` 是安装引导页；配置完成后访问 `/signin` 应进入登录页。
-- `docker compose logs -f api`：启动过程没有连接 PostgreSQL / Redis 失败的堆栈；第一次调用模型后，日志正常记录 token 消耗。
+- `docker compose ps`：所有服务应为 `running`，没有 `Restarting` 或 `Exited`
+- 首次访问 `/install` 是安装引导页；配置完成后 `/signin` 应进入登录页
+- `docker compose logs -f api`：没有连接 PostgreSQL / Redis 失败的堆栈；配置模型后调用一次，日志正常记录 Token 消耗
 
-`.env` 文件中需要关注几个关键配置项：
+`.env` 里最该改的一项是 `SECRET_KEY`——用于签名会话，生产环境必须换成随机长串（留空会自动生成并持久化到 storage 目录，但显式设置更稳）。数据库和 Redis 的默认值（`DB_HOST=db_postgres`、`REDIS_HOST=redis` 等）指向 compose 内部服务，单机部署不用动。
 
-```bash
-# 服务基础配置
-SECRET_KEY=your-secret-key-here          # 建议使用随机字符串
-CONSOLE_WEB_URL=http://localhost          # 前端地址
-CONSOLE_API_URL=http://localhost/api       # 后端API地址
+模型接入不在 `.env` 里配。装好后进界面 **Integrations → Model Provider**，从 Marketplace 安装对应供应商插件并填 API Key。接本地 Ollama 有两条路：装官方 Ollama 插件填服务地址；或者用 OpenAI-API-compatible 插件指向 `http://<host>:11434/v1`，后者适用于任何兼容 OpenAI 格式的推理服务。
 
-# 数据库（默认使用 Docker Compose 内置 PostgreSQL）
-DB_USERNAME=dify
-DB_PASSWORD=dify
-DB_HOST=postgres
-DB_PORT=5432
-DB_DATABASE=dify
+### 生产配置要点
 
-# Redis（默认使用 Docker Compose 内置 Redis）
-REDIS_HOST=redis
-REDIS_PORT=6379
-
-# 模型提供商配置（按需填写）
-# OpenAI
-OPENAI_API_KEY=sk-xxxx
-# Azure OpenAI
-AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com
-AZURE_OPENAI_API_KEY=xxxx
-# Anthropic
-ANTHROPIC_API_KEY=sk-ant-xxxx
-```
-
-连接本地模型服务（如 Ollama）时，在 Dify 的「模型供应商」页面添加「OpenAI-Compatible 接口」，填入 Ollama 的地址（通常是 `http://localhost:11434/v1`）和模型名称即可。
-
-### 4.3 常用生产环境配置
-
-**反向代理配置（Nginx）**
-
-生产环境中，建议用 Nginx 做反向代理，同时处理 SSL 终止和请求限流：
+**反向代理。** compose 已内置 nginx，默认暴露 80/443（`EXPOSE_NGINX_PORT` / `EXPOSE_NGINX_SSL_PORT`）。要外挂 Nginx 做 SSL 终止和限流，注意 SSE 流式响应必须关缓冲，否则流式输出会被中间层攒住：
 
 ```nginx
+# http 上下文先定义：limit_req_zone $binary_remote_addr zone=api_limit:10m rate=10r/s;
 server {
     listen 443 ssl;
     server_name dify.your-domain.com;
 
     ssl_certificate /path/to/cert.pem;
     ssl_certificate_key /path/to/key.pem;
-
-    # 下面 location /api 用到的 api_limit zone，需在 http 上下文先定义，例如：
-    # limit_req_zone $binary_remote_addr zone=api_limit:10m rate=10r/s;
-
     client_max_body_size 100M;
 
     location / {
-        proxy_pass http://localhost:80;
+        proxy_pass http://127.0.0.1:80;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
 
-        # SSE 流式响应需要关闭缓冲
+        # SSE 流式响应必须关闭缓冲
         proxy_buffering off;
         proxy_cache off;
         chunked_transfer_encoding on;
@@ -301,83 +176,51 @@ server {
 
     location /api {
         limit_req zone=api_limit burst=20 nodelay;
-        proxy_pass http://localhost:80;
+        proxy_pass http://127.0.0.1:80;
     }
 }
 ```
 
-**外部 PostgreSQL**
+**外部数据库与对象存储。** 数据量上来后，PostgreSQL 可以迁到独立实例，改 `.env` 里的 `DB_HOST`、`DB_USERNAME`、`DB_PASSWORD` 指过去即可。文件存储同理：把 `OPENDAL_SCHEME` 从 `fs` 换成 `s3`，按 OpenDAL 的约定补上 endpoint、bucket、密钥等配置项（具体键名以所用版本 `.env.example` 注释为准）。
 
-数据量较大时，可以将 PostgreSQL 迁移到独立数据库服务器：
+### 端口与常见安装问题
 
-```bash
-# .env 中修改数据库连接
-DB_HOST=your-postgres-host.internal
-DB_PORT=5432
-DB_DATABASE=dify
-DB_USERNAME=dify_prod
-DB_PASSWORD=strong-password-here
-```
+compose 默认只把 nginx 的 80/443 暴露到宿主机，PostgreSQL、Redis、sandbox 都在内部网络里，不占宿主机端口。80 被占用时改 `EXPOSE_NGINX_PORT`，或直接在外层代理处理。
 
-**外部 S3 兼容存储**
+**模型调用返回 400/401。** 先在 Integrations → Model Provider 里对对应供应商跑连接检查，Dify 会发一个探测请求验证配置。走代理时确认代理支持 POST 和流式响应。
 
-Dify 的日志和上传文件默认存储在本地 Docker 卷中，生产环境建议切换到 S3 兼容存储（如 MinIO、阿里云 OSS、AWS S3）：
+**向量检索不准。** 先查分段设置：分隔符是否把句子拦腰切断、最大长度是否过小。检索质量的上限很大程度在分段和 Embedding 模型选择上，问题定位从这两处入手。
 
-```bash
-S3_ENDPOINT=https://your-bucket.s3.region.amazonaws.com
-S3_BUCKET_NAME=dify-logs
-S3_ACCESS_KEY=AKIAxxx
-S3_SECRET_KEY=xxx
-S3_REGION=us-east-1
-```
+## 排查：从安装问题到运行时
 
-### 4.4 常见安装问题排查
+安装阶段的问题集中在端口和 API Key，运行时的问题更分散。
 
-**端口冲突**
+**工作流节点执行失败但日志信息有限。** 到「日志」页定位运行记录，展开各节点的输入、输出和耗时。节点输入为空，多半是上游变量传递配错了——逐一核对节点间的变量映射，字段名和类型对齐；输入正常但输出异常，进节点详情看模型原始响应和错误码。流式中断时检查反向代理的 `proxy_buffering` 是否已关。
 
-Docker Compose 默认占用端口 `80`（Nginx）、`5432`（PostgreSQL）、`6379`（Redis）、`3000`（前端）。这些端口已被占用时，修改 `docker-compose.yaml` 中的端口映射或停掉冲突服务。
+**模型调用超时或限流。** Dify 会透传上游供应商的错误码，看到 429 就到供应商侧确认配额。区分超时是模型慢还是网络慢：进容器直接 `curl` 模型 API 测基线延迟，再对比 Dify 日志里的耗时。本地模型首次调用慢通常是权重加载，预热一次再测。
 
-**模型调用返回 400/401 错误**
+**sandbox 代码异常退出。** sandbox 是独立容器，`import` 失败、内存超限、死循环都会被隔离层捕获返回错误。先看 sandbox 日志里的 Python 堆栈；缺依赖时通过自定义 sandbox 镜像解决，不要改主镜像。长耗时任务不该塞进 sandbox，拆出去走外部服务。
 
-先确认 API Key 正确，然后在 Dify 的「模型供应商」页面点击对应供应商卡片的「检查连接」按钮。Dify 会发送一个探测请求来验证配置是否生效。使用代理时，确保代理支持 `POST` 方法和流式响应格式。
+**自定义工具返回 502/504。** 多数是目标 API 不可达或证书问题，进容器 `curl` 验证连通性；目标在内网时确认容器能解析内网域名（默认的 SSRF 代理会拦内网地址，这是安全特性，放行需要改代理配置）。OpenAPI Schema 定义错误也会导致调用失败——Dify 对字段类型和 `required` 校验严格，先在本地 Swagger UI 验证再导入。
 
-**向量检索结果不准确**
+**Worker 积压。** `docker compose logs worker` 观察 Celery 队列。持续积压就 `docker compose up -d --scale worker=N` 扩容；Redis 内存不足会丢任务，盯住 `used_memory` 指标。
 
-检查知识库的切片策略。Dify 默认按固定长度切片，容易在句子中间断开，导致语义不完整。可以在知识库设置中将切片策略调整为「语义分块」，或手动调整切片大小和重叠参数。
+## 实战：知识库问答、多步工作流与日志驱动迭代
 
-### 4.5 运行时与自定义工具排查
+### 场景一：知识库问答机器人
 
-安装阶段的问题大多集中在端口和 API Key，运行时的问题更分散。
+把产品文档上传知识库，用户提问时自动检索相关片段生成答案——这是 Dify 最典型的用法。
 
-**工作流节点执行失败但日志信息有限。** 先到「日志」页面定位对应的运行记录，展开各节点的输入、输出和耗时。节点输入为空，多半是上游变量的传递路径配置错了——逐一核对节点间的变量映射，字段名和类型是否对齐；输入正常但输出异常，就进节点详情看 LLM 的原始响应和错误码。流式响应中断时，确认 Nginx 或反向代理有没有关闭 `proxy_buffering`，SSE 链路被中间层缓冲会丢 chunk。
+建知识库：左侧「知识库」→「创建」，上传文档（PDF、Word、PPT、TXT、Markdown 等），选分段模式。结构规整的长文档选父子模式，一般场景通用模式够用。
 
-**模型调用超时或限流。** Dify 的 Model Runtime 层会透传上游提供商的错误码。OpenAI 兼容接口返回 429 时，先在「模型供应商」页面降低该模型的并发上限，或在 Nginx 层加 `limit_req` 做全局限流。超时问题需要区分是模型本身慢还是网络链路慢——可以在 Dify 容器内直接 `curl` 模型 API 测基线延迟，再对比 Dify 日志里的耗时。本地模型（Ollama、LM Studio）首次调用慢通常是模型加载耗时，预热一次后再测。
-
-**Sandbox 代码异常退出。** Sandbox 是独立容器，用户代码里的 `import` 失败、内存超限或死循环都会被隔离层捕获并返回错误。排查时先在 Sandbox 日志里看 Python 异常堆栈；如果是缺少依赖，Dify 的 Sandbox 默认只预装常用库，需要自定义依赖时通过插件机制扩展 Sandbox 镜像，不要直接改主镜像。代码执行超时默认有上限，长耗时任务应当拆成异步任务通过 Worker 执行，而不是塞进 Sandbox。
-
-**自定义工具调用返回 502/504。** 多数情况是目标 API 不可达或 SSL 证书问题。在 Dify 容器内用 `curl` 直接请求目标 API 验证网络连通性；如果目标 API 在内网，确认 Dify 容器能解析内网域名。OpenAPI Schema 定义错误也会导致调用失败——Dify 对 Schema 的字段类型和 `required` 校验比较严格，建议先用本地 Swagger UI 验证 Schema 再导入。
-
-**Worker 积压、异步任务延迟。** 在 `docker compose logs worker` 里观察 Celery 任务队列长度。如果持续积压，说明 Worker 节点不够，可以通过 `docker compose up -d --scale worker=N` 水平扩容。Redis 内存不足也会导致任务丢失，监控 Redis 的 `used_memory` 指标。
-
-## 5. 实战演示
-
-### 5.1 场景一：基于知识库的问答机器人
-
-Dify 最典型的使用场景——把产品文档上传到知识库，用户提问时自动检索相关片段并生成答案。
-
-**创建知识库。** 左侧菜单选「知识库」→「创建知识库」，上传文档（支持 PDF、Word、PPT、Markdown、TXT），选择切片策略。Dify 提供「自动」和「手动」两种模式，自动模式会识别文档结构切片，手动模式允许自定义切片大小和重叠。
-
-**创建应用。** 选「创建应用」→「聊天助手」，在提示词编排页面启用 RAG，关联刚创建的知识库：
+建应用：「创建应用」→「聊天助手」，在编排页启用上下文并关联知识库，写系统提示词：
 
 ```text
-你是一个专业的技术支持助手。当用户提问时，先从知识库中检索相关信息，
-然后结合检索结果给出准确、专业的回答。如果知识库中没有相关信息，
-请明确告知用户，并提供一般性的建议。
+你是一个专业的技术支持助手。回答问题时依据知识库检索结果，
+检索不到相关信息就明确告知用户，不要编造。
 ```
 
-调整模型参数（温度、Top-P、最大 token 数），保存。
-
-**测试与发布。** 在右侧对话窗口输入问题，观察检索结果和答案质量。确认效果后点击「发布」，获得 API 地址：
+调好温度和最大 Token 数，右侧对话窗口验证效果，然后点「发布」拿 API 凭证调用：
 
 ```python
 import requests
@@ -390,6 +233,7 @@ response = requests.post(
     },
     json={
         "query": "你们产品的退款政策是什么？",
+        "inputs": {},
         "user": "user-123",
         "response_mode": "streaming"
     },
@@ -401,41 +245,40 @@ for line in response.iter_lines():
         print(line.decode("utf-8"))
 ```
 
-### 5.2 场景二：多步骤 Agent 工作流
+`query` 是用户消息，`inputs` 填 App 定义的开头变量，`user` 是终端用户标识——这是 Dify 自己的接口格式，不是 OpenAI 的 messages 数组。
 
-实现一个「竞品分析助手」：用户输入竞品名称后，自动完成提取竞品信息 → 并行搜索最新动态 → 整理分析报告。
+### 场景二：多步骤工作流
 
-创建工作流应用后，进入可视化编排画布，编排节点：
+做一个竞品分析助手：输入竞品名，自动提取关键信息 → 并行搜索最新动态 → 汇总成报告。
+
+创建工作流应用，在画布上编排：
 
 ```text
-[开始] → [LLM: 提取竞品名称和关键指标]
-       → [工具: 谷歌搜索 × 3（并行）]
-       → [LLM: 综合信息生成报告]
+[开始] → [LLM: 提取公司名和关键指标]
+       → [工具: 搜索插件 × 3（并行分支）]
+       → [LLM: 汇总生成报告]
        → [结束]
 ```
 
-- **LLM 节点**：选择模型，编写 Prompt，定义输入变量（从前序节点传递）
-- **工具节点**：Dify 提供 50+ 内置工具（Google 搜索、DALL·E、Stable Diffusion 等），也支持自定义 HTTP 工具
-- **条件分支**：搜索结果为空时跳转到「补充搜索」分支，否则进入报告生成
-- **变量传递**：第一个 LLM 节点的输出 `company_name` 成为工具节点的输入；多个搜索工具的输出汇聚到数组变量 `search_results` 中
+工具从 Marketplace 装搜索类插件，或者用自定义 OpenAPI 工具接自己的服务。LLM 节点的输出定义成变量传给下游；多个并行搜索的输出汇聚进数组变量，报告节点一次性引用。加一个 IF/ELSE 节点处理「搜索结果为空走补充搜索」的分支；要对一批竞品逐个跑，套迭代节点。
 
-点击「试运行」输入竞品名称，观察每个节点的执行状态和输出。可以改造为支持多个竞品批量输入的版本——用到数组变量和循环节点。
+「试运行」单测整条流，每个节点的输入输出和耗时实时可见。改完点「发布」才对 API 生效——草稿和线上版本是分离的。
 
-### 5.3 场景三：LLMOps——基于生产数据优化 Prompt
+### 场景三：用日志和标注驱动迭代
 
-Dify 完整记录生产环境的用户对话，为持续的 Prompt 优化提供数据基础。
+Dify 记录生产环境每条对话的完整链路：用户输入、实际 Prompt、模型输出、Token 消耗、响应时间。迭代闭环在日志页完成：
 
-在「日志」页面，可以查看每条对话的完整链路：用户输入 → 完整 Prompt → 模型输出 → Token 消耗 → 响应时间。需要改进的对话，点击「标注」添加人工反馈（「回答不准确」「信息过时」「格式不规范」），这些标注数据可导出用于 fine-tuning 或作为评估集。
+- 对低质量回答点「标注」，写上原因（不准确、过时、格式问题），标注对积累成评估集，可导出用于微调
+- 配置「标注回复」后，高频问题和固定答案直接命中返回，不消耗模型调用
+- 编排页切换模型或参数重新试跑，对比同一输入下的回答质量，选定后发布
 
-Dify 还支持在「日志」页面对同一条用户输入，用不同 Prompt 版本做 A/B 对比。
+这套机制的价值不在单点功能，而在把「改 Prompt」从凭感觉变成对着生产数据做决策。
 
-## 6. 开发扩展
+## 扩展：工具、API 与插件生态
 
-### 6.1 自定义工具
+### 自定义工具
 
-Dify 的工具系统支持通过 OpenAPI Schema 定义自定义 HTTP 工具，新版本也兼容 [MCP](https://modelcontextprotocol.io/)。开发一个自定义工具只需几步：
-
-在「工具」→「自定义工具」中新建工具，填写基本信息。接口定义以 OpenAPI 规范导入，指定目标服务可访问的地址即可拉取；也可以直接粘一份 OpenAPI 描述：
+工具的来源有四类：Marketplace 工具插件、自定义 OpenAPI 工具、把工作流发布成工具、连接外部 MCP（Model Context Protocol，模型上下文协议）服务器。自定义 HTTP 工具的接法：在「工具」→「自定义」里导入 OpenAPI 描述，粘贴或给 URL 均可：
 
 ```yaml
 openapi: 3.1.0
@@ -469,81 +312,62 @@ paths:
           description: 成功返回天气信息
 ```
 
-导入后，在配置页面对应每个 `servers` 条目填写认证方式（API Key / Bearer Token / 无认证）。Dify 会读取 OpenAPI 里的参数定义，把用户输入或对话中提取到的值映射到请求参数上。在工具配置页面填写测试参数验证调用结果，确认正常后即可在工作流和 Agent 中使用。
+导入后按 `servers` 条目填认证方式（API Key / Bearer Token / 无认证），Dify 会把参数定义映射到用户输入或从对话中提取的值。填测试参数验证调用结果，通过后即可在工作流和 Agent 里引用。
 
-### 6.2 API 集成
+### API 集成
 
-Dify 提供完整的 REST API，遵循 OpenAI 的接口规范：
+Dify 的 Service API 是自有格式，和 OpenAI 的 chat completions 不兼容——不能把 OpenAI SDK 的 `base_url` 指到 Dify 就用。端点按应用类型分：聊天类应用走 `POST /v1/chat-messages`，工作流应用走 `POST /v1/workflows/run`，鉴权统一是 App 级别的 Bearer Token。
+
+工作流应用的调用示例：
 
 ```bash
-# 创建应用
-curl -X POST "https://your-dify-instance/v1/apps" \
-  -H "Authorization: Bearer YOUR_API_KEY" \
+curl -X POST "https://your-dify-instance/v1/workflows/run" \
+  -H "Authorization: Bearer app-YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-    "name": "竞品分析助手",
-    "description": "自动完成竞品信息收集与分析报告生成",
-    "app_type": "agent",
-    "icon": "🤖"
+    "inputs": {"company_name": "Notion"},
+    "response_mode": "streaming",
+    "user": "user-123"
   }'
-
-# 获取应用详情
-curl "https://your-dify-instance/v1/apps/{app_id}" \
-  -H "Authorization: Bearer YOUR_API_KEY"
 ```
 
-消息发送 API 兼容 OpenAI SDK，只需修改 base URL 和 API Key：
+`inputs` 的键名对应该工作流「开始」节点定义的输入变量；`response_mode` 选 `blocking`（同步等结果，Cloud 环境有超时限制）或 `streaming`（SSE 逐事件推送）。完整端点清单见官方 API Reference，覆盖会话管理、文件上传、消息反馈、标注等 60 余个接口。
 
-```python
-import openai
+### 插件与 Marketplace
 
-client = openai.OpenAI(
-    api_key="YOUR_DIFY_API_KEY",
-    base_url="https://your-dify-instance/v1"
-)
+1.x 之后，模型供应商、工具、数据源、触发器、Agent 策略都以插件形式存在，从 [Dify Marketplace](https://marketplace.dify.ai/) 一键安装，插件跑在独立的 `plugin_daemon` 服务里，不碰核心代码。自己写插件有官方脚手架（dify-plugin CLI），支持模型、工具、Agent 策略等类型，Python 打包、权限声明、生命周期钩子都有现成规范。
 
-response = client.chat.completions.create(
-    model="draft-app",
-    messages=[
-        {"role": "user", "content": "帮我分析下智谱 AI 的最新动态"}
-    ],
-    stream=True,
-    user="user-id-123"
-)
+企业级能力是另一条线：SAML SSO、细粒度 RBAC、审计日志属于企业版，社区版提供的是工作空间成员的基础角色（所有者、管理员、编辑者、普通成员）。
 
-for chunk in response:
-    print(chunk.choices[0].delta.content, end="", flush=True)
-```
+## 采用边界与上手顺序
 
-### 6.3 插件机制
+三条 license 边界先划清——Dify 用的是带附加条件的修改版 Apache 2.0：
 
-Dify 的插件系统（Plugin）允许以插件形式扩展平台能力，无需修改核心代码。官方示例包括：SAML SSO（对接企业身份提供商）、自定义模型（接入官方未直接支持的模型服务）、Webhook 增强（在特定事件触发自定义业务逻辑）。插件开发文档在 Dify 官方文档的「扩展开发」章节，涉及 Python 打包、权限声明和生命周期钩子等标准机制。
+1. **多租户限制**：未经 Dify 书面授权，不能用其源码运营多租户环境。Dify 语境下一个租户等于一个工作空间，也就是说拿它做 SaaS 服务对外卖多租户账号需要商业授权；给单一企业内部用、作为自家应用的后端没问题。
+2. **前端标识**：使用 Dify 前端时不得移除或修改界面上的 logo 和版权信息；不用它的前端（纯 API 后端用法）不受此限。
+3. 商用（含企业内部作为开发平台）本身是允许的。
 
-## 7. 采用顺序与适用边界
+**适合 Dify 的场景：** 团队要快速验证 AI 应用，不想在流程编排、日志、权限上重复造轮子；应用需要同时管多模型、RAG 管道和工作流；单一组织内部使用，不涉及多租户转售。
 
-**选 Dify 的场景：** 团队想快速验证 AI 概念，不想在基础设施上耗时间；应用要同时管多模型、RAG 管道和工作流编排；企业级能力（多租户、权限、审计日志）是硬需求。
+**不适合的场景：** 工作流逻辑超出节点能力且不愿写插件；已有成熟 LLMOps 栈，再引一层多一套维护成本；拿它做对外多租户 SaaS 又不想买商业授权。
 
-**不选 Dify 的场景：** 工作流逻辑超出 Dify 节点能力，需要极致定制化；已经有成熟的 LLMOps 基础设施，再套一层 Dify 反而增加复杂度；场景单一，直接调 API 就够。
-
-**采用顺序：** 先用 Docker Compose 跑通单机版，熟悉工作流编排和知识库；选一个真实业务场景做试点（推荐从 RAG 问答开始，门槛最低）；验证效果后迁移到生产配置（外部数据库 + S3 + Nginx）；按需开发自定义工具和插件。
-
-**深入方向：** 官方文档 docs.dify.ai；GitHub Discussions 社区；DAG 编排、条件分支、循环处理等高级工作流特性；Embedding 模型选择、分块策略、混合检索等 RAG 优化；插件生态还处于早期，适合贡献自定义工具。
+**上手顺序：** Docker Compose 跑通单机 → 界面装一个模型供应商插件 → 建知识库问答应用走通全流程 → 用工作流搭一个真实业务场景 → 有定制需求再写工具插件。官方文档在 docs.dify.ai，版本变化快，配置项以 `docker/.env.example` 注释和 changelog 为准。
 
 ## 附录：术语速查
 
 | 术语 | 说明 |
 |------|------|
 | Application（应用） | Dify 的统一工作单元，聊天助手、Agent、工作流、RAG 应用都归到这一类 |
-| Agent App | 基于 ReAct 或 Function Calling 循环决策的应用 |
-| Workflow（工作流） | 用节点（Node）和边（Edge）编排的任务图 |
+| App 模式 | `chat` / `completion` / `advanced-chat`（Chatflow）/ `workflow` / `agent` / `agent-chat`（传统） |
+| Workflow（工作流） | 用节点（Node）和边（Edge）编排的任务图，草稿与发布版本分离 |
 | Node / Edge | Node 是处理单元，Edge 表示数据流向 |
-| Tenant（租户） | Dify 的顶级隔离单位，对应一个独立用户体系与应用配置 |
-| Dataset（知识库） | RAG 载体，文档切片后存入向量数据库 |
-| Chunking（切片） | 把长文档切块以便检索，策略影响检索质量 |
-| pgvector | PostgreSQL 的向量扩展，Dify 容器内默认的向量存储 |
-| Conversation / Message | 一次会话及其中的消息，支持人工标注与反馈 |
-| Model Runtime / Config | 底层对接模型商家的实现层 / 每租户的模型配置 |
+| Tenant / Workspace（租户/工作空间） | 顶级隔离单位，对应独立成员体系与应用配置；license 层面一租户即一工作空间 |
+| Dataset（知识库） | RAG 载体，文档分段后存入向量数据库，默认 Weaviate |
+| Chunking（分段） | 通用（General）与父子（Parent-child）两种模式，创建后不可切换 |
+| Model Provider（模型供应商） | 以插件形式安装，数百个模型 / OpenAI 兼容接入 |
+| plugin_daemon | 插件运行时服务，模型与工具插件跑在这里 |
 | Sandbox | 隔离执行用户代码的独立容器 |
-| Celery / Worker | 异步任务框架，承担日志写入、导出等耗时任务 |
-
-
+| ssrf_proxy | 工具外呼的 SSRF 防护代理 |
+| Celery / Worker | 异步任务框架，承担文档索引、导出等耗时任务 |
+| Service API | Dify 自有格式的应用 API，非 OpenAI 兼容，App 级 Bearer Token 鉴权 |
+| Marketplace | 官方插件市场，模型供应商、工具、Agent 策略等在此分发 |

@@ -10,9 +10,9 @@ categories: ["技术笔记"]
 author: 钳岳星君
 ---
 
-Andrej Karpathy 的 [Neural Networks: Zero to Hero](https://github.com/karpathy/nn-zero-to-hero)（GitHub 约 2.2 万 star，MIT 许可证）把 PyTorch 的高级 API 扔到一边，让你从 `numpy` 数组和 Python 原始运算开始，一行一行地把神经网络里真正在发生的事写出来。它不教你调参——它逼你搞清楚 `loss.backward()` 到底做了什么。
+Andrej Karpathy 的 [Neural Networks: Zero to Hero](https://github.com/karpathy/nn-zero-to-hero)（GitHub 约 2.5 万 star，MIT 许可证）把 PyTorch 的高级 API 扔到一边，让你从 `numpy` 数组和 Python 原始运算开始，一行一行地把神经网络里真正在发生的事写出来。它不教你调用现成的 API——它逼你搞清楚 `loss.backward()` 到底做了什么。
 
-这门课的教学主张可以浓缩成一句话，也是 Karpathy 在访谈里反复说的：**如果不能从零构建它，就不算理解它。** 整门课都是这句话的执行——先手动实现 autograd，再关掉 autograd 手动反传，最后在理解梯度的情况下从零写 GPT。
+这门课的教学主张浓缩了费曼的那句名言——What I cannot create, I do not understand（我不能创造的，就不算理解）。Karpathy 在第一讲开头把这句话放在白板上，整门课都是对它的执行：先手动实现 autograd，再关掉 autograd 手动反传，最后在理解梯度的情况下从零写 GPT。
 
 课程的分水岭在第五讲。前四讲你用 PyTorch 的自动微分写模型，第五讲 Karpathy 把 autograd 关掉，让你手动把梯度从 Cross Entropy Loss 一路反推到 Embedding 表。做完这一讲，反向传播对你来说不再是「autograd 替我算的」，而是「我知道梯度经过哪些层、在哪被压缩、最终落在谁身上」。
 
@@ -62,7 +62,7 @@ Karpathy 从零实现了一个叫 `Value` 的 Python 类。每个 `Value` 记住
 
 听这一讲的时候，链式法则会从公式变成一行能跑的代码：`self.grad += local_gradient * upstream_gradient`。Jupyter 里画出来的 `a * b + c` 计算图，以及 `backward()` 逐节点更新梯度的过程，比任何教材里的示意图都直观。
 
-这一讲视频约 2.5 小时，核心产出是一个不到 150 行的 autograd 引擎。它和 Karpathy 单独维护的 [micrograd](https://github.com/karpathy/micrograd) 仓库是同一套思想的不同实现——读懂这一讲的版本后，再去看独立仓库源码，会发现每一行都认识。
+这一讲视频约 2.5 小时，核心产出是一个不到 150 行的 autograd 引擎。讲义后半段，Karpathy 会用 PyTorch 对同一组输入再算一遍梯度，逐个数值对照你手写的引擎，确认两套实现给出一样的结果。它和 Karpathy 单独维护的 [micrograd](https://github.com/karpathy/micrograd) 仓库是同一套思想的不同实现——读懂这一讲的版本后，再去看独立仓库源码，会发现每一行都认识。
 
 ### L2 — makemore Part 1：语言模型的第一个训练循环
 
@@ -95,7 +95,7 @@ Batch Normalization 就是在这里登场的。Karpathy 不仅讲了 BN 的公�
 
 **难度最高的一讲。** 把一个带 BatchNorm 的 2 层 MLP 拿出来，关掉 PyTorch 的 autograd，从 Cross Entropy Loss 开始，手动把梯度一层一层往回推：Loss → 线性层 → Tanh → BatchNorm → 线性层 → Embedding。
 
-每一步都要手写出 `dL/dx` 的表达式，然后用 PyTorch 的 autograd 结果做对照验证。你会反复遇到「这里少了一个求和」「那个维度广播没考虑」的错误——然后修掉它们。
+每一步都要手写出 `dL/dx` 的表达式，然后用 PyTorch 的 autograd 结果做对照验证。你会反复遇到「这里少了一个求和」「那个维度广播没考虑」的错误——然后修掉它们。这一讲的练习单独发布在 Colab 上，Karpathy 的建议是：别当视频看，自己先推，卡住了再暂停看答案。
 
 做完这一讲你不会从此放弃 autograd 改用手写反向传播。但你会获得一种对梯度的物理直觉：路过 BatchNorm 时梯度被压缩了多少、穿过 Tanh 饱和区时梯度还剩多少、反向推到 Embedding 层时梯度是均匀分布还是集中在少数 token 上。这些细节在你以后 debug 训练问题时，会反复用上。
 
@@ -107,7 +107,7 @@ Batch Normalization 就是在这里登场的。Karpathy 不仅讲了 BN 的公�
 
 ### L7 — Let's build GPT：Transformer 的完整实现
 
-从零实现一个 GPT 级别的 Transformer。不是调 `transformers` 库，是手写 Multi-Head Attention、FeedForward、LayerNorm、残差连接和整个 decoder-only 架构。
+从零实现一个 GPT 级别的 Transformer。不是调 `transformers` 库，是手写 Multi-Head Attention、FeedForward、LayerNorm、残差连接和整个 decoder-only 架构。这一讲的配套代码在独立的 [ng-video-lecture](https://github.com/karpathy/ng-video-lecture) 仓库里——课程主仓库的 `lectures/` 目录只收录了 micrograd 和 makemore 两讲，别到时候找不到代码。
 
 这节课建立在前面所有积累之上：你已经理解了张量运算（L2）、训练循环（L2-L3）、激活函数与归一化（L4）、梯度流动（L5），所以当你看到 Self-Attention 里 `Q @ K^T / sqrt(d_k)` 这行代码时，你脑子里同时在想三件事：
 
@@ -179,14 +179,16 @@ git clone https://github.com/karpathy/nn-zero-to-hero.git
 cd nn-zero-to-hero
 
 python3 -m venv nn-env
-source nn-env/bin/activate
-pip install jupyter numpy torch
+source nn-env/bin/activate   # Windows 用 nn-env\Scripts\activate
+pip install jupyter numpy torch matplotlib graphviz
 
 cd lectures/micrograd
 jupyter notebook
 ```
 
-L1 只需要 `numpy`，不需要 GPU。L2 开始用 PyTorch，但所有计算都可以在 CPU 上跑——Karpathy 刻意控制了数据规模，不会让你的笔记本风扇起飞。
+L1 前半只需要 `numpy`；画计算图用的是 Graphviz，讲义后半段用 PyTorch 做梯度对照。L2 起 PyTorch 成为主力，但所有计算都可以在 CPU 上跑——Karpathy 刻意控制了数据规模，不会让你的笔记本风扇起飞。
+
+一个容易踩的坑：`graphviz` 这个 Python 包依赖系统里的 Graphviz 二进制，只 pip 装完，画图那一步会报错。macOS 用 `brew install graphviz`，Debian/Ubuntu 用 `sudo apt install graphviz`。另外，每讲的练习题挂在对应 YouTube 视频的描述里，做完了再往下走。
 
 一个实操建议：**不要复制粘贴代码。** 每个 Notebook 都新建一个空白 `.py` 文件，看着视频一边暂停一边自己敲。抄一遍和看着抄一遍，对理解的影响不在一个量级。
 
@@ -194,7 +196,7 @@ L1 只需要 `numpy`，不需要 GPU。L2 开始用 PyTorch，但所有计算都
 
 课程中的核心组件被 Karpathy 拆成了独立仓库：
 
-- [micrograd](https://github.com/karpathy/micrograd) — 约 150 行的 autograd 引擎，读完 L1 后去看源码，会发现每一行都认识
+- [micrograd](https://github.com/karpathy/micrograd) — 引擎 `engine.py` 加神经网络库 `nn.py` 一共 150 多行，读完 L1 后去看源码，会发现每一行都认识
 - [makemore](https://github.com/karpathy/makemore) — 字符级语言模型的完整实现，比课程里的版本更完善
 - [minbpe](https://github.com/karpathy/minbpe) — BPE 分词器的独立实现，和 L8 配套
 
@@ -228,7 +230,7 @@ L1 只需要 `numpy`，不需要 GPU。L2 开始用 PyTorch，但所有计算都
 
 **Q: 没有 GPU 能学完这门课吗？**
 
-能。Karpathy 刻意控制了数据规模（L2-L6 以同一个约 3.2 万个名字的人名数据集为主，L7 用的是莎士比亚文本），所有计算都可以在 CPU 上完成。L1 只需要 `numpy`。
+能。Karpathy 刻意控制了数据规模（L2-L6 以同一个约 3.2 万个名字的人名数据集为主，L7 用的是莎士比亚文本），所有计算都可以在 CPU 上完成。L1 前半只需要 `numpy`，画计算图另需 Graphviz（见「环境搭建」）；L2 起用 PyTorch。
 
 **Q: 需要多少数学基础？**
 
@@ -263,4 +265,4 @@ L1 只需要 `numpy`，不需要 GPU。L2 开始用 PyTorch，但所有计算都
 
 ---
 
-下次你敲 `loss.backward()` 的时候，你会知道从那行代码出发，梯度正在穿过哪些层、经过哪些非线性变换、最终落在哪些参数上。这不是一个抽象的理解——是你在 L5 里亲手算过的那条路径。说到底，这门课想留给你的就是 Karpathy 那句话：如果不能从零构建它，就不算理解它。
+下次你敲 `loss.backward()` 的时候，你会知道从那行代码出发，梯度正在穿过哪些层、经过哪些非线性变换、最终落在哪些参数上。这不是一个抽象的理解——是你在 L5 里亲手算过的那条路径。说到底，这门课想留给你的就是白板上那句费曼名言：What I cannot create, I do not understand。

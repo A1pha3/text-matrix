@@ -8,7 +8,7 @@ tags: ["cilium", "ebpf", "kubernetes", "网络"]
 description: "Cilium 是 CNCF 毕业级的 eBPF 网络、可观测与安全方案，用内核态数据面替代 kube-proxy，以身份而非 IP 地址执行 L3-L7 策略。本文拆解其组件结构、身份模型与落地路径。"
 github_repo: "cilium/cilium"
 source_key: "gh:cilium/cilium"
-slug : cilium-ebpf-kubernetes-networking
+slug: cilium-ebpf-kubernetes-networking
 ---
 
 ## 核心判断
@@ -16,6 +16,17 @@ slug : cilium-ebpf-kubernetes-networking
 Cilium 解决的不是"又一个 CNI 插件"的问题，而是把 Kubernetes 网络从"IP 地址 + iptables"的模型迁移到"身份标识 + eBPF 程序"的模型。它的数据面运行在 Linux 内核里，而不是用户态的规则引擎里——这是它能在服务密度和策略表达能力上同时拉开差距的根本原因。
 
 对大多数团队，Cilium 的实际价值集中在三件事：完全替代 kube-proxy 的东西向负载均衡、不依赖 IP 的 L3-L7 网络策略、以及跨集群的统一安全模型。如果你的集群还在为 iptables 规则数量膨胀发愁，或者需要按"Pod 是谁"而不是"Pod 在哪个网段"来写策略，Cilium 值得认真评估。
+
+### 为什么是把规则搬进内核，而不是写得更快
+
+要理解 Cilium 的取舍，先看传统路径慢在哪。iptables 是典型的"线性规则列表"：每个包在 netfilter 钩子点从头到尾匹配规则，规则越多，每包匹配耗时越长，复杂度接近 O(n)。而 Kubernetes 服务多起来后，规则条数随服务数近似线性增长——于是出现了一个组合式的问题：流量规模在涨，每包的开销也在涨。
+
+eBPF 换掉了这套模型的根基。BPF（Berkeley Packet Filter）本是跑在内核里的受限字节码沙箱，其扩展版本 eBPF 允许把用户态程序经严格校验后编译进内核，在 socket 层、XDP、TC 等钩子点直接执行。它带来两点质变：
+
+- **匹配不再是线性遍历**：规则编译成内核指令后挂在专门的钩子上，访问路径由状态查找（哈希、Map）承担，而不是逐条比对人写的规则文本。
+- **更新不再依赖 nft/iptables 语义**：Cilium 直接管理 eBPF Map 的插入与删除，服务或命令的变更以数据结构更新生效，绕开了 iptables 处理整条链的笨重路径。
+
+正是因为决策点从"用户态规则引擎"移到了"内核程序"，Cilium 才能在服务密度和策略表达能力上同时拉开差距，而不是靠更优的规则写法来救火。
 
 ## 项目概览
 

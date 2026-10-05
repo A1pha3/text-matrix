@@ -1,10 +1,11 @@
 ---
 title: "Archon：让AI编程变得可重复、可追溯的开源工作流引擎"
 date: "2026-08-06T09:00:00+08:00"
+lastmod: "2026-09-27T09:00:00+08:00"
 slug: "archon-ai-coding-workflow-engine-guide"
 github_repo: "coleam00/Archon"
 source_key: "gh:coleam00/Archon"
-description: "Archon 是面向 AI 编程的开源工作流引擎：开发流程写成 YAML 定义的 DAG，把规划、实现、验证、评审、批准与 PR 创建编排成可重复执行的工程流水线。本文讲清它的工作流模型、worktree 隔离、默认工作流、上手路径与自定义方式。"
+description: "Archon 是面向 AI 编程的开源工作流引擎：开发流程写成 YAML 定义的 DAG，把规划、实现、验证、评审、批准与 PR 创建编排成可重复执行的工程流水线。本文讲清它的工作流模型、worktree 隔离、默认工作流的弃用窗口、上手路径与自定义方式。"
 draft: false
 categories: ["技术笔记"]
 tags: ["AI 编程", "Claude Code"]
@@ -12,21 +13,21 @@ tags: ["AI 编程", "Claude Code"]
 
 用 Claude Code、Codex 这类编码 Agent 一段时间后，会撞上同一个瓶颈：模型能力在涨，开发流程却仍靠临时提示词、人工盯执行、手动补审查维系。Archon 解决的就是这一层——把 Agent 的执行收束成可审计的工程流程。
 
-Archon 是一个面向 AI 编程的 workflow engine（工作流引擎），也是一个 AI coding harness builder（编码流程框架构建器）。开发流程写成 YAML，它负责把规划、实现、验证、评审、批准、PR 创建这些步骤编排成可重复执行的工程流水线。
+Archon 是一个面向 AI 编程的 workflow engine（工作流引擎），也是一个 AI coding harness builder（编码流程框架构建器）。开发流程写成 YAML，它负责把规划、实现、验证、评审、批准、PR 创建这些步骤编排成可重复执行的工程流水线。官方 README 给的类比是：Dockerfile 之于基础设施、GitHub Actions 之于 CI/CD，Archon 之于 AI 编程工作流——"Think n8n, but for software development"。
 
-GitHub API 2026-08-05 验证的仓库基本数据：
+GitHub API 2026-09-27 复核的仓库基本数据：
 
 | 指标 | 数值 |
 |------|------|
-| GitHub Stars | 23,073 |
-| Forks | 3,452 |
+| GitHub Stars | 23,565 |
+| Forks | 3,487 |
 | 主语言 | TypeScript |
 | License | MIT |
-| 最新 release | v0.7.1（2026-08-04 发布）|
+| 最新 release | v0.11.1（2026-09-25 发布）|
 | 默认分支 | dev |
 | 仓库描述 | The first open-source harness builder for AI coding. Make AI coding deterministic and repeatable. |
 
-一个需要留意的口径差异：官方入门文档以 17 个核心 workflow 为主目录，更完整的文档与源码里还能看到 additional workflows。最稳妥的确认方式始终是运行 `archon workflow list`。
+一个需要留意的口径差异：README 的 workflow 表列出 19 个默认 workflow，authoring 文档则写 21 个打包进二进制——多出的 `archon-review-block`、`archon-test-loop-dag` 不在 README 表格里。v0.10.0 起这批改版前的 workflow 整体进入弃用通道，继任者是新的 sdlc pack。清单一直在动，最稳妥的确认方式始终是运行 `archon workflow list`。
 
 ## 先说结论：Archon 到底是什么
 
@@ -104,16 +105,15 @@ Archon 解决的是 AI 如何进入工程体系的问题，模型本身的能力
 
 ### Workflow 是一个 DAG
 
-Archon 把 workflow 定义成 directed acyclic graph（有向无环图，DAG）。每个 node（节点）声明自己要做什么，以及依赖哪些上游节点。没有依赖的节点可以并行运行；有依赖的节点等前置结果就绪后再执行。
+Archon 把 workflow 定义成 directed acyclic graph（有向无环图，DAG）。每个 node（节点）声明自己要做什么，以及依赖哪些上游节点。没有依赖的节点立即执行；同一拓扑层的节点并发跑；有依赖的节点等前置结果就绪后再执行。被 `when:` 条件或 `trigger_rule` 跳过的节点，会把跳过状态传给下游依赖。
 
 DAG 模型让流程的顺序、并行和依赖关系都变成显式声明，避免藏在提示词里靠模型自己理解。这对团队协作的意义在于：流程变更会触发 code review，避免某天某个同事改了提示词就悄悄变了。
 
-这是官方 authoring 文档里的典型结构，比较接近当前设计方向：
+官方 authoring 文档的第一个完整示例，展示的是"先分类、再按类型走不同支路"的典型结构：
 
 ```yaml
-name: classify-and-route
-description: |
-  Classify an issue as a bug or feature, then run the appropriate path.
+name: classify-and-fix
+description: Classify issue type, then run the appropriate fix path
 
 nodes:
   - id: classify
@@ -140,7 +140,6 @@ nodes:
     command: implement-changes
     depends_on: [investigate, plan]
     trigger_rule: none_failed_min_one_success
-    context: fresh
 ```
 
 DAG 模型的价值落在三处：
@@ -149,25 +148,32 @@ DAG 模型的价值落在三处：
 2. **并行是天然的**：同一依赖层的节点可以并发跑，例如多个 review agent 并行审查。
 3. **输出可被消费**：上游节点的输出可以通过 `$nodeId.output` 传给下游，用于路由和条件判断。
 
-### Archon 不只是 AI 节点加 Bash 节点
+`trigger_rule: none_failed_min_one_success` 这类汇合规则有一个 v0.11.0 起的行为变化：因上游失败而被跳过的依赖，现在也会阻塞汇合节点，哪怕另一条支路成功了。此前"一条支路失败、一条成功"时汇合节点仍会运行，新语义下它跳过并保留原始失败节点作为原因。
 
-早期介绍多停留在 prompt 和 bash 两类节点，当前 Archon 已经有更丰富的工作流原语。
+### 节点类型比"AI + Bash"丰富得多
+
+早期介绍多停留在 prompt 和 bash 两类节点，当前的工作流原语已经覆盖了大部分工程控制流：
 
 | 节点 / 能力 | 作用 | 什么时候用 |
 | ------ | ------ | ------ |
 | `command:` / `prompt:` | 让 AI 做规划、实现、审查、总结 | 需要模型推理和代码理解时 |
 | `bash:` | 执行确定性的 shell 命令 | 跑测试、lint、构建、Git 操作 |
-| `script:` | 运行内联 TypeScript / Python，或调用 `.archon/scripts/` | 需要比 shell 更可控的逻辑时 |
-| `when:` | 根据上游输出做条件分支 | bug / feature 分流，复杂度分级 |
-| `output_format:` | 约束 AI 输出为结构化 JSON | 路由、决策、下游消费 |
-| `context: fresh` | 强制节点在新上下文里执行 | 避免长链任务上下文污染 |
-| `provider:` / `model:` | 为节点指定 AI provider / model | 需要按任务类型切模型时 |
+| `script:` | 用 `bun` / `uv` 运行内联 TypeScript / Python 或 `.archon/scripts/` 里的脚本 | 需要比 shell 更可控的逻辑时 |
+| `loop:` | 迭代执行一个 prompt，直到声明的完成条件触发 | 测试-修复循环、逐任务实现 |
+| `loop_group:` | 每轮迭代重跑一个多节点子 DAG | 一轮迭代需要多个节点配合时 |
+| `approval:` | 暂停 workflow，等人工批准或驳回 | 不可逆动作前的门禁 |
+| `wait:` | 持久等待到某个时间点、有界外部事件或显式外部动作 | 跨等待的长流程（v0.10.0 引入） |
+| `cancel:` | 按条件提前终止整个 run | 前置检查失败时止损 |
+| `include:` / `workflow:` | 把另一个 workflow 内联进 DAG，或作为子 run 调用 | 流程复用（v0.9.0 起支持 `inputs:` / `returns:` / `with:` 签名） |
+| `when:` / `output_format:` / `context: fresh` / `provider:` / `model:` | 条件路由、结构化输出、上下文与模型控制 | 节点级精细控制 |
 
-`script:` 值得单独说。从官方 release 信息看，v0.3.3 开始，Archon 支持 script node，允许通过 `bun` 或 `uv` 运行内联 TypeScript / Python 或 `.archon/scripts/` 中的脚本。这让它在 YAML 加提示词的编排器之外，更像一个真正的工程自动化 runtime。需要解析 JSON、调用内部 API、做复杂条件判断时，script node 比纯 prompt 更可靠。
+`script:` 值得单独说。从官方 release 信息看，v0.3.3 开始，Archon 支持 script node：通过 `bun` 或 `uv` 运行内联 TypeScript / Python 或 `.archon/scripts/` 中的脚本，stdout 直接成为 `$nodeId.output` 供下游消费，支持 `deps:`（仅 uv）和 `timeout:`。这让它在 YAML 加提示词的编排器之外，更像一个真正的工程自动化 runtime。需要解析 JSON、调用内部 API、做复杂条件判断时，script node 比纯 prompt 更可靠。
+
+另一个 v0.9.0 之后必须知道的变化：工作流里的 Claude 节点不再继承你机器上配置的 skills 和 MCP servers。节点能看见什么，由它 YAML 里的 `skills:` 和 `mcp:` 字段显式声明；声明了但实际不可达的 skill 会在产生任何模型开销之前报错。以前"全局配好了顺便就能用"的写法，现在必须写进节点。
 
 ### Human-in-the-loop 有两种模式
 
-Archon 在文档里明确区分了两种常见的人机协同模式。
+Archon 在文档里明确区分了两种人机协同模式，官方给的选择标准很直接：人和 AI 在来回对话，用 interactive loop；流程默认前进、有人反对才回头，用 approval 加 `on_reject`。
 
 #### Interactive loop
 
@@ -177,13 +183,15 @@ Archon 在文档里明确区分了两种常见的人机协同模式。
 - id: refine-plan
   loop:
     prompt: |
-      User feedback: $LOOP_USER_INPUT
-      Read the current plan, revise it, and present the updated version.
+      User's feedback: $LOOP_USER_INPUT
+      Read the plan, apply feedback, present changes.
     until: PLAN_APPROVED
     max_iterations: 10
     interactive: true
-    gate_message: "Review the plan. Provide feedback or say approved."
+    gate_message: "Review the plan. Provide feedback or say 'approved'."
 ```
+
+每轮迭代结束后流程暂停，用户的输入通过 `$LOOP_USER_INPUT` 进入下一轮。approve 的行为取决于暂停时这轮迭代的状态：如果完成条件已经触发，不带评论的 approve 直接接受结果；带评论的 approve 则把评论当反馈再跑一轮。
 
 #### Approval with on_reject
 
@@ -194,12 +202,13 @@ Archon 在文档里明确区分了两种常见的人机协同模式。
   approval:
     message: "Review the report. Approve or request changes."
     capture_response: true
-    on_reject:
-      prompt: "Revise based on: $REJECTION_REASON"
-      max_attempts: 5
+    on_reject: { prompt: "Revise based on: $REJECTION_REASON", max_attempts: 5 }
+  depends_on: [generate]
 ```
 
-两种模式差别在于：interactive loop 是多轮对话式协作，approval 是单次门禁式介入。一个松散、一个僵硬，选错模式流程就不对味。Archon 把人类介入从临时行为变成流程原语，普通脚本编排不会自动提供这一点。
+没有 `on_reject` 时，驳回等于取消整个 workflow；有了 `on_reject`，驳回会触发修订 prompt，然后重新在同一道门禁前暂停。`capture_response: true` 打开后，你的审批意见才能作为 `$review-gate.output` 被下游节点读到。
+
+一个 v0.10.0 起的安全垫：在聊天平台里，门禁暂停期间随便发一句普通消息不再被自动记成批准——此前"不，别动 schema"也会被当成同意存档。现在门禁交给聊天 Agent 走确认式的 approve / reject：明确的同意才批准，明确的反对以你的原话为理由驳回，含糊的消息 Agent 会反过来问你。斜杠命令仍是最确定的路径。
 
 ## 为什么 worktree 隔离是 Archon 的工程核心
 
@@ -235,7 +244,7 @@ worktree 隔离直接解决了四个工程痛点：
 flowchart LR
     Entry["入口层：CLI / Web UI / Slack / Telegram / GitHub / Discord"] --> Orchestrator["编排层：Orchestrator"]
     Orchestrator --> Executor["执行层：Workflow Executor"]
-    Executor --> AI["AI 层：Claude / Codex 等 Assistant Clients"]
+    Executor --> AI["AI 层：Claude / Codex / Pi 等 Assistant Clients"]
     AI --> Executor
     Executor <--> Data[("数据层：SQLite / PostgreSQL")]
 ```
@@ -245,66 +254,76 @@ flowchart LR
 | 入口层 | CLI、Web UI、Slack、Telegram、GitHub、Discord | 接收用户指令，触发 workflow |
 | 编排层 | Orchestrator | 路由消息、管理上下文、决定调用哪个 workflow |
 | 执行层 | Workflow Executor | 解析 YAML、执行 DAG、处理依赖、条件和循环 |
-| AI 层 | Claude / Codex 等 Assistant Clients | 在指定节点执行推理、生成代码、做审查 |
-| 数据层 | SQLite / PostgreSQL | 持久化 codebases、conversations、sessions、workflow runs、isolation environments、messages、workflow events |
+| AI 层 | Claude / Codex / Pi 等 Assistant Clients | 在指定节点执行推理、生成代码、做审查 |
+| 数据层 | SQLite / PostgreSQL | 14 张核心表，持久化 codebases、conversations、sessions、workflow runs、isolation environments、messages、workflow events 等（PostgreSQL 下另有 Better Auth 表） |
 
 一次运行从入口进入编排层：Orchestrator 判定意图、选定 workflow 后交给执行层；Workflow Executor 按 DAG 逐个触发节点，AI 节点把推理结果交回，确定性节点直接执行；运行状态与产物持续写入数据层，供回放和排查。
 
 同一套 workflow 在 Web UI、命令行和聊天平台之间行为一致，本地 CLI 只是其中一个入口。数据层统一持久化，无论从哪个入口触发，运行历史都能在 Web UI 里回放。
 
-## 默认 workflows 怎么选，不要一上来就用最重的
+## 默认 workflows：先认清弃用窗口，再选
 
-官方 README 和 Getting Started 文档面向入门用户时，仍以 17 个核心 workflows 作为主目录。它们足够覆盖大多数团队的第一阶段需求。
+官方 README 和 Getting Started 文档面向入门用户时，主目录是 19 个默认 workflow。它们覆盖了从问答到 PR 的常见场景，但 v0.10.0 起，这批 workflow 大部分已进入弃用窗口，选型前需要先知道这一点。
 
-### 17 个核心 workflows
+### README 表里的 19 个默认 workflow
 
 | Workflow | 用途 |
 | ------ | ------ |
-| `archon-assist` | 通用问答、调试、探索代码库 |
-| `archon-fix-github-issue` | GitHub Issue 修复全流程 |
-| `archon-idea-to-pr` | 从功能想法到经过验证和审查的 PR |
-| `archon-plan-to-pr` | 执行已有计划并完成 PR |
-| `archon-issue-review-full` | 复杂 Issue 的修复与多 Agent 审查 |
-| `archon-smart-pr-review` | 按 PR 复杂度做定向审查 |
-| `archon-comprehensive-pr-review` | 5 个并行 reviewer 的全量 PR 审查 |
-| `archon-create-issue` | 归类问题、收集上下文并创建 GitHub Issue |
-| `archon-validate-pr` | 验证 feature branch 和 main 分支的 PR 行为 |
-| `archon-resolve-conflicts` | 检测并解决合并冲突 |
-| `archon-feature-development` | 从现有计划直接实现功能并创建 PR |
-| `archon-architect` | 架构扫频、复杂度治理、代码库健康提升 |
-| `archon-refactor-safely` | 带类型检查和行为验证的安全重构 |
-| `archon-ralph-dag` | 按 story 迭代推进 PRD 实现 |
-| `archon-remotion-generate` | 生成或修改 Remotion 视频组合 |
-| `archon-test-loop-dag` | 迭代式测试-修复循环 |
-| `archon-piv-loop` | 带人工审核的 Plan-Implement-Validate 循环 |
+| `archon-assist` | 通用问答、调试、探索代码库——带全部工具的完整 Claude Code Agent |
+| `archon-fix-github-issue` | Issue 分类 → 调查/规划 → 实现 → 验证 → PR → 定向审查 → 自修复 |
+| `archon-create-issue` | 问题归类 → 收集上下文 → 调查 → 创建 GitHub Issue |
+| `archon-issue-review-full` | GitHub Issue 的完整修复 + 多 Agent 全量审查流水线 |
+| `archon-piv-loop` | 有引导的 Plan-Implement-Validate 循环，迭代间有人工审查 |
+| `archon-idea-to-pr` | 功能想法 → 规划 → 实现 → 验证 → PR → 5 路并行审查 → 自修复 |
+| `archon-plan-to-pr` | 执行既有计划 → 实现 → 验证 → PR → 审查 → 自修复 |
+| `archon-feature-development` | 按既有计划实现功能 → 验证 → 创建 PR |
+| `archon-adversarial-dev` | 用对抗式开发从零构建完整应用 |
+| `archon-smart-pr-review` | 按 PR 复杂度分类 → 运行定向审查 Agent → 汇总结论 |
+| `archon-comprehensive-pr-review` | 5 个并行 reviewer 的多 Agent PR 审查，带自动修复 |
+| `archon-validate-pr` | 全面验证 PR，同时测试 main 分支与 feature 分支的行为 |
+| `archon-architect` | 架构扫频、降低复杂度、提升代码库健康度 |
+| `archon-refactor-safely` | 带类型检查钩子和行为验证的安全重构 |
+| `archon-interactive-prd` | 通过引导式对话创建 PRD |
+| `archon-ralph-dag` | PRD 实现循环——按 story 迭代直到完成 |
+| `archon-workflow-builder` | 为你的项目生成一份新的 Archon workflow YAML |
+| `archon-remotion-generate` | 用 AI 生成或修改 Remotion 视频组合 |
+| `archon-resolve-conflicts` | 检测合并冲突 → 分析双方 → 解决 → 验证 → 提交 |
+
+### v0.10.0 起：sdlc pack 是它们的继任者
+
+v0.10.0 的 changelog 把这次更替说得很清楚：新的 sdlc pack 用八个可复用原语组合出从"一个待办问题"到"评审过、CI 绿、可合并的 PR"的完整链路，取代过去的单体式 prompt。仓库源码里能看到它的十个子工作流：`archon-triage`、`archon-investigate`、`archon-plan`、`archon-implement`、`archon-review`、`archon-validate`、`archon-deliver`、`archon-pr`、`archon-ship`、`archon-upkeep`。
+
+改版前的 20 个 `archon-*` workflow（含 README 表格未列出的 `archon-review-block`、`archon-test-loop-dag`）被移进 `.archon/workflows/defaults/legacy/`，每次运行都会播报弃用公告，官方声明将在后续版本删除。`archon-assist` 不在 legacy 之列，单独留在 defaults 顶层。想长期保留某个旧 workflow，把它的 YAML 复制到你自己的 `.archon/workflows/`（项目级或全局、同名文件）即可，复制出去的版本不再播报弃用。
 
 ### 选型建议
 
 | 你的目标 | 优先选择 |
 | ------ | ------ |
 | 先问代码库问题、做探索 | `archon-assist` |
-| 从自然语言需求直接做功能 | `archon-idea-to-pr` |
+| 从自然语言需求直接做功能 | `archon-idea-to-pr`，或直接试 sdlc 链路 |
 | 你已经有成熟 plan，只想稳妥落地 | `archon-plan-to-pr` 或 `archon-feature-development` |
 | 你只想 review 当前 PR | `archon-smart-pr-review` 或 `archon-comprehensive-pr-review` |
 | 你要修 GitHub Issue | `archon-fix-github-issue` |
 | 你要做人机反复协作的开发闭环 | `archon-piv-loop` |
 
+上表右侧的 legacy workflow 在弃用窗口内仍然照常工作，适合现在上手；如果团队要定长期标准，值得直接评估 sdlc pack 的子工作流。
+
 ### 默认 workflow 数量口径不一致
 
-官方不同位置对"默认 workflows 的数量"口径并不一致：
+官方不同位置对"默认 workflows"的口径确实对不上，这是核实过的现状，不是文档笔误那么简单：
 
-- README 和 Getting Started 强调的是面向用户最常用的 17 个核心 workflows。
-- 更完整的文档还会出现 `archon-interactive-prd`、`archon-adversarial-dev`、`archon-workflow-builder` 等 workflow。
-- 源码里和 binary distribution 相关的 bundled defaults 又可能比完整文档目录更精简。
-- 不同文档示例的 YAML 语法也在演进，例如旧示例里常见 `fresh_context: true`，而新的 authoring 文档更强调 `context: fresh`、`approval`、`loop.interactive` 这套表达方式。
+- README 的表格与正文说的是 19 个默认 workflows。
+- authoring 文档写的是 21 个打包进二进制，多出的是 `archon-review-block` 和 `archon-test-loop-dag`。
+- v0.10.0 起，其中 20 个改版前的 workflow 被 `deprecated:` 标记覆盖，进入弃用窗口。
+- YAML 语法本身也在演进，例如 v0.11.0 移除了 `thinking:`，推理深度只剩 `effort:` 一个写法；`workflow:` 子运行节点不再允许声明自己的 `output_format`。
 
-这种差异反映的是 Archon 仍在快速迭代，文档错误只是表象。实践里不要死记清单，直接在目标仓库运行下面这条命令最可靠：
+实践里不要死记清单，直接在目标仓库运行下面这条命令最可靠：
 
 ```bash
 archon workflow list
 ```
 
-如果你准备自己写 workflow，建议把 README 当成概念导览，把 [Authoring Workflows](https://archon.diy/guides/authoring-workflows/) 当成实际语法基准。
+如果你准备自己写 workflow，建议把 README 当成概念导览，把 [Authoring Workflows](https://archon.diy/guides/authoring-workflows/) 当成实际语法基准。写完先跑 `archon validate workflows <name>`——它检查 YAML 语法、DAG 结构、依赖引用、command 文件存在性、MCP 配置和模型引用，报错信息带"did you mean"提示。
 
 ## 三条上手路径
 
@@ -347,6 +366,8 @@ brew install coleam00/archon/archon
 docker run --rm -v "$PWD:/workspace" ghcr.io/coleam00/archon:latest workflow list
 ```
 
+两个安装前提值得提前知道。其一，quick-install 的二进制不捆绑 Claude Code，装完 Archon 还要单独装 Claude Code 并通过 `CLAUDE_BIN_PATH` 指向它，或在 `~/.archon/config.yaml` 里配 `assistants.claude.claudeBinaryPath`——只有 Docker 镜像内置了 Claude Code。其二，x64 架构的 macOS/Linux 快速安装要求 CPU 支持 AVX2，老 Intel/AMD 机器和屏蔽了 AVX2 的虚拟机要走源码安装，ARM64 不受影响。
+
 安装后先做两步验证：
 
 ```bash
@@ -356,16 +377,17 @@ archon workflow list
 
 ### 路线 C：你想用 Web UI 观察和管理 workflows
 
-Archon 不只有 CLI。官方文档显示，binary installs 可以直接通过 `archon serve` 下载并启动 Web UI；源码运行则可以从 Archon 仓库启动前端开发环境。
+Archon 不只有 CLI。两种安装方式都用 `archon serve` 启动 Web 控制台：二进制安装首次运行时会下载匹配版本的 Web UI；源码检出则先在仓库根目录跑一次 `bun run build:web`，之后同样 `archon serve`。
 
-Web UI 有四个页面值得看：
+Web UI 有五个页面值得看：
 
 | 页面 | 你会看到什么 |
 | ------ | ------ |
-| Chat | 实时对话与工具调用可视化 |
-| Dashboard | workflow 监控、项目 / 状态 / 日期过滤 |
-| Workflow Builder | 可视化拖拽编辑 DAG |
-| Workflow Execution | 节点级进度和历史回放 |
+| Runs | 所有项目或单项目的运行列表，带状态过滤和实时进度 |
+| Run detail | 事件日志、工件、workflow 图，以及 approve / reject / resume / cancel / abandon 等治理操作 |
+| Project chat | 所选项目的实时对话与工具活动 |
+| Settings | Provider 凭证、模型分层与别名、Assistant 默认值、系统状态、GitHub 身份 |
+| Workflow builder | 实验性的可视化编排，覆盖一部分节点表单 |
 
 如果给团队引入，Web UI 让 workflow 运行从个人终端事件变成团队可见事件，它并不替代 CLI。多人协作时，Web UI 让运行状态、审批待办、历史回放对所有人可见，避免"只有跑命令的人知道发生了什么"。
 
@@ -376,6 +398,9 @@ Web UI 有四个页面值得看：
 ```bash
 # 查看当前目录可用的 workflows
 archon workflow list
+
+# 先零成本推演一遍 DAG：不建 run、不开 worktree、不调模型
+archon workflow run archon-idea-to-pr --dry-run "Add dark mode to the settings page"
 
 # 运行 workflow
 archon workflow run archon-idea-to-pr "Add dark mode to the settings page"
@@ -389,25 +414,29 @@ archon workflow run archon-idea-to-pr --cwd /path/to/repo "Add dark mode"
 # 不使用 worktree，直接在当前 checkout 上运行
 archon workflow run archon-assist --no-worktree "How does error handling work here?"
 
-# 查看运行状态
+# 查看活动中的运行（running + paused）
 archon workflow status
 
 # 恢复失败的 workflow
 archon workflow resume <run-id>
 
+# 校验 workflow 定义（不运行）
+archon validate workflows <name>
+
 # 放弃一个非终态 workflow
 archon workflow abandon <run-id>
 
 # 批准或驳回人工门禁
-archon workflow approve <run-id> "Looks good, proceed"
-archon workflow reject <run-id> "Please split the migration into two steps"
+archon workflow approve <run-id>
+archon workflow reject <run-id> --reason "Please split the migration into two steps"
 ```
 
-三个细节值得注意：
+四个细节值得注意：
 
 1. 写操作默认优先配合 worktree 隔离，不要把 `--no-worktree` 当常态。
-2. `archon workflow list` 读取的是**当前工作目录**的可用 workflows，没有全局固定目录这一说。
+2. `archon workflow list` 的发现范围是三处：当前仓库的 `.archon/workflows/`、全局的 `~/.archon/workflows/`、内置 bundled defaults。全局目录适合放跨项目通用的自有 workflow。
 3. 如果仓库里有和内置 workflow 同名的文件，仓库版本会覆盖 bundled default。
+4. approve 在 interactive loop 门禁上有讲究：完成条件已触发时，不带评论的 approve 是接受结果，带评论的 approve 会把评论当作下一轮反馈继续迭代；`approval:` 节点的 approve 则是直接放行。另外 v0.11.0 起 abandon 与 cancel 语义分离——`failed` 的 run 可以 resume，`cancelled` 的 run 直接丢弃，abandon 会先尝试停掉仍在写的活进程再落 cancelled 状态。
 
 ## 第一次成功的最小闭环
 
@@ -421,6 +450,9 @@ archon workflow list
 # 用轻量问题确认编排器能正常工作
 archon workflow run archon-assist "What workflows are available here?"
 
+# 零成本推演一次重量 workflow，确认 DAG 和门禁符合预期
+archon workflow run archon-idea-to-pr --dry-run "Add a tiny docs-only improvement"
+
 # 再运行一个真正会创建 worktree 的写任务
 archon workflow run archon-idea-to-pr --branch feat/hello-archon "Add a tiny docs-only improvement"
 
@@ -428,9 +460,9 @@ archon workflow run archon-idea-to-pr --branch feat/hello-archon "Add a tiny doc
 archon workflow status
 ```
 
-当你能稳定完成这四步，才算跑通 Archon 的最小闭环：CLI 可用、workflow 可发现、AI 节点可执行、worktree 隔离生效。
+当你能稳定完成这五步，才算跑通 Archon 的最小闭环：CLI 可用、workflow 可发现、AI 节点可执行、隔离与门禁行为符合预期。
 
-## 新手最容易踩的 5 个坑
+## 新手最容易踩的 6 个坑
 
 ### 把 README 示例当成完整语法真相
 
@@ -446,7 +478,11 @@ README 适合快速建立直觉，但不适合作为 workflow authoring 的最�
 
 ### 写 interactive loop 时漏掉 `gate_message`
 
-根据当前 workflow 校验逻辑，interactive loop 通常需要明确的 `gate_message`，否则用户很难知道在暂停点该输入什么，某些配置下也会直接触发加载错误。`gate_message` 是人和流程之间的契约，漏掉它会让暂停点变成黑盒。
+官方 loop 文档对 `gate_message` 的标注是"interactive: true 时必填"。而且要注意方向：单独写 `gate_message` 并不会产生门禁，必须是 `loop.interactive: true` 和 `gate_message` 成对出现；把 `interactive:` 直接写在节点层（loop 外面）是未知键，加载时会被忽略并给出警告。`archon validate workflows` 能在运行前把这类问题报出来。
+
+### 假设节点继承你机器上的 skills 和 MCP
+
+v0.9.0 起，workflow 里的 Claude 节点只看见 YAML 声明的 `skills:` 和 `mcp:`，操作员机器上的用户级、项目级、插件级配置都不再透传。从旧版本升级后如果某个节点突然"少了能力"，先检查是不是依赖了环境里的隐式配置。
 
 ### 忘了"同名文件覆盖默认 workflow"
 
@@ -454,7 +490,7 @@ README 适合快速建立直觉，但不适合作为 workflow authoring 的最�
 
 ## 自定义 workflows
 
-Archon 的上限不在那 17 个默认 workflow，而在于你能不能把团队流程写成可提交、可维护的 workflow 文件。
+Archon 的上限不在那 19 个默认 workflow，而在于你能不能把团队流程写成可提交、可维护的 workflow 文件。
 
 ### 自定义文件放在哪里
 
@@ -462,11 +498,13 @@ Archon 的上限不在那 17 个默认 workflow，而在于你能不能把团队
 - command 文件放在 `.archon/commands/`
 - script node 相关脚本可放在 `.archon/scripts/`
 
-官方文档明确说明：这些文件会从**当前仓库**运行时动态加载，没有全局模板目录静态拷贝这一步。你可以把 workflow 当作仓库基础设施的一部分来维护。这意味着同一个团队的不同项目可以有完全不同的 workflow 集合，新成员 clone 仓库后就能看到团队当前的标准流程。
+现在还多了一种 pack 形态：把某个 workflow 的 YAML、commands、scripts 整体放进 `.archon/workflows/<pack>/<workflow>/`，两层目录名都由你定，这棵树在目标仓库和 `~/.archon/workflows/` 下都能用。旧的扁平结构和共享的 `.archon/commands/`、`.archon/scripts/` 继续支持。v0.11.0 起，`archon plugin install owner/repo` 可以把发布在 GitHub 上的 workflow pack 整棵装进本地，`archon plugin copy` 再复制成可编辑的项目副本。
+
+这些文件都从运行时动态加载。你可以把 workflow 当作仓库基础设施的一部分来维护，这意味着同一个团队的不同项目可以有完全不同的 workflow 集合，新成员 clone 仓库后就能看到团队当前的标准流程。
 
 ### 一个更接近真实团队流程的示例
 
-下面这个例子展示的是"审查 → 人工批准 → 驳回后自动修订"的 gate-then-fix 模式：
+下面这个例子展示的是"审查 → 人工批准 → 驳回后自动修订"的 gate-then-fix 模式（`review-pr`、`create-pr` 需要在 `.archon/commands/` 里有对应的 command 文件）：
 
 ```yaml
 name: team-review-gate
@@ -495,18 +533,18 @@ nodes:
 
 它在不可逆动作前把人判断显式写进系统，比"让 AI 自己 review 自己"可靠。`create-pr` 一旦创建就会通知 reviewer、触发 CI，在它前面加 approval gate，能避免 AI 把不成熟的改动直接推到团队视野里。
 
-另一个细节：在 Web UI 里，带人工审批门的 workflow 通常还需要 workflow 级的 `interactive: true`，这样它会以前台交互方式运行，避免被完全丢到后台。这个约束在参考文档里写得比 README 更明确。
+另一个细节：workflow 级的 `interactive: true` 和节点的 interactive loop 不是一回事——它只在 Web UI 生效，让 run 保持在前台交互，聊天平台本来就是前台，这个字段对它们没有作用。这个约束在参考文档里写得比 README 更明确。
 
 ### 自定义时最值得坚持的 4 条原则
 
 1. 一个节点只做一件事，不要把规划、实现、验证混在同一个 AI prompt 里。混在一起会让失败定位变得困难——你不知道是规划错了、实现错了还是验证错了。
 2. 所有 AI 节点后面都跟一个确定性验证步骤，至少是测试、lint 或构建之一。AI 节点的输出有随机性，确定性节点是兜底。
 3. 重要决策前加 approval gate，例如数据库迁移、批量删除、PR 创建。判断标准是：这个动作的回滚成本高不高。
-4. 从默认 workflow 复制再改，避免第一天就从空白 YAML 重新发明流程。默认 workflow 经过实战检验，复制再改能少踩很多语法坑。
+4. 从默认 workflow 复制再改，避免第一天就从空白 YAML 重新发明流程。复制还有个附带好处：拷进自己项目目录的副本不再播报 legacy 弃用公告，不受官方删除节奏影响。
 
 ## 边界与注意事项
 
-工程选型先看边界。Archon 当前至少有 5 个限制：
+工程选型先看边界。Archon 当前至少有 6 个限制：
 
 ### Archon 解决的是流程治理，不是模型能力替换
 
@@ -520,21 +558,25 @@ nodes:
 
 如果只是问一个函数是做什么的、为什么测试失败，直接用 `archon-assist` 或普通 Agent 往往更省成本。Archon 最有价值的地方，是多步、需要验证、需要隔离的任务。判断标准是：这个任务会不会被重复执行、需不需要回溯、错了能不能回滚。
 
-### 文档目录变化很快，实际以本机 live list 为准
+### 默认 workflow 正处在换代期，实际以本机 live list 为准
 
-默认 workflow 数量、命名、bundled set 与文档目录的差异，是当前 Archon 非常真实的状态。不要把某一页 README 当唯一真相。升级版本后第一件事是跑 `archon workflow list`，确认本机实际可用的工作流。
+19（README 表格）、21（打包进二进制）、20（进入弃用窗口的 legacy）这组数字是 2026-09-27 复核时的读数，legacy workflow 的删除时点官方只说了"后续版本"。不要把某一页 README 当唯一真相。升级版本后第一件事是跑 `archon workflow list`，确认本机实际可用的工作流，再对照 `archon version` 决定是否需要同步团队的自定义 workflow。
 
 ### 人工审核仍然不可省略
 
-Archon 提供了更好的审批点，但并不意味着你可以在数据库迁移、大规模重构、权限改造这类任务上完全放弃人工 review。approval gate 是流程里的一环，它不能替代有经验的工程师对不可逆动作的最终判断。
+Archon 提供了更好的审批点，但并不意味着你可以在数据库迁移、大规模重构、权限改造这类任务上完全放弃人工 review。approval gate 是流程里的一环，它不能替代有经验的工程师对不可逆动作的最终判断。v0.10.0 把"聊天里的普通消息不再自动算批准"写进了行为，机制上收紧了一步，但最终判断仍然是人的。
+
+### 遥测默认开启，但可一键关闭
+
+Archon 默认发送匿名使用事件：哪些 bundled workflow 被真实使用、什么平台、成功率如何。官方声明不收集代码、prompt、消息内容，自有 workflow 的名字也只以 `"custom"` 计。不想发送的话，设 `ARCHON_TELEMETRY_DISABLED=1`、`DO_NOT_TRACK=1` 或 `POSTHOG_API_KEY=off` 任一即可，CI 环境（`CI=true`）自动关闭。用 `archon telemetry status` 可以查看当前状态。给公司内网环境做评估时，这一项建议放进清单。
 
 ## 实践建议
 
-- 从 `archon-idea-to-pr`、`archon-plan-to-pr`、`archon-feature-development` 三者中选一个作为团队起点，不要一开始就铺满所有 workflow。先让一个 workflow 跑稳，再扩展。
+- 从 `archon-idea-to-pr`、`archon-plan-to-pr`、`archon-feature-development` 三者中选一个作为团队起点，不要一开始就铺满所有 workflow。先让一个 workflow 跑稳，再扩展。团队要定长期标准的话，把 sdlc pack 纳入评估。
 - 任何会改代码的任务，默认保留 worktree isolation；只有只读探索才考虑 `--no-worktree`。
 - 把 workflow 当仓库资产来维护，和 CI、lint、脚本一样进入版本控制。workflow 变更应该走 code review，避免某个人偷偷改 YAML。
 - 在 workflow 里优先放"组织步骤"和"验证门禁"，不要试图把所有聪明都塞进长 prompt。prompt 越长越难维护，验证门越多流程越稳。
-- 每次升级 Archon 版本后，先运行 `archon workflow list` 和 `archon version`，再决定是否需要同步更新团队的自定义 workflow。内置 workflow 的语法和字段可能随版本变化，覆盖文件需要手动同步。
+- 每次升级 Archon 版本后，先运行 `archon workflow list`、`archon version` 和 `archon validate workflows`，再决定是否需要同步更新团队的自定义 workflow。v0.9 到 v0.11 之间有多次影响 YAML 写法的破坏性变更，覆盖文件需要手动 diff。
 
 采用顺序：先在个人项目跑通 `archon-assist` 和 `archon-idea-to-pr` 的最小闭环，确认 worktree 隔离和 approval gate 对你有价值；再把一个团队高频流程（例如 PR 审查）写成自定义 workflow，验证它能否被团队复用；最后再考虑是否把所有开发任务都迁进 Archon。
 
@@ -542,17 +584,19 @@ Archon 提供了更好的审批点，但并不意味着你可以在数据库迁�
 
 ### Archon 是不是 Claude Code 的替代品？
 
-Archon 不是 Claude Code 的替代品。它把 Claude Code、Codex 等编码能力拉进可编排流程，和底层 Agent 是编排器与执行器的关系。Claude Code 负责单个节点的推理和代码生成，Archon 负责把多个节点串成有依赖、有门禁的流程。
+Archon 不是 Claude Code 的替代品。它把 Claude Code、Codex、Pi 等编码能力拉进可编排流程，和底层 Agent 是编排器与执行器的关系。Claude Code 负责单个节点的推理和代码生成，Archon 负责把多个节点串成有依赖、有门禁的流程。
 
 ### 为什么我本机看到的默认 workflows 数量和文章里不一样？
 
-因为 Archon 现在同时存在用户向导型文档、完整参考文档、源码中的 bundled defaults、仓库自定义 overrides 这几套来源。你本机的 live list 才是最终答案。文档目录展示的是"可能可用"的 workflow，本机 list 展示的是"实际可用"的 workflow。
+因为"默认 workflow"在官方语境里至少有四个来源：README 表格（19 个）、打包进二进制的 defaults（21 个）、已标记弃用的 legacy 集合（20 个）、外加你的全局和项目目录里的自有 workflow。发现来源分 bundled、global、project 三处，同名时项目级文件覆盖内置版本。你本机的 live list 才是最终答案。
 
 ### `archon-idea-to-pr`、`archon-plan-to-pr`、`archon-feature-development` 应该怎么选？
 
 - 需求还只有一句描述，用 `archon-idea-to-pr`。它会先规划再实现。
 - 已经有人给出 plan，用 `archon-plan-to-pr`。它跳过规划直接执行。
 - 团队流程比较轻，只想从现有计划快速实现并发 PR，用 `archon-feature-development`。它的验证门更少，速度更快。
+
+这三个都在 legacy 弃用窗口内，短期内照常可用；长期规划建议对照 sdlc pack 的 `archon-plan`、`archon-implement`、`archon-deliver` 链路。
 
 ### 一定要用 Web UI 吗？
 
@@ -576,6 +620,7 @@ Archon 解决的不是让 AI 写出更多代码，而是让 AI 的产出进入�
 - [Authoring Workflows](https://archon.diy/guides/authoring-workflows/)
 - [CLI Reference](https://archon.diy/reference/cli/)
 - [The Book of Archon](https://archon.diy/book/what-is-archon/)
+- [llms.txt（全站文档索引，供 AI 工具读取）](https://archon.diy/llms.txt)
 
 ---
 
@@ -583,16 +628,8 @@ Archon 解决的不是让 AI 写出更多代码，而是让 AI 的产出进入�
 
 本文的判断基于以下来源和取径：
 
-1. **项目文档分析**：分析了 `coleam00/Archon` 仓库的 GitHub README、官方文档（archon.diy）、Authoring Workflows 指南；仓库基本数据经 GitHub API 于 2026-08-05 验证（Stars 23,073、Forks 3,452、MIT、TypeScript、最新 release v0.7.1）
-2. **CLI 命令验证**：基于 `archon workflow list` 的实际输出和官方文档中的命令说明
-3. **架构分析**：基于文章中的 5 层架构拆解（入口层、编排层、执行层、AI 层、数据层）
-4. **技术细节验证**：部分 YAML 语法和 CLI 命令来自官方文档和源码，实际使用时需要参考最新版本
-5. **事实边界**：Archon 仍在快速迭代（截至 v0.7.1），文档和功能的对齐可能需要以本机实测为准
-
-**局限性**：
-
-- 默认 workflow 数量在官方文档不同位置可能有差异，本文以 README 提到的 17 个核心 workflows 为主
-- YAML 语法在 v0.3.3 后有所演进（如 `context: fresh` 替代 `fresh_context: true`），需要注意版本兼容性
-- 本文未实际运行所有 workflows，部分描述基于文档推断
-- Web UI 功能可能需要额外配置，本文未深入安装细节
-
+1. **版本锚点**：原稿基于 2026-08-05 前后的仓库状态（v0.7.1）；2026-09-27 复核并整体更新至 v0.11.1（2026-09-25 发布）与 dev 分支文档，v0.8 至 v0.11 期间影响正文表述的变化（sdlc 换代、节点 skills/MCP 声明化、汇合规则收紧、abandon/cancel 语义分离、`thinking:` 移除）已并入正文。
+2. **仓库读数**：Stars 23,565、Forks 3,487、MIT、TypeScript、默认分支 dev，均为 2026-09-27 GitHub API 读数。
+3. **核实渠道**：GitHub API（repo / releases / tags / git trees）、dev 分支的 README 与 CHANGELOG、`packages/docs-web` 文档源（authoring-workflows、loop-nodes、script-nodes、approval 节点、CLI reference、adapters/web、getting-started/installation），以及 archon.diy 线上页面逐条验证可访问。
+4. **YAML 示例来源**：正文三段 YAML 分别取自 authoring 文档的 Workflow Structure 示例、Interactive Loop 示例与 Approval with on_reject 示例，未做改写；自定义一节的 `team-review-gate` 是按官方语法组织的示例，其中的 command 需要读者自行提供。
+5. **事实边界**：sdlc pack 在二进制发行版中的打包与分发方式，以你本机 `archon workflow list` 的输出为准；legacy workflow 的删除时点官方仅表述为"an upcoming release"；README 与 CHANGELOG 的更新节奏不完全同步，两者冲突时以 CHANGELOG 和本机实测为准。本文未实际运行 workflow，运行期行为以官方文档与实测为准。

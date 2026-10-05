@@ -1,13 +1,14 @@
 ---
 title: "Open-LLM-VTuber：把\"能被打断\"做成一等公民的开源桌面 AI 伴侣"
 date: "2026-06-03T09:05:00+08:00"
+lastmod: "2026-09-30T10:30:00+08:00"
 slug: "open-llm-vtuber-voice-llm-live2d-guide"
 github_repo: "Open-LLM-VTuber/Open-LLM-VTuber"
 source_key: "gh:Open-LLM-VTuber/Open-LLM-VTuber"
 description: "Open-LLM-VTuber 是支持免提语音打断、本地 LLM、可换 Live2D 形象的开源 AI 伴侣。本文拆解 VAD 状态机、asyncio.Task 取消链与 Agent 装饰器链设计。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Live2D", "本地LLM", "Python"]
+tags: ["VTuber", "Live2D", "语音交互", "本地LLM", "Python"]
 author: "钳岳星君"
 summary: "Open-LLM-VTuber 真正解决的不是\"让 LLM 说话\"，而是\"LLM 正在说话时能被合理打断\"。本文拆解 VAD 状态机、asyncio.Task 取消链、装饰器化的 Agent pipeline，以及 Live2D 表情驱动与多 LLM/ASR/TTS 后端的解耦设计。"
 ---
@@ -31,9 +32,9 @@ summary: "Open-LLM-VTuber 真正解决的不是\"让 LLM 说话\"，而是\"LLM 
 
 ## 一句话核心判断
 
-Open-LLM-VTuber（[仓库地址](https://github.com/Open-LLM-VTuber/Open-LLM-VTuber)，约 1.29 万 stars / 1.5 千 forks，Python，2026-08-07 核实；后端 MIT，前端自 v1.2.0 起为 Open-LLM-VTuber License 1.0，Live2D 示例模型单独授权）在 Python 单进程里把"麦克风采样 → VAD 端点检测 → ASR 文字 → 流式 LLM 推理 → 句级切片 → TTS 合成 → Live2D 表情 + 嘴型"做成一条**支持任意环节被打断的实时管线**。当 AI 正在念一长段回答时，你随时可以开口，它能在亚秒级（受 LLM 推理与 TTS 合成链路共同影响）停下、收听你的新输入、然后接话。这种"被打断"的体验，是它和"按一下按钮问一句"的桌面助手在工程复杂度上最关键的鸿沟。
+Open-LLM-VTuber（[仓库地址](https://github.com/Open-LLM-VTuber/Open-LLM-VTuber)，约 1.4 万 stars / 1.7 千 forks，Python，2026-09-30 核实；后端 MIT，前端自 v1.2.0 起为 Open-LLM-VTuber License 1.0，Live2D 示例模型单独授权）在 Python 单进程里把"麦克风采样 → VAD 端点检测 → ASR 文字 → 流式 LLM 推理 → 句级切片 → TTS 合成 → Live2D 表情 + 嘴型"做成一条**支持任意环节被打断的实时管线**。当 AI 正在念一长段回答时，你随时可以开口，它能在亚秒级（受 LLM 推理与 TTS 合成链路共同影响）停下、收听你的新输入、然后接话。这种"被打断"的体验，是它和"按一下按钮问一句"的桌面助手在工程复杂度上最关键的鸿沟。
 
-> 注：项目最新 release 为 v1.2.1（2025-08-26），v2.0 正在做完整重写；本文所有源码引用基于 `main` 分支当前快照（最近推送 2026-05-15）。
+> 注：项目最新 release 为 v1.2.1（2025-08-26），v2.0 正在做完整重写；本文所有源码引用基于 `main` 分支当前快照（最近推送 2026-05-15），关键读数以 2026-09-30 核实为准。
 
 ---
 
@@ -50,11 +51,11 @@ graph TB
         WS[websocket_handler<br/>消息路由]
         SC[service_context<br/>每客户端一份]
         VAD[vad/silero<br/>语音活动检测]
-        ASR[asr/*<br/>7+ 种实现]
+        ASR[asr/*<br/>7 种实现]
         AG[agent/<br/>BasicMemoryAgent]
         TF[transformers<br/>sentence_divider 等]
         CONV[conversations/<br/>单聊 / 群聊]
-        TTS[tts/*<br/>十几种实现]
+        TTS[tts/*<br/>19 种实现]
     end
 
     subgraph 后端 "可插拔的外部服务"
@@ -100,7 +101,7 @@ graph TB
 | 输入通道 | 鼠标点击、托盘菜单 | 按住说话键 | **免提常驻麦克风** |
 | 打断能力 | 不存在 | 需要手动松开按键 | **VAD 自动检测，AI 说话中可被打断** |
 | 状态机 | 单向 | 半双工 | **全双工 + 取消旧 asyncio.Task** |
-| 输出形式 | 动画 + 文字气泡 | TTS 完整句 | **流式 TTS，首句到达即可发声** |
+| 输出形式 | 动画 + 文字气泡 | TTS 完整句 | **按句流式：首句合成完即发声，后续句子边合成边排队** |
 | 模型可换 | 形象换皮 | 通常锁定云 API | **LLM/ASR/TTS 三类后端都做工厂解耦** |
 | Live2D 表情 | 内置 idle 动画 | 一般不支持 | **后端 prompt 注入表情标签，agent 装饰器链解析** |
 
@@ -114,16 +115,17 @@ graph TB
 
 ### 1. `websocket_handler.py` —— 入口与消息路由
 
-整个服务端只有一个 WebSocket endpoint（`server.py` 注册），所有交互都通过 WS 消息的 `type` 字段分发。`MessageType` 枚举把消息归成若干家族——`CONVERSATION` 里的 `mic-audio-end` / `text-input` / `ai-speak-signal` 是会话触发入口，`CONTROL` 里的 `interrupt-signal` / `audio-play-start` 是打断与控制信号（此外还有 `GROUP` / `HISTORY` / `DATA` / `CONFIG` 等家族）：
+整个服务端只有一个 WebSocket endpoint（`server.py` 注册），所有交互都通过 WS 消息的 `type` 字段分发。`MessageType` 枚举把消息归成六个家族——和打断直接相关的是两个：`CONVERSATION` 里的 `mic-audio-end` / `text-input` / `ai-speak-signal` 是会话触发入口，`CONTROL` 里的 `interrupt-signal` / `audio-play-start` 是打断与播放控制信号：
 
 ```python
 # src/open_llm_vtuber/websocket_handler.py
 class MessageType(Enum):
-    GROUP      = ["add-client-to-group", "remove-client-from-group"]
-    HISTORY    = ["fetch-history-list", "fetch-and-set-history", "create-new-history", "delete-history"]
+    GROUP        = ["add-client-to-group", "remove-client-from-group"]
+    HISTORY      = ["fetch-history-list", "fetch-and-set-history", "create-new-history", "delete-history"]
     CONVERSATION = ["mic-audio-end", "text-input", "ai-speak-signal"]
-    CONTROL    = ["interrupt-signal", "audio-play-start"]
-    DATA       = ["mic-audio-data"]
+    CONFIG       = ["fetch-configs", "switch-config"]
+    CONTROL      = ["interrupt-signal", "audio-play-start"]
+    DATA         = ["mic-audio-data"]
 ```
 
 `WebSocketHandler.handle_new_connection()` 为每个新客户端初始化一份独立的 `ServiceContext`，其中 `config` / `system_config` / `character_config` 三个配置字段各自 `model_copy(deep=True)`，这是"多客户端互不污染"的工程基线。每个客户端持有自己的 `asr_engine / tts_engine / vad_engine / agent_engine / live2d_model` 引用。
@@ -185,11 +187,16 @@ async def handle_individual_interrupt(
         task = current_conversation_tasks[client_uid]
         if task and not task.done():
             task.cancel()                          # 1) 取消正在跑的协程
+            logger.info("🛑 Conversation task was successfully interrupted")
 
-    context.agent_engine.handle_interrupt(heard_response)   # 2) 通知 LLM agent
+        try:
+            context.agent_engine.handle_interrupt(heard_response)   # 2) 通知 LLM agent
+        except Exception as e:
+            logger.error(f"Error handling interrupt: {e}")
 
-    if context.history_uid:
-        store_message(...)                        # 3) 把被打断的回合存进历史
+        if context.history_uid:
+            store_message(...)                        # 3) 把 AI 已说出的部分存进历史
+            store_message(role="system", content="[Interrupted by user]")
 ```
 
 三步缺一不可：
@@ -243,13 +250,13 @@ LLM token stream
   → sentence_divider 切成完整句
   → actions_extractor 抽出表情
   → tts_filter 清洗 TTS 不可读字符
-  → TTSTaskManager.audio_to_proactive_speak / speak
-  → tts_engine.async_generate_audio(sentence) 
-  → 音频流通过 WS 推给前端
+  → TTSTaskManager.speak 逐句登记 TTS 任务
+  → tts_engine.async_generate_audio 整句合成
+  → 音频 payload 按序号经 WS 推给前端
   → 前端 Live2D SDK 播放声音 + 切换表情
 ```
 
-当打断信号来临时，`tts_manager` 收到 `interrupt-signal`，会丢弃尚未播完的句子；已发到前端的音频在 `audio-play-start` 帧之后就被截断。
+合成与打断的衔接：`TTSTaskManager` 为每个句子起独立的 `asyncio.Task`（多句并行合成），但用序列号缓冲保证按句序推送；会话协程末尾 `asyncio.gather(*tts_manager.task_list)` 等待全部句子完成。打断时 `task.cancel()` 会顺着这条 gather 把未完成的合成任务一并取消，收尾时 `cleanup_conversation` 调 `tts_manager.clear()` 兜底清空任务表；已经推送到前端的音频由前端在收到打断信号后停止播放。
 
 ### 6. `agent/agents/` —— Agent 的可插拔性
 
@@ -284,10 +291,10 @@ Open-LLM-VTuber 不打算和你抢 agent 设计的活——它只做"把 agent �
 值得在拆解时提一下的几项 v1.2.0 变更（[release 页面](https://github.com/Open-LLM-VTuber/Open-LLM-VTuber/releases/tag/1.2.0)）：
 
 - **MCP（Model Context Protocol）支持** —— agent 可以调外部工具，内置 `time` / `ddg-search` MCP server，浏览器侧还能用 BrowserBase 的 Live View。
-- **Letta 长期记忆** —— 之前一直说"long-term memory is temporarily removed"，v1.2.0 借 `LettaAgent` 还回来了。
-- **Live2D 升级到 Cubism 5** —— 前端从 `pixi-live2d-display-lipsync` 切到官方 Live2D Web SDK；副作用是 **Cubism 2.1 模型不再支持**，README 明确提示这是 breaking change。
+- **Letta 长期记忆** —— v1.0 重构时被移除的长期记忆，v1.2.0 以 `LettaAgent`（对接外部 Letta 服务）的形式给出路径；main 分支 README 至今仍标注内置长期记忆 "temporarily removed (coming back soon)"。
+- **Live2D 升级到 Cubism 5** —— 前端从 `pixi-live2d-display-lipsync` 切到官方 Live2D Web SDK；副作用是 **Cubism 2.1 模型不再支持**，release notes 明确提示这是 breaking change。
 - **B 站直播弹幕接入** —— `live/bilibili_live.py` 把 B 站弹幕转成 `user_input`，理论上可以让 AI 在直播间里"看到"弹幕互动。
-- **LM Studio / SparkTTS / SiliconFlow TTS / MiniMax TTS** —— 后端矩阵再扩。
+- **LM Studio（LLM）/ OpenAI-Compatible / SparkTTS / SiliconFlow TTS（TTS）** —— 后端矩阵再扩。
 
 这一波变更说明项目在"对话质量 + 长期记忆 + 工具调用 + 跨平台直播"四个方向同时推进，而**打断机制本身没改动**——它已经是 v1.0.0 时就稳定下来的核心架构。
 
@@ -297,9 +304,9 @@ Open-LLM-VTuber 不打算和你抢 agent 设计的活——它只做"把 agent �
 
 把"插拔"做到这个粒度不是炫技：因为"延迟 × 隐私 × 离线"在每一层的取舍完全不同，分开才能单独调。
 
-- **LLM 层**：云 API（Claude / GPT-4o / Gemini）质量上限高、隐私差；Ollama / vLLM / LM Studio / llama.cpp 是本地化主力，**Ollama 是 v1.2.0 后配置里 `llm_provider` 的预设项**。
-- **ASR 层**：本地离线阵营（sherpa-onnx + SenseVoiceSmall、faster-whisper、whisper.cpp、FunASR）和云 API 阵营（OpenAI Whisper、Groq Whisper、Azure ASR）并行。仓库 release zip 预下载了 `SenseVoiceSmall` 离线模型（**这个文件名是 release notes 写明的**），对内地用户比较友好。
-- **TTS 层**：19 种实现里既有 Edge TTS（免 API key 的微软云服务）、ElevenLabs / Cartesia / Azure（云）、也有 CosyVoice（v1+v2）/ GPTSoVITS / MeloTTS / pyttsx3 / Fish Audio（本地+可声音克隆）。**v1.3 计划上"流式 TTS"**——目前多数实现要等整句合成完才发前端，是首句延迟的瓶颈。
+- **LLM 层**：云 API（Claude / GPT-4o / Gemini）质量上限高、隐私差；Ollama / vLLM / LM Studio / llama.cpp 是本地化主力，官方 quick-start 的默认路径就是 Ollama（配置项预设 `ollama_llm`）。
+- **ASR 层**：本地离线阵营（sherpa-onnx + SenseVoiceSmall、faster-whisper、whisper.cpp、FunASR）和云 API 阵营（OpenAI Whisper、Groq Whisper、Azure ASR）并行。v1.2.1 专门给内地用户准备了内置 SenseVoice 模型的中文加速下载包（release notes 写明"就不用再从 github 上拉取了"），离线部署省一步。
+- **TTS 层**：19 种实现里既有 Edge TTS（免 API key 的微软云服务）、ElevenLabs / Cartesia / Azure（云）、也有 CosyVoice（v1+v2）/ GPTSoVITS / MeloTTS / pyttsx3 / Fish Audio（本地+可声音克隆）。**按句合成是当前的首句延迟瓶颈**——`TTSTaskManager` 句间并行、按序推送，但单句内部要等 `async_generate_audio` 把整句合成完才开始推流，首句延迟 = LLM 首 token + 第一句完整合成时间。
 
 > 这种"每层都有 7-19 种可换实现"的工程代价是 `*_factory.py` 抽象层会比较啰嗦，但好处是：你可以**只换一层**做实验，比如把 ASR 从云 Whisper 换到本地 sherpa-onnx，对比首句延迟和准确率，而不必动 LLM 和 TTS。
 
@@ -350,39 +357,41 @@ sequenceDiagram
 注意几个工程细节：
 
 1. **`<|PAUSE|>` 标签是 Silero VAD 的内部协议** —— 在 IDLE→ACTIVE 转换瞬间 yield 这个特殊字节，告诉上层"这里是一段连续语音的开始"，让前端/服务端能正确切分 buffer。
-2. **打断的"已听清的部分"是 `heard_response`** —— 它是从 LLM 输出中收集到的、已经经过装饰器链处理过的字符串，由 `TTSTaskManager` 在取消时同步返回。把它写进历史，而不是写 `[用户在 X 时刻说话]`，能保住"上下文连续"。
+2. **打断的"已说出部分"是 `heard_response`** —— 它由前端随 `interrupt-signal` 消息的 `text` 字段回传（后端 `data.get("text", "")`），内容是 AI 已经播出的文本。把它写进历史，而不是写 `[用户在 X 时刻说话]`，能保住"上下文连续"。
 3. **新会话的 trigger 可以是 `mic-audio-end / text-input / ai-speak-signal` 三种** —— `ai-speak-signal` 用于"AI 主动说话"功能（proactive speaking），由前端定时器触发。
 
 ---
 
 ## 装上跑一遍的最小路径
 
-这是从仓库 README 和 pyproject.toml 还原出的最小可用步骤，**不要照搬 v1.0.0 之前的老文档**（README 明确说 v1.0.0 是不兼容更新）：
+以下步骤按官方 quick-start 文档还原（**不要照搬 v1.0.0 之前的老文档**，README 明确说 v1.0.0 是不兼容更新）：
 
 ```bash
-# 1. 克隆（带 frontend 子模块）
-git clone --recurse-submodules https://github.com/Open-LLM-VTuber/Open-LLM-VTuber.git
-cd Open-LLM-VTuber
-
-# 2. 安装 uv（项目推荐用 uv 来管依赖）
-#    macOS:  brew install uv
+# 1. 前置依赖：git、FFmpeg、uv
+#    FFmpeg 是必需项，缺了会报"找不到音频文件"；浏览器只用 Chrome（Edge/Safari 有已知问题）
+#    macOS:  brew install git ffmpeg uv
 #    其他:   https://docs.astral.sh/uv/
 
-# 3. 同步依赖（注意 README 强调 conf.yaml 不再入库）
+# 2. 克隆（--recursive 拉 frontend 子模块，漏了会白屏；
+#    也别用 GitHub "Code" 按钮的 Zip——不含子模块和 Git 信息）
+git clone --recursive https://github.com/Open-LLM-VTuber/Open-LLM-VTuber.git
+cd Open-LLM-VTuber
+
+# 3. 同步依赖（v1.0.0 起推荐 uv；不想用 uv 也有 requirements.txt）
 uv sync
 
-# 4. 启动
+# 4. 启动（浏览器访问 http://localhost:12393，端口在 conf.yaml 的 server 段改）
 uv run run_server.py
 ```
 
-启动后访问 `http://localhost:8000`（或 electron 桌面端），第一次启动会提示你从 `config_templates/` 复制 `conf.yaml` 模板并填好 LLM / ASR / TTS 后端信息。
+配置文件 `conf.yaml` 自 v1.1.0 起不再自动生成：从 `config_templates/` 复制 `conf.default.yaml`（或中文版 `conf.ZH.default.yaml`）到项目根目录并改名为 `conf.yaml`，然后填好 LLM / ASR / TTS 后端信息。快速开始文档的默认组合是 Ollama + sherpa-onnx（SenseVoiceSmall）+ Edge TTS。
 
 ### 推荐的后端组合（按"零云、纯本地"严格排序）
 
 | 层级 | 推荐 | 备注 |
 |------|------|------|
 | LLM | **Ollama** + Qwen2.5 / Llama3.1 | 本地推理，断网可跑；GGUF 也可走 llama.cpp |
-| ASR | **sherpa-onnx** + SenseVoiceSmall | 完全离线，中文/英文/日文/韩文都覆盖；预下载在 release zip 里 |
+| ASR | **sherpa-onnx** + SenseVoiceSmall | 完全离线，中文/英文/日文/韩文都覆盖；v1.2.1 中文加速包内置该模型 |
 | TTS | **Edge TTS**（免 API key，但需联网） / **CosyVoice** / **GPTSoVITS** | 想纯离线就选 CosyVoice 或 pyttsx3 |
 | VAD | **Silero VAD**（默认） | 已经内置 |
 
@@ -397,12 +406,12 @@ uv run run_server.py
 | 想做"按一下按钮问一句"的桌面助手 | 不必上 Open-LLM-VTuber，直接 LangChain / LlamaIndex 桌面化更轻 |
 | 想要"全双工 + Live2D"的伴侣 / 助手 / 直播间数字人 | ✅ 这是它的强项 |
 | 想研究"AI 说话中插嘴"的工程范式 | ✅ 仓库代码就是一份开源参考实现 |
-| 想要长期记忆 + 工具调用 | ✅ v1.2.0 起有 Letta agent + MCP |
-| 想做企业内私有部署 | ⚠️ 注意 Live2D 模型商用授权，中大规模企业单独谈 |
-| 想要低延迟直播口播 | ⚠️ 当前 TTS 多数非流式（v1.3 计划补流式 TTS），首句延迟主要由 LLM 首 token + TTS 首包共同决定 |
+| 想要长期记忆 + 工具调用 | ✅ v1.2.0 起有 Letta agent + MCP；内置长期记忆仍在开发，Letta 路线需跑外部服务 |
+| 想做企业内私有部署 | ⚠️ 注意 Live2D 模型商用授权，中大规模企业单独谈；后端 MIT 计划在 v1.3/v1.4 前后收紧 |
+| 想要低延迟直播口播 | ⚠️ TTS 按句合成（句间并行、单句等整句合成完），首句延迟主要由 LLM 首 token + 首句 TTS 合成决定 |
 | 想接 GPT-4o realtime 那种原生多模态语音 | ❌ 当前仓库主要做"模块化拼接"，原生多模态是另一条路线 |
 
-**采用顺序建议**（这是我假设你从零开始做这件事）：
+**采用顺序建议**（假设你从零开始做这件事）：
 
 1. **先跑通最小链路**：Ollama + sherpa-onnx + Edge TTS + 默认 Live2D 模型（`mao_pro`），确认能正常对话。
 2. **再上打断**：默认配置里打断就是开的，验证你能正常插嘴。
@@ -418,7 +427,7 @@ uv run run_server.py
 
 **Q: 它和 neuro-sama 是什么关系？**
 
-README 直接说了：项目名称叫 `Open-LLM-Vtuber` 而不是 `Open-LLM-Waifu`，是因为**最初目标是用开源方案在 Windows 之外的平台上复现 neuro-sama**（闭源 AI VTuber）。它不接 neuro-sama 的模型，但设计目标对标它的体验。
+README 直接说了：项目没有叫 `Open-LLM-Companion` 或 `Open-LLM-Waifu`，而是叫 `Open-LLM-Vtuber`，是因为**最初目标是用开源方案在 Windows 之外的平台上离线复现 neuro-sama**（闭源 AI VTuber）。它不接 neuro-sama 的模型，但设计目标对标它的体验。
 
 **Q: 真的能"免提 + 不戴耳机"被插嘴吗？**
 
@@ -434,7 +443,7 @@ README 顶部明确写：**v2.0 是一次完整重写**，目前还在早期规�
 
 **Q: 能在树莓派上跑吗？**
 
-仓库没有显式声明支持 ARM SBC，但 `pyproject.toml` 里对 macOS x86_64 / arm64 都有 `torch` 标记。要在树莓派上跑主要瓶颈是 LLM 推理速度（SBC 上 Ollama 大模型基本不可用），可以考虑用云 API 做 LLM、ASR/TTS/VAD 仍然本地。
+官方 quick-start 明确写了最低要求是"电脑，树莓派也行"——因为各组件（ASR / LLM / TTS / 翻译）都可以选 API，官方推荐的思路就是本地跑得动的放本地、跑不动的用 API。实际瓶颈在本地 LLM：SBC 上跑 Ollama 大模型不现实，树莓派上可行的组合是 LLM 走云 API，ASR / TTS / VAD 留在本地。
 
 **Q: 前端必须用它的 web/desktop 客户端吗？**
 
@@ -442,7 +451,7 @@ README 顶部明确写：**v2.0 是一次完整重写**，目前还在早期规�
 
 **Q: 商用 Live2D 模型会被怎么影响？**
 
-仓库的 sample 模型（`shizuku`、`mao_pro` 等）由 Live2D Inc. 单独授权，**MIT 不覆盖它们**。中大型企业商用前要单独谈 Live2D Free Material License Agreement。v1.2.0 之后默认模型换成了 `mao_pro`，因为 `shizuku` 在 Live2D 5 版本里去掉了官方表情。
+仓库的 sample 模型（`shizuku`、`mao_pro` 等）由 Live2D Inc. 单独授权，**MIT 不覆盖它们**。README 提醒中大型企业商用前要确认 Live2D Free Material License Agreement 下的额外授权要求，或使用不含这些模型的版本。v1.2.0 之后默认模型换成了 `mao_pro`，因为 `shizuku` 在 Live2D 5 版本里被官方去掉了表情。另外留意：前端自 v1.2.0 起已是 Open-LLM-VTuber License 1.0，官方也宣布后端 MIT 计划在 v1.3 或 v1.4 前后统一为同一许可证，商用决策前盯一下 release 公告。
 
 ---
 
@@ -463,18 +472,22 @@ Open-LLM-VTuber 的价值在于它完整暴露了一套"语音 + LLM + Live2D + 
 
 ## 引用清单
 
-- 仓库主页与 README: < PROTECTED_147 >
-- Release Notes v1.2.0: < PROTECTED_148 >
-- v1.2.0 与 v1.1.0 release 页： < PROTECTED_149 >
-- 项目文档： < PROTECTED_150 >
-- 关键源码：
+- 仓库主页与 README：<https://github.com/Open-LLM-VTuber/Open-LLM-VTuber>
+- Release Notes v1.2.0（含许可证变更与 breaking changes）：<https://github.com/Open-LLM-VTuber/Open-LLM-VTuber/releases/tag/1.2.0>
+- Release Notes v1.2.1（中文加速包）：<https://github.com/Open-LLM-VTuber/Open-LLM-VTuber/releases/tag/v1.2.1>
+- 全部 release 页：<https://github.com/Open-LLM-VTuber/Open-LLM-VTuber/releases>
+- 项目文档（快速开始）：<https://open-llm-vtuber.github.io/docs/quick-start>
+- 关键源码（路径相对于仓库根）：
   - `src/open_llm_vtuber/websocket_handler.py`
   - `src/open_llm_vtuber/service_context.py`
   - `src/open_llm_vtuber/vad/silero.py`
   - `src/open_llm_vtuber/conversations/conversation_handler.py`
+  - `src/open_llm_vtuber/conversations/tts_manager.py`
+  - `src/open_llm_vtuber/conversations/conversation_utils.py`
   - `src/open_llm_vtuber/agent/transformers.py`
   - `src/open_llm_vtuber/agent/agents/basic_memory_agent.py`
   - `src/open_llm_vtuber/live2d_model.py`
-  - `pyproject.toml` / `requirements.txt`
-- Silero VAD 文档： < PROTECTED_151 >
-- MCP 协议： < PROTECTED_152 >
+  - `config_templates/conf.default.yaml`
+  - `run_server.py` / `pyproject.toml`
+- Silero VAD 文档：<https://github.com/snakers4/silero-vad>
+- MCP 协议：<https://modelcontextprotocol.io/>

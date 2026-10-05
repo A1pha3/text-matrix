@@ -4,7 +4,7 @@ date: "2026-05-23T03:05:00+08:00"
 slug: "yt-dlp-video-download-tool-guide"
 github_repo: "yt-dlp/yt-dlp"
 source_key: "gh:yt-dlp/yt-dlp"
-description: "yt-dlp 是一款开源命令行音视频下载工具，支持超过一千个站点，基于 youtube-dl 活跃 fork 而来。本文从安装、常用用法、格式选择、元数据处理、Python API、插件开发讲到架构解析，并给出适用边界与排查路径。"
+description: "yt-dlp 是一款开源命令行音视频下载工具，内置 1700+ 个站点提取器，从 youtube-dl fork 而来且维护活跃。本文从安装、常用用法、格式选择、元数据处理、Python API、插件开发讲到架构解析，并给出适用边界与排查路径。"
 draft: false
 categories: ["技术笔记"]
 tags: ["FFmpeg", "Python", "开源工具"]
@@ -16,7 +16,7 @@ tags: ["FFmpeg", "Python", "开源工具"]
 > **核心问题**：怎么装、怎么挑格式、怎么排反爬、报错时改哪里。架构部分为排查服务，不要求先读完。
 > **事实边界**：命令、选项与架构依据 `yt-dlp/yt-dlp` 仓库 README 整理；站点支持与反爬策略随网站变动，文中数字以标注日期为准。
 
-需要从 YouTube、Bilibili、TikTok 等站点批量下载视频、提取音频、嵌入字幕或写元数据时，命令行工具比图形界面更可控、可脚本化、可复现。yt-dlp 是这一场景下维护最活跃的开源实现，覆盖超过一千个站点，从 youtube-dl fork 而来并持续合并上游修复。
+需要从 YouTube、Bilibili、TikTok 等站点批量下载视频、提取音频、嵌入字幕或写元数据时，命令行工具比图形界面更可控、可脚本化、可复现。yt-dlp 是这一场景下维护最活跃的开源实现，内置 1700+ 个站点提取器，从 youtube-dl fork 而来并持续合并上游修复。
 
 ## 阅读导航
 
@@ -70,14 +70,14 @@ PostProcessor    ffmpeg 合并音视频、嵌字幕、写元数据
 | 指标 | 值 |
 |------|------|
 | GitHub | [yt-dlp/yt-dlp](https://github.com/yt-dlp/yt-dlp) |
-| Stars / Forks | 183k / 16k（2026-08-06 实时） |
-| 语言 | Python 3.10+（推荐 3.11+） |
+| Stars / Forks | 194k / 16.9k（2026-09-30 实测） |
+| 语言 | Python（CPython 3.10+ / PyPy 3.11+） |
 | 许可证 | Unlicense |
 | 维护状态 | 活跃，master 日常推送 |
 
 yt-dlp 能做的事集中在这几类：
 
-- 支持超过一千个站点的视频提取，每个站点对应一个 Extractor 类
+- 内置 1700+ 个站点的视频提取器，每个站点对应一个 Extractor 类
 - 格式选择与多维度排序（`-f` 按格式 ID，`-S` 按分辨率/codec/文件大小等维度）
 - 字幕下载、嵌入与格式转换
 - 元数据写入与缩略图嵌入
@@ -99,10 +99,10 @@ yt-dlp 能做的事集中在这几类：
 sudo curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp
 sudo chmod a+rx /usr/local/bin/yt-dlp
 
-# Windows（PowerShell）
-irm https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe -o yt-dlp.exe
+# Windows（Windows 10+ 自带 curl.exe）
+curl.exe -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe -o yt-dlp.exe
 
-# macOS
+# macOS 专用构建
 sudo curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_macos -o /usr/local/bin/yt-dlp
 sudo chmod a+rx /usr/local/bin/yt-dlp
 ```
@@ -113,7 +113,7 @@ sudo chmod a+rx /usr/local/bin/yt-dlp
 python -m pip install -U yt-dlp
 ```
 
-通过 pip 安装后，更新命令为：
+通过 pip 安装后，升级稳定版用同一条命令加 `-U` 即可；想改用每日构建的 nightly 通道，加 `--pre` 安装预发布版本：
 
 ```bash
 python -m pip install -U --pre yt-dlp
@@ -128,7 +128,7 @@ yt-dlp 的多数能力依赖外部工具 ffmpeg，包括：
 - 提取和嵌入字幕
 - 缩略图转换
 
-之所以依赖外部 ffmpeg 而非内置，是因为 ffmpeg 本身体积大（数十 MB）、维护独立、且涉及大量编解码专利问题，作为独立进程调用更利于各自升级。yt-dlp 只负责抓取和调度，编解码与容器操作全部交给 ffmpeg，两者通过子进程通信。
+之所以依赖外部 ffmpeg 而非内置，是因为 ffmpeg 本身体积大（数十 MB）、独立发布（GPL/LGPL 许可），打包进 yt-dlp 会让两者的分发和升级互相牵制；作为独立进程调用，各自升级互不影响。yt-dlp 只负责抓取和调度，编解码与容器操作全部交给 ffmpeg，两者通过子进程通信。
 
 建议从 [yt-dlp/FFmpeg-Builds](https://github.com/yt-dlp/FFmpeg-Builds) 下载预编译版本。安装后运行 `yt-dlp --version` 确认安装成功。
 
@@ -140,8 +140,8 @@ yt-dlp 提供三个发布通道：
 
 | 通道 | 特点 | 适用场景 |
 |------|------|----------|
-| `stable` | 每月一次正式发布 | 一般用户 |
-| `nightly` | 每日构建，推荐日常使用 | 多数用户首选 |
+| `stable` | 约每月发布一次 | 一般用户 |
+| `nightly` | 每日构建，官方推荐日常用户使用 | 多数用户首选 |
 | `master` | 每次 push 触发构建 | 追求最新功能的开发者 |
 
 ```bash
@@ -168,7 +168,7 @@ yt-dlp --version
 ffmpeg -version | head -n 1
 ```
 
-预期输出分别是 `2026.07.04` 之类的版本号和 `ffmpeg version ...`。`yt-dlp --version` 能跑通说明程序本身可用；ffmpeg 缺失不影响下载单文件流，但合并分离的音视频流、嵌入字幕这类操作会失败，建议一起装好。
+预期输出分别是 `2026.08.19` 这类按日期命名的版本号（写本文时最新 stable 为 2026.08.19）和 `ffmpeg version ...`。`yt-dlp --version` 能跑通说明程序本身可用；ffmpeg 缺失不影响下载单文件流，但合并分离的音视频流、嵌入字幕这类操作会失败，建议一起装好。
 
 ---
 
@@ -202,17 +202,18 @@ yt-dlp -f "bv*+ba/b" "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
 yt-dlp -F "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
 ```
 
-输出示例（截取部分）：
+输出示例（截取部分，文件大小随时间变化）：
 
 ```text
-ID  EXT   RESOLUTION │   FPS │   CODECS    │   BR    │   SIZE
-────────────────────────────────────────────────────────────
-sb2 mhtml   images                │         │ unknown
-18  mp4    426x240    24 │ av01   72kbps │ ~1MB
-22  mp4    1280x720   22 │ avc1   ~2MB
+ID      EXT   RESOLUTION FPS CH │   FILESIZE   TBR PROTO │ VCODEC          VBR ACODEC      ABR ASR MORE INFO
+───────────────────────────────────────────────────────────────────────────────────────────────────────────
+18      mp4   640x360     30    │        ~1.36MiB  388 https │ avc1.42001E         mp4a.40.2      360p
+22      mp4   1280x720    30    │       ~3.29MiB  937 https │ avc1.64001F         mp4a.40.2      720p
+137     mp4   1920x1080   30    │      ~25.79MiB 7354 https │ avc1.640028                        1080p
+251     webm  audio only        │        ~2.66MiB   76 https │                     opus       55k
 ```
 
-第一列 ID 是后续 `-f` 选择格式的依据。
+第一列 ID 是后续 `-f` 选择格式的依据。注意 `18`、`22` 这类小 ID 是音视频合一的渐进式格式，`137` 这类则是纯视频流，需要再配一条音频流。
 
 #### 选择特定格式
 
@@ -232,24 +233,26 @@ yt-dlp -f "bv" "URL"
 yt-dlp 在 `-S` 参数上提供格式排序机制，按多个维度排序后取最优：
 
 ```bash
-# 优先选择分辨率高、codec 新的格式
+# 优先选 1080p 以内分辨率最高的，再偏好 h264 编码
 yt-dlp -S "res:1080,codec:avc" "URL"
 
-# 先按文件大小排序，再选最佳画质
-yt-dlp -S "filesize:desc,res:desc" "URL"
-
-# 优先选择 av1 编码
+# 优先选择 av1 编码（vcodec 排序中 av01 本就靠前，可用 codec 指定偏好）
 yt-dlp -S "codec:av01" "URL"
+
+# 反转某个维度的排序方向（+ 表示升序，比如要最小的分辨率）
+yt-dlp -S "+res" "URL"
 ```
 
-默认排序依次考虑 `lang`、`quality`、`res`、`fps`、`hdr`、`vcodec`、`channels`、`acodec`、`size`、`br`、`asr`、`proto`、`ext` 等维度，其中 `hasvid` 和 `ie_pref` 始终优先。用 `-S ""` 可以查看当前生效的默认顺序。
+`res:1080` 这类写法表示"优先更大的分辨率，但不超过 1080p"；冒号后跟的是首选值，不是排序方向——排序方向用 `+` 前缀反转。字段值还可以做就近匹配，例如 `filesize~1G` 选最接近 1 GiB 的格式。
+
+默认排序依次考虑 `lang`、`quality`、`res`、`fps`、`hdr:12`、`vcodec`、`channels`、`acodec`、`size`、`br`、`asr`、`proto`、`ext`、`hasaud`、`source`、`id`，其中 `hasvid`（有视频流优先）和 `ie_pref`（站点偏好）始终排在最前，用户指定的 `-S` 也压不过它们。想看某个视频的格式实际按什么顺序排出来的，用 `yt-dlp -v -F "URL"`，verbose 日志里会打印排序依据。
 
 `-S` 与 `-f` 的区别：`-f` 是硬过滤，不满足条件的格式直接排除；`-S` 是软排序，所有格式都参与，只是按指定维度排先后。需要严格限制清晰度时用 `-f` 加过滤表达式，需要在多个维度间权衡时用 `-S`。
 
 #### 格式过滤器
 
 ```bash
-# 只选择大于 720p 的视频
+# 只选择不低于 720p 的视频
 yt-dlp -f "bestvideo[height>=720]+bestaudio/best[height>=720]" "URL"
 
 # 排除 webm 格式（用过滤器 [ext!=webm]）
@@ -268,11 +271,11 @@ yt-dlp --write-subs --sub-langs "en,zh-cn" "URL"
 # 嵌入字幕到视频文件
 yt-dlp --embed-subs "URL"
 
-# 下载自动生成的字幕
-yt-dlp --write-auto-subs --embed-auto-subs "URL"
+# 下载自动生成的字幕并嵌入视频
+yt-dlp --write-auto-subs --embed-subs "URL"
 ```
 
-`--write-subs` 把字幕作为独立文件保存，`--embed-subs` 通过 ffmpeg 把字幕轨道写入容器（mp4/mkv）。两者可以同时使用：既保留独立字幕文件，又嵌入到视频里。
+`--write-subs` 把字幕作为独立文件保存，`--embed-subs` 通过 ffmpeg 把字幕轨道写入容器（mp4/mkv）。两者可以同时使用：既保留独立字幕文件，又嵌入到视频里。自动生成的字幕要先写盘才能嵌入，所以嵌入自动字幕需要 `--write-auto-subs` 加 `--embed-subs` 组合。
 
 ### 元数据与缩略图
 
@@ -287,7 +290,7 @@ yt-dlp --embed-thumbnail "URL"
 yt-dlp --write-description --write-info-json --write-thumbnail --embed-thumbnail "URL"
 ```
 
-`--write-info-json` 保存的视频元数据（标题、上传者、时长、格式列表等）可以后续被 `--load-info-json` 重新加载，避免重复请求站点 API。批量下载时先抓 info-json 再决定下载哪些格式，能显著降低被站点限速的风险。
+`--write-info-json` 保存的视频元数据（标题、上传者、时长、格式列表等）可以后续被 `--load-info-json` 重新加载，避免重复请求站点 API。批量下载时先抓 info-json 再决定下载哪些格式，能减少对站点的重复请求。
 
 ### 下载时间范围与章节
 
@@ -299,7 +302,7 @@ yt-dlp --download-sections "*10-60" "URL"
 yt-dlp --split-chapters "URL"
 ```
 
-`--download-sections` 依赖 ffmpeg 的精确裁剪，会先下载完整流再裁剪，不会减少下载量但能减少输出文件体积。`--split-chapters` 按视频自带的章节标记切成多个文件。
+`--download-sections` 按时间戳或章节只下载选定的部分；实际能省多少下载量取决于流类型与关键帧位置。`--split-chapters` 按视频自带的章节标记切成多个文件。
 
 ### 播放列表处理
 
@@ -314,7 +317,7 @@ yt-dlp --playlist-random "PLAYLIST_URL"
 yt-dlp --download-archive archive.txt "PLAYLIST_URL"
 ```
 
-`--download-archive` 把已下载视频的 ID 写入归档文件，下次运行时跳过。批量下载长播放列表时配合使用，可以断点续传。
+`--download-archive` 把已下载视频的 ID 写入归档文件，下次运行时跳过。批量下载长播放列表时配合使用，中断后重跑不会重复下载。
 
 ---
 
@@ -386,14 +389,14 @@ yt-dlp --proxy "socks5://user:pass@127.0.0.1:1080"
 # 伪装成 Chrome
 yt-dlp --impersonate "chrome" "URL"
 
-# 伪装成 Edge (Windows)
+# 伪装成 Windows 10 上的 Chrome（CLIENT[:OS] 语法）
 yt-dlp --impersonate "chrome:windows-10" "URL"
 
 # 查看所有支持的伪装目标
 yt-dlp --list-impersonate-targets
 ```
 
-底层使用 [curl_cffi](https://github.com/lexiforest/curl_cffi)（curl-impersonate 的 Python 绑定）实现 TLS 指纹伪装。这是可选依赖：pip 安装用 `pip install -U yt-dlp[curl-cffi]`，官方二进制已内置。
+底层使用 [curl_cffi](https://github.com/lexiforest/curl_cffi)（curl-impersonate 的 Python 绑定）实现 TLS 指纹伪装，伪装目标覆盖 Chrome、Edge 和 Safari。这是可选依赖：pip 安装用 `pip install "yt-dlp[default,curl-cffi]"`；官方预编译二进制大多数已内置，例外是 Unix 的 zipimport 版 `yt-dlp` 和 Windows 32 位版 `yt-dlp_x86`。
 
 ### 地理限制绕过
 
@@ -426,7 +429,7 @@ https://www.youtube.com/watch?v=video3
 yt-dlp -a urls.txt
 ```
 
-`-a` 会顺序处理每个 URL。配合 `--download-archive` 可以跳过已下载项，配合 `--ignore-errors` 可以在某个 URL 失败时继续处理后续项。
+`-a` 会顺序处理每个 URL。配合 `--download-archive` 可以跳过已下载项。yt-dlp 默认就是遇到下载错误继续处理下一个视频（`--no-abort-on-error`），想连后处理错误也一并忽略时加 `-i`（`--ignore-errors`）。
 
 ### 预设别名（Preset Aliases）
 
@@ -436,11 +439,11 @@ yt-dlp 内置几个常用组合，用 `--preset-alias` 调用：
 # 提取音频并转成 mp3
 yt-dlp --preset-alias mp3 "URL"
 
-# 下载为 mp4（优先 mp4 容器并嵌入元数据）
+# 下载并转为 mp4 容器（格式偏好 h264/aac）
 yt-dlp --preset-alias mp4 "URL"
 ```
 
-内置预设包括 `mp3`、`mp4`、`mkv` 等。`mp3` 相当于 `-x --audio-format mp3 --audio-quality 0`，`mp4` 相当于 `-f bv*+ba -S ext:mp4,m4a --embed-metadata`。
+内置预设还有 `aac`、`mkv`、`sleep` 等，官方承诺未来只增不改名。`mp3` 相当于 `-f 'ba[acodec^=mp3]/ba/b' -x --audio-format mp3`，`mp4` 相当于 `--merge-output-format mp4 --remux-video mp4 -S vcodec:h264,lang,quality,res,fps,hdr:12,acodec:aac`。
 
 更常用的组合用 `--alias <名称> "<选项串>"` 自定义，通常写进配置文件 `~/.config/yt-dlp/config`，之后直接以 `--<名称>` 调用：
 
@@ -566,10 +569,10 @@ yt-dlp 支持通过插件扩展功能，可加载自定义的 Extractor（提取
 ### 插件示例
 
 ```python
-# myplugin/yt_dlp_plugins/extractor/_myplugin.py
-from yt_dlp.extractor import GenericIE
+# mysitepkg/yt_dlp_plugins/extractor/mysite.py
+from yt_dlp.extractor.common import InfoExtractor
 
-class MySiteIE(GenericIE):
+class MySiteIE(InfoExtractor):
     _VALID_URL = r'https?://mysite\.com/watch/(?P<id>\w+)'
     _TESTS = [{
         'url': 'https://mysite.com/watch/abc123',
@@ -582,7 +585,7 @@ class MySiteIE(GenericIE):
         return self.url_result(f'https://mysite.com/api/video/{video_id}')
 ```
 
-插件类名以 `IE` 结尾自动注册，以 `_` 开头或包含在 `__all__` 中则可控制导入行为。`_VALID_URL` 是匹配规则，`_real_extract` 是实际请求和解析逻辑，返回的字典结构与内置 Extractor 一致。
+公开类名以 `IE`（后处理器以 `PP`）结尾才会被自动导入；类名或模块名以下划线开头会被当作私有跳过，`__all__` 也可以控制导入范围。`_VALID_URL` 是匹配规则，`_real_extract` 是实际请求和解析逻辑，返回的字典结构与内置 Extractor 一致。要替换某个内置提取器，继承它并设置 `plugin_name` 类参数（如 `class MyPluginIE(SomeBuiltinIE, plugin_name='myplugin')`）。官方在 [yt-dlp-sample-plugins](https://github.com/yt-dlp/yt-dlp-sample-plugins) 仓库提供了可直接套用的插件包模板。
 
 ---
 
@@ -595,20 +598,20 @@ class MySiteIE(GenericIE):
 ```text
 yt_dlp/
 ├── YoutubeDL.py       # 主引擎：调度下载流程
-├── extractor/         # 1000+ 网站提取器
+├── extractor/         # 1700+ 网站提取器
 │   ├── _extractors.py # 所有提取器的注册表
-│   ├── youtube.py     # YouTube 专用提取器
+│   ├── youtube/       # YouTube 提取器（拆分为包：_base.py、_video.py 等）
 │   └── ...
 ├── downloader/        # 下载器实现
 │   ├── http.py        # HTTP 下载
 │   ├── hls.py         # HLS 流下载
 │   ├── dash.py        # DASH 流下载
 │   └── fragment.py    # 分片并发下载
-├── postprocessor/    # 后处理器
+├── postprocessor/     # 后处理器
 │   ├── ffmpeg.py      # ffmpeg 封装（合并/转码/字幕）
 │   ├── embedthumbnail.py
 │   └── sponsorblock.py
-├── networking/       # 网络层（curl_cffi/requests）
+├── networking/        # 网络层（含 curl_cffi 伪装支持）
 └── utils/             # 工具函数
 ```
 
@@ -623,8 +626,7 @@ URL 输入 → Extractor.match_id()    # 匹配 URL，确定使用哪个提取�
         → Extractor._real_extract() # 向网站请求数据，解析视频信息
         → YoutubeDL.extract_info()  # 获取视频元数据（formats、字幕等）
         → Format Selector           # 根据用户选项筛选格式
-        → Downloader                # 下载视频/音频流
-        → Fragment Joiner           # 分片合并（HLS/DASH）
+        → Downloader                # 下载视频/音频流（HLS/DASH 分片边下边拼接）
         → PostProcessor             # ffmpeg 合并、转码、字幕嵌入、元数据写入
         → Output
 ```
@@ -639,7 +641,7 @@ URL 输入 → Extractor.match_id()    # 匹配 URL，确定使用哪个提取�
 2. `_real_extract()`：向目标网站发起请求，解析页面/API，返回视频信息字典
 3. `url_result()`：将提取结果转换为标准化格式
 
-以 YouTube 为例，其 Extractor 还需要处理 signature（签名）解密、n-sig（下一代签名）反混淆等逻辑。YouTube 会持续更新签名算法，yt-dlp 必须同步跟进，所以遇到 YouTube 下载失败时，第一反应先更新版本。
+以 YouTube 为例，其 Extractor 还要处理 signature 与 n-sig（n 参数签名挑战）的解密。YouTube 会持续更新签名算法，yt-dlp 必须同步跟进，所以遇到 YouTube 下载失败时，第一反应先更新版本。
 
 ### Downloader 分层
 
@@ -648,28 +650,28 @@ yt-dlp 支持多协议和多层并发：
 | 下载层 | 说明 |
 |--------|------|
 | HTTP Downloader | 基础 HTTP 下载，支持断点续传 |
-| HLS Downloader | 下载 `.m3u8` 清单文件，按 TS 分片下载 |
+| HLS Downloader | 下载 `.m3u8` 清单文件，按分片下载（典型为 TS） |
 | DASH Downloader | 下载 `.mpd` 清单文件，按 segment 下载 |
 | Fragment Downloader | 并发下载多个分片（`-N` 参数控制并发数）|
 
-默认 `-N 1`（单线程），对于 HLS/DASH 流可提升到 4-8 加快速度。并发数过高可能触发站点限速，需要根据目标站点的反爬策略调整。
+默认 `-N 1`（单线程），对于 HLS/DASH 流可提升到 4-8 加快速度。并发数过高可能触发站点限速，需要根据目标站点的反爬策略调整。分片流的下载与拼接在 `FragmentFD.download_and_append_fragments` 里同时进行：分片按顺序下载、追加进输出文件，下载完成即得完整流，无需单独的合并步骤。
 
 ### PostProcessor 链路
 
 后处理在下载完成后串行执行，典型链路：
 
 ```text
-FFmpegMergeDownloader  # 合并视频+音频流（若有）
-  → FFmpegFixupStretched  # 修复拉伸的流
-  → FFmpegFixupM4a        # 修复 M4a 元数据
-  → FFmpegSubtitlesConvertor  # 字幕格式转换
-  → FFmpegEmbedSubtitle   # 嵌入字幕到 mp4/mkv
-  → FFmpegMetadata        # 写入元数据
-  → EmbedThumbnail        # 嵌入缩略图
-  → SponsorBlock          # 标记/移除赞助段落
+FFmpegMergerPP          # 合并视频+音频流（若有）
+  → FFmpegFixupStretchedPP  # 修复拉伸的流
+  → FFmpegFixupM4aPP      # 修复 M4a 元数据
+  → FFmpegSubtitlesConvertorPP  # 字幕格式转换
+  → FFmpegEmbedSubtitlePP   # 嵌入字幕到 mp4/mkv
+  → FFmpegMetadataPP        # 写入元数据
+  → EmbedThumbnailPP        # 嵌入缩略图
+  → SponsorBlockPP          # 标记/移除赞助段落
 ```
 
-每一步都是可插拔的 PostProcessor，通过 `postprocessors` 参数可以添加、移除或调整顺序。某一步失败不会阻塞后续步骤，但可能导致输出文件缺少对应的内容（如字幕没嵌入但视频正常）。
+每一步都是可插拔的 PostProcessor（源码在 `postprocessor/` 目录，类名以 `PP` 结尾），通过 `postprocessors` 参数可以添加、移除或调整顺序。某一步失败会报错并可能让输出文件缺少对应的内容（如字幕没嵌入但视频正常），是否继续处理取决于容错设置。
 
 ---
 
@@ -698,18 +700,18 @@ yt-dlp --impersonate "chrome" --geo-verification-proxy "http://proxy:port" "URL"
 yt-dlp -x --audio-format mp3 "URL"
 ```
 
-`-x` 触发 `FFmpegExtractAudio` 后处理器，`--audio-format` 指定输出格式。需要更高音质时加 `-S "abr:best"` 选最高码率音频流。
+`-x` 触发 `FFmpegExtractAudio` 后处理器，`--audio-format` 指定输出格式，`--audio-quality 0` 用最高质量的 VBR 编码。想先选最高码率的音频流再转码，可以再指定排序 `-S "abr"`（音频码率降序优先）。
 
 ### Q: PyInstaller 打包的 exe 启动太慢？
 
-yt-dlp 启动时会导入所有 Extractor，1000+ 个类的导入开销在 PyInstaller 冻结环境下尤其明显。构建时启用懒加载提取器：
+yt-dlp 启动时会导入所有 Extractor，1700+ 个类的导入开销在 PyInstaller 冻结环境下尤其明显。构建前先生成懒加载提取器：
 
 ```bash
 python devscripts/make_lazy_extractors.py
 python -m bundle.pyinstaller
 ```
 
-这会把 Extractor 导入推迟到首次匹配 URL 时，启动时间可从数秒降到毫秒级。
+这会把 Extractor 导入推迟到首次匹配 URL 时，官方文档确认此举能明显改善二进制的启动速度。
 
 ### Q: 报错 "No video formats"？
 
@@ -727,11 +729,11 @@ yt-dlp --no-check-certificates --impersonate "chrome" "URL"
 yt-dlp --list-extractors
 ```
 
-输出包含所有已注册 Extractor 的名称和匹配的 URL 模式。完整列表也可在 [yt-dlp Supported Sites](https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md) 查看。
+输出所有已注册 Extractor 的名称；想看每个提取器的描述，改用 `--extractor-descriptions`。完整站点列表也可在 [yt-dlp Supported Sites](https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md) 查看。
 
 ### Q: 文件名带特殊字符导致报错？
 
-视频标题里的 `/`、`:`、`|` 等字符在文件系统中非法，默认输出模板会自动替换为 `#`。需要更精细控制时加 `--restrict-filenames` 把所有非 ASCII 字符和空格也替换掉，或用 `--windows-filenames` 强制兼容 Windows 命名规则。
+视频标题里的 `/`、`:`、`|` 等字符在文件系统中非法。yt-dlp 默认把它们替换为全角的相似字符（如 `:` 变 `：`、`/` 变 `⧸`），Windows 路径的目录段则替换为 `#`。需要更精细控制时加 `--restrict-filenames`，把文件名限制为 ASCII 字母数字加 `-_.`（README 示例中，标题 `To'y!🤯😂🤦🏻‍♂️` 会变成 `To_y`）；`--windows-filenames` 则强制按 Windows 命名规则兼容处理。
 
 ```bash
 yt-dlp --restrict-filenames -o "%(title)s.%(ext)s" "URL"
@@ -753,7 +755,7 @@ yt-dlp 相比原版 youtube-dl 的主要改进（来自官方 README）：
 
 | 差异 | yt-dlp | youtube-dl |
 |------|--------|-------------|
-| Python 版本 | 3.10+（推荐 3.11+） | 2.6+/3.2+ |
+| Python 版本 | CPython 3.10+ / PyPy 3.11+ | 2.6+/3.2+ |
 | 格式排序 | 默认按分辨率/codec | 默认按比特率 |
 | 默认容错 | `--no-abort-on-error` | 中断 |
 | YouTube 支持 | n-sig 反混淆+Clips+Shorts | 基础 |
@@ -762,13 +764,13 @@ yt-dlp 相比原版 youtube-dl 的主要改进（来自官方 README）：
 | 多线程下载 | `--concurrent-fragments` | 不支持 |
 | 插件系统 | 支持 | 不支持 |
 
-youtube-dl 的最后一次大版本更新已较久，对新站点和 YouTube 反爬更新的跟进明显慢于 yt-dlp。新项目应直接选 yt-dlp；已有 youtube-dl 脚本可以通过 `yt-dlp` 命令别名平滑替换，多数参数兼容。
+youtube-dl 的最后一次正式发布停留在 2021 年 12 月（2021.12.17），对新站点和 YouTube 反爬更新的跟进明显慢于 yt-dlp。新项目应直接选 yt-dlp；已有 youtube-dl 脚本可以通过 `yt-dlp` 命令别名平滑替换，多数参数兼容。
 
 ## 适用边界与采用建议
 
 yt-dlp 适合：批量下载视频、提取音频、归档播放列表、嵌入到自动化流水线、需要精确控制格式和元数据的场景。
 
-不适合：实时流媒体录制（用 streamlink 或 OBS）、需要 GUI 的非技术用户（用 yt-dlg 等图形前端）、对下载速度有极致要求且站点支持 aria2c 加速的场景（yt-dlp 的并发主要在分片层，不如 aria2c 的多连接下载）。
+不适合：实时流媒体录制（用 streamlink 或 OBS）、需要 GUI 的非技术用户（社区有多个基于 yt-dlp 的图形前端）、对下载速度有极致要求且站点支持 aria2c 加速的场景（yt-dlp 的并发主要在分片层，不如 aria2c 的多连接下载）。
 
 遇到站点无法下载时，按以下顺序排查：
 
@@ -794,4 +796,4 @@ yt-dlp 适合：批量下载视频、提取音频、归档播放列表、嵌入�
 - **固化常用选项**：把 `--impersonate chrome --embed-thumbnail --write-info-json` 这类固定参数写进 `~/.config/yt-dlp/config`，省去每次输入。
 - **增量归档脚本**：用 Python API 配合 `--download-archive`，实现只补新视频的播放列表增量同步。
 - **写自定义 Extractor**：对照「插件系统」的示例为内部站点写提取器，理解 `_real_extract` 返回的字段结构。
-- **读源码**：从 `extractor/youtube.py` 的 signature 解密与 n-sig 反混淆入手，理解反爬应对的边界。
+- **读源码**：从 `extractor/youtube/` 包的 signature 解密与 n-sig 反混淆入手，理解反爬应对的边界。

@@ -14,11 +14,12 @@ tags: ["AI Agent", "Rust", "CLI工具"]
 
 | 属性 | 值 |
 |------|-----|
-| GitHub Stars | 约 19 万（持续变化） |
-| 主要语言 | Rust（`rust/` 规范工作区，约 2 万行，9 个 crate） |
+| GitHub Stars | 19.5 万+，forks 10.8 万（2026-10-04 核实，持续变化） |
+| 主要语言 | Rust（`rust/` 规范工作区，约 2 万行；README 自述 9 个 crate，实际 `crates/` 下已有 11 个） |
 | 开源协议 | MIT |
 | 维护方式 | 由 AI Agent 自动打理（agent-managed） |
 | 项目定位 | 博物馆展品 / 研究性 artifacts |
+| 最近提交 | 2026-08-16（此后近两个月无新提交） |
 | 默认模型 | `claude-opus-4-7` |
 | 默认权限 | `workspace-write` |
 
@@ -31,7 +32,7 @@ tags: ["AI Agent", "Rust", "CLI工具"]
 - [它到底是什么](#它到底是什么)
 - [为什么不建议当生产工具](#为什么不建议当生产工具)
 - [快速开始：从源码构建](#快速开始从源码构建)
-- [真实架构：9 个 crate 的 Rust 工作区](#真实架构9-个-crate-的-rust-工作区)
+- [真实架构：README 说 9 个 crate，实际有 11 个](#真实架构readme-说-9-个-crate实际有-11-个)
 - [模型接入：不止 Claude](#模型接入不止-claude)
 - [CLI 与交互层](#cli-与交互层)
 - [权限系统](#权限系统)
@@ -49,15 +50,15 @@ Claw Code 是 **`claw` 这个 CLI agent harness 的公开 Rust 实现**，规范
 它做的事和 Claude Code 一样：你在终端里给它指令，它自己读写文件、跑命令、调 LLM，把多轮工具调用串起来完成一个任务。区别在于——
 
 - **它不是 Anthropic 的东西**。仓库明确声明不主张对原始 Claude Code 源码的所有权，也与 Anthropic 无任何关联。
-- **它是「干净室重写」的产物**。社区报道的背景是：2026 年初 Claude Code 的 TypeScript 源码被意外公开，引发了大量基于公开文档和行为独立重写的开源项目，Claw Code 是其中 Star 增长最快的一个（一度被称"史上最快破十万 Star"）。
+- **它是「干净室重写」的产物**。社区报道的背景是：2026 年 3 月 Claude Code 的 TypeScript 源码被意外公开，引发了大量基于公开文档和行为独立重写的开源项目，Claw Code 是其中声量最大的一个——仓库 2026 年 3 月 31 日创建，半年涨到约 19.5 万 star，在 GitHub 的增长史上排得上号。
 
-对多数人来说，只要记住一点就够：**这个仓库是被人当"展品"打理的研究项目，不是给你日常搬砖用的工具。**
+对多数人来说，只要记住一点就够：**这个仓库是被人当「展品」打理的研究项目，不是给你日常搬砖用的工具。**
 
 ---
 
 ## 为什么不建议当生产工具
 
-README 的原话大致是：这个仓库离产品更像一件展品，代码由 agent 自动清扫、贴标签、归档，背后有一批 gajae（桃树下的螃蟹）在维持运作。
+README 的原话大致是：这个仓库离产品更像一件展品，代码由 agent 自动清扫、贴标签、归档，靠一群「gajaes」维持运作——原文明说 crabs keep the tank running，全程拿螃蟹打比方，但没解释 gajae 这个词本身。
 
 翻译成风险清单：
 
@@ -65,7 +66,7 @@ README 的原话大致是：这个仓库离产品更像一件展品，代码由 
 2. **文档会漂移**。你可能看到文档写的和实际行为对不上，遇到矛盾以代码和 `--help` 输出为准。
 3. **界面在快速变动**。CLI 命令和 slash 命令一直在加，教程跟不上也正常。
 
-作者本人的态度很直接：要真跑活，去 [LazyCodex](https://github.com/code-yeongyu/lazycodex) 或 [Gajae-Code](https://github.com/Yeachan-Heo/gajae-code)。想观察 Claw Code 这个"历史瞬间"，可以继续往下读。
+作者本人的态度很直接：要真跑活，去 [LazyCodex](https://github.com/code-yeongyu/lazycodex) 或 [Gajae-Code](https://github.com/Yeachan-Heo/gajae-code)。想观察 Claw Code 这个「历史瞬间」，可以继续往下读。
 
 ---
 
@@ -106,19 +107,19 @@ $env:ANTHROPIC_API_KEY = "sk-ant-..."
 .\target\debug\claw.exe prompt "say hello"
 ```
 
-`claw doctor` 是安装后的第一道检查：它会验证 API Key、模型可访问性和工具配置，比起自己慢慢试错省事得多。
-
 ---
 
-## 真实架构：9 个 crate 的 Rust 工作区
+## 真实架构：README 说 9 个 crate，实际有 11 个
 
-`rust/` 是一个约 2 万行、9 个 crate 的 Cargo 工作区。核心分工如下：
+`rust/` 是一个约 2 万行的 Cargo 工作区。`rust/README.md` 自述 9 个 crate，但 2026 年 10 月实数 `crates/` 目录下已有 11 个——新增的 `claw-analog` 和 `claw-rag-service` 还没被写进 README。这不是文档笔误，而是这个项目「agent 打理、文档漂移」的现场证据：README 跟不上 agent 的提交速度。核心分工如下：
 
 ```
 rust/
 ├── Cargo.toml
 └── crates/
     ├── api/               # Provider 客户端、SSE 流式、认证、请求预检
+    ├── claw-analog/       # 极简 harness 示例：工具循环 + 显式权限 + workspace 隔离
+    ├── claw-rag-service/  # 工作区 RAG 服务：SQLite 索引、OpenAI 兼容 embeddings、查询 API
     ├── commands/          # slash 命令注册表 + help 渲染
     ├── compat-harness/    # 与上游对照的兼容性/一致性工具
     ├── mock-anthropic-service/ # 本地确定性的 /v1/messages 假服务（测试用）
@@ -131,7 +132,7 @@ rust/
 
 理解它并不需要逐 crate 读。一条主路径：`rusty-claude-cli` 收命令 → `runtime` 管会话与权限 → `api` 调模型（SSE 流式返回 token）→ `tools` 执行工具调用并回填到对话。
 
-一个很实用的设计是 **mock-anthropic-service**：一个本地假接口，不联网也能跑一遍端到端 parity 测试，用来验证"给模型的请求长什么样、工具回包怎么拼"。想自己搭本地 harness 的人可以直接抄这套。
+一个很实用的设计是 **mock-anthropic-service**：一个本地假接口，不联网也能跑一遍端到端 parity 测试，用来验证「给模型的请求长什么样、工具回包怎么拼」。想自己搭本地 harness 的人可以直接抄这套。
 
 仓库根目录另外有配套的 Python `src/` + `tests/` 参考工作区，但那是辅助审计用的，**主运行时在 Rust 这一侧**。
 
@@ -174,7 +175,9 @@ export OPENAI_API_KEY="local-dev-token"
 - 走 OpenAI 兼容网关时可用 `openai/` 前缀，如 `--model "openai/gpt-4.1-mini"`。
 - 工具调用比纯对话更容易触发兼容性问题。一句 prompt 能通不代表 slash / 工具流程能通——得看服务端是否支持 OpenAI 兼容的 tool-call 格式。
 
-一句话：**它不是"多 Provider trait 统一抹平"，而是靠环境变量做路由**，官方把 OpenAI 兼容这条路明确当作可扩展的接入方式。
+一句话：**它没有做「多 Provider trait 统一抹平」那层抽象，Provider 路由就靠环境变量**，官方把 OpenAI 兼容这条路明确当作可扩展的接入方式。
+
+另外，出站请求遵循标准的 `HTTP_PROXY` / `HTTPS_PROXY` / `NO_PROXY` 环境变量（大小写均可），底层 HTTP 客户端是 reqwest，设好即生效——公司内网或需要审计流量的环境不用额外配置。
 
 ---
 
@@ -190,6 +193,7 @@ export OPENAI_API_KEY="local-dev-token"
 ./target/debug/claw --output-format json status   # 机器可读输出
 ./target/debug/claw doctor                        # 健康检查
 ./target/debug/claw init                          # 初始化 .claw/ 配置 + CLAUDE.md
+./target/debug/claw state                         # 读 .claw/worker-state.json（worker ID、session、模型、权限模式）
 ```
 
 模型别名：
@@ -214,7 +218,7 @@ export OPENAI_API_KEY="local-dev-token"
 
 你可以用 `--allowedTools` 收紧允许的工具集（如 `read,glob`），或用 `--dangerously-skip-permissions` 跳过全部拦截（慎用）。看当前工作区的隔离快照，跑 `claw sandbox`。
 
-这套东西对一个"跑你的 shell"的工具是刚需——尤其你连的都是敏感数据时。
+这套东西对一个「跑你的 shell」的工具是刚需——尤其当它接触的是敏感数据时。
 
 ---
 
@@ -239,14 +243,15 @@ export OPENAI_API_KEY="local-dev-token"
 **值得学的部分**
 
 - Rust 写 CLI harness 的完整范式：`api` 做流式、`runtime` 做会话与权限、`tools` 做工具注册，层次干净，约 2 万行也容易读。
+- `claw-analog` 单独值得一看：一个只有工具循环、显式权限和 workspace 隔离的最小 harness，想理解 agent 运行时的最小骨架，从它入手比啃主运行时快。
 - mock 服务做端到端测试的思路（`mock-anthropic-service`）。
-- 一套不绑定单模型的接入方式（Anthropic + OpenAI 兼容），适合当"搭你自己的 coding agent"的起点。
+- 一套不绑定单模型的接入方式（Anthropic + OpenAI 兼容），适合当「搭你自己的 coding agent」的起点。
 
 **不推荐的部分**
 
 - 当日常开发工具。文档会漂移，界面在变，没人负责。
 - 期望稳定的 MCP/ACP 支持。MCP 有生命周期与 `/mcp` 检查，但完整协议仍列在路线图里；ACP/Zed 目前只有一个 `claw acp` 探路命令，真协议支持还在路上。
-- 依赖某个"精确版本"的 CLI 行为。命令面变化很快，教程里的写法和实际 `--help` 可能不一致。
+- 依赖某个「精确版本」的 CLI 行为。命令面变化很快，教程里的写法和实际 `--help` 可能不一致。
 
 ---
 
@@ -262,7 +267,7 @@ export OPENAI_API_KEY="local-dev-token"
 
 **Q: 会话存在哪？怎么恢复？**
 
-会话默认写在项目内的 `.claw/sessions/`（用户级在 `~/.claw/` 相关目录）。用 `--resume` 或 REPL 里的 `/resume`、`/session` 恢复最近的对话。想在自动化里 readonly 看一眼状态，`claw status --output-format json`。
+会话写在项目内的 `.claw/sessions/`（REPL 每一轮都会持久化），用户级设置在 `~/.claw/settings.json`。用 `--resume latest` 或 REPL 里的 `/resume`、`/session` 恢复最近的对话——保存过会话之后，`claw --resume latest /doctor` 也能直接对既有会话重跑体检。想在自动化里 readonly 看一眼状态，`claw status --output-format json`。
 
 **Q: Windows 上能不能跑？**
 
@@ -273,7 +278,7 @@ export OPENAI_API_KEY="local-dev-token"
 ## 自测题
 
 1. `cargo install claw-code` 和从源码构建，有什么区别？
-2. "museum exhibit / 博物馆展品"这个自述，落到使用者身上意味着哪三类风险？
+2. 「museum exhibit / 博物馆展品」这个自述，落到使用者身上意味着哪三类风险？
 3. Claw 支持接 Claude 以外模型吗？要接本地 Ollama，最少要设置哪个环境变量？
 4. 默认权限模式是什么？想临时只读、或完全放行，各用什么旗标？
 5. 你要一个能日常用的 AI 编码 CLI，作者推荐的替代品是哪两个？
@@ -291,4 +296,4 @@ export OPENAI_API_KEY="local-dev-token"
 
 ---
 
-*本文依据 ultraworkers/claw-code 仓库的 README、USAGE 与 rust/README 实读整理（2026-09-15 核实）。命令面变动较快，实际操作以 `claw --help` 与仓库最新文档为准。*
+*本文依据 ultraworkers/claw-code 仓库的 README、USAGE、rust/README、ROADMAP 与 docs/ 实读整理，关键数字对照 GitHub API 核实（2026-10-04：stars 195,223、forks 108,217、crates 11、最近提交 2026-08-16）。命令面变动较快，实际操作以 `claw --help` 与仓库最新文档为准。*

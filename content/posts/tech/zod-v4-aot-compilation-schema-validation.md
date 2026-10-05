@@ -4,7 +4,7 @@ date: "2026-09-03T03:25:00+08:00"
 slug: "zod-v4-aot-compilation-schema-validation"
 github_repo: "colinhacks/zod"
 source_key: "gh:colinhacks/zod"
-description: "Zod 是 TypeScript 生态最流行的运行时模式校验库，4.5 引入 z.compile() 前提前编译（AOT）快路径，将热路径校验提升约 2.4 倍。本文解析其用法、编译机制与代价边界。"
+description: "Zod 是 TypeScript 生态最流行的运行时模式校验库，4.5 引入 z.compile() 预先编译（AOT）快路径，官方报告对象、数组、联合等容器类型解析提速约 3-8 倍。本文解析其用法、编译机制与代价边界。"
 draft: false
 categories: ["技术笔记"]
 tags: ["TypeScript", "校验", "Zod", "AOT 编译"]
@@ -37,7 +37,7 @@ tags: ["TypeScript", "校验", "Zod", "AOT 编译"]
 
 Zod 是 TypeScript 生态里最主流的运行时模式校验库：定义一个 schema，用它解析未知输入，得到强类型、已校验的结果。它把"类型系统只在编译期有效、运行时数据没有保障"这个矛盾，压进一个值里解决。
 
-4.5（2026-08-28 发布，当前最新 4.5.4）带来 `z.compile()`：前提前编译（Ahead-of-Time，AOT）快路径。官方在 55 个 schema 的基准里报出的中位提速约 2.4 倍，对象 / 数组 / 联合这类容器类型能到 3-9 倍。但提速不是免费：编译会吃掉约 7 KB gzip 的包体积，而且只对合法输入见效。下面逐步展开这个判断的依据。
+4.5（2026-08-28 发布）带来 `z.compile()`：预先编译（Ahead-of-Time，AOT）快路径。提速幅度取决于 schema 形态：官方混合负载图里，对象、数组、联合这类容器提速约 3-8 倍，结构越复杂收益越大；裸标量几乎没有提升。但提速不是免费：编译会吃掉约 7 KB gzip 的包体积，而且只对合法输入见效。下面逐步展开这个判断的依据。
 
 ## 为什么需要 Zod
 
@@ -115,6 +115,14 @@ try {
 
 ## AOT 编译：`z.compile()` 与全局模式
 
+先把三条路径摆在一起：
+
+| 路径 | 怎么开启 | 快路径覆盖范围 |
+|------|----------|----------------|
+| 默认（不编译） | 什么都不做 | 无，全部走标准解析器 |
+| 单个编译 | `z.compile(Schema)` | 只有这一个 schema |
+| 全局模式 | 入口 `import "zod/compile"` | import 之后构造、且真被 parse 的 schema |
+
 ### 编译单个 schema
 
 对校验频率很高的热路径（例如高频请求参数校验），4.5 提供：
@@ -124,7 +132,7 @@ const CompiledPlayer = z.compile(Player);
 CompiledPlayer.parse({ username: "billie", xp: 100 });
 ```
 
-`z.compile(schema)` 返回一个带编译快路径的 schema 副本，原 schema 不变。它的接口和原版一致：`parse` / `safeParse` / `extend` / `optional` 都在，推导类型、issue、报错都一样。合法输入走编译后的快路径，非法输入回退到常规解析器。
+`z.compile(schema)` 返回一个带编译快路径的 schema 副本，原 schema 不变。它的接口和原版一致：`parse` / `safeParse` / `extend` / `optional` 都在，推导类型、issue、报错都一样。合法输入走编译后的快路径，非法输入回退到标准解析器。
 
 ### 全局开启
 
@@ -147,6 +155,8 @@ node --import zod/compile app.js   # ESM
 node --require zod/compile app.cjs # CommonJS
 ```
 
+Bun 与 Nub 走各自的 preload 配置（`bunfig.toml` / `nub.jsonc`），效果等同。
+
 ## 编译机制：它为什么快
 
 `z.compile()` 会走一遍整个 schema，产出一段扁平、无循环的校验函数，用 `new Function` 在进程内执行。比如 `{ x: number; y: number }` 会生成类似这样的片段：
@@ -163,10 +173,12 @@ const isPoint = new Function(
 
 对多数输入，跑的是直通的 `typeof` 检查和属性读取，中间没有 interpreter，快在这。对象键多、嵌套深、union 分支多的 schema，逐节点派发和分配被压平，收益越大。
 
-当快路径判定输入非法，它返回一个 `INVALID` 哨兵，schema 回退到未编译解析器——报错仍来自原来的解析逻辑，字段定位是完整的。这带来两个结果：
+当快路径判定输入非法，它返回一个 `INVALID` 哨兵，schema 回退到标准解析器——报错仍来自标准解析器的完整逻辑，字段定位是完整的。这带来两个结果：
 
 - 非法输入要付"快路径 + 回退"两遍，编译**不**加速失败。
 - refine / transform 在合法输入上跑一遍，非法输入上最多跑两遍。
+
+把一次校验从头到尾串起来：应用入口 import 了 `zod/compile`，订单模块随后构造一个 20 键的 schema——此刻它还没被编译。第一个请求进来，`parse` 发现这是它第一次被调用，于是先编译：`new Function` 生成扁平校验函数并挂回 schema。之后的合法输入都走那段生成的代码，一串 `typeof` 检查直通返回。某天上游把金额传成了字符串，快路径返回 `INVALID`，schema 换标准解析器重跑，产出带 `path` 的完整 issues；再下一个请求合法，又回到快路径。编译只发生一次，回退按输入逐次发生。
 
 ## 哪些 schema 编不了
 
@@ -179,7 +191,7 @@ z.compile(Schema); // 返回 Schema 本身，未编译
 
 完整不支持清单：async 的 refine / transform / check；`z.xor()`；递归 schema；`z.coerce.*`；自定义 `when` 的 check；`.catch()` 传入回调的（`.catch(value)` 传常量可以编译）。
 
-在对象 / 数组 / 元组 / record / intersection 里，某个不支持的子节点会退回常规解析器，外层结构仍保持编译。但 union 含不支持的成员、或任意子树里出现 async，会让整个 schema 整体回退。
+在对象 / 数组 / 元组 / record / intersection 里，某个不支持的子节点会退回标准解析器，外层结构仍保持编译。但 union 含不支持的成员或 `.catch()` 回调、或任意子树里出现 async，会让整个 schema 整体回退。此外，编码方向（`z.encode()` 与 codec 的反向转换）和异步解析入口始终走标准解析器——快路径只服务 `parse` 方向的同步校验。
 
 想确认热点 schema 真的编上了，传 `strict` 让不能编译的直接抛错：
 
@@ -203,7 +215,9 @@ const s2 = z.compile(z.string().refine((v) => v.length > 1));
 
 ## 性能：测的是什么、能推出什么
 
-官方给的加速比是相对值，随 schema 复杂度、输入分布和 JS 引擎变化。文档里那组"单 schema 独立测、tight loop"的数字，是标准解析器的最优工况，比值普遍比真实混跑场景低：
+官方给的加速比是相对值，随 schema 复杂度、输入分布和 JS 引擎变化。官方数字有两组，要分开读。
+
+一组是单 schema 独测：每个 schema 单独放进步骤紧凑的循环里反复跑——这是标准解析器的最优工况，比值因此普遍偏低：
 
 | schema | 提速 |
 |--------|------|
@@ -216,7 +230,7 @@ const s2 = z.compile(z.string().refine((v) => v.length > 1));
 | tuple，5 项 | 3.0x |
 | tuple，10 项 | 3.7x |
 
-README 的 55 schema 基准里，**中位提速约 2.4 倍**；容器类型在更接近真实负载的混合工作负载下能到 3-9 倍。趋势清楚：schema 越大越深，编译收益越大。
+另一组是更接近真实负载的混合工作负载图：八个场景全部落在 2.8x-7.8x，容器类型（对象、数组、联合）约 3-8 倍，其中 20 键对象 7.8x、10 个对象组成的数组 5.5x、3 对象联合 5.3x。第三方 Moltar 基准（TypeScript Runtime Type Benchmarks）的 parseSafe 项目上，编译后的 Zod 与 typia 同一量级：Node 22 下约 48.4M 对 48.1M ops/s，未编译 Zod 约 14.9M，约 3.2 倍（结果站数字随每次运行浮动，截至 2026-09 查询）。趋势清楚：schema 越大越深，编译收益越大。
 
 不能推出什么：
 
@@ -234,7 +248,7 @@ README 的 55 schema 基准里，**中位提速约 2.4 倍**；容器类型在�
   z.config({ jitless: true });
   ```
 
-  显式 `z.compile()` 是主动选择，会照常尝试产出代码；若环境拒绝 `new Function`，schema 和普通拒绝一样回来未编译。
+  显式 `z.compile()` 是主动选择，会照常尝试产出代码；若环境拒绝 `new Function`，schema 和普通拒绝一样回来未编译。4.6 新增 `z.withParser()`：安装一个在构建期生成的解析器，绕开运行时 `new Function`，适合 CSP 严格的部署环境。
 - **内置 JSON Schema 转换**：`z.toJSONSchema()` 把 Zod schema 转成 JSON Schema，方便跨语言 / 跨服务复用。
 - **生态成熟**：周边表单校验、API schema、RPC 框架大多围绕 Zod 集成，`z.compile()` 保持同一套 API，迁移几乎没有改动。
 
@@ -256,7 +270,7 @@ README 的 55 schema 基准里，**中位提速约 2.4 倍**；容器类型在�
 能，但结果是未编译的。要在完整形态上再 `z.compile()` 一次。
 
 **Q：编译会不会改变报错？**
-不会。设计上合法输入走快路径、非法回退原解析器，issue 与未编译完全一致。
+不会。设计上合法输入走快路径、非法回退标准解析器，issue 与未编译完全一致。
 
 **Q：用了 `z.config({ jitless: true })` 就彻底不用编译了？**
 全局模式停用，但显式 `z.compile()` 仍会尝试。只有环境拒绝 `new Function` 时才真正回退为未编译。
@@ -276,4 +290,4 @@ README 的 55 schema 基准里，**中位提速约 2.4 倍**；容器类型在�
 - 仓库：<https://github.com/colinhacks/zod>
 - `z.compile()` 技术说明：<https://zod.dev/blog/introducing-z-compile>
 - 编译文档：<https://zod.dev/compile>
-- 版本节奏：v4.5.4（2026-08-29 发布），主分支仍在迭代（`z.validate()` 系列、编译产物内存优化等）
+- 版本节奏：v4.5.0（2026-08-28）引入 `z.compile()`；v4.6（2026-09-09）让 `z.validate()` 直接从编译快路径回答非法输入——在编译 schema 上比 `.safeParse().success` 快至 35 倍，并新增 `z.withParser()`。当前最新 v4.6.5（2026-09-13 发布）。

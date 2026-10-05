@@ -1,7 +1,7 @@
 ---
 title: "EAGLE-1/2/3 拆解：推测解码省的是大模型前向次数，赚不赚看草稿准确率"
 date: "2026-06-28T15:19:20+08:00"
-lastmod: "2026-09-20T00:30:00+08:00"
+lastmod: "2026-10-02T00:00:00+08:00"
 slug: "safe-ai-lab-eagle-speculative-decoding-guide"
 github_repo: "SafeAILab/EAGLE"
 source_key: "gh:SafeAILab/EAGLE"
@@ -17,9 +17,9 @@ EAGLE 三代做的事情可以归成一件：让大语言模型（LLM）每跑�
 
 这句话决定了读这套系统的方式。推测解码不是"让小模型多写几个字"，而是用一次大模型前向去并行验证一批候选，只留下从左到右的第一条一致前缀。所以真正值钱的量是**平均接受长度 τ**——一个"起草—验证"周期里平均落到最终输出里的词元数。仓库和三篇论文的加速数字，几乎都能还原成"τ 涨了多少、起草开销占一次前向的几成"这两件事。
 
-τ 有两条涨法：把草稿猜得更准，或者把同样的草稿预算分得更聪明。EAGLE-1 和 EAGLE-3 走前者，EAGLE-2 只走后者。按 EAGLE-3 论文 Table 1 的五数据集平均（Vicuna-13B，Temperature=0，即贪心解码），标准推测解码（拿 Vicuna-68M 当草稿模型）τ 是 2.24，EAGLE-1 是 3.96，EAGLE-2 是 4.83，EAGLE-3 是 6.62。
+τ 有两条涨法：把草稿猜得更准，或者把同样的草稿预算分得更聪明。EAGLE-1 和 EAGLE-3 走前者，EAGLE-2 只走后者。按 EAGLE-3 论文 Table 1 的五数据集平均（Vicuna-13B，temperature=0，即贪心解码），标准推测解码（拿 Vicuna-68M 当草稿模型）τ 是 2.24，EAGLE-1 是 3.96，EAGLE-2 是 4.83，EAGLE-3 是 6.62。
 
-判断也因此可以提前给出：如果你的负载是单请求、长输出，EAGLE-3 现在就是推测解码这一档的工程上限；如果你要的是大 batch 吞吐，EAGLE-1 的实现在 batch 24 附近就已经开始亏，而 EAGLE-3 论文自己在 H100 + SGLang 上报到 batch 64 仍有 1.38 倍——这一步是三代里唯一真正改变"能不能上生产"结论的变化。
+判断也因此可以提前给出：如果你的负载是单请求、长输出，EAGLE-3 现在就是推测解码这一档的工程上限；如果你要的是大 batch 吞吐，EAGLE-1 的实现在 batch 24 附近就已经开始亏，而 EAGLE-3 论文自己在 H100 + SGLang 上报到 batch 64 仍有 1.38 倍——这是三代里唯一真正改变"能不能上生产"这个结论的变化。
 
 ## 目录
 
@@ -441,7 +441,7 @@ python -m eagle.evaluation.gen_baseline_answer_llama3chat \
   --base-model-path meta-llama/Llama-3.1-8B-Instruct
 ```
 
-两条命令各产出一个 `.jsonl`，记录生成结果与 wall time，README 说再用 `evaluation/speed.py` 求速度比，也说明要看具体加速比就必须把基线那条一起跑。但 `speed.py` 得先改：文件顶部三行是硬编码的作者本机路径与文件名——
+两条命令各产出一个 `.jsonl`，记录生成结果与 wall time，README 说再用 `evaluation/speed.py` 求速度比（实际路径是 `eagle/evaluation/speed.py`，README 少写了 `eagle/` 前缀），也说明要看具体加速比就必须把基线那条一起跑。但 `speed.py` 得先改：文件顶部三行是硬编码的作者本机路径与文件名——
 
 ```python
 tokenizer=AutoTokenizer.from_pretrained("/home/lyh/weights/hf/llama2chat/13B/")
@@ -451,7 +451,7 @@ jsonl_file_base = "llama-2-chat-70b-fp16-base-in-temperature-0.0.jsonl"
 
 它按题号累加 `choices[0]['new_tokens']` 与各轮耗时，最后一行输出 `ratio = mean(speeds)/mean(speeds0)`。README 里另一条 Qwen3 的示例命令同样带着作者的绝对路径 `/workspace/yunhai/Qwen3-4B_eagle3`，直接复制会失败。
 
-想测接受率而不是只测速度，仓库里有 `gen_ea_answer_*` 之外的两个脚本：`gen_ea_alpha_vicuna.py` / `gen_ea_alpha_llama2chat.py` 配合 `alpha.py`，会按草稿位置记录 `alpha` 与 `alpha_num` 两个数组——这正好对应 EAGLE-1 论文里那个"1-α 到 4-α"的鲁棒性分析。但这条路径目前跑不通：两个 alpha 脚本都 `from model.utils_alpha import *`，而仓库里不存在 `utils_alpha.py`（`eagle/model/` 下只有 `utils.py` 与 `utils_c.py`）。`alpha.py` 顶部同样写死了 `/home/lyh/code/nlp/EAGLE/data/...`。要测 α，实际得自己补这个模块。
+想测接受率而不是只测速度，仓库里有 `gen_ea_answer_*` 之外的两个脚本：`gen_ea_alpha_vicuna.py` / `gen_ea_alpha_llama2chat.py` 配合 `alpha.py`，会按草稿位置记录 `alpha` 与 `alpha_num` 两个数组——这正好对应 EAGLE-1 论文里那个"1-α 到 4-α"的鲁棒性分析。但这条路径目前跑不通：两个 alpha 脚本都 `from ..model.utils_alpha import *`，而仓库里不存在 `utils_alpha.py`（`eagle/model/` 下只有 `utils.py` 与 `utils_c.py`）。`alpha.py` 顶部同样写死了 `/home/lyh/code/nlp/EAGLE/data/...`。要测 α，实际得自己补这个模块。
 
 ## 框架集成：仓库列了 15 个入口
 
@@ -592,6 +592,6 @@ EAGLE-3 论文的 vLLM 一节给出同方向的第二组证据：
 - 对比方法 Medusa：<https://arxiv.org/abs/2401.10774>
 - 对比方法 Lookahead：<https://lmsys.org/blog/2023-11-21-lookahead-decoding/>
 
-最后放三件背景数据，核对时间 2026-09-20：仓库约 2.5k star、约 300 fork，最后一次提交是 2026-02-20 合并的 PR #330（把 GLM-4.7-Flash 加进 EAGLE-3 社区权重表），默认分支 `main`，主体语言 Python。许可证条款写在 `LICENSE` 文件里，首行是 "Copyright 2025 SafeAI Lab (SAIL)"，正文为 Apache-2.0；由于这份自定义头部，GitHub 在仓库页面上不识别它，显示成 "Other"——只按页面标签判断许可证会得出错误结论。
+最后放三件背景数据，核对时间 2026-10-02：仓库约 2.5k star、约 300 fork，最后一次提交是 2026-02-20 合并的 PR #330（把 GLM-4.7-Flash 加进 EAGLE-3 社区权重表），默认分支 `main`，主体语言 Python。许可证条款写在 `LICENSE` 文件里，首行是 "Copyright 2025 SafeAI Lab (SAIL)"，正文为 Apache-2.0；由于这份自定义头部，GitHub 在仓库页面上不识别它，显示成 "Other"——只按页面标签判断许可证会得出错误结论。
 
-> 本文事实来源为 SafeAILab/EAGLE 仓库（README、`eagle/model/`、`eagle/traineagle3/`、`eagle/evaluation/`）、EAGLE 系列三篇 arXiv 原文与 Spec-Bench 公开榜单，核对时间 2026-09-20。文中性能数字一律标注测量条件；仅由本文对公开数字做的算术（"可复算的例子"一节）已就地标明，不作为论文结论引用。vLLM 论文正文与 Table 5 标题的设备口径不一致处已标 unresolved。
+> 本文事实来源为 SafeAILab/EAGLE 仓库（README、`eagle/model/`、`eagle/traineagle3/`、`eagle/evaluation/`）、EAGLE 系列三篇 arXiv 原文与 Spec-Bench 公开榜单，核对时间 2026-10-02。文中性能数字一律标注测量条件；仅由本文对公开数字做的算术（"可复算的例子"一节）已就地标明，不作为论文结论引用。EAGLE-3 论文 vLLM 一节的正文与 Table 5 标题的设备口径不一致处已标 unresolved。

@@ -4,34 +4,34 @@ slug: chrome-devtools-mcp-v1.8-google-grade-engineering-7-choices
 github_repo: "ChromeDevTools/chrome-devtools-mcp"
 source_key: "gh:ChromeDevTools/chrome-devtools-mcp"
 date: 2026-09-01T18:20:00+08:00
-lastmod: 2026-09-01T18:20:00+08:00
+lastmod: 2026-09-30T00:00:00+08:00
 draft: false
 categories: ["技术笔记"]
 tags: ["MCP", "Chrome DevTools", "AI Agent", "浏览器自动化", "性能分析", "内存泄漏"]
-description: "chrome-devtools-mcp 是 Chrome DevTools 团队官方出的 MCP 服务器（50k+ stars），把真实 DevTools 能力以 57 个工具切给 AI 编程助手。本文从 v1.8.0 出发，拆解它把浏览器自动化做成 Google 级工程的 7 个设计选择与 6 个内置 skill。"
+description: "chrome-devtools-mcp 是 Chrome DevTools 团队官方出的 MCP 服务器（52.8k stars），把真实 DevTools 能力以 59 个工具切给 AI 编程助手。本文以 v1.10.1 为准，拆解它把浏览器自动化做成 Google 级工程的 7 个设计选择与 7 个内置 skill。"
 ---
 
 # chrome-devtools-mcp：Chrome 团队把「浏览器自动化」做成 Google 级工程的 7 个选择
 
 ## 核心判断
 
-chrome-devtools-mcp 解决的不是「怎么让 AI 打开一个网页」的问题，而是「怎么让 AI 像 Chrome DevTools 一样可靠地调试一个网页」的问题。它给出的答案是：**用 MCP 协议把整个 DevTools 能力面切成 57 个小而确定的工具，配上一套 agent 会话模型和 6 个内置 skill，让 AI 编程助手在真实浏览器里完成「导航 → 等待 → 快照 → 交互」的闭环。**
+chrome-devtools-mcp 解决的不是「怎么让 AI 打开一个网页」的问题，而是「怎么让 AI 像 Chrome DevTools 一样可靠地调试一个网页」的问题。它给出的答案是：**用 MCP 协议把整个 DevTools 能力面切成 59 个小而确定的工具，配上一套 agent 会话模型和 7 个内置 skill，让 AI 编程助手在真实浏览器里完成「导航 → 等待 → 快照 → 交互」的闭环。**
 
-它不是又一个 MCP 玩具。它是 Chrome 团队（就是维护 DevTools 的那批人）给的官方答案——**把 DevTools 卖掉给 agent**。这决定了它的工程气质：不是「能跑就行」，而是「像 Chrome 本身一样抗造」。
+它不是又一个 MCP 玩具。它是 Chrome 团队（就是维护 DevTools 的那批人）给的官方答案——**把 DevTools 卖给 agent**。这决定了它的工程气质：不是「能跑就行」，而是「像 Chrome 本身一样抗造」。
 
 ## 项目坐标
 
 | 维度 | 数据 |
 |------|------|
 | 仓库 | ChromeDevTools/chrome-devtools-mcp |
-| Stars | 约 50.3k（截至 2026-09）|
-| Forks | 约 3.5k |
-| 仓库大小 | 10.7 MB |
+| Stars | 52,750（截至 2026-09-30）|
+| Forks | 约 5.3k |
+| 仓库大小 | 10.9 MB |
 | 主语言 | TypeScript |
 | License | Apache-2.0（Google LLC）|
-| 当前版本 | 1.8.0（2026-08-25 发布）|
-| 工具数 | 57 个，分 11 类 |
-| 内核 | Puppeteer 25.8 + MCP SDK 1.30 + Lighthouse 13.4 + DevTools frontend 子模块 |
+| 当前版本 | 1.10.1（2026-09-23 发布）|
+| 工具数 | 59 个，分 11 类 |
+| 内核 | Puppeteer 25.12 + MCP SDK 2.0 + Lighthouse 13.5 + DevTools frontend 子模块 |
 | 安装 | `npm i chrome-devtools-mcp`（MCP server + CLI）|
 | 适配 | 任何 MCP 客户端（Claude / Cursor / Copilot / Antigravity 等）|
 
@@ -39,13 +39,13 @@ chrome-devtools-mcp 解决的不是「怎么让 AI 打开一个网页」的问�
 
 ## 问题拆分：浏览器自动化到底难在哪
 
-要理解它为什么值 50k stars，先得理解浏览器自动化这个领域的四个老坑。
+要理解它为什么值 52.8k stars，先得理解浏览器自动化这个领域的四个老坑。
 
 ### 坑一：多页面路由——「点哪个 tab」是个真问题
 
 一个浏览器里同时开着十几个 tab，AI 说「点这个按钮」，它指的是哪个页面？早期方案靠「当前选中的 tab」隐式猜测，一错就全错。
 
-chrome-devtools-mcp 的答案是：**`pageId` 强制显式**。从 1.1.0 起，页面级工具把 `pageId` 设为必传，用 `list_pages` 拿到真实 id，再传回给每个工具；到 1.8.0 进一步明确为「页面级工具默认必传」。这是把「隐式状态」改成「显式参数」的工程决策——不依赖 agent 的记忆，只依赖协议参数。
+chrome-devtools-mcp 的答案是：**`pageId` 强制显式**。这条路线走了两步：1.1.0 把页面级工具的 `pageId` 改为必传（#2084）；1.8.0 移除 `--experimental-page-id-routing` 实验开关，让「必传」成为唯一默认行为，想退回旧模式得显式传 `--pageIdRouting=false`。这是把「隐式状态」改成「显式参数」的工程决策——不依赖 agent 的记忆，只依赖协议参数。配置文档里对它的定位写着「useful for concurrent agent sessions」。
 
 ### 坑二：token 爆炸——「返回一堆 JSON」会撑爆上下文
 
@@ -81,19 +81,21 @@ chrome-devtools-mcp 把「怎么做 MCP server」这个命题，抽象成 7 条�
 | 6 | **Progressive Complexity** | 工具默认简单（高层动作），但提供高级可选参数给高阶用户。 |
 | 7 | **Reference over Value** | 重资产（截图、trace、视频）返回文件路径或资源 URI，绝不返回原始数据流。 |
 
-这 7 条不是空话，它们精确地指导了 57 个工具的每一个参数设计。
+这 7 条不是空话，它们精确地指导了 59 个工具的每一个参数设计。
 
 ### 三层架构：McpContext → McpPage → McpResponse
 
 从源码看，核心是三层：
 
-- **McpContext**：会话级。管理浏览器实例、多页面、隔离上下文（`#isolatedContexts` Map）、service worker 控制台、heap snapshot 管理器、trace 结果。页面 id 用进程级计数器保证跨重连唯一。
+- **McpContext**：会话级。管理多页面、隔离上下文（`#isolatedContexts` Map）、service worker 控制台、heap snapshot 管理器、trace 结果。页面 id 用进程级计数器发放，源码注释写明这样「跨重连保持唯一」。
 - **McpPage**：页面级。封装单个页面的 Puppeteer `Page`、TextSnapshot（带 uid 的 DOM 文本快照）、ConsoleCollector、NetworkCollector、对话框处理。
-- **McpResponse**：响应级。聚合所有可能返回的数据（快照、网络请求、控制台、trace 摘要、heap 数据、Lighthouse 结果、扩展），用 formatter 格式化成「机器结构化 + 人可读摘要」双轨输出，并支持分页。
+- **McpResponse**：响应级。聚合所有可能返回的数据（快照、网络请求、控制台、trace 摘要、heap 数据、Lighthouse 结果、CSS、扩展），用一组 formatter 格式化成「机器结构化 + 人可读摘要」双轨输出，并支持 `pageSize`/`pageIdx` 分页。
+
+1.10 把浏览器实例的启动与复用从 McpContext 拆成独立的 `BrowserManager` 类——三层架构没有变，只是把「管浏览器」从「管页面」里分离出来；另有一个 `SlimMcpResponse` 服务 `--slim` 精简模式。
 
 一个关键设计：**`HTMLElement` 类型在 schema 里被替换成 `uid: string`**（`replaceHtmlElementsWithUids`）。agent 不直接传 DOM 元素引用，而是通过 `take_snapshot` 拿到元素的 uid，再用 uid 交互。这是「把 DOM 引用改成协议参数」的又一个显式化——避免传整个元素对象，也避免引用失效。
 
-### 57 个工具，11 类
+### 59 个工具，11 类
 
 | 类 | 工具数 | 代表工具 |
 |------|------|------|
@@ -102,18 +104,22 @@ chrome-devtools-mcp 把「怎么做 MCP server」这个命题，抽象成 7 条�
 | Emulation | 2 | `emulate` / `resize_page` |
 | Performance | 3 | `performance_start_trace` / `performance_stop_trace` / `performance_analyze_insight` |
 | Network | 2 | `list_network_requests` / `get_network_request` |
-| Debugging | 8 | `evaluate_script` / `take_snapshot` / `take_screenshot` / `lighthouse_audit` / `screencast_start` |
-| Memory | 13 | `take_heapsnapshot` / `compare_heapsnapshots` / `get_heapsnapshot_retainers` / `query_heapsnapshot_objects` |
+| Debugging | 9 | `evaluate_script` / `take_snapshot` / `take_screenshot` / `lighthouse_audit` / `get_css_styles` |
+| Memory | 14 | `take_heapsnapshot` / `compare_heapsnapshots` / `get_heapsnapshot_retainers` / `query_heapsnapshot_objects` |
 | Extensions | 5 | `install_extension` / `trigger_extension_action`（需 `--categoryExtensions`）|
 | Third-party | 2 | `execute_3p_developer_tool` / `list_3p_developer_tools` |
 | WebMCP | 2 | `execute_webmcp_tool` / `list_webmcp_tools` |
 | PWA | 4 | `install_pwa` / `launch_pwa` / `get_os_app_state` / `uninstall_pwa`（需 `--categoryPwa`）|
 
-记忆类工具（13 个）是 1.8 版本的重点加强：`query_heapsnapshot_objects`、`get_heapsnapshot_edges` 增强、`retained by context` 报告、`duplicate strings` 检测——都是针对「前端内存泄漏」这个老大难做的定向工具。
+Debugging 类在 1.10 新增了 `get_css_styles`（配合 CSS formatter，能拿到 matched rules、inherited rules、keyframes、伪元素）；Memory 类同期加入 `analyze_heapsnapshot_contexts`。
 
-### 6 个内置 skill：把工具包成方法论
+记忆类工具（14 个）是 1.8 以来重点加强的方向：`query_heapsnapshot_objects`、`get_heapsnapshot_edges` 增强、`retained by context` 报告、`duplicate strings` 检测——都是针对「前端内存泄漏」这个老大难做的定向工具。
 
-光有工具不够，agent 还得知道「怎么用」。仓库在 `skills/` 下内置 6 个 skill，每个都是一套完整方法论：
+如果 59 个还嫌多，`--slim` 模式只暴露 3 个工具（`navigate` / `evaluate` / `screenshot`），给「只是打开网页截个图」的场景。这是 Progressive Complexity 原则的另一个方向：复杂度往上加参数，往下砍工具面。
+
+### 7 个内置 skill：把工具包成方法论
+
+光有工具不够，agent 还得知道「怎么用」。仓库在 `skills/` 下内置 7 个 skill，每个都是一套完整方法论：
 
 | skill | 解决的问题 |
 |------|-----------|
@@ -121,10 +127,23 @@ chrome-devtools-mcp 把「怎么做 MCP server」这个命题，抽象成 7 条�
 | `chrome-devtools-cli` | 在终端里直接操作浏览器（无 MCP 客户端时）|
 | `memory-leak-debugging` | 内存泄漏诊断全流程（baseline→操作 10 次→对比快照→查 retainers）|
 | `debug-optimize-lcp` | LCP 性能优化（元素/大小排查 + 优化策略）|
-| `a11y-debugging` | 无障碍问题排查 |
+| `a11y-debugging` | 无障碍问题排查（语义 HTML、ARIA、焦点、键盘导航、对比度）|
+| `cookie-debugging` | Cookie/会话/认证问题排查（401/403、SameSite、consent 合规）|
 | `troubleshooting` | 启动/连接/平台问题排查 |
 
+`cookie-debugging` 是 1.9 新增的。它教的不只是工具调用，还有浏览器常识的边界：HttpOnly cookie 的值读不到但浏览器会自动附带在请求头里，所以要看请求头而非 `document.cookie`；测 cookie consent 弹窗要用 `isolatedContext` 起干净会话，避免残留登录态污染结论。
+
 `memory-leak-debugging` 尤其体现工程化深度：它教 agent「**先放大泄漏再抓快照**」（重复同样操作 10 次）、「**对比 baseline/target/final 三张快照**」、「**用 retainer/dominator 链定位持有者**」、「**查完记得 close_heapsnapshot 释放内存**」——甚至警告「detached DOM 节点有时是故意的缓存，清空前要问用户」。这不是工具清单，是带判断力的专家工作流。
+
+## 版本演进：1.8 到 1.10 在补什么
+
+1.8.0 集中补了内存工具（14 个 memory 工具的大头），之后两个月发了 1.9.0（2026-09-08）和 1.10.x（2026-09-23），方向各有侧重。
+
+**1.9.0：安全边界与性能兜底。** `--no-javascript-evaluation` 从只关 `evaluate_script` 扩展到封掉导航与 initScript 里的 JS 注入——给「不想让 agent 执行任意脚本」的场景一个硬开关；trace buffer 默认值提到 1.2 GB，对齐 DevTools 本身；文件系统访问支持可配置 roots，CLI 默认带 `--allow-unrestricted-paths`；新增 `cookie-debugging` skill 和 Agent Plugins 1.0 包。
+
+**1.10.0：补 CSS 与换底座。** 新增 `get_css_styles` 工具和一整套 CSS formatter（matched/inherited rules、keyframes、伪元素、`@` 规则）——在此之前，全部工具里没有一个能读样式，这是调试能力面最明显的一块空白；MCP SDK 从 1.x 迁到 2.0；浏览器实例管理拆成 `BrowserManager`；大 trace 改用分块缓冲解析。1.10.1 修了 bundle 的 node export 条件。
+
+两个月三个版本，没有改过 7 条设计原则，也没有动过三层架构的分工——改动都是往既定骨架里填能力。对「设计原则先行」这个判断来说，这本身就是证据。
 
 ## 任务流案例：一次前端内存泄漏排查
 
@@ -147,7 +166,7 @@ agent 用 `navigate_page` 打开应用，`click` / `fill` 操作到目标状态�
 
 整个过程没有一步需要读原始 `.heapsnapshot` 文件——skill 明确警告那会「消耗太多 token」。所有分析都走内存工具的摘要接口。这就是「Token-Optimized + 语义摘要」原则在真实工作流里的落地。
 
-## 数据解读：50.3k stars 说明什么，不能推出什么
+## 数据解读：52.8k stars 说明什么，不能推出什么
 
 ### 这个数字主要在测什么
 
@@ -161,7 +180,7 @@ GitHub stars 测的是**关注度**，不是**效果**。它反映「有多少�
 
 ### 不能从这里推出什么
 
-- **不能推出它「完全稳定无坑」**。troubleshooting.md 白纸黑字列了 7 类典型问题：`Target closed`、WSL 启动失败、macOS Web Bluetooth 崩溃（TCC 权限）、Windows 10 `Connection closed`、VM 远程调试 Host 头校验、MCP 客户端沙箱冲突、Chrome 上百 tab 卡顿（Issue #1921 明确「不推荐上百 tab 的实例」）。
+- **不能推出它「完全稳定无坑」**。troubleshooting 文档白纸黑字列了 10 类具体问题：`Target closed`、WSL 启动失败、macOS Web Bluetooth 崩溃（TCC 权限）、Windows 10 `Connection closed`、VM 远程调试被 Host 头校验拦下、操作系统沙箱冲突、以 root 运行时 Chrome 拒绝启动、Claude Code 插件克隆失败、`--autoConnect` 连接超时、`ERR_MODULE_NOT_FOUND`。多 tab 场景另有 Issue #1921（至今 open）：有用户把连着约 2000 个 tab 的 Chrome 交给它，首个工具调用就把浏览器拖到无响应——根因是连接时对所有 tab 做 eager attach，维护者的缓解方向是用 targetFilter 把 MCP 视角收窄到部分 tab。
 - **不能推出「MCP 是唯一入口」**。它同时提供 CLI（`chrome-devtools` 命令 + daemon），不是所有场景都要走 MCP。
 - **不能推出「它解决所有调试问题」**。文档明确说「如果 chrome-devtools-mcp 不够，引导用户去 DevTools UI」——有些场景（复杂 CSS 调试、深层异步堆栈）人工用 DevTools 仍是最佳路径。
 
@@ -171,7 +190,7 @@ GitHub stars 测的是**关注度**，不是**效果**。它反映「有多少�
 
 - **AI 编程助手用户**：写前端、调样式、查性能时，让 agent 直接操作真实浏览器。
 - **前端自动化团队**：需要比纯 Puppeteer 更高层的「agent 可理解」的浏览器控制。
-- **做性能/内存优化的工程师**：6 个内置 skill 提供了可直接套用的排查方法论。
+- **做性能/内存优化的工程师**：7 个内置 skill 提供了可直接套用的排查方法论。
 
 ### 谁可以等等
 
@@ -181,14 +200,14 @@ GitHub stars 测的是**关注度**，不是**效果**。它反映「有多少�
 
 ### 落地顺序
 
-1. **最轻**：`npm i chrome-devtools-mcp -g`，用 `chrome-devtools status` 验证，CLI 手动操作。
-2. **标准**：配置进 MCP 客户端（Claude / Cursor / Copilot），agent 自动获得 57 个工具。
-3. **进阶**：按需开启 `--categoryExtensions` / `--memoryDebugging` / `--categoryPwa` 解锁扩展/内存/PWA 工具组。
+1. **最轻**：`npm i chrome-devtools-mcp -g`，用 `chrome-devtools status` 验证，CLI 手动操作；只要基础浏览器任务就加 `--slim`，工具面收窄到 3 个。
+2. **标准**：配置进 MCP 客户端（Claude / Cursor / Copilot），agent 自动获得 59 个工具。
+3. **进阶**：按需开启 `--categoryExtensions` / `--memoryDebugging` / `--categoryPwa` 解锁扩展/内存/PWA 工具组；参数多了就用 `--config` 指向 JSON 配置文件（1.10 新增）。
 4. **深度**：读 `skills/memory-leak-debugging/SKILL.md` 和 `docs/design-principles.md`——它们同时是产品文档和工程范本。
 
 ## 结尾判断
 
-chrome-devtools-mcp 真正的价值，不在 57 个工具，也不在 50k stars，而在它示范了「**把真实开发工具卖给 AI agent**」这件事该怎么做到位：**显式参数代替隐式状态（pageId）、语义摘要代替原始 JSON（token 优化）、可组合小工具代替魔法按钮（deterministic blocks）、方法论 skill 代替裸工具（workflow）**。
+chrome-devtools-mcp 真正的价值，不在 59 个工具，也不在 52.8k stars，而在它示范了「**把真实开发工具卖给 AI agent**」这件事该怎么做到位：**显式参数代替隐式状态（pageId）、语义摘要代替原始 JSON（token 优化）、可组合小工具代替魔法按钮（deterministic blocks）、方法论 skill 代替裸工具（workflow）**。
 
 这跟很多「把某功能包成 MCP server」的项目有本质区别——后者是把工具暴露出去，前者是**为 agent 重新设计了一套交互协议**。它证明了「浏览器自动化」可以从「一串 Puppeteer 脚本」升格成「一个 agent 可理解的工程域」。
 
@@ -200,6 +219,6 @@ chrome-devtools-mcp 真正的价值，不在 57 个工具，也不在 50k stars�
 
 - [ChromeDevTools/chrome-devtools-mcp 仓库](https://github.com/ChromeDevTools/chrome-devtools-mcp)
 - [Design Principles](https://github.com/ChromeDevTools/chrome-devtools-mcp/blob/main/docs/design-principles.md)
-- [Tool Reference（57 工具全量）](https://github.com/ChromeDevTools/chrome-devtools-mcp/blob/main/docs/tool-reference.md)
+- [Tool Reference（59 工具全量）](https://github.com/ChromeDevTools/chrome-devtools-mcp/blob/main/docs/tool-reference.md)
 - [Troubleshooting（7 类典型问题）](https://github.com/ChromeDevTools/chrome-devtools-mcp/blob/main/docs/troubleshooting.md)
-- [CHANGELOG v1.8.0](https://github.com/ChromeDevTools/chrome-devtools-mcp/blob/main/CHANGELOG.md)
+- [CHANGELOG（v1.8 → v1.10 演进记录）](https://github.com/ChromeDevTools/chrome-devtools-mcp/blob/main/CHANGELOG.md)

@@ -9,9 +9,9 @@ aliases:
   - "/posts/tech/chrome-devtools-mcp-ai-browser-control/"
   - "/posts/tech/chrome-devtools-mcp-ai-coding-agent-chrome/"
   - "/posts/tech/chrome-devtools-mcp-ai-coding-agents/"
-description: "ChromeDevTools/chrome-devtools-mcp 解读：pageId 与 uid 两级寻址如何让智能体稳定操作浏览器，57 项工具盘点与默认可见集开关、CLI 行为边界、隐私脱敏与报错对照。"
+description: "ChromeDevTools/chrome-devtools-mcp 解读：pageId 与 uid 两级寻址如何让智能体稳定操作浏览器，58 项工具盘点与默认可见集开关、CLI 行为边界、隐私脱敏与报错对照。"
 draft: false
-lastmod: "2026-09-19T00:00:00+08:00"
+lastmod: "2026-09-29T00:00:00+08:00"
 categories: ["技术笔记"]
 topics: ["coding-agent"]
 tags: ["MCP", "Chrome DevTools", "Puppeteer", "AI Agent", "浏览器自动化", "Claude"]
@@ -21,7 +21,7 @@ tags: ["MCP", "Chrome DevTools", "Puppeteer", "AI Agent", "浏览器自动化", 
 
 先说它不是什么东西。它不是又一个 headless 浏览器，不是没有主张的 Puppeteer（Node.js 浏览器驱动库）封装，也不是测试框架。它是 Google Chrome 团队维护的一个 Model Context Protocol（模型上下文协议）服务端，服务对象是 Antigravity、Claude、Cursor、Copilot 这类编码智能体，让它们能控制并检查一个实时运行的 Chrome。它按 MCP 这套开放标准暴露应用程序接口，不绑定某一家模型。仓库现在的名字是 "Chrome DevTools for agents"，npm 包仍叫 `chrome-devtools-mcp`。
 
-判断它值不值得接进工作流，看三件事：两级寻址解决了什么老问题，57 项工具里有多少真用得上，以及它把哪些数据交给了谁。
+判断它值不值得接进工作流，看三件事：两级寻址解决了什么老问题，58 项工具里有多少真用得上，以及它把哪些数据交给了谁。
 
 ## 各取所需
 
@@ -80,7 +80,7 @@ MCP 的一次工具调用长这样：
 }
 ```
 
-结论：这个项目真正的工程量在 Puppeteer 之上那层——把调试能力切成地址稳定、返回可读的函数。浏览器控制本身它一行没重造。
+这个项目真正的工程量在 Puppeteer 之上那层——把调试能力切成地址稳定、返回可读的函数。浏览器控制本身它一行没重造。
 
 ## pageId 与 uid：把选择器问题换成快照问题
 
@@ -96,7 +96,7 @@ MCP 的一次工具调用长这样：
 
 ## 工具全家福
 
-v1.9.0 版共 57 项，按能力分 11 组。下表是分组与数量，逐项签名以官方 [tool-reference](https://github.com/ChromeDevTools/chrome-devtools-mcp/blob/main/docs/tool-reference.md) 为准；main 分支已把调试组扩到 9 项（新增 `get_css_styles`，返回某个元素的匹配规则、内联样式与层叠信息，用来判断某条属性为什么生效、为什么被覆盖），清单总数随之变成 58。
+npm 已发布的 v1.10.1（2026-09-23）共 58 项，按能力分 11 组。v1.10.0 刚把 `get_css_styles` 收进调试组：按快照 uid 返回某元素的匹配规则、内联与继承样式及层叠信息，用来判断某条属性为什么生效、为什么被覆盖。main 分支（2026-09-29）又给内存组添了 `analyze_heapsnapshot_contexts`，从堆快照里找出持有死捕获字段的闭包上下文——已经没有任何活闭包能读到其变量——按保留大小排序，作为泄漏排查的优先级启发式，清单总数随之变成 59。下表按 v1.10.1 计，逐项签名以官方 [tool-reference](https://github.com/ChromeDevTools/chrome-devtools-mcp/blob/main/docs/tool-reference.md) 为准。
 
 | 能力组 | 数量 | 成员 |
 |--------|------|------|
@@ -105,16 +105,16 @@ v1.9.0 版共 57 项，按能力分 11 组。下表是分组与数量，逐项�
 | 模拟 | 2 | `emulate` / `resize_page` |
 | 性能 | 3 | `performance_start_trace` / `performance_stop_trace` / `performance_analyze_insight` |
 | 网络 | 2 | `list_network_requests` / `get_network_request` |
-| 调试 | 8 | `take_snapshot` / `take_screenshot` / `evaluate_script` / `list_console_messages` / `get_console_message` / `lighthouse_audit` / `screencast_start` / `screencast_stop` |
-| 内存 | 13 | 堆快照的拍摄、比较与查询一族，见下文 |
+| 调试 | 9 | `take_snapshot` / `take_screenshot` / `evaluate_script` / `list_console_messages` / `get_console_message` / `get_css_styles` / `lighthouse_audit` / `screencast_start` / `screencast_stop` |
+| 内存 | 13 | 堆快照的拍摄、比较与查询一族 |
 | 扩展 | 5 | `install_extension` / `list_extensions` / `reload_extension` / `uninstall_extension` / `trigger_extension_action` |
 | 渐进式 Web 应用（PWA） | 4 | `get_os_app_state` / `install_pwa` / `launch_pwa` / `uninstall_pwa` |
 | 第三方工具 | 2 | `list_3p_developer_tools` / `execute_3p_developer_tool` |
 | WebMCP | 2 | `list_webmcp_tools` / `execute_webmcp_tool` |
 
-数量是清单上限，不是默认可见集。真正的默认集比 57 小得多：内存那 13 项要 `--memoryDebugging`（别名 `--experimentalMemory`）；扩展、PWA、第三方三组分别要 `--categoryExtensions`、`--categoryPwa`、`--categoryExperimentalThirdParty`；`screencast_*` 要 `--experimentalScreencast`，且录制依赖 ffmpeg 在 MCP 服务端的 PATH 里；`click_at` 要 `--experimentalVision`。这些开关默认全是 false。扩展与 PWA 两组还要求管道连接：用 `--browserUrl`、`--wsEndpoint` 或 `--autoConnect` 连一个已在运行的 Chrome 时拿不到它们，官方说明这一限制要到 Chrome 149 才解除。
+数量是清单上限，不是默认可见集。真正的默认集比 58 小得多：内存那 13 项要 `--memoryDebugging`（别名 `--experimentalMemory`）；扩展、PWA、第三方、WebMCP 四组分别要 `--categoryExtensions`、`--categoryPwa`、`--categoryExperimentalThirdParty`、`--categoryExperimentalWebmcp`，其中 WebMCP 一组还要求 Chrome 150 以上，并给浏览器加 `--enable-features=WebMCP` 启动；`screencast_*` 要 `--experimentalScreencast`，且录制依赖 ffmpeg 在 MCP 服务端的 PATH 里；`click_at` 要 `--experimentalVision`。这些开关默认全是 false。扩展与 PWA 两组还要求管道连接：用 `--browserUrl`、`--wsEndpoint` 或 `--autoConnect` 连一个已在运行的 Chrome 时拿不到它们；扩展组官方写了期限，Chrome 149 发布后解除，PWA 组暂无解除说明。
 
-按上表算：默认暴露的是输入 10 + 导航 6 + 模拟 2 + 性能 3 + 网络 2 + 调试 7 = 30 项；打开 `--memoryDebugging` 到 43，再打开扩展与 PWA 两组到 52。别按 57 项预估智能体每次要读多少工具描述，那直接反映在接入后的首轮词元开销上。客户端里能列出的工具清单才是准数，这 30 项是按上表默认值推出来的。
+按上表算：默认暴露的是输入 9（`click_at` 要实验开关，不算）+ 导航 6 + 模拟 2 + 性能 3 + 网络 2 + 调试 7（`screencast_*` 两项不算）= 29 项；打开 `--memoryDebugging` 到 42，再打开扩展与 PWA 两组到 51。别按 58 项预估智能体每次要读多少工具描述，那直接反映在接入后的首轮词元开销上。客户端里能列出的工具清单才是准数，这 29 项是按上表默认值推出来的。
 
 输入组里值得单独说的：
 
@@ -237,10 +237,10 @@ CLI 是客户端，后台跑着一个 `chrome-devtools-mcp` 守护进程，Linux
 
 两条限制记牢：
 
-- CLI 只暴露无需额外参数即可调用的工具，`--categoryExtensions` 相关的扩展类工具因此不在 CLI 里。
-- `wait_for` 与 `fill_form` 被排除在 CLI 生成之外，用不了。别照抄 MCP 的调用顺序写脚本：用 shell 的 `sleep` 顶替等待，只是把稳定的流程换成随机失败的流程。
+- CLI 只收录默认配置下就能用的工具，`--categoryExtensions` 相关的扩展类工具因此不在 CLI 里。
+- `wait_for` 与 `fill_form` 被排除在 CLI 生成之外，用不了。生成脚本的源码注释给的理由：CLI 处理不好数组与 JSON 参数，而等待语义 shell 自己就有不少机制。别照抄 MCP 的调用顺序写脚本：用 shell 的 `sleep` 顶替等待，只是把稳定的流程换成随机失败的流程。
 
-CLI 默认放开整个文件系统访问，`chrome-devtools start --workspace=/path/to/project` 可以把文件类工具限制在指定目录，需要时可重复传该参数。让智能体生成脚本时，这行参数值得默认加上。
+CLI 默认放开整个文件系统访问；MCP 服务端那边相反，客户端不协商 roots（MCP 的目录授权机制）时，文件类工具默认只能碰系统临时目录。`chrome-devtools start --workspace=/path/to/project` 可以把文件类工具限制在指定目录，需要时可重复传该参数。让智能体生成脚本时，这行参数值得默认加上。
 
 ## 隐私边界
 
@@ -277,8 +277,8 @@ CLI 默认放开整个文件系统访问，`chrome-devtools start --workspace=/p
 2. 复用浏览器实例，别每条命令都重开；需要干净会话用 `isolatedContext` 开新上下文。
 3. trace 只录关心的区间，在关键代码段前后 start/stop；用 `filePath` 流式落盘，别把整个生命周期塞回对话。
 4. 只需要读数据的 `evaluate_script` 调用传 `waitForStableDom=false`，默认值会等 DOM 安定，白等一轮。
-5. 重的返回值（截图、trace、响应体）一律走 `filePath`。截图想省得更彻底，用 `--screenshotFormat` 把默认格式定为 JPEG 或 WebP，再用 `--screenshotMaxWidth` 压尺寸——官方说明图片词元随像素数增长，不只随字节数。
-6. 用不到的能力组直接踢出清单：`--categoryEmulation`、`--categoryPerformance`、`--categoryNetwork` 默认 true，设成 false 即从工具列表里移除。少了 20 项工具描述，比事后压缩返回值便宜。
+5. 重的返回值（截图、trace、响应体）一律走 `filePath`。截图想省得更彻底，用 `--screenshotFormat` 把默认格式定为 JPEG 或 WebP——官方说明这两者比 PNG 小约三到五倍——再用 `--screenshotMaxWidth` 压尺寸：图片词元随尺寸增长，与编码后的字节数无关。
+6. 用不到的能力组直接踢出清单：`--categoryEmulation`、`--categoryPerformance`、`--categoryNetwork` 默认 true，设成 false 即从工具列表里移除，一共少 7 项工具描述（模拟 2、性能 3、网络 2），比事后压缩返回值便宜。开关多了可以收进一个 JSON 文件用 `--config` 传入，v1.10.0 起支持。
 
 ## 排障
 
@@ -313,7 +313,7 @@ CLI 默认放开整个文件系统访问，`chrome-devtools start --workspace=/p
 
 **能同时开多个浏览器实例吗？** 一个服务端只管一个浏览器；它的设计取向是在这一个实例里用 `isolatedContext` 做多套互不可见的会话。真要并行多浏览器，就起多个服务端进程，并各自处理 user data directory 冲突。
 
-**`fill_form` 为什么在 CLI 里找不到？** CLI 不生成需要复合参数的工具，`fill_form` 与 `wait_for` 都在排除之列。
+**`fill_form` 为什么在 CLI 里找不到？** CLI 生成时跳过了它，同批跳过的还有 `wait_for`：数组与 JSON 参数 CLI 处理不好，前者在 shell 场景也不实用。
 
 **Lighthouse 报告里没有性能分？** 正常。`lighthouse_audit` 明确不含性能项，性能要另跑 trace。
 
@@ -334,7 +334,7 @@ CLI 默认放开整个文件系统访问，`chrome-devtools start --workspace=/p
 4. `lighthouse_audit` 拿不到性能分，接下来调哪个工具？
 5. CLI 里为什么没有 `wait_for`，你打算怎么补这个语义？
 
-答案在上文对应小节里。第 2 题的关键词是两个开关互相独立，第 5 题的关键词是复合参数不参与 CLI 生成。
+答案在上文对应小节里。第 2 题的关键词是两个开关互相独立，第 5 题的关键词是数组与 JSON 参数 CLI 处理不好、等待语义 shell 自有。
 
 ## 下一步
 
@@ -346,9 +346,9 @@ CLI 默认放开整个文件系统访问，`chrome-devtools start --workspace=/p
 
 ## 维护与复现
 
-- 本文事实来自仓库 `chrome-devtools-mcp`，快照为 main 分支 2026-09-18 提交、npm 已发布的 v1.9.0（2026-09-08）。工具组数量与参数以官方文档为准。
+- 本文事实来自仓库 `chrome-devtools-mcp`，快照为 npm 已发布的 v1.10.1（2026-09-23）、main 分支 2026-09-29 提交。工具组数量与参数以官方文档为准。
 - 逐项签名看 [tool-reference](https://github.com/ChromeDevTools/chrome-devtools-mcp/blob/main/docs/tool-reference.md)，精简模式看 [slim-tool-reference](https://github.com/ChromeDevTools/chrome-devtools-mcp/blob/main/docs/slim-tool-reference.md)，启动参数看 [configuration](https://github.com/ChromeDevTools/chrome-devtools-mcp/blob/main/docs/configuration.md)。
-- 上游更新后最容易失效的是四处：调试组的数量与成员、各开关的默认值、CLI 排除工具清单、`lighthouse_audit` 的覆盖范围。
+- 上游更新后最容易失效的是四处：各组工具的数量与成员、各开关的默认值、CLI 排除工具清单、`lighthouse_audit` 的覆盖范围。
 - 改动时四处标题都要对得上：「各取所需」的条目、「工具全家福」的分组表、「排障」里的错误字符串、本节标题本身。按标题关键词搜，别按行号。
 
 | 参考资源 | 链接 |

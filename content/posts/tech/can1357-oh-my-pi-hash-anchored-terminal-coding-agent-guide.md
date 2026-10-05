@@ -4,7 +4,7 @@ date: "2026-06-25T18:05:11+08:00"
 slug: "can1357-oh-my-pi-hash-anchored-terminal-coding-agent-guide"
 github_repo: "can1357/oh-my-pi"
 source_key: "gh:can1357/oh-my-pi"
-description: "can1357/oh-my-pi（omp）是 14.5k+ Stars 的终端 AI 编程 Agent，fork 自 Mario Zechner 的 pi-mono。它用 hashline 锚定编辑把 str_replace 的失败模式（whitespace 不一致、anchor 漂移、整段重打）从根上拆掉；用 32 个工具 + 14 LSP + 28 DAP + ~55k 行 Rust 内核构建\"Agent 真的能调的工具\"。文章拆 hashline 的 [PATH#TAG] 格式、SWAP/INS/DEL 操作符、与同类 Agent 的精度/成本对比、以及在生产 Agent 中的适用边界。"
+description: "can1357/oh-my-pi（omp）是 Stencil Labs 维护的终端 AI 编程 Agent，fork 自 Mario Zechner 的 pi-mono，33.9k Stars（2026-10-01）。它用 hashline 锚定编辑把 str_replace 的失败模式（whitespace 不一致、anchor 漂移、整段重打）从根上拆掉；用 31 个内置工具 + 14 LSP + 28 DAP + 约 80k 行 Rust 内核构建\"Agent 真的能调的工具\"。文章拆 hashline 的 [PATH#TAG] 格式与 PUT/CUT 操作符、基准数据的读法、与同类 Agent 的对比，以及在生产 Agent 中的适用边界。"
 draft: false
 categories: ["技术笔记"]
 tags: ["AI Coding Agent", "Rust", "TypeScript", "LSP", "MCP", "工具调用"]
@@ -12,170 +12,108 @@ tags: ["AI Coding Agent", "Rust", "TypeScript", "LSP", "MCP", "工具调用"]
 
 # oh-my-pi：把 hash-anchored 编辑做进终端 AI 编程 Agent
 
+## 先给判断
+
+`can1357/oh-my-pi`（命令名 `omp`，项目主页 [omp.sh](https://omp.sh)）是 Can Bölük 创建、[Stencil Labs](https://stencil.so) 维护的终端 AI 编程 Agent，2025-12-31 立项，九个月做到 33.9k Stars、3.7k Forks（2026-10-01 核实）。它 fork 自 Mario Zechner 的 [pi-mono](https://github.com/badlogic/pi-mono)，把 "Pi" 从一个底层 LLM 客户端重写成"开箱即用的编码工作流"。
+
+它值得专门拆开看的工程原因有三条：
+
+1. **编辑格式动了根**。绝大多数终端 Agent 给模型一个 `str_replace(old, new)`：模型必须把要替换的整段代码原样抄进调用，缩进、空格、换行、emoji 差一个字符就 `String not found`，然后进入重试循环，每试一次就把同样的原文重新烧一遍 token。omp 的解法是 `hashline`——行号加内容哈希做成一等公民锚点，模型只说"第 12 行换成这一句"，不重抄原文。
+2. **harness（工具编排层）当产品做**。14 个 LSP 操作 + 28 个 DAP 操作、流级规则中断、advisor 第二模型盯梢、APFS 级 subagent 隔离，这些在其他工具里算插件生态的事，在 omp 里是内置的。
+3. **热路径不走 fork-exec**。约 80k 行 Rust 内核把 bash、ripgrep、glob、find、tree-sitter、BPE 计数全部 in-process 链接，模型每调一次工具不用起一个新进程。
+
+作者给出的基准最能说明第 1 条的分量：Grok Code Fast 1 换上 hashline 后，编辑 pass rate 从 **6.7%** 跳到 **68.3%**——模型没换，换的只是编辑格式。这篇文章拆开 hashline 的格式与状态机、harness 的分层结构、这批数字该怎么读，以及什么时候不该选 omp。
+
 ## 快速信息卡
 
 | 项目 | 信息 |
-|------|----------|
-| **Stars** | 14,781+ |
-| **Forks** | 1,302+ |
+|------|------|
+| **Stars / Forks** | 33,917 / 3,658（2026-10-01，GitHub API） |
 | **许可证** | MIT |
-| **语言** | TypeScript + Rust |
+| **语言** | TypeScript（主体）+ Rust（内核约 80k 行） |
+| **运行时** | Bun ≥ 1.3.14，macOS / Linux / Windows 原生 |
+| **来源** | fork 自 [badlogic/pi-mono](https://github.com/badlogic/pi-mono)，由 Stencil Labs 维护 |
 | **仓库** | [can1357/oh-my-pi](https://github.com/can1357/oh-my-pi) |
 
-## 学习目标
+## 系统地图：四层组织
 
-阅读本文后，你将能够：
-
-1. **解释 hashline 锚定编辑的原理和优势**，掌握其 `[PATH#TAG]` 格式、状态机和 stale-tag 恢复机制
-2. **描述 oh-my-pi 的四层架构**（交互层、编排层、工具层、Rust 内核），并解释每层的核心职责
-3. **对比 hashline 与 str_replace 的精度和成本**，通过真实编辑示例理解为什么 hashline 能显著降低 token 消耗和失败率
-4. **列出 oh-my-pi 的 32 个内置工具 + 14 LSP + 28 DAP 操作**，理解"Agent 真的能调的工具"的含义
-5. **判断什么时候选 omp，什么时候 Claude Code / Cursor / Aider 更合适**，基于项目类型、任务长度、工具需求做决策
-
-## 目录
-
-- [核心判断](#核心判断)
-- [阅读路径](#阅读路径)
-- [系统地图](#系统地图)
-- [hashline 格式](#hashline-格式)
-- [hashline 状态机](#hashline-状态机)
-- [真实编辑示例](#真实编辑示例)
-- [hashline 的真实效果](#hashline-的真实效果)
-- [与 Claude Code / Gemini CLI / Aider 的对比](#与-claude-code--gemini-cli--aider-的对比)
-- [Rust 内核](#rust-内核)
-- [工作流特性](#工作流特性)
-- [适用场景与边界](#适用场景与边界)
-- [自测清单](#自测清单)
-- [进阶路径](#进阶路径)
-- [常见问题](#常见问题)
-- [参考链接](#参考链接)
-
----
-
-## 核心判断
-
-`can1357/oh-my-pi`（命令名 `omp`，项目主页 [omp.sh](https://omp.sh)）是 Can Bölük 维护的终端 AI 编程 Agent，2025-12-31 立项，到 2026-06 已经 14.5k+ Stars、1.2k+ Forks。它 fork 自 Mario Zechner 的 [pi-mono](https://github.com/badlogic/pi-mono)，把"Pi"从一个底层 LLM 客户端重写成"开箱即用的编码工作流"。
-
-oh-my-pi 解决的核心问题不是"让模型更聪明"，而是"让模型改文件时不再白做工"。绝大多数终端 AI Agent 给模型一个 `str_replace(old, new)` 工具：模型必须把要替换的整段代码**原样**抄进调用里——缩进、空格、换行、emoji 都要一致，差一个字符就 `String not found`，进入无限重试循环。oh-my-pi 的解法是 `hashline`：把"行号 + 行内容哈希"做成一等公民的锚点，模型只需要说"第 12 行的整行换成这一句"，**永不**重新抄原文。
-
-配套的核心创新是工具编排层（harness）：
-
-- 32 个内置工具（read/write/edit/bash/eval/lsp/debug/browser/web_search/github/...）
-- 14 个 LSP 操作 + 28 个 DAP 操作，模型调 `lsp rename` 真的走 `workspace/willRenameFiles`，处理 re-exports 和 barrel 文件
-- ~55k 行 Rust 内核（shell、grep、glob、ast、iso、tokens、sixel...），把 `ripgrep`、`bash`、`find`、`ast-grep`、`tiktoken` 全部 in-process 链接，热路径上 0 次 fork-exec
-- 40+ 模型 provider + per-role 路由（default / smol / slow / plan / commit）
-
-数字上最直观的验证：Grok Code Fast 1 在 hashline 启用后，pass rate 从 **6.7% 跳到 68.3%**；Grok 4 Fast 输出 token 下降 **61%**；在 MiniMax 上 pass rate 翻 2.1 倍。这些数字来自 [blog.can.ac/2026/02/12/the-harness-problem/](https://blog.can.ac/2026/02/12/the-harness-problem/)，是同一作者的基准数据。
-
-文章要拆开的事：
-
-1. 核心创新——hashline 锚定编辑的格式、状态机和 stale-tag 恢复
-2. 系统地图——agent loop、tool harness、context 管理、provider 路由四层
-3. 与现有工具的精度 / 速度 / 成本对比
-4. 真实编辑示例——普通 str_replace 和 hashline 的区别
-5. 工具编排层——LSP/DAP/Rust 内核如何把"AI 写代码"从 demo 拉进生产
-6. 适用边界——什么时候选 omp，什么时候 Claude Code / Cursor / Aider 更合适
-
-## 阅读路径
-
-- **想看 hashline 算法**：§4 格式 + §5 状态机 + §6 真实编辑示例
-- **想看系统地图**：§3 整体架构 + §4-§7 逐层拆解
-- **想看性能数据**：§8 基准数据 + §9 与 Claude Code/Gemini CLI/Aider 的精度对比
-- **想看 Rust 内核**：§10 工具编排层 + §11 55k 行 Rust 在做什么
-- **想看选型决策**：§12 适用场景 + §13 不适用场景
-
-## 系统地图
-
-oh-my-pi 是一个 monorepo，14 个 npm 包 + 6 个 Rust crate，按"交互 → 编排 → 工具 → 内核"四层组织：
+omp 是一个 monorepo：16 个 npm 包加一组 Rust crate，按"交互 → 编排 → 工具 → 内核"四层组织：
 
 ```
 oh-my-pi
 ├── 交互层
-│   ├── packages/coding-agent/        # CLI 入口（omp、omp -p、omp acp）
+│   ├── packages/coding-agent/        # CLI 入口与 SDK（omp、omp -p、omp acp）
 │   ├── packages/tui/                 # 差分渲染 TUI（Kitty 键盘协议 + PHF 完美哈希）
 │   └── packages/collab-web/          # 浏览器 guest client + relay
 │
 ├── 编排层
 │   ├── packages/agent/               # Agent runtime、tool calling、状态机
-│   ├── packages/hashline/            # 锚定 patch 语言 + applier
-│   ├── packages/mnemopi/             # 本地 SQLite 长期记忆
+│   ├── packages/mnemopi/             # 本地 SQLite 记忆引擎
 │   └── packages/snapcompact/         # 位图帧上下文压缩 + SQuAD 评测
 │
-├── 工具层（32 个内置工具）
-│   ├── read / write / edit / ast_edit / ast_grep / search / find
-│   ├── bash / eval / ssh             # 运行时
-│   ├── lsp / debug                   # 代码智能（DAP/LSP）
-│   ├── task / irc / todo / job / ask # 协调
-│   ├── browser / web_search / github / generate_image / inspect_image / tts
-│   ├── checkpoint / rewind / retain / recall / reflect  # 记忆与状态
-│   └── resolve / search_tool_bm25    # 杂项
+├── 工具层（31 个内置工具）
+│   ├── read / write / edit / ast_edit / ast_grep / grep / glob
+│   ├── bash / eval                   # 运行时（持久 Python + JavaScript 双 kernel）
+│   ├── lsp / debug / security_scan   # 代码智能
+│   ├── task / wait / todo / ask      # 协调
+│   ├── browser / computer / web_search / github / generate_image / tts
+│   └── checkpoint / rewind / retain / recall / reflect / memory_edit / learn / manage_skill
 │
 ├── 模型层
 │   ├── packages/ai/                  # 多 provider LLM 客户端（流式 + 工具调用）
 │   ├── packages/catalog/             # 模型目录 + provider 描述符
 │   └── packages/wire/                # collab 协议类型
 │
-└── Rust 内核（~55k LoC，4 个 crate + 平台 N-API addon）
-    ├── crates/pi-natives/            # N-API cdylib 聚合
-    ├── crates/pi-shell/              # brush-shell 包装的 bash + PTY
-    ├── crates/pi-ast/                # tree-sitter + ast-grep 包装
-    ├── crates/pi-iso/                # APFS/btrfs/zfs/overlayfs 工作区隔离
-    └── crates/brush-*-vendored/      # vendored brush-shell
+└── Rust 内核（核心 6 crate，~80k 行 + 同量级 vendored 代码）
+    ├── crates/pi-natives/           # N-API cdylib 聚合（约 25k 行）
+    ├── crates/pi-shell/             # brush-shell 包装的 bash + PTY（约 38k 行）
+    ├── crates/pi-ast/               # tree-sitter + ast-grep 包装
+    ├── crates/pi-iso/               # APFS/btrfs/zfs/overlayfs 工作区隔离
+    ├── crates/pi-walker/            # 并行文件遍历 + grep/glob/workspace 共享缓存
+    ├── crates/pi-edit/              # edit 工具引擎：hashline / apply_patch / patch / replace / sloppy 五种模式
+    └── crates/vendor/brush-core/    # vendored brush-shell fork
 ```
 
 四层的职责切割：
 
-- **交互层**只关心输入输出：TUI、CLI 参数、ACP/JSON-RPC 协议、Node SDK
-- **编排层**关心"Agent 这一轮要走哪些工具、context 该长什么样"——hashline 的 applier 在这里
-- **工具层**关心"这一类操作的具体语义"——`read` 知道怎么读 PDF/notebook/URL/SQLite，`debug` 知道怎么跟 lldb-dap 对话
-- **Rust 内核**关心"高频底层操作别走 fork-exec"——ripgrep、bash、find、tiktoken 全 in-process
+- **交互层**只管输入输出：TUI、CLI 参数、ACP/JSON-RPC 协议、Node SDK
+- **编排层**管"Agent 这一轮走哪些工具、context 长什么样"
+- **工具层**管每一类操作的具体语义：`read` 读 PDF/notebook/URL/SQLite，`debug` 跟 lldb-dap 对话
+- **Rust 内核**管高频底层操作：搜索、shell、AST、文本宽度、BPE 计数全部 in-process
 
-四层之间的调用方向是严格自上而下的：交互层不直接调 Rust，所有 native 调用经过编排层的 Node N-API 绑定。
+一个值得注意的迁移：hashline 引擎最早是 TypeScript 包（`packages/hashline`），2026 年下半年已重写进 Rust crate `pi-edit`——现在编辑落地、快照管理、stale 恢复都跑在内核里，`packages/hashline` 已从仓库消失。引用旧路径的资料（包括本文的早期版本）需要更新。
 
-## hashline 格式
+四层之间的调用方向严格自上而下，所有 native 调用经过编排层的 N-API 绑定。
 
-普通 str_replace 失败的根本原因是"模型必须重打一遍要替换的原文"。任何空白、缩进、引号、转义、注释的差异都会让 anchor 漂移，触发 `String not found`，模型进入"再试一次"循环——每次都把同样的原文重新放进 prompt 烧 token。
+## hashline：把锚点做成一等公民
+
+str_replace 失败的根本原因是"模型必须重打一遍要替换的原文"。任何空白、缩进、引号、转义的差异都会让锚点漂移，触发 `String not found`，模型进入"再试一次"循环——每次都把同样的原文重新放进 prompt 烧 token。
 
 hashline 的解法是**双重锚定**：
 
 1. **行号**——`read` 返回的每行带 `LINE:TEXT` 前缀（`12:const greeting = "hi";`）
-2. **快照标签**——文件头 4-hex hash，记录"我看到的文件状态"
+2. **快照标签**——文件头 4 位十六进制哈希，记录"我看到的文件状态"
 
-完整 patch 的语法（来自 [packages/hashline/grammar.lark](https://github.com/can1357/oh-my-pi/blob/main/packages/hashline/src/grammar.lark)）：
+完整 patch 用 `*** Begin Patch` / `*** End Patch` 包裹，文件 section 的头是 `[PATH#TAG]`。TAG 由快照存储对规范化后的全文算 XXH32 得到：LF 统一换行、剥 BOM、剥行尾空白——所以模型抄不抄错行尾空格根本不影响匹配。
 
-```lark
-start: begin_patch file_patch+ end_patch
-begin_patch: "*** Begin Patch" LF
-end_patch:   "*** End Patch" LF?
-file_patch: file_header hunk+
-file_header: "[" filename "#" file_hash "]" LF
-file_hash: /[0-9A-F]{4}/
-```
-
-`#TAG` 是 4 位十六进制（0000–FFFF），是 `SnapshotStore` 给完整规范化文件文本算的哈希。`PATCHER` 在应用前先 resolve tag，验证 live 文件内容哈希是否还匹配——不匹配直接拒绝 patch，防止模型基于过期 `read` 改错文件。
-
-文件 section 内部的操作符：
+文件 section 内部的操作符（当前语法，来自 [crates/pi-edit/prompts/hashline.md](https://github.com/can1357/oh-my-pi/blob/main/crates/pi-edit/prompts/hashline.md)）：
 
 | 操作 | 语法 | 含义 |
 |------|------|------|
-| 替换行 | `SWAP N.=M:` | 替换原始 N 到 M 行（含两端），下面 `+TEXT` 行是新内容 |
-| 替换块 | `SWAP.BLK N:` | 替换 N 行开始的整个语法块（tree-sitter 解析闭区间） |
-| 删除行 | `DEL N.=M` | 删除 N 到 M 行，无 body |
-| 删除块 | `DEL.BLK N` | 删除 N 行开始的整个块 |
-| 前插 | `INS.PRE N:` | 在 N 行**之前**插入 body |
-| 后插 | `INS.POST N:` | 在 N 行**之后**插入 body |
-| 块后插 | `INS.BLK.POST N:` | 在 N 行开始的块的**末尾之后**插入（同级） |
-| 文件头/尾 | `INS.HEAD:` / `INS.TAIL:` | 文件首尾插入 |
+| 替换行 | `PUT N.=M:` | 用 body 替换 N 到 M 行（含两端），单行写 `PUT N.=N:` |
+| 替换块 | `PUT N*:` | 替换 N 行所在的整个语法块（tree-sitter 定位） |
+| 前插 / 后插 | `PUT <N:` / `PUT >N:` | 在 N 行之前 / 之后插入 body |
+| 块后插 | `PUT >N*:` | 在 N 行所在块的末尾之后插入（同级深度） |
+| 文件头 / 尾 | `PUT <1:` / `PUT >$:` | 文件首尾插入 |
+| 删除 | `CUT N.=M` / `CUT N*` | 删除行范围 / 块，无 body，可加 `@名字` 存入寄存器 |
+| 寄存器粘贴 | `PUT <N @r` / `PUT N.=M @r` | 把寄存器内容粘到空隙 / 覆盖范围 |
+| 文件级 | `REM` / `MV DEST` | 删文件 / 改名 |
 
-最关键的规则：**body 行只有 `+TEXT`**。没有 `-old` 行，没有上下文行，没有 unified diff 头。
+核心规则只有一条：**body 行只有 `+TEXT`**。没有 `-old` 行，没有上下文行，没有 unified diff 头——parser 见到 `-` 行直接拒绝，因为行范围本身已经指名了要改哪些行。
 
-## hashline 状态机
+### 快照的生命周期
 
-hashline 不是"行号 + 文本"的玩具，它有完整的生命周期管理：
-
-### 5.1 快照的 mint 与销毁
-
-每次 `read` 或 `search` 返回时，`SnapshotStore.record(path, content)` 计算 4-hex hash 并存储。模型拿到的响应里每行都带 `LINE:TEXT` 前缀：
+每次 `read` 或 `search` 返回时，快照存储记录一份文件版本。模型拿到的响应长这样：
 
 ```
 [greet.py#A1B2]
@@ -185,41 +123,17 @@ hashline 不是"行号 + 文本"的玩具，它有完整的生命周期管理：
 4:greet("world")
 ```
 
-模型编辑时**必须**复用 `#A1B2`。编辑成功一次，`Patcher` 给文件计算**新** hash 并 mint 新 tag，原始行号全部作废。模型必须 re-`read` 拿新行号——**这是 prompt.md 的第一条 critical rule**：
+模型编辑时必须带上 `#A1B2`。编辑成功一次，引擎给文件算出新哈希、作废旧行号，模型要么从编辑响应里取新行号，要么重新 `read`。prompt 规则写得很硬：
 
-> Every apply mints a fresh `#TAG` and renumbers — take the next edit's numbers from the edit response or a fresh `read`. Stale tag or surprise? STOP, re-`read`.
+> After EVERY edit tag/numbers change: use edit response or fresh `read`; stale tag/surprise → STOP, re-read.
 
-### 5.2 stale tag 拒绝
+如果模型拿旧 tag 编辑，而文件已经被另一个进程（或前一次编辑）改掉了，引擎检测到哈希不匹配：不静默应用，不做"尽力匹配"，直接拒绝。Claude Code / Gemini CLI 这类工具在 str_replace 失败时通常会重试两三次再放弃，hashline 在第一次 stale 就 STOP。
 
-如果模型用 `#A1B2` 编辑，但文件已经被另一进程（或同一进程的前一个 edit）改成 hash `#C3D4`，`Patcher` 检测到 tag 不匹配：
+拒绝之后还有一层恢复：pi-edit 的 recovery 模块会把旧快照上的锚点尝试映射到当前文件——文件被外部改过、行号偏移、会话链断裂分别有对应的告警路径；映射不干净才真正报错。快照本身有 LRU 上限（每路径 4 个版本、总量 64 MB、单文件 4 MB 以上不快照），连续三次完全相同的 no-op 编辑会触发硬上限中断，防止模型烧 token 打转。
 
-- **不** 静默应用
-- **不** 尝试"尽力匹配"
-- 拒绝 patch，返回 mismatch error
+## 一次真实编辑：str_replace vs hashline
 
-模型看到错误后必须 `read` 一次拿新状态，再重新构造 patch。这一步把"过期记忆"和"实际文件"完全隔开——Claude Code / Gemini CLI 这类工具在 str_replace 失败时通常会重试 2-3 次然后放弃，hashline 在第一次 stale 就 STOP。
-
-### 5.3 session-aware recovery
-
-`SnapshotStore` 缓存了**编辑前**的快照。当 live 文件 hash 不匹配时，recovery 模块用 3-way merge 尝试恢复：
-
-- base = 缓存的 pre-edit 内容
-- theirs = 现在的 live 文件
-- yours = 模型想改成的目标
-
-如果 yours 在 theirs 上能干净 3-way 合上，自动 apply；否则仍然拒绝。`Patcher` 接口支持 in-memory、disk、S3、LSP text-document protocol、Git tree 等任意 `Filesystem` 子类——同一个 patch 语言可移植到任何 backend。
-
-### 5.4 范围紧凑性检查
-
-`prompt.md` 显式禁止"宽范围 + 重打 keepers"的反模式：
-
-> WRONG — a pure insertion done as a widened `SWAP`: you want to add one line after 2, but you replace 2.=4, retype the keepers, and drop one (here line 4, `greet("world")`).
-
-`Patcher` 检测"body 里有近似于未修改范围外行的内容"时**自动 drop** 并发 warning，但 prompt 明确要求**不要依赖这个修复**——发出去的 patch 应该只覆盖"要改的行"。
-
-## 真实编辑示例
-
-假设模型要在一个 Python 文件里加一行，并把某行的字符串替换掉。原文：
+假设模型要在一个 Python 文件里加一行守卫，并把字符串拼接换成 f-string。原文：
 
 ```python
 def greet(name):
@@ -229,7 +143,7 @@ def greet(name):
 greet("world")
 ```
 
-### 6.1 用 str_replace 工具（Claude Code / Gemini CLI / Aider 风格）
+str_replace 风格（Claude Code / Gemini CLI / Aider）：
 
 ```python
 # 调用 1：插入守卫
@@ -254,331 +168,187 @@ str_replace(
 )
 ```
 
-每次调用都要把原文重打一遍。注意第二次调用时 `old_string` 必须是**当前**文件的实际内容（已经经过第一次插入），第三次同理。三次调用三段原文，总输入 token 约 380 字符。
+每次调用都要把原文重打一遍。第二次调用的 `old_string` 必须是第一次插入**之后**的实际内容，第三次同理。三次调用三段原文。
 
-### 6.2 用 hashline（oh-my-pi 风格）
+hashline 风格（omp，一个 patch 搞定）：
 
 ```text
 *** Begin Patch
 [greet.py#A1B2]
-INS.POST 1:
+PUT >1:
 +    if not name: name = "stranger"
-SWAP 2.=2:
+PUT 2.=2:
 +    greeting = "Hi"
 +    msg = f"{greeting}, {name}"
-DEL 3
+CUT 3
 *** End Patch
 ```
 
-模型**不**重打任何已有行——所有锚点都是"行号"。输入 token 约 180 字符，不到 str_replace 的一半。
+模型不重打任何已有行——所有锚点都是行号，输入不到 str_replace 一半。
 
-更重要的差异是**失败率**。str_replace 在以下场景会失败：
+更重要的差异是失败率。str_replace 在这些场景会失败：缩进用了 tab 而原文是空格、原文有模型看不见的 BOM、行尾有 trailing whitespace、CRLF 对 LF、文件在 Agent 思考期间被 formatter 改过、原文里的中文注释或 emoji 被转义错。hashline 对这些不敏感——它操作的是规范化后的行号与行内容，读入时怎么规范化，编辑时就怎么还原。
 
-- 缩进用了 tab，原文用了空格
-- 原文有 BOM，模型看不到
-- 原文末尾有 trailing whitespace
-- 原文有 CRLF，模型用 LF 写
-- 文件在 Agent 思考期间被另一进程改过（pre-commit hook、formatter on save）
-- 原文里有非 ASCII 字符（中文注释、emoji）模型用 `\u` 转义失败
+## 基准数据怎么读
 
-hashline 对这些都不敏感——它操作的是行号 + tree-sitter 解析后的行内容，行内容在 read 时规范化，编辑时还原规范化。
+作者在 [The Harness Problem](https://blog.can.ac/2026/02/12/the-harness-problem/) 里给的数字（README 同步引用）：
 
-## hashline 的真实效果
-
-[blog.can.ac/2026/02/12/the-harness-problem/](https://blog.can.ac/2026/02/12/the-harness-problem/) 的基准（来自 oh-my-pi 同一作者）：
-
-| 模型 | 指标 | 数字 | 原因 |
+| 模型 | 指标 | 数字 | 说明 |
 |------|------|------|------|
-| Grok Code Fast 1 | pass rate | 6.7% → 68.3% | hashline 替换 str_replace 格式 |
-| Gemini 3 Flash | pass rate | +5pp | 超过 Google 自家 str_replace 实现 |
-| Grok 4 Fast | output tokens | -61% | 输出在 retry 循环消失后塌缩 |
+| Grok Code Fast 1 | 编辑 pass rate | 6.7% → 68.3% | 换编辑格式，其余不动 |
+| Gemini 3 Flash | pass rate | +5pp | 超过 Google 自家的 str_replace 实现 |
+| Grok 4 Fast | 输出 token | −61% | 重试循环消失后输出塌缩 |
 | MiniMax | pass rate | 2.1× | 同权重同 prompt，仅 harness 变 |
 
-`6.7% → 68.3%` 的跃迁本质是"模型本来能做对，但 str_replace 格式让 90% 的尝试死在 anchor 漂移上"——把 harness 修对，模型能力立刻显现。
+这批数字测的是**同一批编辑任务在只更换编辑格式时的通过率**——模型、权重、prompt 不变，变的只有 harness。所以数字反映的是锚定机制的质量，而不是模型能力的变化；6.7% 到 68.3% 的跃迁说明这些模型本来就能做对，之前是死在 anchor 漂移上。
+
+反过来，有三件事不能从这批数字推出：一，omp 在端到端软件工程基准上整体优于 Claude Code——这里只测了"编辑落地"这一环；二，hashline 对强模型收益一样大——Gemini 3 Flash 只涨 5pp，说明 harness 的收益上限受模型自身格式遵循能力影响；三，这是作者自家的基准，尚无第三方复现，读的时候打折是应该的。
 
 ## 与 Claude Code / Gemini CLI / Aider 的对比
 
 | 维度 | oh-my-pi | Claude Code | Gemini CLI | Aider |
 |------|----------|-------------|------------|-------|
-| 锚定方式 | hashline（行号 + 4-hex tag） | str_replace（字符串匹配） | str_replace | search/replace（diff 格式） |
-| 工具数 | 32 个内置 + 14 LSP + 28 DAP | Bash/Read/Write/Edit/Grep/Glob 等 | 同 Claude Code | Read/Write/Shell/Architect |
-| LSP rename 走 willRenameFiles | ✅ | ❌（只 sed） | ❌ | ❌ |
+| 锚定方式 | hashline（行号 + 4-hex tag） | str_replace（字符串匹配） | str_replace | search/replace 块 |
+| 工具面 | 31 内置 + 14 LSP + 28 DAP | Bash/Read/Write/Edit/Grep/Glob 等 | 同 Claude Code | Shell 命令 + architect 编辑模式 |
+| LSP rename 走 willRenameFiles | ✅ | ❌ | ❌ | ❌ |
 | 内置 DAP 调试（lldb/dlv/debugpy） | ✅ | ❌ | ❌ | ❌ |
 | 持久 Python + JavaScript 双 kernel | ✅（eval） | ❌ | ❌ | ❌ |
-| 浏览器自动化（CDP） | ✅（Puppeteer + stealth） | ❌ | ❌ | ❌ |
+| 浏览器自动化 | ✅（Puppeteer + stealth） | ❌ | ❌ | ❌ |
 | 工作区隔离（APFS clone / reflink） | ✅（pi-iso） | ❌ | ❌ | ❌ |
-| bash / ripgrep in-process | ✅（brush-shell + pi-natives） | ❌（fork-exec） | ❌ | ❌ |
-| Provider 数 | 40+ | Anthropic 为主 | Google 为主 | 任意 OpenAI 兼容 |
-| per-role 路由 | ✅（default/smol/slow/plan/commit） | ❌ | ❌ | ❌ |
+| bash / ripgrep in-process | ✅（brush + pi-builtins） | ❌（fork-exec） | ❌ | ❌ |
+| Provider 数 | 60+ | Anthropic 为主 | Google 为主 | 任意 OpenAI 兼容 |
+| per-role 路由 | ✅（9 个角色） | ❌ | ❌ | ❌ |
 | License | MIT | 商业 | Apache-2.0 | Apache-2.0 |
 
 几个关键差异：
 
-- **LSP rename**：Aider / Claude Code / Gemini CLI 的 rename 是 sed + 文本替换，**不知道** re-exports 和 barrel 文件的拓扑关系。oh-my-pi 调 `workspace/willRenameFiles`，TypeScript 项目的 import alias、barrel re-export、跨文件符号引用会**一次性**正确更新。
-- **DAP 调试**：其他工具遇到 segfault 还是让 Agent 加 print。oh-my-pi 可以 attach lldb-dap 到二进制、设断点、单步、读 frame 变量。
-- **In-process bash**：`brush-shell` 是 vendored 的 Rust bash 实现，session 状态跨多次调用保留；其他工具每条命令 fork 一个新 bash 进程，环境变量、alias、`cd` 状态全部丢失。
-- **APFS 隔离**：`pi-iso` 在 macOS 上用 `clonefile(2)`，在 Linux 上用 btrfs/zfs reflink，几乎零成本地给每个 subagent 一份独立 worktree；其他工具共用工作区，subagent 之间会互相踩。
+- **LSP rename**：其他工具的 rename 是文本替换，不知道 re-exports 和 barrel 文件的拓扑。omp 调 `workspace/willRenameFiles`，TypeScript 项目的 import alias、barrel re-export、跨文件引用一次性正确更新。
+- **DAP 调试**：其他工具遇到 segfault 还是让 Agent 加 print。omp 可以 attach lldb-dap 到二进制、设断点、单步、读 frame 变量；Go 服务挂起就 attach dlv 走 goroutine。
+- **In-process bash**：brush（vendored 的 Rust bash 实现）让 session 状态跨调用保留，`cd`、环境变量、alias 不丢；ls、sed、sort、xargs、jq 等数十个常用命令被移植成 in-process builtin。其他工具每条命令 fork 一个新 bash 进程。
+- **APFS 隔离**：pi-iso 在 macOS 用 `clonefile(2)`，Linux 用 btrfs/zfs reflink，几乎零成本给每个 subagent 一份独立 worktree；其他工具的 subagent 共用工作区，会互相踩。
 
-代价是 oh-my-pi 的 monorepo 体积大、首次安装需要 bun ≥ 1.3.14、定制 provider 要写 YAML。但对**长任务**（多文件重构、debug session、subagent fan-out）来说，这些代价换回的是模型不用反复重打原文、不用反复 read 验证环境、不用 fork-exec 等 bash 启动。
+代价也实在：monorepo 体积大，首次安装要 bun ≥ 1.3.14（也有 curl/brew/nix/PowerShell 安装脚本），自定义 provider 要写 YAML。但对长任务——多文件重构、debug session、subagent fan-out——这些代价换回的是模型不重打原文、不反复 read 验证环境、不等 fork-exec。
 
-## Rust 内核
+## Rust 内核：约 80k 行在做什么
 
-`packages/natives` 是一个 N-API addon，把 4 个 Rust crate 暴露给 Node。各模块的 LoC 分布（来自 README 的 per-module breakdown，**不含** glue 和 tests）：
+`packages/natives` 是 N-API addon，把 Rust crate 暴露给 Node。核心 6 个 crate 的分布（README per-crate 表，仅代码行）：
 
-| 模块 | LoC | 功能 | 底层库 |
-|------|----:|------|--------|
-| shell | 3,700 | embedded bash + 持久 session + timeout/abort + custom builtins | brush-shell（vendored） |
-| grep | 1,900 | regex 搜索 + 并行/串行 + glob/type 过滤 + fuzzy | grep-regex · grep-searcher |
-| keys | 1,490 | Kitty 键盘协议 + xterm fallback + PHF 完美哈希 | phf |
-| text | 1,450 | ANSI-aware 宽度 + 截断 + 列切片 + SGR wrap | unicode-width · segmentation |
-| summary | 1,040 | tree-sitter 结构化源码摘要 + elision | tree-sitter · ast-grep-core |
-| ast | 1,000 | ast-grep 模式匹配 + 结构化改写 | ast-grep-core |
-| fs_cache | 840 | mtime-keyed 文件缓存，read/grep/lsp 共享 | in-tree |
-| highlight | 470 | 语法高亮 + 11 语义类别 + 30+ aliases | syntect |
-| pty | 455 | sudo / ssh 交互式 prompt 的 PTY | portable-pty |
-| glob | 410 | glob 发现 + type 过滤 + mtime 排序 + gitignore | ignore · globset |
-| workspace | 385 | gitignore + AGENTS.md 单 pass 扫描 | ignore |
-| appearance | 270 | Mode 2031 + macOS dark/light（CoreFoundation FFI） | core-foundation |
-| power | 270 | macOS power-assertion（IOKit FFI） | IOKit FFI |
-| task | 260 | libuv 线程池 + cancellation + timeout + profiling | tokio · napi |
-| fd | 250 | find 工具的 fs walker | ignore |
-| iso | 245 | 工作区隔离（APFS/btrfs/zfs/overlayfs/projfs/rcopy） | pi-iso（PAL） |
-| prof | 240 | 环形 buffer profiler + folded-stack + SVG 火焰图 | inferno |
-| ps | 195 | 跨平台进程树 kill + 后代列举 | libc · libproc · CreateToolhelp32Snapshot |
-| clipboard | 80 | 系统剪贴板 + image read（无 xclip/pbcopy） | arboard |
-| tokens | 65 | O200k / Cl100k BPE token 计数（两表内嵌） | tiktoken-rs |
-| sixel | 55 | 终端图像渲染（PNG/JPEG/WebP/GIF → SIXEL） | icy_sixel · image |
-| html | 50 | HTML → Markdown（可选内容清理） | html-to-markdown-rs |
+| Crate | 功能 | 约行数 |
+|-------|------|-------:|
+| pi-shell | 内嵌 bash 引擎 · 持久 session · in-process coreutils 分发 | 38,000 |
+| pi-natives | N-API 表面——下表所有模块的宿主 | 25,000 |
+| pi-walker | 并行 ignore 感知遍历 + grep/glob/workspace 共享扫描缓存 | 5,200 |
+| pi-iso | 工作区隔离：apfs / btrfs / zfs / reflink / overlayfs / projfs | 3,300 |
+| pi-ast | tree-sitter + ast-grep 匹配、块解析、结构化摘要 | 2,900 |
+| pi-voice | 音频采集/播放 · Opus · WebRTC | 1,000 |
+
+`pi-natives` 内部按模块划分（glue 和测试不计）：
+
+| 模块 | 功能 | 底层库 | 约行数 |
+|------|------|--------|-------:|
+| desktop | 窗口/显示枚举 · 截图 · 原生输入 · AX 树（computer 工具背后） | xcap · enigo · OS AX FFI | 10,600 |
+| grep | regex 搜索 · 并行/串行 · glob/type 过滤 · fuzzy | grep-regex · grep-searcher | 3,280 |
+| text | ANSI 感知宽度 · 截断 · 列切片 · SGR 保留 wrap | unicode-width · segmentation | 2,070 |
+| snapcompact | 位图帧光栅化 + PNG 编码（上下文压缩用） | image · png | 1,760 |
+| keys | Kitty 键盘协议 + xterm fallback · PHF 完美哈希 | phf | 1,740 |
+| ast | ast-grep 模式匹配与结构化改写 | ast-grep-core | 1,510 |
+| diff | 结构化文件 diff | in-tree | 1,030 |
+| pty | sudo / ssh 交互式 prompt 的 PTY | portable-pty | 630 |
+| crash_handler | 原生 crash 捕获与上报 | in-tree | 610 |
+| highlight | 语法高亮 · 11 语义类别 · 30+ aliases | syntect | 550 |
+| appearance | Mode 2031 + macOS 深浅色（CoreFoundation FFI） | core-foundation | 450 |
+| task | libuv 线程池阻塞任务 · 取消 · 超时 · profiling | tokio · napi | 440 |
+| glob | glob 发现 + type 过滤 + mtime 排序 + gitignore | ignore · globset | 430 |
+| fd | find 工具的文件遍历 | ignore | 385 |
+| clipboard | 系统剪贴板文本/图片（不依赖 xclip/pbcopy） | arboard | 370 |
+| workspace | gitignore + AGENTS.md 单遍扫描 | ignore | 275 |
+| power | macOS 电源断言（阻止休眠） | IOKit FFI | 270 |
+| prof | 环形 buffer profiler + folded-stack + SVG 火焰图 | inferno | 240 |
+| file_lock | 跨进程咨询锁 | in-tree | 210 |
+| ps | 跨平台进程树 kill + 后代列举 | libc · libproc · CreateToolhelp32Snapshot | 195 |
+| tokens | O200k / Cl100k BPE 计数（两表内嵌） | tiktoken-rs | 70 |
+| html | HTML → Markdown（可选内容清理） | html-to-markdown-rs | 60 |
+| sixel | 终端图像渲染（PNG/JPEG/WebP/GIF → SIXEL） | icy_sixel · image | 55 |
 
 几个值得注意的设计选择：
 
-- **shell 用 brush 而非 tokio::process**：bash 是图灵完备的，写一个完整 bash 实现比"调外部 bash"更可控，session 状态可以序列化/反序列化（持久 session）
-- **tokens 用 tiktoken-rs 内嵌表**：避免每次调 OpenAI 编码前 fork Python；O200k 和 Cl100k 都是 ~1MB 体积，常驻即可
-- **iso 用 PAL（Platform Abstraction Layer）**：macOS APFS clone、Linux btrfs/zfs reflink、container overlayfs、WSL projfs 各自走不同系统调用，但接口统一
-- **sixel 内置**：TUI 可以直接在终端里渲染截图（用 `imgcat` 风格），不需要切换到外部 viewer
-- **phf 完美哈希**：`keys` 模块编译时生成 O(1) 查表，键盘事件 0 间接跳转
+- **shell 用 brush 而非 tokio::process**：brush-shell 的 fork 被 vendored 进仓库，bash 是图灵完备的，跑一个进程内实现比每次 fork 外部 bash 更可控，session 状态可以持久；常用外部命令也被移植进 builtins crate，热路径零 fork/exec。
+- **tokens 内嵌 BPE 表**：O200k 和 Cl100k 两张表常驻内存，token 计数不需要调外部服务或起 Python。
+- **iso 用平台抽象层**：macOS APFS clone、Linux btrfs/zfs reflink、overlayfs、projfs 各走各的系统调用，接口统一。
+- **desktop 是新的大头**：1.06 万行，撑起 `computer` 工具——枚举窗口、截屏、原生输入、走系统无障碍树，让 Agent 直接操作桌面。
+- **phf 完美哈希**：keys 模块编译时生成 O(1) 查表，键盘事件零间接跳转。
 
-平台编译目标：linux-x64、linux-arm64、darwin-x64、darwin-arm64、win32-x64——同一个 omp 二进制在三大主流平台跑，**不依赖**用户机器上有 rg/grep/find/bash。
+平台编译目标：linux-x64/arm64、darwin-x64/arm64、win32-x64/arm64，x64 附带 AVX2 与 baseline 双二进制。同一个 omp 二进制在三大平台原生跑，不要求用户机器上装好 rg/grep/find/bash。
 
-## 工作流特性
+## 长任务工作流
 
-hashline 是底座，oh-my-pi 在它之上构建了几个长任务关键能力：
+hashline 是底座，omp 在它之上放了一组长任务能力：
 
-### 10.1 Time-traveling stream rules
+**Time-traveling stream rules**。规则平时休眠，模型输出流一旦匹配某个 regex（比如 `Box::leak`），流在 token 级立即中断，规则作为 system reminder 注入，模型从同一位置重试。README 的演示：模型正要写 `Box::leak`，流被截断并注入"不要在生产代码路径用 Box::leak"，模型改用 `Arc<str>` 并向用户确认。注入跨 compact 存活，同一规则下次触发不用重学。
 
-规则平时 dormant，模型输出流里一旦匹配某 regex（比如 `Box::leak`），流**立即**在 token 级 abort，把规则作为 system reminder 注入，让模型从**同一位置**重试。规则 injection 跨 compact 存活，下次同一规则触发时不用重学。
+**/advisor**。给 advisor 角色配一个 review 模型（比如 openai-codex/gpt-5.5），它在自己独立的 context 和模型上读主 Agent 的每一轮，注入 inline 备注——aside、concern、blocker 三档。主 Agent 看到备注要么修正，要么解释为什么不改。做事的模型不被 review prompt 污染上下文。
 
-README 给的演示：模型准备 `Box::leak`，流 abort + 注入"不要在 production code 路径里用 Box::leak"，模型重新生成时改用 `Arc<str>` 并问用户确认。
+**/collab**。把 live session 挂到本地 relay，发回 `omp join <id>` 命令、my.omp.sh 链接和 QR 码。队友从另一台终端 `omp join` 接入，或浏览器只读围观；`/collab view` 是纯只读链接。帧在客户端封存，relay 拿不到你的密钥。
 
-### 10.2 /advisor：第二双眼睛
+**/review**。起 reviewer subagent 并行扫 branch / 单个 commit / 未提交改动，每个输出带 P0–P3 优先级和置信度的结构化 issue，主 Agent 聚合成排序清单加一句 verdict：ships / ships with fixes / blocks。
 
-`/advisor <model>` 配一个 review 模型（比如 openai-codex/gpt-5.5）作为 advisor，advisor 在自己的 context、自己的 model 上读主 Agent 的每一轮，注入 inline 备注（concern、aside、blocker 三档）。主 Agent 看到备注就 course-correct，或者解释为什么不改。
+**记忆**。`retain` 写事实，`recall` 拉原始记忆，`reflect` 在记忆库上合成答案，`learn` 沉淀可复用经验并可以晋升为托管 skill。记忆引擎用 `memory.backend` 选择——本地 SQLite（mnemopi）、Hindsight 或其他后端，按项目隔离：A 项目学到的不会污染 B 项目。session 结束时压缩成 mental model，下次该项目第一轮自动加载。
 
-这是 "reviewer model 跟 doer model 解耦" 的实现——做事的模型不被 review prompt 污染上下文。
+**Subagent 与 Agent Hub**。`task` 把工作拆给并行 worker，各自跑在隔离 worktree 里，返回 schema 校验过的结构化结果，父级直接读字段不用解析散文。`Alt+A` 打开 Agent Hub 看每个 worker 的实时转录、用量，可以插话或停掉卡住的 worker。
 
-### 10.3 /collab：会发链接的 terminal session
+**统一 `://` 命名空间**。`read pr://1428` 和 `read src/foo.ts` 返回同一结构；`agent://<id>/findings.0.path` 直接按路径取 subagent 输出的某个字段。PR、issue、skill、冲突（`conflict://N` 配 `@theirs`/`@ours`/`@base`）都是文件系统形状，模型学一个接口就够。
 
-`/collab` 把 live session 挂到本地 relay，发回 `omp join <id>` 命令 + my.omp.sh 链接 + QR 码。队友 `omp join` 从另一台 terminal 接入，或者浏览器打开链接 watch-only（read-only）/ pair（read-write）。Frame 在 client 端加密，relay 看不到内容。
+接入方式五个入口：`omp` 交互 TUI、`omp -p` 单次 prompt、Node SDK（`@oh-my-pi/pi-coding-agent`，session 发 typed event）、`omp --mode rpc`（NDJSON over stdio）、`omp acp`（Agent Client Protocol，Zed 等编辑器驱动）。
 
-### 10.4 /review：P0–P3 优先级 + verdict
+## 适用边界与选型
 
-`/review` 起 reviewer subagent 在 branch / single commit / uncommitted work 上并行扫，每个 subagent 输出 schema-validated 对象（issue + priority + confidence），主 Agent 聚合出 P0–P3 排序的清单 + 一句 verdict："ships / ships with fixes / blocks"。
+适合 omp 的场景：
 
-### 10.5 Hindsight：项目级长期记忆
+- **多文件长任务**：跨 5+ 文件的重构、debug session、workspace 级搜索替换
+- **吃 LSP/DAP 的项目**：TypeScript / Rust / Go / C++，rename 引用、attach debugger 是日常
+- **强 harness 需求**：advisor、流级规则、项目记忆、隔离 subagent 你都要
+- **多 provider 切换**：plan 角色用 Opus、smol subagent 用便宜模型、reviewer 用另一家，9 个角色各配各的
+- **Windows 原生环境**：omp 原生跑 win32-x64/arm64，不用 WSL 桥
 
-`retain` 写事实，`recall` 拉原始记忆，`reflect` 让 Hindsight 合成答案。每个项目独立 memory bank——A 项目学到的不会污染 B 项目。Session 结束时 compact 成 mental model，下次该项目的第一次 turn 自动加载。
+不适合的场景：
 
-### 10.6 ACP / RPC / SDK 四种接入
+- **要 IDE 原生体验**：Zed（ACP）能拿到 in-editor 体验，但和 Cursor / Windsurf 的"左边编辑器右边聊天"比，omp 还是 terminal first
+- **要零配置开箱**：安装要 bun 或安装脚本，自定义 provider 要手写 YAML；Claude Code 的开箱度更高
+- **锁定单一厂商**：想保持 Anthropic-only 团队，omp 的 60+ provider 开放度是负担不是特性
+- **轻量小项目**：200 行的 Python 脚本，str_replace 足够，hashline 加 31 个工具的复杂度过剩
+- **要云端托管**：omp 是本地 CLI，没有 hosted 版
 
-- `omp` —— TUI
-- `omp -p` —— 单次 prompt 即退出
-- `@oh-my-pi/pi-coding-agent` —— Node SDK，session 发出 typed event
-- `omp --mode rpc` —— NDJSON over stdio
-- `omp acp` —— JSON-RPC over Agent Client Protocol（Zed 等编辑器驱动）
-
-`read pr://can1357/oh-my-pi/1063` 跟 `read src/foo.ts` 返回相同 shape——PR、issue、subagent findings、conflict、skill、rule 都是统一 `://` 协议名空间。`agent://<id>/findings.0.path` 直接按 path 拉 subagent 输出的某个字段。
-
-## 适用场景与边界
-
-### 11.1 适合 oh-my-pi 的场景
-
-- **多文件长任务**：跨 5+ 文件的重构、debug session、workspace 级别的搜索替换
-- **需要 LSP/DAP 的语言项目**：TypeScript / Rust / Go / C++ 项目，rename 引用、attach debugger 是日常
-- **强 harness 需求**：你想要 advisor、time-traveling rules、Hindsight memory、APFS-isolated subagent
-- **多 provider 切换**：不同任务用不同模型（planner 用 Opus、smol subagent 用 Haiku、reviewer 用 GPT-5.5）
-- **本地 + 浏览器混合**：让 Agent 读 PDF、读 arxiv、读 GitHub PR、点网页、跑 headless browser
-- **Windows 不可绕过**：oh-my-pi 在 Windows 上原生跑（`win32-x64`），其他工具普遍依赖 WSL
-
-### 11.2 不适合 oh-my-pi 的场景
-
-- **想要 IDE 原生体验**：用 Zed（ACP）能拿到 in-editor 体验，但和 Cursor / Windsurf 那种 "left side editor + right side chat" 比还是 terminal first
-- **完全零配置**：oh-my-pi 安装需要 bun ≥ 1.3.14，macOS / Linux / Windows 各有不同 install script，商用开箱度不如 Claude Code
-- **团队希望保持 Anthropic-only**：oh-my-pi 40+ provider 全开放，模型混用需要 per-role 路由 + fallback chain 配置
-- **轻量小项目**：一个 200 行的 Python script，str_replace 足够，hashline + 32 工具的复杂度过剩
-- **需要云端托管**：oh-my-pi 是本地 CLI，没有 hosted 版；云端体验请用 Claude Code / Cursor
-
-### 11.3 选型决策矩阵
+选型速查：
 
 | 需求 | 首选 | 次选 |
 |------|------|------|
-| 长任务 + 多文件 + 强 harness | oh-my-pi | Claude Code（claude-code-harness） |
+| 长任务 + 多文件 + 强 harness | oh-my-pi | Claude Code |
 | 强 IDE 集成 + 云端 | Cursor | Windsurf |
 | 终端 + 多 provider + 跨平台 | oh-my-pi | Aider |
-| 学术 / 一次性 script | Claude Code / Gemini CLI | Aider |
-| 企业 Claude 锁定 | Claude Code | oh-my-pi（Anthropic oauth） |
-| 想要真实 LSP rename / DAP | oh-my-pi | 直接用 Cursor |
+| 一次性脚本、低学习成本 | Claude Code / Gemini CLI | Aider |
+| 真实 LSP rename / DAP 调试 | oh-my-pi | Cursor |
 
-## 自测清单
-
-- 说出 hashline 的 `[PATH#TAG]` 中 TAG 的生成方式和 4-hex 限制
-- 解释为什么 `SWAP N.=M` 必须包含两端，且 body 不允许 `-old` 行
-- 描述 stale tag 拒绝和 session-aware 3-way recovery 的触发条件
-- 列出 oh-my-pi 的 4 层架构（交互 / 编排 / 工具 / 内核），说出每层至少一个包
-- 解释为什么 hashline 让 Grok Code Fast 1 从 6.7% 跳到 68.3%
-- 对比 oh-my-pi 与 Claude Code / Aider 在 LSP rename 和 DAP 上的差异
-- 说出 pi-natives 的 shell 模块用的是哪个 vendored bash 实现
-- 解释 time-traveling stream rules 与普通 system prompt 注入的区别
-
----
-
-## 进阶路径
-
-跑通基础用法后，下面三个方向值得深入，按收益和难度排序。
-
-### 方向一：hashline 算法深入
-
-- 阅读 [hashline README](https://github.com/can1357/oh-my-pi/blob/main/packages/hashline/README.md)，理解 `SnapshotStore` 的 mint 与销毁逻辑
-- 深入研究 `Patcher` 的 apply 逻辑：如何验证 tag、如何执行 SWAP/INS/DEL 操作
-- 对比 str_replace 与 hashline 的失败模式差异
-- 进阶：理解 tree-sitter 如何解析闭区间、如何与 hashline 协作
-
-### 方向二：贡献到 oh-my-pi 项目
-
-- 从 [GitHub 仓库](https://github.com/can1357/oh-my-pi) 克隆代码
-- 阅读贡献指南（如果有）
-- 从简单 issue 开始：修复文档错误、添加单元测试、优化错误处理
-- 理解代码结构：14 个 npm 包 + 6 个 Rust crate
-
-### 方向三：将 omp 集成到生产环境
-
-- 评估需求：长任务、多文件、需要 LSP/DAP、多 provider 切换
-- 测试稳定性：在实际项目中运行 omp，记录崩溃、内存泄漏、性能瓶颈
-- 集成到开发流：配置 per-role 路由、设置 advisor、配置 Hindsight memory
-- 监控性能：关注 token 消耗、pass rate、retry 次数
-
-### 方向四：开发自定义工具
-
-- 理解 tool harness 的扩展机制
-- 开发自定义工具：继承 `BaseTool`，实现 `execute` 方法
-- 将自定义工具集成到 omp：修改 `packages/agent/` 中的工具注册逻辑
-- 测试自定义工具：确保 hashline 编辑与自定义工具协同工作
-
-### 方向五：探索高级功能
-
-- **Time-traveling rules**：配置 stream 级别的规则注入
-- **Advisor**：配置 review 模型，提供 inline 备注
-- **Collab**：启动 collaborative session，邀请队友加入
-- **Review**：配置 P0-P3 优先级，自动化代码审查
-
----
+一句话收尾：omp 把"模型改文件"这一件最频繁的事从概率游戏改成了确定性协议——行号和哈希不会含糊，stale 就拒绝，恢复有兜底。如果你的日常工作是多文件长任务，它值得装一次试试；如果你的场景是单文件小修，str_replace 系工具依然是更省心的选择。
 
 ## 常见问题
 
-### oh-my-pi 与 Claude Code 有什么区别？
+**stale tag 报错怎么处理？**
+这是设计行为而非故障：文件在模型读之后被改过（手动编辑、formatter、另一个 Agent）。让模型重新 `read` 目标文件再发 patch 即可；正常情况下 recovery 会自动重映射锚点，只有映射不干净才需要人工介入。
 
-Claude Code 使用 str_replace 格式，模型必须重打原文；oh-my-pi 使用 hashline 格式，模型只需要指定行号。根据基准数据，hashline 让 Grok Code Fast 1 的 pass rate 从 6.7% 跳到 68.3%。
+**生产环境要注意什么？**
+模型成本按角色分开预算（9 个角色的用量在 Agent Hub 里能看到）；`github`、`generate_image`、`tts`、记忆工具等默认关闭，启用前确认数据出境策略；hashline 拒绝 patch 是保护机制，不要在包装层里绕过它。
 
-### oh-my-pi 的学习曲线如何？
+**许可证和商用？**
+MIT。vendored 的 brush-core 等第三方代码保留各自上游许可证，细节见仓库的 THIRD-PARTY-NOTICES.txt。
 
-oh-my-pi 的概念较多（hashline、tool harness、LSP/DAP、Rust 内核），学习曲线中等。建议先通过 `omp` 命令行体验基本用法，然后逐步深入工具编排层和 Rust 内核。
+**遇到问题去哪？**
+文档在 [omp.sh](https://omp.sh)，源码和 issue 在 [GitHub 仓库](https://github.com/can1357/oh-my-pi)，社区在 [Discord](https://discord.gg/4NMW9cdXZa)。
 
-### 生产环境使用 oh-my-pi 需要注意什么？
+## 参考链接
 
-需要注意：
-1. **模型成本**：oh-my-pi 支持 40+ 模型 provider，但每个模型的定价不同
-2. **性能监控**：需要监控 token 消耗、pass rate、retry 次数
-3. **错误处理**：hashline 在 stale tag 时会拒绝 patch，需要确保模型正确处理错误
-4. **团队采用**：建议先在小范围团队内试用，再逐步推广
+- 仓库：[can1357/oh-my-pi](https://github.com/can1357/oh-my-pi)
+- 项目主页与文档：[omp.sh](https://omp.sh)（工具参考 [omp.sh/docs/tools](https://omp.sh/docs/tools)，provider 与路由 [omp.sh/docs/providers](https://omp.sh/docs/providers)）
+- hashline prompt 与语法：[crates/pi-edit/prompts/hashline.md](https://github.com/can1357/oh-my-pi/blob/main/crates/pi-edit/prompts/hashline.md)
+- 作者对 harness 问题的完整论述：[The Harness Problem](https://blog.can.ac/2026/02/12/the-harness-problem/)
+- 上游项目：[badlogic/pi-mono](https://github.com/badlogic/pi-mono)
 
-### oh-my-pi 的许可证是什么？
-
-MIT License。可以免费用于商业项目。
-
-### 如何获取 oh-my-pi 的技术支持？
-
-- 阅读 [oh-my-pi 文档](https://omp.sh)
-- 在 [GitHub 仓库](https://github.com/can1357/oh-my-pi) 提交 issue
-- 加入 Discord 社区（如果有）
-
----
-
-## 练习
-
-### 练习 1：对比 str_replace 与 hashline 的编辑失败率
-
-**任务**：使用 Claude Code（str_replace）和 oh-my-pi（hashline）分别尝试编辑同一个多文件项目，记录失败率和 retry 次数。
-
-**步骤**：
-1. 准备一个包含 5+ 文件的项目（故意引入 tab/空格混用、BOM、CRLF 等问题）
-2. 用 Claude Code 执行编辑任务，记录失败次数和 token 消耗
-3. 用 omp 执行同样的编辑任务
-4. 对比两者的 pass rate 和 output tokens
-
-**验证**：理解 hashline 如何在各种边界情况下保持稳定性。
-
----
-
-### 练习 2：配置 oh-my-pi 的 per-role 路由
-
-**任务**：在实际项目中配置 omp 的 per-role 路由，让不同任务使用不同模型。
-
-**步骤**：
-1. 编辑配置文件，设置 `default` → Haiku，`plan` → Opus，`commit` → Sonnet
-2. 执行一个完整任务（包含规划、编码、提交）
-3. 查看日志，确认每个阶段使用了正确的模型
-4. 计算总成本，对比单模型方案
-
-**验证**：能够在生产环境中根据任务类型选择最优模型。
-
----
-
-### 练习 3：编写一个自定义 Tool
-
-**任务**：继承 `BaseTool`，实现一个自定义工具（如 `database_query`），并注册到 omp。
-
-**步骤**：
-1. 在 `packages/agent/` 中创建自定义 Tool 类
-2. 实现 `execute` 方法
-3. 将 Tool 注册到工具列表中
-4. 测试 Tool 是否能被 Agent 正确调用
-
-**验证**：Agent 能够在合适的情况下自动调用你的自定义 Tool。
-
----
-
-### 练习 4：调试 stale tag 场景
-
-**任务**：故意制造 stale tag 场景（在 Agent 思考期间手动修改文件），观察 omp 的拒绝和恢复机制。
-
-**步骤**：
-1. 启动 omp，开始一个编辑任务
-2. 在 Agent 输出 patch 之前，手动修改目标文件
-3. 观察 Agent 收到的错误信息
-4. 验证 Agent 是否能够正确执行 re-read → re-apply 流程
-
-**验证**：理解 stale tag 拒绝机制如何保护文件一致性。
-
----
-
-### 练习 5：评估 Rust 内核的性能影响
-
-**任务**：对比 in-process（Rust）和 fork-exec（传统方式）的 bash 执行性能。
-
-**步骤**：
-1. 准备一个需要多次 bash 调用的任务（如编译、测试、部署）
-2. 分别用 omp 和传统方式执行
-3. 记录总执行时间、bash 启动次数、环境变量持久性
-4. 分析 Rust 内核对长任务的影响
-
-**验证**：能够解释为什么 in-process bash 对长任务有重要意义。
-
+文中 stars/forks、工具数、LoC 数据核实于 2026-10-01 的 GitHub API 与 main 分支 README；hashline 语法以 `crates/pi-edit` 当前源码为准。

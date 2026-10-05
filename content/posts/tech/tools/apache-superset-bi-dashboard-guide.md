@@ -1,6 +1,7 @@
 ---
 title: "Apache Superset：从入门到精通 开源企业级BI与数据可视化平台"
 date: "2026-03-31T01:00:00+08:00"
+lastmod: 2026-10-01T00:00:00+08:00
 slug: apache-superset-bi-dashboard-guide
 github_repo: "apache/superset"
 source_key: "gh:apache/superset"
@@ -8,16 +9,18 @@ aliases:
   - /posts/tech/apache-superset-bi-dashboard-guide/
 categories: ["技术笔记"]
 tags: ["Python"]
-description: "Apache Superset 是 Apache 软件基金会的顶级开源 BI 平台，64.5k Stars。本文从入门到精通，涵盖 47+ 图表类型、SQL Lab、权限管理、生产部署和自定义插件开发。"
+description: "Apache Superset 是 Apache 软件基金会的顶级开源 BI 平台，75k Stars。本文从入门到精通，涵盖 40+ 可视化类型、SQL Lab、权限管理、生产部署和扩展开发。"
 ---
 
 # Apache Superset：使用指南 — 开源企业级 BI 与数据可视化平台
 
 **目标读者**：数据分析师、BI 开发工程师、数据工程师、前端开发者。
 **前置知识**：了解 SQL 与数据可视化概念；有 Python 或 JavaScript 基础更佳。
-**体量与节奏**：入门约 2-3 小时，精通约 8-12 小时。
+**体量与节奏**：入门约 2-3 小时，进阶约 8-12 小时。
 
-读完本文，你会掌握 Apache Superset 的定位与架构、三种常见的安装方式、数据库连接与虚拟数据集、47+ 图表与仪表板构建、基于角色的权限控制、生产部署，以及自定义可视化插件的开发路径。每节都给出可照做的命令或配置，动手卡住时在对应小节就能找到答案。
+读完本文，你会掌握 Apache Superset 的定位与架构、官方推荐的安装方式、数据库连接与虚拟数据集、图表与仪表板构建、基于角色的权限控制、生产部署，以及扩展开发的路径。每节都给出可照做的命令或配置，动手卡住时在对应小节就能找到答案。
+
+本文基于撰写时的最新稳定版 Superset 6.1.0（2026 年 5 月发布），关键命令与配置均对照过官方文档与仓库源码。
 
 ---
 
@@ -25,9 +28,9 @@ description: "Apache Superset 是 Apache 软件基金会的顶级开源 BI 平�
 
 ### 1.1 它是什么
 
-Apache Superset（[apache/superset](https://github.com/apache/superset)）是 Apache 软件基金会的顶级开源项目，一款企业级的 BI 与数据可视化平台。它起源于 Airbnb 内部工具，后捐赠给 Apache，如今由社区维护。
+Apache Superset（[apache/superset](https://github.com/apache/superset)）是 Apache 软件基金会的顶级开源项目，一款企业级的 BI 与数据可视化平台。它起源于 Airbnb 的内部工具，2017 年进入 Apache 孵化器，2019 年毕业成为顶级项目，现在由社区维护。
 
-它想解决的是数据团队普遍面对的问题：业务要看数，但每次都写 SQL、查结果、再导进 Excel 拼图表太慢。Superset 把"连接数据源 → 写查询 → 做图表 → 拼仪表板 → 分享给同事"这条链路收进一个界面，多数场景不需要写代码。
+它要解决的是数据团队的日常摩擦：业务要看数，但每次都写 SQL、查结果、导进 Excel 拼图表，动作重复且口径容易散架。Superset 把"连接数据源 → 写查询 → 做图表 → 拼仪表板 → 分享给同事"这条链路收进一个界面，多数场景不写代码。
 
 ```mermaid
 graph TB
@@ -48,46 +51,52 @@ graph TB
 
 | 指标 | 数值 |
 |------|------|
-| GitHub Stars | **64.5k** |
-| GitHub Forks | **23.9k** |
+| GitHub Stars | **75.0k** |
+| GitHub Forks | **18.4k** |
 | 许可证 | Apache-2.0 |
-| 主要语言 | Python 77.0%，TypeScript 16.3% |
-| 社区 | Twitter、Netflix、Zalando 等 200+ 企业贡献 |
+| 主要语言 | Python 约 53%，TypeScript 约 43%（按仓库代码字节数） |
+| 当前稳定版 | 6.1.0（2026-05-13 发布） |
 
-> 以上 star、fork 与语言占比为撰写时点数据，具体以 [apache/superset](https://github.com/apache/superset) 仓库当前页面为准。
+> 数据为 2026-10-01 从 GitHub API 读取的时点值，使用组织和贡献者名单见仓库 [In the Wild](https://superset.apache.org/inTheWild) 页面与 [contributors](https://github.com/apache/superset/graphs/contributors) 列表。
 
 ### 1.3 核心能力
 
 | 能力 | 说明 |
 |------|------|
-| 47+ 图表类型 | 折线、柱状、饼图、地图、热力图、桑基图等 |
-| SQL Lab | 内置 SQL 工作台，支持结果导出与保存为数据集 |
-| 无代码可视化 | 拖拽式构建图表与仪表板 |
-| 多级缓存 | 提升重复查询与仪表板加载速度 |
-| 细粒度权限 | 基于角色的访问控制，可细化到数据集与数据表 |
-| 插件系统 | 支持开发自定义可视化插件 |
-| 多种认证 | OAuth、LDAP、DB 等后端 |
-| 嵌入式 | Embedded Analytics SDK 可将图表嵌入第三方应用 |
+| 40+ 预装可视化 | 官方预装 40 多种图表类型，覆盖折线、柱状、地图、透视表等（见 §4.1） |
+| SQL Lab | 内置 SQL 工作台，支持异步执行、结果导出、保存为数据集 |
+| 轻量语义层 | 在数据集上定义自定义维度与指标，图表复用同一口径 |
+| 无代码构建 | 拖拽式构建图表与仪表板 |
+| 缓存层 | 可配置的缓存，减轻数据库重复查询压力 |
+| 细粒度权限 | 基于角色的访问控制，可细化到数据集、schema 与行 |
+| 多种认证 | 数据库账号、OAuth、LDAP 等后端 |
+| 定时报表 | Alerts & Reports 按计划截图或发邮件（需开启功能开关，见 §8.3） |
+| 嵌入 | Embedded SDK 可把仪表板嵌进第三方应用（见 §11 Q3） |
+| REST API | 图表、仪表板、数据集等资源均有 API，可编程管理 |
+
+渲染层用的是 Apache ECharts——Superset 团队 2021 年公开过选型文章《Why Apache Superset is Betting on Apache ECharts》，ECharts 的图表种类与交互能力是主要理由。这一点决定了它能"开出"多少图：靠 ECharts 生态，而不是自己画。
 
 ### 1.4 适用场景
 
 - 运营仪表板：实时盯业务指标
 - 管理驾驶舱：给高管看核心经营数据
 - 自助分析：分析师自己探索数据，不依赖开发排期
-- 嵌入式 BI：把图表嵌进已有的 SaaS 产品
-- 周期性报表：定时生成并分发
+- 嵌入式 BI：把仪表板嵌进已有的 SaaS 产品
+- 周期性报表：定时报表把仪表板截图或 CSV 发到邮箱
+
+它不擅长的事也要说清楚：Superset 直连数据源做查询，不做数据建模、不做 ELT，也不存储业务数据。这些活在 dbt、Airflow 或数仓侧完成。
 
 ### 1.5 与同类工具的取舍
 
-| 工具 | 图表数 | SQL 支持 | 权限模型 | 嵌入能力 | 学习曲线 |
-|------|--------|----------|-----------|-----------|-----------|
-| Superset | 47+ | 强 | 细粒度 | SDK | 中等 |
-| Metabase | 15+ | 弱 | 简单 | API | 低 |
-| Grafana | 30+ | 弱 | 中等 | API | 低 |
-| Tableau | 50+ | 弱 | 强 | 强 | 高 |
-| Power BI | 100+ | 中等 | 强 | 强 | 高 |
+| 工具 | SQL 自由度 | 权限模型 | 嵌入 | 开源 |
+|------|-----------|----------|------|------|
+| Superset | 强（SQL Lab + 语义层） | 细粒度（角色 + 行级） | SDK + guest token | Apache-2.0 |
+| Metabase | 弱（偏问答式） | 简单 | 收费版支持 | AGPL / 商业双许可 |
+| Grafana | 弱（面向时序） | 中等 | API | AGPL |
+| Tableau | 中等 | 强 | 强 | 商业 |
+| Power BI | 中等 | 强 | 强 | 商业 |
 
-选择建议：团队重视 SQL 自由度与开源可控，选 Superset；需要更轻量、人人能上手的问答式分析，Metabase 更容易；对监控告警而非 BI 报告，Grafana 更对路。
+各家版本迭代很快，具体图表数量与授权方式以官方页面为准。方向性的判断是：团队重视 SQL 自由度与开源可控，选 Superset；要更轻量、人人能上手的问答式分析，Metabase 更容易；监控告警场景，Grafana 更对路；预算充足且要端到端商业支持，再考虑 Tableau 与 Power BI。
 
 ---
 
@@ -97,36 +106,43 @@ graph TB
 
 | 安装方式 | 适用场景 | 难度 |
 |----------|-----------|------|
-| Docker | 快速体验、开发 | 低 |
-| pip | 单机生产 | 中 |
-| Kubernetes | 生产集群 | 高 |
+| Docker Compose | 快速体验、开发环境 | 低 |
+| pip | 单机部署 | 中 |
+| Kubernetes Operator | 生产集群 | 高 |
 | 源码 | 二次开发、贡献代码 | 高 |
 
-### 2.2 Docker 安装（推荐）
+### 2.2 Docker Compose 安装（官方推荐）
 
-先用仓库自带的 docker-compose 起一个完整环境：
+官方 quickstart 的完整流程：
 
 ```bash
-git clone https://github.com/apache/superset.git
+git clone https://github.com/apache/superset
 cd superset
 
-docker-compose up -d
+# 切到最新稳定版对应的代码状态（以 Releases 页为准，撰写时为 6.1.0）
+git checkout tags/6.1.0
 
-# 访问 http://localhost:8088
+# 用官方提供的 compose 文件启动
+docker compose -f docker-compose-image-tag.yml up
 ```
 
-首次启动后需初始化数据库并创建管理员：
+首次启动会拉取镜像并加载示例数据，需要几分钟。初始化是自动的：`superset-init` 容器依次完成建表（db upgrade）、创建管理员、初始化角色权限（superset init）三步，不用手动执行。
 
-```bash
-docker-compose exec superset superset db upgrade
-docker-compose exec superset superset fab create-admin \
-  --username admin --firstname Admin --lastname User --email admin@example.com \
-  --password admin
-docker-compose exec superset superset init
-docker-compose restart superset
+全部容器就绪后，打开 http://localhost:8088，用默认账号登录：
+
+```text
+username: admin
+password: admin
 ```
 
-只想临时体验，也可以用官方镜像单容器拉起：
+生产环境务必第一时间改掉这个默认密码。
+
+两个注意点：
+
+- 命令是 `docker compose`（空格，Compose V2）。旧命令 `docker-compose`（连字符）已在弃用路上，新版 compose 文件会报 env_file 格式错误。
+- 官方明确说明 Docker Compose 适合沙箱和开发环境，不建议用于生产；生产走 §8 的方案。
+
+只想要一个临时容器体验，也可以用官方镜像单容器拉起：
 
 ```bash
 docker pull apache/superset:latest
@@ -137,7 +153,7 @@ docker run -d -p 8088:8088 \
   apache/superset
 ```
 
-单容器模式同样要先执行 `superset db upgrade`、`superset fab create-admin`、`superset init` 这三步，账号才能生效。
+单容器没有 init 容器代劳，需要自己进容器执行 `superset db upgrade`、`superset fab create-admin`、`superset init` 三步，账号才能用。
 
 ### 2.3 pip 安装
 
@@ -189,18 +205,18 @@ graph TB
 
 | 概念 | 说明 |
 |------|------|
-| Database | 数据库连接，如 MySQL、PostgreSQL、BigQuery |
+| Database | 数据库连接，如 PostgreSQL、BigQuery |
 | Schema | 数据库内的模式 / 命名空间 |
-| Table | 数据表，包含列与指标 |
-| Column | 表的列，可作维度或指标 |
+| Dataset | 数据集，绑到一张表或一段 SQL，图表的数据来源 |
+| Column | 数据集的列，可作维度或指标 |
 | Metric | 聚合计算，如 COUNT、SUM、AVG |
 | Virtual Dataset | 基于 SQL 查询生成的虚拟数据集 |
 
-为什么先要有虚拟数据集这一层：对复杂业务，直接在图表里拖原始表会写很长很碎的查询。先在虚拟数据集里把口径定义好，后面每张图都复用同一个口径，避免"A 图口径 A、B 图口径 B"的矛盾。
+为什么要有虚拟数据集这一层：复杂业务的取数逻辑写在图表里会很长很碎，而且每张图各写各的，口径迟早打架。先把 JOIN、过滤、聚合在虚拟数据集里定死，后面每张图复用同一个口径，"A 图营收 100 万、B 图营收 90 万"这类事故就从源头堵住了。
 
 ### 3.2 SQL Lab
 
-SQL Lab 是 Superset 的核心工作台，也是它相对轻量 BI 工具的差异化所在——可以跑完整 SQL，而不是只做拖拽。
+SQL Lab 是 Superset 的工作台，也是它和轻量 BI 工具拉开差距的地方——能跑完整 SQL，而不只是拖拽。
 
 ```sql
 SELECT
@@ -217,32 +233,53 @@ GROUP BY d.department, DATE_TRUNC('month', o.order_date)
 ORDER BY month DESC
 ```
 
-常用能力：自动补全、语法高亮、查询历史、把查询结果保存为数据集、导出 CSV / Excel。长查询建议开异步执行，避免浏览器停在等待。
+常用能力：自动补全、语法高亮、查询历史、把查询结果保存为数据集、导出 CSV。跑长查询前先切到异步模式（界面上的 "Run asynchronously"），查询丢给 Celery worker 执行，浏览器不用干等，关掉页面结果也还在。
 
 ### 3.3 权限模型
 
-Superset 用 Flask-AppBuilder 的基于角色的访问控制（RBAC）。核心角色：
+Superset 用 Flask-AppBuilder 的基于角色的访问控制（RBAC）。内置的标准角色（对照仓库 `RESOURCES/STANDARD_ROLES.md`）：
 
 | 角色 | 权限 |
 |------|------|
-| Admin | 全部权限，包括安全配置 |
-| Alpha | 可创建与编辑数据集、图表、仪表板，访问全部数据 |
-| Gamma | 只读，只能访问被授权的数据 |
-| sql_lab | 能否使用 SQL Lab 的开关，通常与 Gamma / Alpha 组合 |
+| Admin | 全部权限，包括安全管理与用户管理 |
+| Alpha | 可访问全部数据源，可添加数据源，可创建和修改自己拥有的图表与仪表板 |
+| Gamma | 数据消费角色：只能查看被授权数据源上的图表与仪表板；也可以自己创建，但只能基于被授权的数据集 |
+| Public | 给匿名访问用，只够看公开仪表板 |
+| sql_lab | SQL Lab 的准入角色；Alpha 和 Gamma 即便有它，也要按数据库单独授权才能查询 |
 
-按职责组合角色是常见做法：给分析师 `Alpha + sql_lab`，给只看报表的同事只配 `Gamma`。`sql_lab` 并不是一个独立账号层级，而是附加在角色上的权限，需要单独勾选。
+典型的组合方式：给分析师 `Alpha + sql_lab`，给只看报表的同事配 `Gamma` 加上一个授权数据集的自定义角色。`sql_lab` 不是一个独立的用户层级，而是附加在角色上的权限集合。
 
-要限定用户只能访问某些 schema，通过自定义安全管理器实现：
+要进一步收窄某类用户可见的 schema，可以继承 `SupersetSecurityManager` 做定制。源码里的过滤方法是：
+
+```python
+def get_schemas_accessible_by_user(
+    self,
+    database: "Database",
+    catalog: Optional[str],
+    schemas: AbstractSet[str] | list[str],
+    hierarchical: bool = True,
+) -> set[str]:
+```
+
+在 `superset_config.py` 里继承并覆写它，就能控制每个用户在指定数据库上能看到哪些 schema：
 
 ```python
 # superset_config.py
 from superset.security.manager import SupersetSecurityManager
 
 class CustomSecurityManager(SupersetSecurityManager):
-    def get_schemas_accessible_by_user(self, user, database):
-        # 返回该用户可访问的 schema 列表
-        return ['public', 'analytics']
+    def get_schemas_accessible_by_user(self, database, catalog, schemas, hierarchical=True):
+        accessible = super().get_schemas_accessible_by_user(
+            database, catalog, schemas, hierarchical
+        )
+        # 在原有判定之上，只保留业务允许的 schema
+        return accessible & {"public", "analytics"}
+
+# 最后让 Superset 用这个安全管理器
+CUSTOM_SECURITY_MANAGER = CustomSecurityManager
 ```
+
+行级的数据隔离不在这里做，走行级安全规则，见 §7.3。
 
 ---
 
@@ -250,7 +287,7 @@ class CustomSecurityManager(SupersetSecurityManager):
 
 ### 4.1 图表分类
 
-Superset 支持 47+ 图表类型，主要分三类。
+Superset 官方预装 40+ 可视化类型（官方口径 "40+ pre-installed visualization types"），按用途分三类。
 
 基础图表：
 
@@ -263,7 +300,7 @@ Superset 支持 47+ 图表类型，主要分三类。
 | 面积图（Area Chart） | 累积趋势 |
 | 散点图（Scatter Plot） | 变量关联 |
 
-高级图表：
+进阶图表：
 
 | 图表类型 | 适用场景 |
 |-----------|-----------|
@@ -273,7 +310,7 @@ Superset 支持 47+ 图表类型，主要分三类。
 | 平行坐标图（Parallel Coordinates） | 多维数据对比 |
 | 地图（Map） | 地理分布 |
 | 日历热力图（Calendar Heatmap） | 按日期密集查看 |
-| 关系图（Graph） | 网络关系 |
+| 关系图（Graph Chart） | 网络关系 |
 
 专用图表：
 
@@ -281,42 +318,25 @@ Superset 支持 47+ 图表类型，主要分三类。
 |-----------|-----------|
 | 透视表（Pivot Table） | 多维交叉汇总 |
 | 时间线（Timeline） | 事件序列 |
-| Word Cloud | 文本词频 |
-| Gauge | 单个 KPI 完成度 |
-| Funnel | 转化漏斗 |
+| 词云（Word Cloud） | 文本词频 |
+| 仪表盘（Gauge Chart） | 单个 KPI 完成度 |
+| 漏斗图（Funnel Chart） | 转化漏斗 |
 
 ### 4.2 创建一个图表
 
-创建入口：`+` → `Chart` → 选数据库与数据表 → `Create Chart`。
+入口：`+` → `Chart` → 选数据集 → 选图表类型 → `Create Chart`，进入 Explore 视图。
 
-以"各部门每月营收"为例，在配置面板里填：
+以"各部门每月营收"的折线图为例，在左侧数据面板填：
 
+```text
+X-AXIS（时间轴）: order_date
+METRIC（指标）:   SUM(revenue)
+DIMENSION（系列）: department
 ```
-X轴（时间）: order_date
-Y轴（指标）: SUM(revenue)
-Group by: department
-图表类型: Line Chart
-```
 
-图表的数据配置本质上是一段"取数说明"。想精确控制时，可以直接在高级选项里给出编码（Vega-Lite 语法），例如：
+配置好点 "Create chart" 出图，再 "Save" 保存并可以选择加进某张仪表板。
 
-```json
-{
-  "encoding": {
-    "x": {
-      "field": "order_date",
-      "type": "temporal",
-      "axis": { "format": "%Y-%m" }
-    },
-    "y": {
-      "field": "revenue",
-      "type": "quantitative",
-      "aggregate": "sum"
-    }
-  },
-  "mark": { "type": "line", "color": "#1DA1F2", "strokeWidth": 2 }
-}
-```
+同一个图表换数据集、换聚合方式都很快，因为 Explore 的每一步改动只是改查询参数，图表即时重查。想复用一段固定的取数逻辑，别在每张图里重配，存成虚拟数据集（§6.3）再基于它建图。
 
 ---
 
@@ -346,17 +366,18 @@ graph TB
 
 ### 5.2 过滤器
 
+仪表板顶部的过滤器栏（Filters）支持几类控件：
+
 | 过滤器类型 | 说明 |
 |-----------|------|
 | Time Range | 日期范围 |
 | Select | 单选 / 多选 |
 | Date Time | 日期时间选择 |
-| Numeric Range | 数值范围 |
-| Freeform | 自由输入 |
+| Numerical Range | 数值范围 |
 
-一个日期过滤器示例：
+一个日期过滤器的配置：
 
-```
+```text
 Filter Name: order_date
 Dataset: orders
 Filter Type: Time Range
@@ -364,26 +385,44 @@ Default Value: Last 30 days
 Time Column: order_date
 ```
 
-同一个过滤器挂到多个图表上，切换时间范围时这些图表一起刷新，这是仪表板"概览体验"的关键。
+过滤器可以设置作用范围（应用到哪些图表），一个日期过滤器挂到所有时间序列图上，切换时间范围时整页联动刷新——这是仪表板"总览"体验的来源。
 
 ### 5.3 缓存策略
 
-缓存把 DB 查过一次的结果存起来，降低重复查询压力。Superset 的缓存分为几层：数据表缓存、图表缓存、SQL Lab 查询缓存。通过 `superset_config.py` 统一配置：
+Superset 用缓存把查过的查询结果存起来，重复访问不再打数据库。配置里有几个分工不同的缓存桶（对照 `superset/config.py`）：
 
 ```python
+# superset_config.py
+
+# 通用缓存（元数据类）
 CACHE_CONFIG = {
-    'CACHE_TYPE': 'redis',
-    'CACHE_REDIS_HOST': 'localhost',
-    'CACHE_REDIS_PORT': 6379,
+    'CACHE_TYPE': 'RedisCache',
+    'CACHE_REDIS_URL': 'redis://localhost:6379/1',
     'CACHE_DEFAULT_TIMEOUT': 300,   # 5 分钟
     'CACHE_KEY_PREFIX': 'superset_',
 }
 
-VIZ_CACHE_TIMEOUT = 300   # 图表缓存
-SQL_CACHE_TIMEOUT = 300   # 查询缓存
+# 图表查询结果缓存
+DATA_CACHE_CONFIG = {
+    'CACHE_TYPE': 'RedisCache',
+    'CACHE_REDIS_URL': 'redis://localhost:6379/2',
+    'CACHE_DEFAULT_TIMEOUT': 300,
+}
+
+# 过滤器状态与 Explore 表单数据缓存
+FILTER_STATE_CACHE_CONFIG = {
+    'CACHE_TYPE': 'RedisCache',
+    'CACHE_REDIS_URL': 'redis://localhost:6379/3',
+    'CACHE_DEFAULT_TIMEOUT': 86400,
+}
+EXPLORE_FORM_DATA_CACHE_CONFIG = {
+    'CACHE_TYPE': 'RedisCache',
+    'CACHE_REDIS_URL': 'redis://localhost:6379/4',
+    'CACHE_DEFAULT_TIMEOUT': 86400,
+}
 ```
 
-缓存时间要按数据变化频率权衡：数据每秒在变的指标，缓存 5 分钟会给错误信号；每天凌晨更新的报表，缓存到中午都合理。
+超时时间按数据变化频率定：每秒都在变的指标，缓存 5 分钟就是错误信号；每天凌晨更新的报表，缓存一上午都合理。`DATA_CACHE_CONFIG` 里把 `CACHE_DEFAULT_TIMEOUT` 设为 0 可以对查询结果永久缓存，靠缓存失效机制更新，适合特别贵的查询。
 
 ---
 
@@ -391,7 +430,9 @@ SQL_CACHE_TIMEOUT = 300   # 查询缓存
 
 ### 6.1 支持的数据库
 
-Superset 通过 SQLAlchemy 方言连接各类数据库，原生支持 60+ 数据源：
+Superset 通过 SQLAlchemy 方言连接数据库：官方的口径是"任何会说 SQL 的数据源"，只要有对应的 Python DB-API 驱动和 SQLAlchemy 方言就能接入。官方文档的[支持列表](https://superset.apache.org/docs/databases)收录了几十种，从 PostgreSQL、MySQL 这类 OLTP 库，到 ClickHouse、Trino、Snowflake、BigQuery 这类分析型引擎都有现成驱动。
+
+常用连接字符串示例：
 
 | 数据库 | 连接字符串示例 |
 |--------|---------------|
@@ -400,31 +441,35 @@ Superset 通过 SQLAlchemy 方言连接各类数据库，原生支持 60+ 数据
 | BigQuery | `bigquery://project/dataset` |
 | Snowflake | `snowflake://user:pass@account/db` |
 | Redshift | `redshift+psycopg2://user:pass@host:5439/db` |
-| Presto | `presto://localhost:8080/catalog/schema` |
 | Trino | `trino://localhost:8080/catalog/schema` |
+| ClickHouse | `clickhousedb://user:pass@localhost:8123/db` |
 | DuckDB | `duckdb:///path/to/db` |
 | SQLite | `sqlite:///path/to/db` |
 
-### 6.2 连接示例
+### 6.2 安装驱动与连接
 
 PostgreSQL：
 
 ```bash
 pip install psycopg2-binary
-# Database: postgresql://username:password@host:5432/dbname
+# SQLAlchemy URI: postgresql://username:password@host:5432/dbname
 ```
 
-BigQuery：安装驱动并指向服务账号 JSON，再把证书路径放进环境变量。
+BigQuery：装驱动，把服务账号 JSON 的路径写进环境变量：
 
 ```bash
-pip install pybigquery
+pip install sqlalchemy-bigquery
 export GOOGLE_APPLICATION_CREDENTIALS="/path/to/key.json"
 # SQLAlchemy URI: bigquery://project-id/dataset
 ```
 
+Docker Compose 环境装驱动的姿势不一样：把包名写进 `./docker/requirements-local.txt` 再重建，容器里才会带上。
+
+在 Superset 里填 URI 的位置是 `Settings → Database Connections → + Database`，高级参数（超时、开启异步等）在 Advanced 里配。
+
 ### 6.3 虚拟数据集
 
-虚拟数据集就是一个保存下来的 SQL，作为图表的数据来源：
+虚拟数据集就是一段保存下来的 SQL，作为图表的数据来源。入口：数据集列表页 `+ Dataset`，选库后切换到虚拟数据集方式粘贴 SQL：
 
 ```sql
 SELECT
@@ -438,6 +483,8 @@ WHERE o.created_at >= '2025-01-01'
 GROUP BY u.id, u.name
 ```
 
+另一条顺手的生产路径：在 SQL Lab 里把查询调通后直接点 "Save as dataset"，省去复制粘贴。
+
 ---
 
 ## 七、安全与认证
@@ -447,9 +494,9 @@ GROUP BY u.id, u.name
 | 认证方式 | 说明 |
 |---------|------|
 | Database | Superset 内置的用户名 / 密码 |
-| OAuth | Google、GitHub、Okta 等提供商 |
+| OAuth / OIDC | Google、GitHub、Okta、Keycloak 等 |
 | LDAP | 对接企业目录服务 |
-| REMOTE_USER | 由反向代理提供 SSO 身份 |
+| REMOTE_USER | 由反向代理提供身份 |
 
 ### 7.2 配置 OAuth
 
@@ -477,20 +524,22 @@ OAUTH_PROVIDERS = [
 
 ### 7.3 数据权限
 
-按角色分好权限后，还需要限定"哪些用户能看哪些行 / 哪些 schema"：
+角色决定"能用哪些功能"，数据权限解决"能看哪些数据"。两层：
 
-- schema 级访问：在自定义安全管理器里重写 `get_schemas_accessible_by_user`。
-- 行级权限：在 `Security → Row Level Security` 里为角色定义行过滤规则，让不同角色看到同一张表的不同子集。
+- schema 级：§3.3 的自定义安全管理器。
+- 行级：Row Level Security（RLS），在设置菜单的 Row Level Security 页面为角色定义过滤规则。规则本质是追加到查询上的谓词，让不同角色看到同一张表的不同行。
 
-数据权限的正确姿势是先按角色放开"能看什么表"，再用行级规则做"能看哪些行"，两层叠加才会既不越权又不会误伤。
+RLS 的谓词里可以用 Jinja 宏取当前用户上下文（`current_username()`、`current_user_id()` 等），前提是管理员开启了 `ENABLE_TEMPLATE_PROCESSING` 功能开关。
+
+数据权限的搭建次序：先用角色和数据集授权圈定"能碰哪些表"，再用 RLS 收细到"能看哪些行"。两层各管一段，出了问题也好定位是哪层漏了。
 
 ---
 
 ## 八、生产部署
 
-### 8.1 单机 + 依赖服务
+### 8.1 单机：Compose + 外部依赖
 
-生产环境建议把元数据库换成 PostgreSQL，并引入 Redis 做缓存与消息队列：
+生产环境的最小架构：元数据库换 PostgreSQL，加 Redis 做缓存和 Celery 消息队列，密钥从环境变量注入：
 
 ```yaml
 services:
@@ -501,33 +550,29 @@ services:
     environment:
       SUPERSET_SECRET_KEY: ${SECRET_KEY}
       DATABASE_URL: postgresql://user:pass@db:5432/superset
+      REDIS_HOST: redis
     depends_on:
       - db
       - redis
   db:
-    image: postgres:14
+    image: postgres:17
     environment:
       POSTGRES_DB: superset
       POSTGRES_USER: user
       POSTGRES_PASSWORD: pass
   redis:
-    image: redis:7-alpine
+    image: redis:7
 ```
+
+`SUPERSET_SECRET_KEY` 用于会话签名和敏感数据加密，必须是足够长的随机串，丢了它元数据库里的加密字段（如数据库连接密码）就解不开了，务必单独备份。
 
 ### 8.2 Kubernetes 部署
 
-Apache 官方发布了 Helm Chart，适合集群部署：
+仓库里老的 Helm Chart（`helm/superset`）已被官方标记为 deprecated，新部署不要再基于它。官方现在维护的是 [Apache Superset Kubernetes Operator](https://github.com/apache/superset-kubernetes-operator)，通过 Kubernetes 自定义资源声明 Superset 实例，覆盖安装、升级、依赖配置等运维动作。已有 Helm 部署的团队按官方迁移指南逐步迁到 Operator。
 
-```bash
-helm repo add superset https://apache.github.io/superset
-helm install superset superset/superset \
-  --set secretKey=${SECRET_KEY} \
-  --set databaseUrl=${DATABASE_URL}
-```
+### 8.3 异步任务与定时报表
 
-### 8.3 性能与异步
-
-让 sudo 界面和查询结果分享体验更稳的关键是把重型查询交给异步 worker，而不是阻塞在 Web 进程里：
+重型查询不该阻塞在 Web 进程里。Superset 用 Celery 跑异步：SQL Lab 的异步查询、告警与报表的执行都交给 worker：
 
 ```python
 # superset_config.py
@@ -536,68 +581,33 @@ CELERY_CONFIG = {
     'result_backend': 'redis://redis:6379/1',
 }
 
-SUPERSET_WORKERS = 4
-
 SQLLAB_ASYNC_TIME_LIMIT_SEC = 300   # SQL Lab 异步查询超时
-VIZ_CACHE_MAXAGE = 3600             # 图表缓存上限，1 小时
 ```
+
+定时报表（Alerts & Reports）按计划把仪表板截图或把图表数据发到邮件/Slack。它依赖两件事：开启 `ALERT_REPORTS` 功能开关（默认关闭），以及 worker 节点装好无头浏览器（Superset 用 Playwright 对仪表板截图）。
 
 ---
 
-## 九、自定义可视化插件
+## 九、扩展开发
 
-当内置图表满足不了业务时，可以开发插件。插件是独立的前端包，用 @superset-ui 开发。
+内置图表和功能满足不了时，有两条路。
 
-### 9.1 目录结构
+### 9.1 扩展系统（6.x 推荐方向）
 
-```
-my-custom-viz/
-├── package.json
-├── src/
-│   ├── plugin/
-│   │   ├── index.ts
-│   │   ├── controlPanel.ts
-│   │   └── transformProps.ts
-│   └── images/
-│       └── thumbnail.png
-└── tsconfig.json
-```
+Superset 6.x 引入了新的扩展系统，思路接近 VS Code 的扩展模型：组织不改核心代码就能加功能，避免 fork 整个仓库带来的维护成本。
 
-### 9.2 插件入口
+要点：
 
-```typescript
-// src/plugin/index.ts
-import { ChartPlugin } from '@superset-ui/core';
-import ControlPanel from './controlPanel';
-import transformProps from './transformProps';
+- 扩展是自包含的 `.supx` 包，可同时含前端（React/TypeScript）与后端（Python）组件
+- 运行时通过 Webpack Module Federation 动态加载
+- 扩展能做的事：自定义 UI 组件与面板、命令与菜单、`/extensions/` 命名空间下的 REST API 端点、面向 AI 智能体的 MCP 工具与 prompt
+- 开发者可用的 UI 组件来自 `@apache-superset/core/components`，文档里有 Extension Compatible 标记标明可用范围
 
-export default class CustomVizPlugin extends ChartPlugin {
-  constructor() {
-    super({
-      loadChart: () => import('./CustomChart'),
-      controlPanel: ControlPanel,
-      transformProps,
-      metadata: {
-        name: 'Custom Chart',
-        description: 'A custom visualization',
-        credits: ['My Company'],
-      },
-    });
-  }
-}
-```
+从零写一个扩展的完整流程见官方 developer-docs 的 Extensions 章节（Overview → Quick Start → Deployment）。要判断"该不该用扩展"，标准很直接：改动如果必须动 Superset 源码，就该做成扩展。
 
-### 9.3 注册
+### 9.2 传统自定义图表插件
 
-把插件注册进 Superset 前端入口：
-
-```javascript
-// superset-frontend/src/preamble.ts
-import { configure } from '@superset-ui/core';
-import CustomVizPlugin from './src/plugins/CustomViz';
-
-configure([new CustomVizPlugin().configure()]);
-```
+在扩展系统之前，自定义可视化的方式是写 ChartPlugin 前端插件：一个独立的前端包，包含图表元数据、控制面板（controlPanel）与数据转换逻辑（transformProps），用仓库自带的 Yeoman 生成器 `@superset-ui/generator-superset` 起项目，再打进前端构建。这条路径的官方文档已并入 developer-docs，新项目建议优先评估扩展系统；维护已有插件时，插件包在 `superset-frontend/plugins/` 下有大量官方实现可对照。
 
 ---
 
@@ -605,27 +615,27 @@ configure([new CustomVizPlugin().configure()]);
 
 ### 10.1 仪表板设计
 
-- 一张图只回答一个问题，不要挤多信息
-- 颜色、口径全站统一
+- 一张图只回答一个问题，塞多种信息只会让读者都看不懂
+- 颜色、口径全站统一；口径统一靠虚拟数据集，不靠人记
 - 最重要的指标放左上角，按重要性从左上向右下排
-- 用过滤器应对'想换个维度看'的需求，而不是再做一张图
-- 单个仪表板不要堆太多图表，加载速度会拖垮体验
+- "想换个维度看"的需求用过滤器满足，别复制出十张相似的图
+- 单张仪表板控制在十来张图以内，加载慢的仪表板没人看
 
 ### 10.2 性能
 
-- 复杂聚合用物化视图预计算
-- 汇总表 + 明细表分层，避免每次都全量扫明细
-- 合理设置缓存时间
-- 必要查询加索引
-- 对分析频繁的宽表，用扁平模型降低 join 成本
+- 复杂聚合用物化视图预计算，让 Superset 查现成结果
+- 汇总表 + 明细表分层，避免每张图都全量扫明细
+- 按数据变化频率设置 `DATA_CACHE_CONFIG` 超时
+- 高频过滤列建索引
+- 大宽表用扁平模型降低 join 成本
 
 ### 10.3 安全
 
 - 对外访问一律 HTTPS
-- 定期升级版本，跟进漏洞修复
-- 最小权限：谁的只读，谁的开 sql_lab，别一刀切 Admin
-- 开启审计日志，重大操作可追溯
-- 敏感字段做脱敏或不下数据集
+- 定期升级版本，跟进安全公告
+- 最小权限：看报表的给 Gamma，别一刀切 Admin；默认密码上线前必改
+- 开启审计日志（`EVENT_LOGGER` 类配置），重大操作可追溯
+- 敏感字段不进数据集，或用 RLS 挡住
 
 ---
 
@@ -633,61 +643,77 @@ configure([new CustomVizPlugin().configure()]);
 
 **Q1：数据量大时怎么办？**
 
-先聚合减少返回量，再配置查询超时兜底，复杂指标用物化视图，实在撑不住再考虑换 ClickHouse 等 OLAP 引擎。SQL Lab 的长查询务必开异步执行。
+顺序是：先在虚拟数据集里聚合减少返回量；再确认长查询走异步；还不够就把重指标做成物化视图。以上都做完仍撑不住，说明该换引擎了——把分析负载迁到 ClickHouse、Trino 这类 OLAP 引擎，Superset 照样直连它们。
 
 **Q2：怎么实现只让销售看销售自己的数据？**
 
-用行级权限（Row Level Security），为对应角色定义过滤条件。想在 SQL Lab 里更精细地取当前用户，也可以拿到用户上下文后拼接过滤；但首选还是 RLS，规则集中、好维护：
+用行级安全（RLS）。在 Row Level Security 页面为对应角色建规则，规则的 Clause 就是追加到查询的过滤谓词，支持 Jinja 宏（需开启 `ENABLE_TEMPLATE_PROCESSING`）：
 
 ```sql
-SELECT *
-FROM orders
-WHERE region IN (SELECT region FROM user_region WHERE user_id = {{ current_user_id() }})
+region IN (SELECT region FROM user_region WHERE user_id = {{ current_user_id() }})
 ```
 
-**Q3：怎么把图表嵌到自己的应用里？**
+规则集中在一个页面管理，比在每张图里写过滤条件好维护得多。
 
-用 Embedded Analytics SDK。Superset 为指定仪表板签发 guest token，你在前端加载 SDK 并挂载图表：
+**Q3：怎么把仪表板嵌到自己的应用里？**
+
+用 Embedded SDK。嵌入的单位是仪表板，流程是三步：
+
+1. 在 `superset_config.py` 开启功能开关并配置 JWT 密钥：
+
+```python
+FEATURE_FLAGS = {'EMBEDDED_SUPERSET': True}
+GUEST_TOKEN_JWT_SECRET = 'a-strong-random-secret'   # 生产环境务必更换
+```
+
+2. 你的后端调 Superset REST API 为指定仪表板签发 guest token，并提供一个接口给前端拿 token。
+3. 前端装 `@superset-ui/embedded-sdk` 并挂载：
 
 ```javascript
-import { SupersetEmbedding } from '@superset-ui/embedded-sdk';
+import { embedDashboard } from '@superset-ui/embedded-sdk';
 
-SupersetEmbedding({
-  id: 'your-chart-id',
-  supersetUrl: 'https://superset.example.com',
-  guestToken: 'your-guest-token',
-  mountPoint: document.getElementById('chart'),
+embedDashboard({
+  id: 'your-dashboard-id',          // 仪表板 ID，来自 Superset 嵌入入口
+  supersetDomain: 'https://superset.example.com',
+  mountPoint: document.getElementById('dashboard-container'),
+  fetchGuestToken: () => fetchGuestTokenFromYourBackend(),
+  dashboardUiConfig: { hideTitle: true },
 });
 ```
 
+SDK 以 iframe 方式嵌入仪表板页，guest token 决定了访问权限和有效期，你的应用用自己的认证体系，不用把 Superset 账号暴露给最终用户。
+
 **Q4：怎么备份？**
 
-元数据都在元数据库里，导出即可；配置单独备份：
+Superset 的全部元数据（数据集、图表、仪表板、用户、RLS 规则）都在元数据库里，导出它就够了；配置文件单独备份：
 
 ```bash
 pg_dump -U user -h host superset > superset_backup.sql
 cp superset_config.py /path/to/backup/
 ```
 
+别忘了 `SUPERSET_SECRET_KEY` 也在必须备份的清单里——没有它，元数据库里的加密字段无法解密。
+
 ---
 
 ## 十二、收尾
 
-Superset 的价值在于把 SQL 的自由度和 BI 的易用性放进一个开源系统里：分析师照写 SQL，管理层看仪表板，IT 只用维护一套平台，没有许可费用。
+Superset 把 SQL 的自由度和 BI 的易用性放进了同一个开源系统：分析师写 SQL、管理层看仪表板、IT 只维护一套平台，没有许可费用。
 
-接下来可以按这条路继续：
+接下来可以按这条路走：
 
-- 用 Docker 把环境跑起来，导入示例数据熟悉界面
+- 用 Docker Compose 把环境跑起来，导入示例数据熟悉界面
 - 连上自己的业务库，从一张图和一张仪表板开始
 - 把关键查询沉淀成虚拟数据集，统一口径
-- 稳定后按第八章部署到生产，并配好缓存与异步 worker
+- 稳定后按第八章部署到生产，配好缓存、Celery 与备份
 
 **文档信息**
 
 - 难度：进阶
 - 类型：完整教程
-- 更新日期：2026-03-31
-- 预计学习时间：2-3 小时入门，8-12 小时精通
+- 更新日期：2026-10-01
+- 基线版本：Apache Superset 6.1.0
+- 预计学习时间：2-3 小时入门，8-12 小时进阶
 - GitHub：https://github.com/apache/superset
 
 由钳岳星君撰写 | 项目源码：https://github.com/apache/superset

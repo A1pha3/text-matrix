@@ -60,7 +60,7 @@ Chatwoot 把分散在十几种渠道里的客户对话统一收进一个可自�
 └──────────────────────────┬──────────────────────────────────┘
                            │ REST + WebSocket (Rails 默认)
 ┌──────────────────────────▼──────────────────────────────────┐
-│              Backend  (Ruby on Rails 7.1 + Sidekiq)         │
+│              Backend  (Ruby on Rails 7.2 + Sidekiq)         │
 │  - app/controllers          : REST API                       │
 │  - app/jobs                 : 异步任务 (Sidekiq)             │
 │  - app/mailers              : 邮件入站/出站                   │
@@ -84,7 +84,7 @@ Chatwoot 把分散在十几种渠道里的客户对话统一收进一个可自�
 
 读这张图要注意四件事：
 
-1. **后端是 Rails 7.1 单体**。`Gemfile` 写明 `gem 'rails', '~> 7.1'`，`Procfile` 把 `web`、`worker`、`release` 三个进程拆开跑：web 是 `rails server`，worker 是 `bundle exec sidekiq -C config/sidekiq.yml`。这意味着核心能力都跑在同一个 Rails 应用里，异步任务用 Sidekiq + Redis，发布前的 `db:chatwoot_prepare` 由 release 阶段执行。
+1. **后端是 Rails 7.2 单体**。`Gemfile` 写明 `gem 'rails', '7.2.3.1'`（Ruby 3.4.4），`Procfile` 把 `web`、`worker`、`release` 三个进程拆开跑：web 是 `rails server`，worker 是 `bundle exec sidekiq -C config/sidekiq.yml`。这意味着核心能力都跑在同一个 Rails 应用里，异步任务用 Sidekiq + Redis，发布前的 `db:chatwoot_prepare` 由 release 阶段执行。
 2. **PostgreSQL 还带 pgvector**。`docker-compose.production.yaml` 用的镜像是 `pgvector/pgvector:pg16`——这不是巧合，pgvector 正是 Captain AI Agent 做检索增强生成（RAG，Retrieval-Augmented Generation）的存储后端。
 3. **前端是独立 SPA**。`vite.config.ts`、`package.json`、`pnpm-lock.yaml`、`tailwind.config.js`、`postcss.config.js` 都在仓库根目录——Vue 3 + Vite + Tailwind。`Procfile.dev` 同时拉 Rails 后端和 Vite 前端，是开发时的并行启动方式。
 4. **渠道适配被压到 `lib/` 之下**。每个渠道（WhatsApp、Line、Facebook、Email）独立成文件，统一走 `Channel` 抽象层。这就是"全渠道"的工程含义——不是写十套代码，而是写一份抽象 + 若干适配器。
@@ -95,10 +95,10 @@ Chatwoot 把分散在十几种渠道里的客户对话统一收进一个可自�
 
 1. 客户在网站打开 Widget。Widget 是仓库内 `app/javascript/widget/` 的独立打包产物，前端建立 WebSocket 长连接后从后端拿到匿名身份。
 2. 客户发出第一条消息。前端把消息 POST 到 REST API，后端在负责会话创建的服务对象里建出 `Conversation` 与第一条 `Message`。
-3. **路由与自动分配**。`Assignment` 逻辑按 inbox 策略（轮询、负载最低、标签匹配）选一个坐席；`reporting_event` 写入一张事件表，供后续报表聚合。
+3. **路由与自动分配**。分配逻辑由 `assignment_policy` 驱动：社区版的派单顺序只有轮询（round_robin）一种，enterprise 版才开放均衡分发等策略，会话优先级可选"最早创建"或"等待最久"；`reporting_event` 写入一张事件表，供后续报表聚合。
 4. **坐席收到通知**。Rails 广播到该会话的实时通道，所有订阅该会话的浏览器/移动端会立刻收到事件，UI 上无需刷新就把消息卡片 push 出来。
 5. **坐席回复**。回复时如果启用了 Captain，其 Copilot 组件会先在文本框里给出草稿；坐席可以接受、改写或直接关闭。专门负责自动回复的 Assistant 工作流则按配置直接答完高频问题（如"营业时间""退订邮件"），答不了才转人工。
-6. **多渠道合并**。如果同一客户随后从 WhatsApp 又发来消息，WhatsApp 渠道的 incoming-message 服务会按 `contact_id` 把消息合进已有的 `Conversation` 上，而不是新开一张工单。这就是"客户看到的是一次完整对话"与"系统看到的是一条会话记录"的对应。
+6. **多渠道合并**。如果同一客户随后从 WhatsApp 又发来消息，WhatsApp 渠道的 incoming-message 服务会按 `contact_id` 把消息合进已有的 `Conversation` 上，而不是新开一张工单。对客户来说这是一次完整对话，对系统来说只是同一条会话上多了一条消息。
 7. **报表与导出**。报表模块异步聚合当天的 `reporting_event`，供 Agent Reports、Inbox Reports、CSAT Reports 拉取。
 
 理解这条链路后，部署和调优就清楚多了：PostgreSQL 撑会话数，Redis 撑异步任务与实时分发；任何一个环节被打满，瓶颈都落在那一个组件上。
@@ -114,14 +114,14 @@ Captain 是 Chatwoot 官方正式上线的 AI Agent，和"给坐席加个草稿�
 
 工程上 Captain 是"挂件式"接入：它需要外部 LLM 来生成 embedding 与回复，官方文档明确要在系统层配置 OpenAI key（由安装管理员维护）。这套设计的代价是——如果你想换模型、调 embedding 或接自托管端点，需要动的是 LLM 接入配置层，而不是 UI，对企业客户比较友好。
 
-要泼的冷水是：Captain 是 enterprise 级能力，社区版（MIT）拿不到完整版。它的成本、稳定性与长上下文表现受所选 LLM 影响，落地前先用一个低风险的 inbox（FAQ 类，别拿账单或技术 bug 试）做小范围 PoC 再扩张。
+要泼的冷水是：Captain 是 enterprise 级能力。这一点在仓库里可以直接验证——它的核心模型（`assistant.rb`、`faq_suggestion.rb`、`copilot_thread.rb`）全部位于 `enterprise/app/models/captain/` 之下，而 LICENSE 写明该目录按单独的商业许可授权，社区版（MIT）只覆盖目录之外的代码。它的成本、稳定性与长上下文表现受所选 LLM 影响，落地前先用一个低风险的 inbox（FAQ 类，别拿账单或技术 bug 试）做小范围 PoC 再扩张。
 
 ## 部署与落地
 
 README 列了三条主要部署路径：
 
 - **Heroku 一键部署**。仓库根目录有 `app.json`，按钮直接调用。优点是 5 分钟拉起，缺点是 Heroku 免费层已废弃，规模化后账单会迅速超过 SaaS 客服。
-- **DigitalOcean 1-Click Kubernetes**。仓库里 `deployment/` 目录有对应 manifests，思路是 Rails + Sidekiq + PostgreSQL + Redis 拆成 K8s Deployment。
+- **DigitalOcean 1-Click Kubernetes**。README 明确支持通过 DigitalOcean Marketplace 一键部署成 Kubernetes 应用，思路是 Rails + Sidekiq + PostgreSQL + Redis 拆成 K8s 工作负载；仓库里的 `deployment/` 目录则是另一条路——Ubuntu systemd 脚本（`setup_20.04.sh`、`chatwoot-web.service`、nginx 配置），适合不想上 K8s 的单机部署。
 - **自建 Docker Compose**。`docker-compose.yaml`（开发）和 `docker-compose.production.yaml`（生产）覆盖了 90% 自部署场景，标准四件套：Rails + Sidekiq + pgvector/PostgreSQL 16 + Redis。
 
 落地前需要自检的三件事：
@@ -254,7 +254,7 @@ A：先看 Sidekiq Web UI（默认 `/sidekiq`）的队列分布。常见原因�
 
 ### Q4：从 Intercom 迁移，历史会话能完整迁过来吗？
 
-A：不能完整迁。Intercom 的导出 API 只提供最近 90 天的会话，且不包含附件原文件。Chatwoot 官方的 CSV 导入工具能把文本会话迁过来，但 `contact_id` 需要自己写映射脚本对齐。建议迁移策略是：历史会话留在 Intercom 只读访问 6 个月，新会话从切换日起在 Chatwoot 走，避免一次性迁移的脏数据风险。
+A：不能完整迁。Intercom 的导出能力只覆盖近期会话，且不包含附件原文件，具体时间窗口以其当前 API 文档为准。Chatwoot 官方的 CSV 导入工具能把文本会话迁过来，但 `contact_id` 需要自己写映射脚本对齐。建议迁移策略是：历史会话留在 Intercom 只读访问 6 个月，新会话从切换日起在 Chatwoot 走，避免一次性迁移的脏数据风险。
 
 ### Q5：pgvector 的索引该用 IVFFlat 还是 HNSW？
 
@@ -323,8 +323,8 @@ A：取决于数据规模和召回精度要求。Chatwoot 默认不强制选哪�
 ## 资料口径说明
 
 1. **本文基于 Chatwoot 官方文档和 GitHub 仓库**：项目地址为 https://github.com/chatwoot/chatwoot，请以官方最新文档为准。
-2. **版本时效性**：Chatwoot 处于活跃开发状态（33.5k+ Stars），本文提到的功能和支持的特性可能随版本更新而变化。
-3. **性能数据边界**：本文提到的架构和性能特征基于 Rails 7.1 + PostgreSQL + Redis 的标准部署，实际表现取决于具体配置和使用场景。
+2. **版本时效性**：Chatwoot 处于活跃开发状态（2026 年 9 月核实时约 3.7 万 Stars，`develop` 分支当天仍有提交），本文提到的功能和支持的特性可能随版本更新而变化。
+3. **性能数据边界**：本文提到的架构和性能特征基于 Rails 7.2 + PostgreSQL + Redis 的标准部署，实际表现取决于具体配置和使用场景。
 4. **Captain AI 能力边界**：Captain 的效果高度依赖所选 LLM 和知识库质量，本文提到的功能需要 enterprise 版或自配置 LLM endpoint。
 5. **自部署责任**：自部署 Chatwoot 需要维护 PostgreSQL、Redis、Sidekiq 等组件，本文提到的运维建议不构成专业运维指导。
 6. **许可证信息**：Chatwoot 分为社区版（MIT）和企业版（商业许可证），企业功能需要单独授权。

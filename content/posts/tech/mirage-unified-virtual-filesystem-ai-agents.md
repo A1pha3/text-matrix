@@ -1,204 +1,198 @@
 ---
-title: "Mirage：AI Agent 统一虚拟文件系统，让智能体用 Bash 操作一切后端"
+title: "Mirage 解读：AI Agent 的虚拟终端，一次 grep 扫遍 S3、Slack 和本地内存"
 date: "2026-05-22T11:10:00+08:00"
+lastmod: "2026-09-29T00:00:00+08:00"
 slug: "mirage-unified-virtual-filesystem-ai-agents"
 github_repo: "strukto-ai/mirage"
 source_key: "gh:strukto-ai/mirage"
-description: "Mirage 是一个为 AI Agent 设计的统一虚拟文件系统（VFS），将 S3、Google Drive、Slack、Github、Gmail、MongoDB 等各种后端服务以文件系统语义挂载到同一个目录树下，让 AI 智能体通过熟悉的 bash 命令操作一切数据源，无需学习每个服务的专属 SDK。"
+description: "对照 main 分支 README、官方示例与源码拆解 strukto-ai/mirage：虚拟终端定位下的五条主线（VFS、虚拟 CLI、运行时路由、Profile 策略、两层缓存）各自解决什么问题，官方 OpenAI Agents SDK 示例的完整任务流，以及 preview 阶段的采用建议。版本、Stars、代码均核查于 2026-09-29。"
 draft: false
 categories: ["技术笔记"]
 tags: ["AI Agent", "TypeScript", "Python"]
 ---
 
-## Mirage 是什么
+给 Agent 接外部数据，现在的常规做法是每接一个服务就写一层工具封装，或者挂一堆 MCP 服务器。strukto-ai/mirage 押的注不一样：它把 S3、Slack、Gmail、GitHub 这些后端挂到同一个目录树上，让模型用已经会的 `ls`、`grep`、`find`、`jq` 去够所有数据。仓库描述写的是 "The World's First Virtual Terminal for AI Agents"——虚拟终端，而不只是文件系统。这个说法有实指：文件系统只是它四条主线中的一条，虚拟 CLI、可路由的运行时和一套策略引擎同样在 `main` 分支里。
 
-Mirage（[strukto-ai/mirage](https://github.com/strukto-ai/mirage)）是一个**统一虚拟文件系统（Unified Virtual Filesystem for AI Agents）**，其核心理念是：
+项目 2026 年 5 月 6 日建仓，截至 2026-09-29 有 3,666 stars、270 forks，处于 preview 阶段（README 徽章自述），Apache-2.0 协议，由 strukto.ai 团队开发。本文对照 main 分支 README（含官方简体中文版）、`examples/` 目录源码和 PyPI/npm 包信息写成，数字与代码均核查于 2026-09-29。
 
-> 各种后端服务（S3、Slack、Github、Gmail、Redis 等）以目录树的形式挂载到同一个根目录，AI 智能体通过熟悉的 bash 命令（cat、grep、ls、cp 等）来操作一切数据源。
+## 五条主线，先看分工
 
-| 基础信息 | |
-|---|---|
-| 仓库 | [strukto-ai/mirage](https://github.com/strukto-ai/mirage) |
-| Stars | 约 2,500+（2026-05-22） |
-| 主要语言 | TypeScript + Python |
-| 许可证 | 详见 GitHub LICENSE |
-| 官网 | [strukto.ai/mirage](https://www.strukto.ai/mirage) |
-| 文档 | [docs.mirage.strukto.ai](https://docs.mirage.strukto.ai) |
+| 主线 | 回答的问题 | 关键机制 |
+|---|---|---|
+| 虚拟文件系统（VFS） | 数据从哪来、长什么样 | 各后端并排挂载在同一根目录下，应答同一套 POSIX 语义 |
+| 虚拟 CLI | 命令由谁应答 | `git`、`slack`、`ntn` 等由 Mirage 自己应答，机器上无需安装真工具 |
+| 虚拟运行时 | 计算在哪里跑 | Python、JavaScript 及任意命令可路由到进程内、沙箱或远程机器 |
+| Profile 与策略引擎 | 什么能做、什么能看见 | `allow`/`ask`/`deny` 管命令，`hide`/`show` 管可见性，策略脚本兜底 |
+| 两层缓存 | 为什么不必每次都打 API | 索引缓存（TTL 默认 10 分钟）加文件缓存（默认 512 MB），可切 Redis 共享 |
 
-## 核心问题：为什么需要统一虚拟文件系统
-
-当前 AI 智能体需要对接大量外部服务：S3 存文件、Slack 沟通、GitHub 管代码、Gmail 收邮件。每种服务都有独立的 SDK 和 API，AI 需要分别学习才能使用。
-
-Mirage 的思路是：**用统一语义掩盖复杂性**。一个熟悉 bash 的 LLM，不需要学习任何新词汇，就能操作所有已挂载的后端。
-
-## 系统架构
-
-```
-┌─────────────────────────────────────────────┐
-│     AI Agent / Application                  │
-│  (OpenAI Agents / Vercel AI SDK / LangChain)│
-└────────────────┬────────────────────────────┘
-                 │
-          Mirage Bash & VFS
-                 │
-          Dispatcher & Cache
-                 │
-    ┌────────────┼────────────┐
-    ▼            ▼            ▼
-  S3/R2      Slack/GitHub   GDrive
-  (Storage)   (APIs)        (Docs)
-```
-
-**两层缓存机制**：
-- **Index Cache**：目录列表和元数据缓存，减少 API 调用
-- **File Cache**：文件内容缓存，避免重复下载
-
-支持 RAM（默认，512MB）或 Redis（可跨进程共享）作为缓存后端。
-
-## 支持的数据源
-
-Python 和 TypeScript SDK 支持以下资源类型（部分）：
-
-| 资源 | 说明 |
-|---|---|
-| RAM | 内存文件系统 |
-| Disk | 本地磁盘 |
-| Redis | 缓存与键值存储 |
-| S3 / R2 / OCI / Supabase / GCS | 对象存储 |
-| Gmail / GDrive / GDocs / GSheets / GSlides | Google 全家桶 |
-| GitHub / Linear / Notion / Trello | 开发与协作工具 |
-| Slack / Discord / Telegram / Email | 通信平台 |
-| MongoDB | 数据库 |
-| SSH | 远程服务器 |
-
-所有资源挂载在同一目录树下，可相互 pipe 和组合。
-
-## 快速上手
-
-### Python 安装
-
-```bash
-uv add mirage-ai
-```
-
-### TypeScript 安装
-
-```bash
-npm install @struktoai/mirage-node      # Node.js 服务器和 CLI
-npm install @struktoai/mirage-browser   # 浏览器 / Edge 运行时
-npm install @struktoai/mirage-core      # 运行时无关的核心库
-```
-
-### 基本用法（Python）
+一条主命令串起前三条：
 
 ```python
-from mirage import Workspace
-from mirage.resource.ram import RAMResource
-from mirage.resource.s3 import S3Config, S3Resource
-from mirage.resource.slack import SlackConfig, SlackResource
+ws = Workspace(
+    {
+        "/tmp":   (RAMVFS(), MountMode.EXEC),
+        "/redis": (RedisVFS(url=redis_url), MountMode.WRITE),
+        "/slack": (SlackVFS(SlackConfig(token=slack_bot_token)), MountMode.EXEC),
+    },
+    # monty 捕获 python，脚本在工作区内以沙箱方式运行
+    runtimes=[MontyRuntime(captures=["python", "python3"]), "workspace"],
+)
 
-ws = Workspace({
-    '/data':   RAMResource(),
-    '/s3':     S3Resource(S3Config(bucket='my-bucket')),
-    '/slack':  SlackResource(SlackConfig()),
-})
+# 一次 grep 扫遍所有数据源
+await ws.shell("grep -rln session /redis /tmp")
 
-# 文件操作跨后端：S3 → 本地
-await ws.execute("cp /s3/report.csv /data/report.csv")
+# 运行存放在 Slack 里的脚本，把报告写入 Redis
+await ws.shell("python3 /slack/channels/general_.../files/example__F....py > /redis/report.txt")
 
-# 在 Slack 数据里搜索
-await ws.execute("grep alert /slack/general/*.json | wc -l")
-
-# 快照整个工作空间
-ws.snapshot("demo.tar")
+# 以头部命令名安装一个类型化 CLI：按名称分发，而不是按路径，
+# 并且像其他程序一样可以通过 `man`、`type`、`which` 发现
+ws.register_cli("slack", SLACK, {"token": slack_bot_token})
+await ws.shell('slack send-message --channel general --text "report is up"')
 ```
 
-### 基本用法（TypeScript）
+（代码取自官方 README。`MountMode` 决定每个挂载点的权限：上面给 `/tmp` 和 `/slack` 开了 EXEC，给 `/redis` 只开 WRITE。）
 
-```ts
-const ws = new Workspace({
-  '/data':   new RAMResource(),
-  '/s3':     new S3Resource({ bucket: 'my-bucket' }),
-  '/slack':  new SlackResource({}),
-  '/github': new GitHubResource({}),
-})
+## VFS：所有后端说同一套方言
 
-await ws.execute('grep alert /slack/general/*.json | wc -l')
-await ws.execute('cat /github/mirage/README.md')
-await ws.execute('cp /s3/report.csv /data/local.csv')
-```
+挂载之后，每个服务应答同样的读、写、列目录操作。官方按用途分组，主要覆盖：
 
-## 与主流 Agent 框架集成
+| 分组 | 代表后端 |
+|---|---|
+| 对象存储 | S3、R2、GCS、OCI、Supabase、MinIO、Ceph、阿里云 OSS、腾讯云 COS、Backblaze B2 等 |
+| 文件与文档 | Google Drive、Docs、Sheets、Slides、OneDrive、SharePoint、Box、Dropbox、Nextcloud |
+| 消息与协作 | Slack、Discord、Gmail、IMAP/SMTP 邮件、GitHub、Linear、Notion、Trello、Google Calendar |
+| 数据库与数据平台 | PostgreSQL、MongoDB、Redis、LanceDB、Qdrant、Chroma、Databricks Volumes、Hugging Face 数据集 |
+| 本地与远程 | 内存（RAM）、本地磁盘、浏览器 OPFS、SSH 远程 |
 
-Mirage 支持无缝接入主流 Agent 应用框架：
+两点值得注意。其一，`hide` 隐藏的路径不只是"不可读"，而是在 Agent 看到的文件系统里根本不存在——可见性本身成了安全边界，这是它和"读之前先检查权限"的常规做法的实质区别。其二，和 Telegram 有关系的只有架构图 SVG：README 正文的数据源清单里没有 Telegram，引用这张表时别把图当证据。
 
-### OpenAI Agents SDK（Python）
+## 虚拟 CLI 与运行时：命令不落在真机器上
+
+`register_cli` 之后，`slack send-message` 这样的命令按名称分发到 Mirage 的实现，不查找 `$PATH`。同一个 CLI 可以装多份、各用一套凭据，让每个 Agent 只拿到分给它的账号。官方当前虚拟化的 CLI 覆盖 `git`、`gh`、`slack`、`discord`、`himalaya`（邮件）、`linear`、`ntn`（Notion）、`gws`（Google Workspace）、`hf`（Hugging Face）。
+
+运行时走的是同一路数。`runtimes=[MontyRuntime(captures=["python", "python3"]), "workspace"]` 把 python 命令截给进程内的 Monty——Pydantic 用 Rust 从零实现的极简 Python 解释器，默认零权限，脚本与外界交互的唯一途径是显式注册的外部函数；其他命令留给 workspace 自身；也可以路由到 WASI CPython、Pyodide、QuickJS，或经 SSH 送到远程机器，沙箱后端支持 Docker、E2B、Daytona、Apple Container 等。计算与存储因此解耦：换沙箱供应商不动挂载配置，反过来也一样。
+
+## 安全：三层收紧
+
+1. **Profile 规则**：`allow`、`ask`、`deny` 管命令和 CLI，`hide`、`show` 管文件与目录。
+2. **策略脚本**：规则表达不了的限制写成脚本，在每次命令执行前应答 allow、deny 或 ask——并且只能收紧，不能放宽。
+3. **策略引擎**：宿主可注册自己的策略栈，每次命令、VFS 操作和会话写入都会过一遍。
+
+凭据方面，Mirage 的环境变量可以解析到 AWS Secrets Manager、1Password、Auth0 或 dotenv 里已存的密钥，密钥不必复制进工作区。
+
+## 一次真实任务怎么流过系统
+
+抽象机制看腻了，看官方示例 `examples/python/agents/openai_agents/sandbox_agent.py`（模型名等细节原样照录）：
 
 ```python
+import asyncio
+import os
+
 from agents import Runner
+from agents.run import RunConfig
 from agents.sandbox import SandboxAgent, SandboxRunConfig
+from dotenv import load_dotenv
+
+from mirage import MountMode, Workspace
 from mirage.agents.openai_agents import MirageSandboxClient
+from mirage.vfs.ram import RAMVFS
+from mirage.vfs.s3 import S3VFS, S3Config
+from mirage.vfs.slack import SlackConfig, SlackVFS
+
+load_dotenv(".env.development")
+
+ws = Workspace(
+    {
+        "/": (RAMVFS(), MountMode.WRITE),
+        "/s3": (S3VFS(S3Config(
+            bucket=os.environ["AWS_S3_BUCKET"],
+            region=os.environ.get("AWS_DEFAULT_REGION", "us-east-1"),
+            aws_access_key_id=os.environ["AWS_ACCESS_KEY_ID"],
+            aws_secret_access_key=os.environ["AWS_SECRET_ACCESS_KEY"],
+        )), MountMode.READ),
+        "/slack": (SlackVFS(config=SlackConfig(
+            token=os.environ["SLACK_BOT_TOKEN"],
+            search_token=os.environ.get("SLACK_USER_TOKEN"),
+        )), MountMode.READ),
+    },
+    mode=MountMode.WRITE,
+)
 
 client = MirageSandboxClient(ws)
 agent = SandboxAgent(
     name="Mirage Sandbox Agent",
-    model="gpt-5.4-nano",
+    model="gpt-5.5",
     instructions=ws.file_prompt,
 )
 
-result = await Runner.run(
-    agent,
-    "Summarize /s3/data/report.parquet into /report.txt.",
-    run_config=RunConfig(sandbox=SandboxRunConfig(client=client)),
+task = ("1. Find the date of the latest Slack message in the general channel. "
+        "2. Summarize the parquet file in /s3/data/. "
+        "Write your findings to /report.txt.")
+
+async def main():
+    result = await Runner.run(
+        agent,
+        task,
+        run_config=RunConfig(sandbox=SandboxRunConfig(client=client)),
+    )
+    print(result.final_output)
+
+asyncio.run(main())
+```
+
+模型的动作链是这样的：先 `ls /slack`（首次调用远端 API，结果进索引缓存），定位 general 频道文件；再 `grep` 或 `cat` 拿最新消息（命中缓存，零网络）；然后转向 `/s3/data/` 找 parquet 文件——Mirage 的系统提示词 `ws.file_prompt` 会告诉模型挂载了什么；最后把结论写进根目录下的 `/report.txt`。整个过程中模型没有调用任何 S3 或 Slack 专属工具，它只是在跑 shell 命令。
+
+同一仓库的 `examples/python/agents/` 下还有 LangChain、Pydantic AI、CAMEL、OpenHands、Agno 的 Python 示例；TypeScript 侧的 `@struktoai/mirage-agents` 提供 Vercel AI SDK、OpenAI Agents SDK、LangChain、Mastra 适配器，另有面向 Claude Code、Codex、OpenCode 等编码 Agent 的接入文档。注意该包顶层是空导出，一切从子路径导入，比如 `import { mirageTools } from '@struktoai/mirage-agents/vercel'` 会拿到 `execute`、`readFile`、`writeFile`、`editFile`、`ls` 五个工具。
+
+## 缓存：远端后端敢用 grep 的前提
+
+对远端数据跑 `grep -r` 意味着大量列目录和读取。Mirage 用两层缓存压平这部分开销：
+
+- **索引缓存**：目录列表和元数据。首次遍历调 API，TTL 过期前（默认 10 分钟）都读本地索引。
+- **文件缓存**：对象字节。首次读取从源端流式拉取，之后的管道直接读缓存（默认 512 MB）。
+
+两层默认都在进程内 RAM 里，零配置。多进程或分布式部署时切到 Redis：
+
+```ts
+import { RedisFileCacheStore, S3VFS, Workspace } from '@struktoai/mirage-node'
+
+const ws = new Workspace(
+  { '/s3': new S3VFS({ bucket: 'my-bucket' }) },
+  {
+    cache: new RedisFileCacheStore({ url: 'redis://localhost:6379/0', cacheLimit: '8GB' }),
+    index: { type: 'redis', url: 'redis://localhost:6379/0', ttl: 600 },
+  },
 )
 ```
 
-### Vercel AI SDK（TypeScript）
+## 安装与版本锚点
 
-```ts
-import { generateText } from 'ai'
-import { openai } from '@ai-sdk/openai'
-import { mirageTools } from '@struktoai/mirage-agents/vercel'
+```bash
+# Python（同时安装 mirage 库和 mirage CLI 二进制）
+uv add mirage-ai
 
-const { text } = await generateText({
-  model: openai('gpt-5.4-nano'),
-  system: buildSystemPrompt({ mountInfo: { '/': 'In-memory filesystem' } }),
-  prompt: "Use readFile to read /docs/paper.pdf, then describe what's in it.",
-  tools: mirageTools(ws),
-})
+# TypeScript（两个运行时包都会自动引入 @struktoai/mirage-core）
+npm install @struktoai/mirage-node      # Node.js 服务器和 CLI
+npm install @struktoai/mirage-browser   # 浏览器 / edge 运行时
+npm install @struktoai/mirage-agents    # OpenAI / Vercel AI / LangChain / Mastra 适配器
+
+# 独立 CLI，四选一
+curl -fsSL https://strukto.ai/mirage/install.sh | sh
+npm install -g @struktoai/mirage-cli
+uvx mirage-ai
+npx @struktoai/mirage-cli
 ```
 
-还支持 LangChain、Pydantic AI、CAMEL、OpenHands、Mastra 等框架。
+2026-09-29 核查的锚点：PyPI `mirage-ai` 与 npm 各包最新版均为 0.0.6（PyPI 另有 0.0.7a1/a2 预发布）；Python ≥ 3.11，Node.js ≥ 20（npm engines 精确到 ≥ 20.10.0）；基于 FUSE 的真实挂载点需要 macOS 或 Linux。不装 SDK 也能用 CLI 走完整流程：`mirage workspace create` 建工作区、`mirage execute` 跑命令、`mirage workspace snapshot`/`load` 存取快照。
 
-## 自定义命令扩展
+## 采用建议
 
-可以为特定后端和文件类型注册专属命令：
+版本号还在 0.0.x、官方自述 preview，README 明确 API 可能变化——这个前提决定了建议的形状：
 
-```ts
-// 注册跨所有挂载点可用的命令
-ws.command('summarize', ...)
+- **可以现在就上手**：给多后端数据聚合类 Agent 找工具层的团队。价值主张（一次 grep 扫所有源）在 RAMVFS 上就能本地验证，不碰生产数据。
+- **值得跟进但别急**：想给 Claude Code、Codex 这类编码 Agent 挂数据源的团队，先在非关键链路试点，盯 0.1.0 的 API 稳定信号。
+- **建议观望**：把核心业务流程压在上面的生产系统。策略引擎和 Profile 设计是为受限执行准备的，但 0.0.x 阶段的兼容性承诺为零，升级成本现在还没法定价。
 
-// 针对特定资源的特定文件类型覆盖默认行为
-// 例如：在 /s3 上对 Parquet 文件执行 cat 时，自动渲染为 JSON
-ws.command('cat', { resource: 's3', filetype: 'parquet' }, ...)
-```
+判断的落点：Mirage 赌的是"LLM 最大的存量技能是 bash"这件事继续成立。只要主流编码 Agent 仍以 shell 为核心工具，把外部服务收敛进文件系统语义的路线就比逐家写 SDK 少维护一层适配；反之，如果 Agent 的工具调用彻底转向结构化接口，它的杠杆会变短。目前前一种趋势没有逆转的迹象，而这个项目把两条主线——数据面（VFS）和控制面（策略引擎）——放在了同一个界面里，这在同类项目里并不多见。
 
-## 适用场景
-
-- **多后端数据聚合 Agent**：需要从 S3、Slack、Github 同时拉取数据的智能体
-- **编码 Agent**：如 Claude Code、Codex，通过 bash 访问一切挂载资源
-- **数据分析 Agent**：跨数据源进行 grep、wc、jq 等 Unix 工具操作
-- **知识管理 Agent**：打通 GDocs、GSheets、Gmail 的信息流
-
-## 局限与注意事项
-
-- FUSE 模式挂载依赖 macOS/Linux 平台支持
-- Python ≥ 3.12、Node.js ≥ 20
-- 目前处于积极开发阶段，API 可能发生变化
-- 企业使用前请评估具体后端连接器的稳定性
-
-## 总结
-
-Mirage 做的事很明确：**把 AI Agent 与后端服务的交互方式统一到最熟悉的文件系统语义**。对于 AI 开发者而言，这意味着不再需要为每个服务编写独立的工具封装层；对于 LLM 而言，这意味着可以复用它最擅长的 bash 技能来操作一切数据。
-
-项目同时提供 Python 和 TypeScript 双语言 SDK，并深度集成 OpenAI Agents SDK、Vercel AI SDK、LangChain 等主流框架，是当前 Agent 工具层值得关注的基础设施项目。
+文档在 [docs.mirage.strukto.ai](https://docs.mirage.strukto.ai)，缓存命中与失效的完整生命周期、权限配置的细节都在那里；仓库 [strukto-ai/mirage](https://github.com/strukto-ai/mirage) 的 `examples/` 目录按后端分组，六十多个示例可以直接对照运行。

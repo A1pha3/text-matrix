@@ -3,7 +3,7 @@ title: "MarkItDown 指南：微软开源的文档转 Markdown 工具"
 slug: "markitdown-microsoft-document-to-markdown-guide"
 github_repo: "microsoft/markitdown"
 source_key: "gh:microsoft/markitdown"
-description: "深入解析 Microsoft MarkItDown——GitHub 17 万 Star 的文档转换工具，将 PDF/Word/Excel/PowerPoint 等格式统一转换为 Markdown，专为 LLM 和 RAG 场景优化。"
+description: "深入解析 Microsoft MarkItDown——GitHub 18 万 Star 的文档转换工具，将 PDF/Word/Excel/PowerPoint 等格式统一转换为 Markdown，专为 LLM 和 RAG 场景优化。"
 date: "2026-04-10T23:50:00+08:00"
 categories: ["技术笔记"]
 tags: ["Python", "Markdown", "RAG", "LLM", "PDF", "Microsoft"]
@@ -15,29 +15,29 @@ tags: ["Python", "Markdown", "RAG", "LLM", "PDF", "Microsoft"]
 
 ### 1.1 什么是 MarkItDown？
 
-MarkItDown 是微软 AutoGen 团队开源的轻量级 Python 工具，把各种格式的文档转换成 Markdown，服务对象是 LLM（大语言模型）和文本分析管道。
+MarkItDown 是微软开源的轻量级 Python 工具，出自 AutoGen 团队，把各种格式的文档转换成 Markdown，服务对象是 LLM（大语言模型）和文本分析管道。
 
 | 项目 | 信息 |
 |------|------|
-| **Stars** | 172K+（截至 2026 年 8 月） |
-| **Forks** | 12.6K |
+| **Stars** | 188K+（截至 2026 年 10 月） |
+| **Forks** | 13.9K |
 | **官方仓库** | [microsoft/markitdown](https://github.com/microsoft/markitdown) |
-| **最新版本** | v0.1.7（2026-07-30） |
+| **最新版本** | v0.1.8（2026-09-22） |
 | **语言** | Python |
-| **贡献者** | 81 人 |
+| **贡献者** | 133 人 |
 | **许可证** | MIT |
 
 数字会随时间变化，以仓库主页为准。
 
 ### 1.2 为什么转成 Markdown？
 
-LLM 对 Markdown 的接受度天然高于裸文本。GPT-4o 这类主流模型在大量 Markdown 语料上训练过，能直接识别标题、列表、表格、链接的结构；同样的内容用 HTML 表达要消耗更多 token（词元），而 Markdown 用极少的标记就保留了结构。
+LLM 对 Markdown 的接受度天然高于裸文本。GPT-4o 这类主流模型的训练语料里大量出现过 Markdown，能直接识别标题、列表、表格、链接的结构；同样的内容用 HTML 表达要消耗更多 token（词元），而 Markdown 用极少的标记就保留了结构。
 
 一个直观的对比：把同一份财务报告丢给模型，扁平化文本会把表头和数据混在一起，模型要自己猜结构；转成 Markdown 表格后，检索和推理都更稳。
 
 ### 1.3 MarkItDown vs Textract
 
-MarkItDown 常被拿来和 [textract](https://github.com/deanmalmgren/textract) 比较。两者都做文本提取，差别在输出：
+MarkItDown 常被拿来和 [textract](https://github.com/deanmalmgren/textract) 比较，README 也主动把自己定位成 textract 的对标品。两者都做文本提取，差别在输出：
 
 | 对比维度 | Textract | MarkItDown |
 |---------|----------|-------------|
@@ -52,7 +52,7 @@ MarkItDown 常被拿来和 [textract](https://github.com/deanmalmgren/textract) 
 
 ### 2.1 格式列表
 
-MarkItDown 目前支持以下格式（README 明确列出，另有一些社区扩展）：
+MarkItDown 目前支持以下格式（README 列出，另有一些社区扩展）：
 
 | 格式类型 | 说明 | 依赖 |
 |---------|------|------|
@@ -60,11 +60,11 @@ MarkItDown 目前支持以下格式（README 明确列出，另有一些社区�
 | **PowerPoint** | .pptx 文件 | `pip install 'markitdown[pptx]'` |
 | **Word** | .docx 文件 | `pip install 'markitdown[docx]'` |
 | **Excel** | .xlsx / .xls 文件 | `pip install 'markitdown[xlsx,xls]'` |
-| **图片** | EXIF 元数据 + OCR | 内置 + 可选 OCR 插件 |
-| **音频** | EXIF 元数据 + 语音转录 | `pip install 'markitdown[audio-transcription]'` |
+| **图片** | EXIF 元数据 + LLM 图像描述 | 内置（描述需传 `llm_client`，见 §7） |
+| **音频** | 元数据 + 语音转录 | `pip install 'markitdown[audio-transcription]'` |
 | **HTML** | 网页内容 | 内置支持 |
 | **CSV / JSON / XML** | 文本格式 | 内置支持 |
-| **ZIP 文件** | 遍历内部内容 | 内置支持 |
+| **ZIP 文件** | 递归转换内部文件 | 内置支持 |
 | **YouTube** | 视频转录 | `pip install 'markitdown[youtube-transcription]'` |
 | **EPub** | 电子书 | 内置支持 |
 | **Outlook** | .msg 邮件 | `pip install 'markitdown[outlook]'` |
@@ -95,7 +95,7 @@ pip install 'markitdown[pdf,docx,pptx]'
 
 ### 3.1 环境准备
 
-MarkItDown 要求 **Python 3.10+**，官方建议用虚拟环境隔离依赖：
+MarkItDown 要求 **Python 3.10–3.14**，官方建议用虚拟环境隔离依赖：
 
 ```bash
 # 标准 Python
@@ -121,6 +121,8 @@ markitdown path-to-file.pdf -o document.md
 cat path-to-file.pdf | markitdown
 ```
 
+从管道读入时格式判断只能靠猜，可以用 `-x` 指定扩展名、`-m` 指定 MIME 类型、`-c` 指定字符集，给转换器一个明确提示。
+
 ### 3.3 Python API（应用程序接口）使用
 
 核心用法三行：
@@ -130,10 +132,10 @@ from markitdown import MarkItDown
 
 md = MarkItDown()
 result = md.convert("test.xlsx")
-print(result.text_content)
+print(result.markdown)
 ```
 
-`convert()` 接收文件路径、URL 或字节流，按扩展名自动路由到对应转换器。
+`convert()` 接收文件路径、URL、`Path` 对象、`requests.Response` 或二进制流，按扩展名自动路由到对应转换器。结果对象的 `markdown` 属性是当前推荐写法；`text_content` 是它的兼容别名，旧代码里常见。
 
 ## §4 插件系统
 
@@ -178,7 +180,7 @@ md = MarkItDown(
     llm_model="gpt-4o",
 )
 result = md.convert("document_with_images.pdf")
-print(result.text_content)
+print(result.markdown)
 ```
 
 注意：不传 `llm_client` 时插件仍会加载，但 OCR 会被静默跳过，退回内置转换器。
@@ -192,7 +194,7 @@ pip install markitdown-mcp
 markitdown-mcp --help
 ```
 
-服务器暴露一个 `convert_to_markdown(uri)` 工具，可接收 `http:`、`https:`、`file:`、`data:` 形式的 URI。默认走 STDIO；加 `--http` 可开启 Streamable HTTP 与 SSE 传输，默认监听 `127.0.0.1:3001`。服务器不做认证，以当前用户权限读文件，不要把它暴露到不受信的网络。
+服务器暴露一个 `convert_to_markdown(uri)` 工具，可接收 `http:`、`https:`、`file:`、`data:` 形式的 URI。默认走 STDIO；加 `--http` 开启 Streamable HTTP 与 SSE 传输，默认监听 `127.0.0.1:3001`，`--host` 和 `--port` 只在 HTTP 模式下有效（旧的 `--sse` 是 `--http` 的弃用别名）。服务器不做认证，以当前用户权限读文件，不要把它暴露到不受信的网络。
 
 ## §5 Azure Document Intelligence 集成
 
@@ -206,6 +208,13 @@ markitdown-mcp --help
 markitdown path-to-file.pdf -o document.md -d -e "<document_intelligence_endpoint>"
 ```
 
+v0.1.8 起端点也可以放在环境变量里，之后只需要 `-d`：
+
+```bash
+export MARKITDOWN_DOCINTEL_ENDPOINT="<document_intelligence_endpoint>"
+markitdown path-to-file.pdf -o document.md -d
+```
+
 ### 5.3 Python API 使用
 
 ```python
@@ -213,7 +222,7 @@ from markitdown import MarkItDown
 
 md = MarkItDown(docintel_endpoint="<your_endpoint>")
 result = md.convert("test.pdf")
-print(result.text_content)
+print(result.markdown)
 ```
 
 端点从 Azure 门户创建 Document Intelligence 资源后获取。每次调用走 Azure API，会产生费用，别在本地测试时误用。
@@ -222,10 +231,11 @@ print(result.text_content)
 
 ### 6.1 它解决了什么
 
-v0.1.6 起新增对 [Azure Content Understanding](https://learn.microsoft.com/azure/ai-services/content-understanding/) 的支持，覆盖 Document Intelligence 够不着的场景：
+v0.1.6 起新增对 [Azure Content Understanding](https://learn.microsoft.com/azure/ai-services/content-understanding/) 的支持，覆盖内置转换器和 Document Intelligence 够不着的场景：
 
-- **音视频**：内置转换器不支持视频，音频只有基础转录；Content Understanding 提供云端高质量方案
-- **结构化字段提取**：预置或自定义 analyzer 抽取发票金额、合同条款等字段，输出为 YAML front matter
+- **音视频**：内置转换器不支持视频，音频只有基础转录；视频只有 CU 一条路，音频用它质量更高
+- **结构化字段提取**：预置或自定义 analyzer 抽取发票金额、合同条款等字段，输出为 YAML front matter——内置和 Document Intelligence 集成都不暴露字段
+- **高质量文档提取**：云端布局分析与 OCR，应对扫描件、复杂表格和多页文档
 - **单 API 多模态**：一个 `cu_endpoint` 处理文档、图片、音频、视频，按文件类型自动路由
 
 ```bash
@@ -238,6 +248,13 @@ pip install 'markitdown[az-content-understanding]'
 markitdown path-to-file.pdf --use-cu --cu-endpoint "<content_understanding_endpoint>"
 ```
 
+同样支持环境变量：
+
+```bash
+export MARKITDOWN_CU_ENDPOINT="<content_understanding_endpoint>"
+markitdown path-to-file.pdf --use-cu
+```
+
 ### 6.3 Python API 使用
 
 ```python
@@ -245,9 +262,9 @@ from markitdown import MarkItDown
 
 # 零配置：按文件类型自动选择预置 analyzer
 md = MarkItDown(cu_endpoint="<content_understanding_endpoint>")
-result = md.convert("report.pdf")   # 文档 → prebuilt-document
-result = md.convert("meeting.mp4")  # 视频 → prebuilt-video
-result = md.convert("call.wav")     # 音频 → prebuilt-audio
+result = md.convert("report.pdf")   # 文档 → prebuilt-documentSearch
+result = md.convert("meeting.mp4")  # 视频 → prebuilt-videoSearch
+result = md.convert("call.wav")     # 音频 → prebuilt-audioSearch
 print(result.markdown)
 ```
 
@@ -269,6 +286,8 @@ print(result.markdown)
 # ---
 ```
 
+自定义 analyzer 会按自身模态匹配兼容的文件类型；遇到不兼容的输入（比如文档 analyzer 碰上音频），自动回退到默认预置 analyzer，不会直接报错。
+
 费用提示：路由到 Content Understanding 的格式，每次 `convert()` 都是一次计费调用。只希望 PDF 走云端时，用 `cu_file_types` 限定：
 
 ```python
@@ -286,6 +305,7 @@ md = MarkItDown(
 |------|-----------|----------------------|----------------------|
 | **文档转换** | 离线、按格式提取 | 云端布局提取 | 云端多模态提取 |
 | **结构化字段** | 不支持 | 集成未暴露 | YAML front matter |
+| **自定义 analyzer** | 不支持 | 集成不可配 | `cu_analyzer_id` |
 | **音视频** | 无视频、基础音频 | 不支持 | 支持 |
 | **成本** | 仅本地计算 | Azure API 计费 | Azure API 计费 |
 
@@ -301,7 +321,7 @@ md = MarkItDown(
 from markitdown import MarkItDown
 from openai import OpenAI
 
-client = OpenAI()
+client = OpenAI(max_retries=5)
 
 md = MarkItDown(
     llm_client=client,
@@ -309,10 +329,10 @@ md = MarkItDown(
     llm_prompt="用中文描述这张图片的内容",
 )
 result = md.convert("example.jpg")
-print(result.text_content)
+print(result.markdown)
 ```
 
-`llm_client` 只要兼容 OpenAI 的客户端协议即可，不必局限官方 `openai` 包。
+`llm_client` 只要兼容 OpenAI 的客户端协议即可，不必局限官方 `openai` 包。失败处理有一条明确链路：OpenAI 客户端对可重试错误默认自动重试 2 次（`max_retries=5` 表示最多 6 次尝试，带退避）；重试耗尽或遇到不可重试错误时，MarkItDown 会尝试其他适用的转换器，全部失败才抛 `FileConversionException`。
 
 ## §8 技术架构
 
@@ -326,38 +346,54 @@ packages/
 └── markitdown-sample-plugin/ # 插件开发模板
 ```
 
+仓库根目录有 Dockerfile，不改代码就能容器化运行：
+
+```bash
+docker build -t markitdown:latest .
+docker run --rm -i markitdown:latest < ~/your-file.pdf > output.md
+```
+
 ### 8.2 核心转换流程
 
 ```text
-输入文件（路径 / URL / 流）
+输入（路径 / URL / 流）
     ↓
-格式检测（扩展名 → MIME → 兜底分类）
+格式猜测（扩展名 / MIME / 内容探测，可能产生多个候选）
     ↓
-对应 Converter 处理
+按优先级逐个尝试转换器（accepts() 通过才进入 convert()）
+    ↓
+某个转换器抛异常 → 记录下来，换下一个继续
     ↓
 Markdown 输出
-    ↓
-可选：LLM 增强（OCR / 图像描述）
 ```
+
+这套"猜测 + 排序 + 失败回退"的设计解释了一个常见现象：损坏或非常规文件往往仍能转出结果，只是质量下降——因为优先转换器失败后由兜底转换器接手。
 
 ### 8.3 内置 Converter
 
-核心包的 `DocumentConverter` 注册了十余个内置转换器，按扩展名分发：
+核心包内置了 18 个转换器，按扩展名、MIME 类型或 URL 模式分发：
 
-| 转换器 | 支持格式 | 提取内容 |
+| 转换器 | 触发条件 | 提取内容 |
 |-----------|---------|---------|
 | PDF | .pdf | 文本与表格 |
 | PowerPoint | .pptx | 幻灯片文本 |
 | Word | .docx | 全文结构 |
 | Excel | .xlsx / .xls | 表格数据 |
-| 图片 | .jpg / .png 等 | EXIF + 可选 OCR |
+| 图片 | .jpg / .png 等 | EXIF + 可选 LLM 描述 |
 | 音频 | .mp3 / .wav | 元数据 + 转录 |
 | HTML | .html | 结构化文本 |
-| CSV / JSON / XML | 对应格式 | 表格 / 结构 |
-| YouTube | URL | 字幕转录 |
+| CSV | .csv | 表格 |
+| 纯文本 | .txt / .json / .jsonl 等 | 兜底文本提取 |
+| RSS / Atom | XML 订阅源 | 条目内容 |
+| Wikipedia | wikipedia.org URL | 词条内容 |
+| Bing SERP | bing.com/search URL | 搜索结果 |
+| Jupyter Notebook | .ipynb | 单元格内容 |
+| YouTube | YouTube URL | 字幕转录 |
 | EPub | .epub | 全书文本 |
 | Outlook | .msg | 邮件内容 |
-| ZIP | .zip | 遍历内部文件 |
+| ZIP | .zip | 递归转换内部文件 |
+
+Document Intelligence 与 Content Understanding 转换器只在构造时传入对应端点才会注册，且排在转换器栈的最前面——这正是 §6.4 里"传入 `cu_file_types` 才不会被抢路由"的原因。
 
 ## §9 实践建议
 
@@ -372,7 +408,7 @@ def extract_document(file_path: str) -> str:
     """RAG 管道的文档提取步骤"""
     md = MarkItDown(enable_plugins=True)
     result = md.convert(file_path)
-    return result.text_content
+    return result.markdown
 
 content = extract_document("quarterly_report.pdf")
 ```
@@ -393,7 +429,7 @@ def batch_convert(directory: str, output_dir: str) -> None:
         if file.suffix.lower() in [".pdf", ".docx", ".pptx", ".xlsx"]:
             try:
                 result = md.convert(str(file))
-                (output_path / f"{file.stem}.md").write_text(result.text_content)
+                (output_path / f"{file.stem}.md").write_text(result.markdown)
                 print(f"ok: {file.name}")
             except Exception as e:
                 print(f"fail: {file.name}: {e}")
@@ -411,12 +447,12 @@ from markitdown import MarkItDown
 md = MarkItDown()
 with open("document.pdf", "rb") as f:
     result = md.convert_stream(f)
-    print(result.text_content)
+    print(result.markdown)
 ```
 
 ### 9.4 安全注意事项
 
-README 明确提示：MarkItDown 以当前进程权限执行 I/O，行为和 `open()` / `requests.get()` 一样。**不要直接把不受信的输入喂给它**——托管服务里用户上传的文件可能指向内网地址或元数据服务。
+README 在最显眼的位置放了警告：MarkItDown 以当前进程权限执行 I/O，行为和 `open()` / `requests.get()` 一样。**不要直接把不受信的输入喂给它**——托管服务里用户上传的文件可能指向内网地址或元数据服务。
 
 优先调用最窄的 API：只处理本地文件用 `convert_local()`，只处理字节流用 `convert_stream()`，而不是一律用权限宽松的 `convert()`。
 
@@ -432,14 +468,14 @@ A2：确认传的是二进制对象（`open(file, "rb")` 或 `io.BytesIO`）。0
 A3：用可选依赖，如 `pip install 'markitdown[pdf,docx,pptx]'`。格式与依赖对应关系见 §2.1 表格。
 
 **Q4：Azure 端点怎么配置？**
-A4：在 Azure 门户创建 Document Intelligence 或 Content Understanding 资源，拿到端点后分别传给 `docintel_endpoint` 或 `cu_endpoint`。注意两者是独立的云服务，各有各的计费。
+A4：在 Azure 门户创建 Document Intelligence 或 Content Understanding 资源，拿到端点后分别传给 `docintel_endpoint` 或 `cu_endpoint`，也可以用 §5.2 和 §6.2 的环境变量。注意两者是独立的云服务，各有各的计费。
 
 **Q5：OCR 没生效？**
 A5：确认装了 `markitdown-ocr` 并在 `MarkItDown()` 里传了 `enable_plugins=True` 和 `llm_client`。缺任一条件 OCR 都会静默跳过。
 
 ## §11 总结
 
-MarkItDown 解决的核心问题：把 PDF、Office、图片、音频等异构文档统一转成 Markdown，直接喂给 LLM 或 RAG 管道。三个特点是：格式覆盖广、依赖按需安装、输出保留结构（标题、列表、表格、链接不丢）。
+MarkItDown 解决的核心问题：把 PDF、Office、图片、音频等异构文档统一转成 Markdown，直接喂给 LLM 或 RAG 管道。它的竞争力在三点：格式覆盖广、依赖按需安装、输出保留结构（标题、列表、表格、链接不丢）。
 
 局限同样要清楚：复杂排版的 PDF 转换精度有限，追求高保真应评估 Azure Document Intelligence 或 Content Understanding；OCR 和云端转换依赖外部服务，有额外成本与延迟。
 
@@ -467,6 +503,13 @@ pip install 'markitdown[az-content-understanding]'
 pip install 'markitdown[youtube-transcription]'
 ```
 
+端点类配置建议走环境变量，避免把密钥写进脚本：
+
+```bash
+export MARKITDOWN_DOCINTEL_ENDPOINT="<document_intelligence_endpoint>"
+export MARKITDOWN_CU_ENDPOINT="<content_understanding_endpoint>"
+```
+
 ## 附录：术语表
 
 | 术语 | 含义 |
@@ -479,4 +522,4 @@ pip install 'markitdown[youtube-transcription]'
 | **MCP** | 模型上下文协议，LLM 应用与外部工具互通的协议 |
 | **OCR** | 光学字符识别，从图片中提取文字 |
 
-*本文基于 [microsoft/markitdown](https://github.com/microsoft/markitdown) 项目（v0.1.7）撰写，MIT 许可证。版本、Star 等数据随项目演进，以仓库主页为准。*
+*本文基于 [microsoft/markitdown](https://github.com/microsoft/markitdown) 项目（v0.1.8）撰写，MIT 许可证。版本、Star 等数据随项目演进，以仓库主页为准。*

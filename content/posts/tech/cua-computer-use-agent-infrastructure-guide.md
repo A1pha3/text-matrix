@@ -1,5 +1,5 @@
 ---
-title: "Cua：开源计算机控制Agent基础设施完全指南"
+title: "Cua:给 AI Agent 一台能用的电脑——操控、沙箱与基准的开源基础设施"
 date: "2026-05-14T10:47:00+08:00"
 slug: "cua-computer-use-agent-infrastructure-guide"
 github_repo: "trycua/cua"
@@ -7,336 +7,260 @@ source_key: "gh:trycua/cua"
 aliases:
     - "/posts/tech/cua-computer-use-framework/"
     - "/posts/tech/cua-computer-use-agent-framework/"
-description: "Cua是专注于Computer-Use的开源基础设施，提供沙箱、SDK和Benchmark来训练与评估能控制完整桌面的AI Agent。支持macOS、Linux、Windows三大平台，提供Cua Driver（后台控制）、Cua Sandbox（Agent-ready隔离环境）和Cua Bench（评估基准），是当前最完整的开源CUA方案。"
+description: "trycua/cua 把「给 Agent 一台能用的电脑」拆成可独立采用的工程件:Cua Driver 在 macOS、Windows、Linux 上后台操控原生应用与浏览器,cua 沙箱与 Spaces 提供隔离执行环境,Cua Bench 负责评估与训练数据导出。本文基于 2026-10-04 的仓库状态逐项核对。"
 draft: false
 categories: ["技术笔记"]
-tags: ["AI Agent", "Computer Use", "沙箱", "Benchmark", "macOS"]
+tags: ["AI Agent", "Computer Use", "沙箱", "Benchmark", "macOS", "Rust"]
 ---
 
-# Cua：开源计算机控制 Agent 基础设施完全指南
+# Cua:给 AI Agent 一台能用的电脑——操控、沙箱与基准的开源基础设施
 
-> **学习目标**：读完本文后，你应该能够：
-> 1. 理解 Cua 的三层架构（Driver、Sandbox、Bench）及其职责分工
-> 2. 区分 Cua 与 Browser Use 的边界，知道何时该用 Cua
-> 3. 掌握 Cua Driver 的后台操控机制和非 AX 表面覆盖能力
-> 4. 理解 Cua Sandbox 的隔离执行环境和跨 OS 支持
-> 5. 知道如何使用 Cua Bench 评估 Agent 的桌面操控能力，并理解其测量边界
+让 Agent 操作图形界面,难点从来不在「截一张图给模型看」,而在三件工程事:点击和输入怎么在后台落到正确的窗口上、任务跑在哪个可复现的环境里、做得好不好用什么标准衡量。trycua/cua(2026-10-04 读数:27.9k stars,MIT 为主)把这三件事拆成了可以单独接入的组件:Cua Driver 管操控,cua 沙箱与 Cua Spaces 管执行环境,Cua Bench 管评估与训练数据,另有 CUA-S1 探索计算机使用专用的决策小模型。
 
-Cua 把"让 AI 操控完整桌面"这件事拆成了三层可以独立使用的工程能力：后台控制、隔离执行、标准化评估。这三层对应 **Cua Driver**、**Cua Sandbox**、**Cua Bench** 三个组件，由 trycua 团队维护，可以单独接入现有 Agent，也可以串成完整的训练-评估链路。
+README 把这背后的理念称为 Computer-Use 2.0:Agent 在同一个任务里自由穿行于写代码、调 API、点图形界面之间,图形界面只是出口之一。Cua 提供的就是那个「电脑」层——你带自己的 Agent 和模型,它负责输入、捕获、隔离和度量。
 
-Browser Use、Skyvern 这类方案把 Agent 关在浏览器标签页里，靠 DOM 或 accessibility tree 间接驱动页面。一旦任务跳出浏览器——打开 Blender 改模型、在 Figma 里调图层、操作非 AX 标准的 Chromium 内嵌内容——这套思路就够不到。Cua 的判断是：桌面级控制必须从操作系统层切入，Web 层往下够不到的地方，正是 Cua 要补的。
+本文 2026-05-14 首发,2026-10-04 按仓库当前状态全文重写核对。这五个月里项目变化很大:Driver 从仅支持 macOS 扩展到三平台,新增了 Spaces 桌面应用和 CUA-S1 模型,仓库主语言目前是 Rust。发版节奏接近每天多个,具体 API 以官方文档为准,本文只对引用时点的状态负责。
 
-## 这篇文章怎么看
+## 总览:六个组件,各管一段
 
-- 想快速判断 Cua 是否适合自己的场景，看「总览」和「什么时候该用 Cua」两节。
-- 想理解三层组件如何配合，看「任务如何流过系统」。
-- 想直接上手，跳到「安装与快速上手」。
-- 关心评估结果怎么读，看「Cua Bench」一节关于测量边界的讨论。
-
-## 总览：三层职责如何分工
-
-Cua 的三层不是垂直堆叠，而是可以独立替换的并行机制。Driver 解决"怎么操控"，Sandbox 解决"在哪里跑"，Bench 解决"跑得好不好"。三者通过轨迹（trajectory）文件串联：Driver 录制操作轨迹，Sandbox 提供可复现的执行环境，Bench 用同一份轨迹格式做评估和 RL 训练。
+先看全局,再进细节。六个组件不是垂直堆叠,而是按「怎么动手、在哪里跑、跑得好不好」三段职责切开的:
 
 ```mermaid
 flowchart TB
-    subgraph CuaLayer["Cua 三层职责"]
-        Driver["Cua Driver<br/>后台操控 macOS 桌面"]
-        Sandbox["Cua Sandbox<br/>跨 OS 隔离执行环境"]
-        Bench["Cua Bench<br/>标准化评估与 RL"]
+    subgraph control["操控:怎么动手"]
+        Driver["Cua Driver<br/>macOS / Windows / Linux<br/>MCP over stdio,后台交付"]
     end
 
-    Driver -- "录制轨迹" --> Bench
-    Sandbox -- "提供可复现环境" --> Bench
-    Bench -- "RL 训练数据" --> Sandbox
+    subgraph runtime["执行:在哪里跑"]
+        Spaces["Cua Spaces<br/>桌面 App:本地 macOS VM<br/>或 Linux/Omarchy 镜像"]
+        SB["cua 沙箱<br/>gVisor 容器 / QEMU / Lume VM<br/>或云上 Fleet"]
+        Lume["Lume<br/>Apple Silicon 上的<br/>macOS/Linux VM 管理"]
+    end
 
-    Lume["Lume<br/>macOS 虚拟化层"] -.-> Sandbox
+    subgraph eval["评估与数据:跑得好不好"]
+        Bench["Cua Bench<br/>任务集、奖励评估、轨迹导出"]
+        S1["CUA-S1<br/>表单场景决策小模型"]
+    end
+
+    Driver -- "操作与轨迹" --> Bench
+    SB -- "运行环境" --> Bench
+    S1 -. "经 Driver 执行动作" .-> Driver
 ```
 
-| 组件 | 解决的问题 | 边界 |
-|------|-----------|------|
-| Cua Driver | 如何在不抢焦点的情况下操控 macOS 原生应用 | 目前仅 macOS；Windows/Linux 桌面控制未覆盖 |
-| Cua Sandbox | Agent 在哪里跑才不污染宿主 | 提供镜像与生命周期管理，不负责操控逻辑 |
-| Cua Bench | 怎么衡量 Agent 操控能力 | 评估的是端到端任务完成度，不单独测模型推理能力 |
+| 组件 | 解决的问题 | 边界 | 许可 |
+|------|-----------|------|------|
+| Cua Driver | 检查并操控原生应用与浏览器,平台支持时后台交付 | 按平台有明确的拒绝边界,不支持的操作返回结构化拒绝 | MIT(可选感知扩展含 AGPL 组件) |
+| Cua Spaces | 给 Agent 一台完整桌面,支持 Teleport 与多人协作 | 桌面 App 要求 macOS 26+ 宿主 | FSL-1.1-MIT,每个发布两年后转 MIT |
+| cua SDK & CLI | 一个 `cua` 命令加 Python/TypeScript/Swift/Kotlin 四语言 SDK,管沙箱、镜像、Spaces 连接 | 沙箱内不需要也不内置 Agent | MIT |
+| Lume | 在 Apple Silicon 上创建和管理 macOS/Linux 虚拟机 | 只管虚拟化,不管操控 | MIT |
+| CUA-S1 | 计算机使用场景的快速、有界决策模型 | 早期仅源码的研究发布,权重单独放在 Hugging Face | 源码 MIT |
+| Cua Bench | 构建任务、评估 Agent、导出训练轨迹 | 测端到端任务完成度,不对单层归因 | MIT |
 
-Lume 是 Sandbox 在 macOS 上的虚拟化底座，本身不直接面向用户，但理解它的存在有助于解释为什么 Sandbox 能在 Mac 上跑 Mac 镜像。
+主 README 明确写了依赖关系:「MIT 部分从不依赖 FSL 部分」。也就是说,不装 Spaces 应用,Driver、SDK、Lume、Bench 的全部能力照常可用;反过来用 Spaces 则要接受 FSL 许可条款。做技术选型时,这条比任何功能清单都重要。
 
-## Cua Driver：让 Agent 在后台操控 macOS
+## Cua Driver:不抢焦点的桌面操控
 
-Driver 要回答的问题是：当用户正在用电脑时，Agent 能不能同时在同一个桌面里完成自己的任务，而不是把鼠标抢走、把窗口顶到前台。
+Driver 的定位是一句话:给任何 Agent 提供操控电脑的工具,经 stdio 说 MCP 协议。它不是又一个截图-点按循环的 Agent 框架,而是运行在你桌面会话里的原生层,Agent 通过三种方式接入:
 
-常见的辅助功能 API（macOS AXUIElement）能解决标准原生应用，但有两类表面它够不到：Chromium 内嵌的 Web 内容（不走系统 AX 树）、Canvas 或 GPU 渲染的工具（Blender、Figma、DAW、游戏引擎）。Driver 在 AX 之上补了这两条路径，让 Agent 的点击和输入可以落到这些表面上。
+- **MCP**:支持 MCP 的 Agent(Claude Code、Codex、Cursor、OpenClaw 等)直接连 `cua-driver mcp`;
+- **CLI**:脚本类自动化走 `cua-driver call`;
+- **应用 SDK**:Python 导入 `cua_driver`,TypeScript 导入 `@trycua/cua-driver`,两者都是 Rust 核心经 UniFFI 生成的绑定,应用内直连,不需要守护进程。
 
-Driver 的几个能力点：
+### 三平台,边界各不相同
 
-- **后台操控**：Agent 的点击、输入、验证在后台完成，用户当前窗口焦点不被抢占。
-- **非 AX 表面**：覆盖 Chromium Web 内容与 Canvas 渲染工具，不依赖标准无障碍 API。
-- **MCP Server**：提供 Claude Code、Cursor 等支持 MCP 的 Agent 直接接入的 Server。
-- **轨迹录制**：每个会话自动产出可回放的轨迹文件，供 Bench 评估或 RL 训练复用。
+Driver 现已支持 macOS、Windows 和 Linux(X11 与 Wayland),但官方平台支持文档没有停留在「支持」两个字上,而是逐平台写清了后台交付的边界:
 
-安装 Driver：
+- **macOS**:走 AppKit、辅助功能(Accessibility)、Quartz/HID 与 ScreenCaptureKit,需要授予辅助功能和屏幕录制两项权限。部分后台滚动、拖拽手势会拒绝执行;离屏 Space 的 SwiftUI 树、向最小化窗口提交键盘、只接受 HID-tap 输入的应用都在覆盖之外。
+- **Windows**:走 Win32、UI Automation 和原生输入,覆盖 Electron、Tauri、WPF、WinUI 3、WebView2。部分后台 Chromium 手势和提权目标会拒绝;低完整性进程不能向高完整性(提权)应用注入输入,这是系统规则,Driver 不绕过。
+- **Linux X11**:X11/EWMH、XTest、AT-SPI。拒绝合成后台事件的工具包会得到显式拒绝,裸后台投递取决于具体工具包。
+- **Linux Wayland**:核心规则是普通客户端不能向未聚焦、被遮挡的窗口发送裸输入;AT-SPI 语义动作仍可后台执行。GNOME/Mutter 需要 Shell 助手并重启,KDE/KWin 实验性且助手只读,Hyprland/Omarchy 走选装插件、覆盖面窄。
+
+贯穿其中的是一条工程纪律:一种能力只有当 Rust 测试工具「在应用或桌面拥有的状态里观察到结果」才算支持;不支持的路径返回结构化拒绝,而不是猜测执行结果。落到使用上,Driver 的失败是可判定的:Agent 拿到明确的错误信息就能换路径重试,不必对着一次超时干等。
+
+### 权限与授权
+
+权限模式在启动时固定,改动需重启守护进程,三档递进:`standard` 是默认档,正常自动化不弹提示;`bounded` 只放行经审阅的清单里的工具和资源;`unrestricted` 必须显式加 `--dangerously-bypass-approvals`。附加已登录的 Chromium 配置文件也是显式动作:`cua-driver mcp --grant existing-profile`。Driver 自己不渲染任何授权弹窗——审批权在你手上,不在界面上。
+
+### 可选的视觉感知扩展
+
+默认的 MIT 版 Driver 不带模型产物。选装 `cua-perception` 扩展后,可以把一帧原生窗口或桌面截图解析成模型中立的文字与图标区域;由区域推导出的像素点击必须携带与观察时相同的一次性 `capture_id`,防止拿旧截图点新界面。注意许可:该扩展的 OmniParser 图标检测是 AGPL-3.0-only,安装不改变 Driver 的 MIT 许可,但再分发扩展或通过网络向用户提供,可能触发 AGPL 提供源码的义务。官方建议很直接:组织不接受 AGPL 组件就别装。
+
+macOS 每夜构建还有一个选用的 Computer History 预览:把经 Driver 执行的动作记成加密的本地历史,只存严格的元数据白名单,不存截图、键入文本、剪贴板内容、原始参数或 URL,Agent 只能通过只读的查询工具访问。
+
+## 沙箱与 Spaces:Agent 在哪里跑
+
+操控解决了「怎么动手」,第二段职责是「在哪里跑」。Cua 给出的不是一个沙箱,而是一条从轻到重的执行环境谱系:
+
+| 环境 | 形态 | 典型命令 | 适用 |
+|------|------|----------|------|
+| 本地容器 | gVisor(默认)或 runc | `cua sb create ubuntu --name dev` | 轻量隔离,首次使用时初始化 |
+| 本地虚拟机 | QEMU 或 Lume | Bench 传 `--kind vm --runtime lume` | 需要 Windows/macOS/Android 等 VM-only 镜像 |
+| 云上 Fleet | gVisor 容器或 KubeVirt 虚拟机 | `cb run ... --on cloud` | 并行评估、批量数据生成 |
+| Spaces 桌面 | 本地 macOS VM 或 Linux/Omarchy 镜像 | Cua Spaces 应用 | Agent 需要完整桌面与已登录会话 |
+
+一条容易误解的设计:沙箱里不需要装 Agent。就绪判定来自运行时本身和可选的端口探针;镜像若自带 `cua-spacesd` 守护进程(3211 端口),才额外提供进程、文件、截图、输入和低延迟音视频流。沙箱提供环境,操控仍归 Driver,两层各管各的。
+
+Python 侧,`pip install cua` 装的是 Rust 核心的 SDK 绑定(0.3.0,要求 Python 3.10+);高层 `Sandbox` API 走可选依赖,要 Python 3.11+:
 
 ```bash
-# 一键安装
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/trycua/cua/main/libs/cua-driver/scripts/install.sh)"
+pip install "cua[sandbox]"   # cua-sandbox:Sandbox、Image、Pool 等
 ```
-
-安装后得到三样东西：`cua-driver` 命令行工具、Claude Code Skill（位于 `libs/cua-driver/skills/claude-code-skill.md`）、可配置端口的 MCP Server。
-
-## Cua Sandbox：跨 OS 的 Agent 隔离环境
-
-Sandbox 要回答的问题是：Agent 跑任务时如果出错、误删文件、装了奇怪依赖，怎么保证不污染宿主，并且能复现。
-
-它提供跨 OS 的标准化镜像和生命周期管理。Agent 在沙箱内完成"看屏幕 → 决策 → 操作 → 验证"的完整循环，宿主只看到沙箱的进程和磁盘占用。
 
 ```python
 from cua import Sandbox, Image
 
-# 定义任务镜像（预装 OS + 应用）
-sandbox = Sandbox(
-    image=Image("ubuntu:22.04"),  # 或 macOS
-    os="linux"
-)
-
-# 启动 Agent 会话
-session = sandbox.session()
-
-# Agent 自动完成：看屏幕→点击按钮→验证结果
-result = session.run("在浏览器中打开 github.com 并登录")
+async with Sandbox.ephemeral(Image.linux(), local=True) as sb:
+    print((await sb.shell.run("uname -a")).stdout)
 ```
 
-支持平台与底层实现：
+同样的沙箱在命令行里四步走完生命周期:
 
-- **macOS**：通过 Lume 虚拟化，可以在 Mac 上跑 Mac 镜像。
-- **Linux**：Docker 或 KVM，镜像走标准容器或虚拟机流程。
-- **Windows**：路线图中，尚未发布。
+```bash
+cua sb create ubuntu --name dev   # gVisor 容器,首次使用时初始化
+cua sb exec dev uname -a
+cua sb screenshot dev
+cua sb rm dev
+```
 
-Sandbox 本身不负责"怎么操控"——那是 Driver 的职责。Sandbox 提供的是"在哪里跑"和"跑完怎么收"。
+镜像引用统一走 OCI:OS 别名(`linux`、`windows`、`macos:tahoe`)或 `ghcr.io/trycua/<os>`,云与本地同一套选项;把 `on` 从 `local` 换成 `cloud`,剩下的参数不变。`cua host setup` 还能把你自己的一台机器经 cua.ai 中继暴露给 Agent,不需要端口转发。
 
-## Cua Bench：评估与 RL 训练
+### Spaces:带 Teleport 的完整桌面
 
-Bench 要回答的问题是：怎么衡量一个 Agent 的桌面操控能力，并且让这个衡量结果能反过来训练模型。
+Spaces 是 2026 年秋季新出现的旗舰形态,值得单独说。它是一个驻留在菜单栏的 macOS 应用,每个桌面是一个 Space:在你 Mac 上本地构建的 macOS 虚拟机,或者一个 Linux/Omarchy 镜像。Space 可以跑在你自己的 Mac、你拥有的其他机器,或你自己的云账户(AWS、Google Cloud、Modal)里。
 
-Bench 的任务集覆盖文件操作、浏览器操作、文档编辑等真实 GUI 场景，每个任务有明确的成功条件。Agent 跑完后，Bench 自动评分操作的准确性与效率，并把轨迹整理成可用于 RL 训练的格式。
+两个能力把它和普通 VM 管理区分开:
 
-关于 Bench 的数字，有几件事需要先说清楚：
+- **Teleport**:把一个已登录的应用(比如 Chrome 或 Slack)移进 Space,它在那边打开时仍是登录态。会话凭据存在本机加密的 Cua Keyvault 里,经你批准后才进入 Space。
+- **Multiplayer**:你和 Agent 在同一个桌面上各有一个光标。Agent 卡住时你介入点一下选择,再把桌面交还给它。
 
-- **测的是端到端任务完成度**：Agent 能不能在真实桌面里把任务做完，而不是单测模型推理或 API 调用准确率。
-- **数字反映的是"操控+决策+验证"整条链路**：一个任务失败，可能是模型决策错、可能是 Driver 操控错、也可能是 Sandbox 环境问题。Bench 给的是链路总分，不直接归因到某一层。
-- **不能直接推出模型能力对比**：不同模型在 Bench 上的差异，受 Driver 实现细节、Sandbox 镜像版本、任务集构成影响。把 Bench 分数当作"模型 A 比模型 B 强 X%"的依据，会忽略掉这些混淆变量。
+Spaces 对个人免费,Pro 和 Teams 版本即将推出;源码以 FSL-1.1-MIT 提供——可自由使用、自托管、二次开发,唯一限制是不能拿它做竞争性的托管服务,且每个发布版本在两年后自动转 MIT。
 
-如果要做模型对比，需要先固定 Driver 和 Sandbox 版本，再在同一份任务子集上跑，并标注置信区间。
+## Cua Bench:评估与训练数据
 
-## 任务如何流过系统：一个 GitHub PR 案例
+Bench 要回答的是第三段职责:Agent 的桌面操控能力怎么衡量,衡量结果怎么变成训练数据。它的形态是一个叫 `cb` 的命令行工具,加一个任务集注册表。
 
-把三层串起来看一次完整任务。假设目标是：让 Agent 在后台为 `trycua/cua` 仓库创建一个标题为 "fix: update driver" 的 PR，期间用户继续在另一个窗口写代码。
+入门不需要虚拟机、Docker,甚至不需要模型 API Key——先从模拟任务跑通流程:
+
+```bash
+uv tool install 'cua-bench[browser]'                          # 要求 Python 3.12 或 3.13 + uv
+uv tool run --from 'cua-bench[browser]' playwright install chromium
+cb run example_tasks/hello_file_env                           # 默认在本地 gVisor 容器执行
+```
+
+官方建议的第一个结果是:创建一个小任务,跑它的参考解,确认评估器给出 `1.0` 的奖励。跑通之后再接真实 Agent:
+
+```bash
+cb dataset list                                               # 注册表里的任务集与版本
+cb run cua-bench-basic --task-filter click-button             # 指定单个任务,本地桌面
+cb run datasets/cua-bench-basic -j 8 --on cloud               # 云上 8 并行
+cb run my_task --agent cua-agent --model anthropic/claude-sonnet-4-20250514
+```
+
+读 Bench 的数字之前,有三个问题要先答:
+
+**它测什么?** 端到端任务完成度。评估器检查任务的最终状态给出奖励,`--attempts N` 让每个变体跑 N 次(每次全新沙箱),`summary.json` 报告 pass@k。它不单独测模型推理,也不单独测操控。
+
+**数字变化反映什么?** 「模型决策 + Agent 框架 + Driver 操控 + 沙箱环境」整条链路。并行度、镜像版本、任务变体构成都会进入分数。注册表的每个任务集版本固定到一个 git commit,拉取后缓存在本地;`result.json` 还会记录后端(如 `local-gvisor`、`cloud-kubevirt`)与钉死的 `image_digest`。
+
+**不能推出什么?** 换个模型跑一遍就宣布「A 比 B 强」,是这份数据最容易被误用的读法。模型对比要先固定运行时、镜像和任务版本,用 `--attempts` 拿到 pass@k,再谈差异;否则你量到的是整条链路,不是模型。
+
+评估产生的每条轨迹是一个 ATIF-v1.8 格式的 `trajectory.json`(Harbor 规范,截图存于 `imgs/`),`cb dataset build` 能把运行目录导出成 aguvis-stage-1、gui-r1 等训练格式。同一次评估既产出分数,也产出可复现的 RL 训练数据——这是 Bench 和纯榜单最大的不同。
+
+## 任务流案例:一次后台计算器验证
+
+官方 Driver 快速上手给的场景很适合当解剖样本:让 Agent 在 Calculator 里计算 6 × 7,并验证应用显示 42。以 Claude Code 通过 MCP 接入为例,整条链路是这样走的:
 
 ```mermaid
 sequenceDiagram
-    participant User as 用户
-    participant Agent as Agent (LLM)
-    participant Driver as Cua Driver
-    participant Sandbox as Cua Sandbox
-    participant Chrome as Chrome (宿主)
-    participant GitHub as github.com
+    participant User as 用户(正在前台工作)
+    participant CC as Claude Code
+    participant DRV as cua-driver(标准权限模式)
+    participant Calc as Calculator
 
-    User->>Agent: 下发任务：创建 PR
-    Agent->>Sandbox: 申请会话（可选，纯宿主模式可跳过）
-    Agent->>Driver: 请求操控 Chrome
-    Driver->>Chrome: 后台打开 github.com（不抢焦点）
-    Chrome->>GitHub: HTTP 请求
-    GitHub-->>Chrome: 返回页面
-    Driver->>Chrome: 定位仓库并点击 New PR
-    Driver->>Chrome: 输入标题与描述
-    Driver->>Chrome: 点击 Submit
-    Driver->>Chrome: 截图验证 PR 已创建
-    Driver-->>Agent: 返回操作轨迹
-    Agent-->>User: 任务完成，附轨迹文件
-    Note over Driver,Bench: 轨迹文件可送入 Bench 做评估或 RL
+    CC->>DRV: MCP 调用:聚焦并读取 Calculator
+    DRV->>Calc: 后台点击 6 × 7(不移动指针、不抢焦点)
+    Calc-->>DRV: 界面显示 42
+    DRV-->>CC: 返回读取结果
+    CC->>CC: 比对 6 × 7 与显示值一致
+    CC-->>User: 报告验证通过(用户全程未被打断)
 ```
 
-这次任务里，三层各司其职：Driver 负责把 Agent 的决策落到 Chrome 上而不打扰用户；Sandbox 在需要隔离时提供环境（本例走宿主 Chrome，可以不用 Sandbox）；Bench 在任务结束后接收轨迹，用于评估或训练。
+几个细节值得注意。权限层面,标准模式不弹审批,但 Driver 不会渲染自己的授权弹窗,边界在启动参数里已经锁定。失败层面,如果这个场景换成 macOS 后台拖拽或 Wayland 下向被遮挡窗口发裸输入,Driver 会返回结构化拒绝而不是硬执行,Agent 拿到明确错误后可以改走前台或换 AT-SPI 语义动作。隔离层面,如果任务会改动环境——装依赖、改文件——把同一个任务放进 `cua sb create` 的 gVisor 容器或一个 Space 里跑,宿主只看到容器的进程和磁盘占用。
 
-对应的代码骨架：
+这个例子展示的分层正是 Computer-Use 2.0 的要点:Agent 在代码、API 和图形界面之间自由切换,每一层失败都有明确的信号,每一层都可以单独替换。
 
-```python
-# 完整示例：让 Agent 在后台完成 GitHub PR 创建
-from cua import Driver
+## 安装与上手路径
 
-driver = Driver()  # 自动连接 macOS 辅助功能 API
-
-# 让 Agent 独立完成 GitHub PR 创建流程
-task = """
-在 Chrome 中打开 github.com，
-使用当前登录的 GitHub 账号，
-为仓库 trycua/cua 创建一个 PR，标题为 "fix: update driver"
-"""
-driver.run(task)
-```
-
-`driver.run` 内部会循环执行"截图 → 模型决策 → Driver 操控 → 验证"，直到任务完成或触发停止条件。每一步都会写入轨迹文件。
-
-## 安装与快速上手
-
-Cua 的 Python SDK 和 Driver 是两个独立包，按需安装。
-
-安装 Python SDK（依赖 Python 3.11+）：
+统一安装器一条命令,清单式勾选要装的东西(`cua` CLI、Cua Spaces 应用、cua-driver 的 MCP 与 skill、把本机变成可托管机器),最后执行 `cua auth login`,并可选把 cua skill 和 MCP server 装进 Claude Code、Codex、Cursor 等 Agent:
 
 ```bash
-pip install cua
+# macOS 26+(默认选中 Spaces 应用;--only cua-driver 可跳过清单)
+curl -fsSL https://cua.ai/install.sh | sh
 ```
 
-安装 Driver（仅 macOS）：
+只要 Driver 的话:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/trycua/cua/main/libs/cua-driver/scripts/install.sh | bash
+# macOS / Linux
+/bin/bash -c "$(curl -fsSL https://cua.ai/driver/install.sh)"
 ```
 
-Driver 首次运行需要授予 macOS 辅助功能权限。在「系统设置 → 隐私与安全性 → 辅助功能」里把 `cua-driver` 加入白名单，否则点击和键盘事件会被系统拦截。
+```powershell
+# Windows(PowerShell)
+irm https://cua.ai/driver/install.ps1 | iex
+```
 
-## 与 Browser Use 的边界对照
+macOS 上 Driver 首次使用需在「系统设置 → 隐私与安全性」里授予辅助功能和屏幕录制权限,缺一项,捕获和输入都会被系统拦截。想单独管理虚拟机,Lume 另有一键脚本(`curl -fsSL https://cua.ai/lume/install.sh`),建好 Tahoe VM 后可经 SSH 连入。涉及安装命令与 API 的段落集中在 Driver、沙箱、Bench 和本节四处,仓库发版后按这四节更新即可。
 
-| 维度 | Browser Use | Cua |
-|------|-------------|-----|
-| 操控对象 | 浏览器标签页 | 原生桌面应用 |
-| 后台运行 | 需占用标签页，无法完全后台 | 完全后台，不抢焦点 |
-| 非 AX 表面 | 不支持 | 支持 Chromium Web 内容与 Canvas |
-| Canvas/游戏引擎 | 不支持 | 支持 |
-| 轨迹录制 | 基础 | 完整生命周期，可直接喂给 Bench |
-| RL 训练数据 | 有限 | 原生支持 |
+## 什么时候用 Cua,什么时候不急
 
-这张表不是"谁更好"的对比，而是"谁解决哪类问题"。Browser Use 适合纯 Web 流程自动化，Cua 适合需要跳出浏览器的桌面级任务。两者并不互斥——一个完整的 RPA 流程可能同时用 Browser Use 处理 Web 部分，用 Cua 处理本地应用部分。
+**值得先接入的**:
 
-## 什么时候该用 Cua，什么时候不必
+- Agent 任务要碰本地原生应用——自动化 macOS/Windows 上的桌面软件、驱动非标准渲染界面,Driver 的三平台覆盖加结构化拒绝是现成答案;
+- 任务会改环境或要求可复现——gVisor 容器在本地即开即用,镜像 digest 钉死,云上 Fleet 批量并行;
+- 你在做计算机使用方向的模型训练或评估——Bench 的 pass@k 加 ATIF 轨迹导出,把评估和数据生成合成一条流水线。
 
-**建议先上的场景**：
+**可以等等的**:
 
-- 团队已经在做 macOS 桌面 RPA 或 E2E 测试，受够了传统 RPA 工具的脚本维护成本。
-- 研究方向是 CUA（Computer-Use Agent）模型训练，需要标准化的轨迹数据和评估环境。
-- Agent 任务必须操控非 AX 表面（Blender、Figma、DAW、游戏引擎）。
+- 纯 Web 页面自动化,browser-use 这类浏览器内方案更轻,不需要桌面层;
+- 主要痛点是「Agent 框架本身」——Cua 定位在电脑层,模型编排仍由你的 Agent(Claude Code、OpenClaw 等)或 `cua-agent` 承担;
+- 团队不接受 AGPL 或 FSL 条款——先绕开 `cua-perception` 扩展和 Spaces 应用,MIT 部分自成体系。
 
-**可以等等的场景**：
-
-- 只做 Web 自动化，没有跳出浏览器的需求——Browser Use 或 Skyvern 更轻。
-- 主要工作环境是 Windows 或 Linux 桌面——Driver 目前仅覆盖 macOS，Sandbox 的 Windows 支持还在路线图。
-- 团队还没有 Agent 框架，先解决"用什么跑 Agent"再考虑"在哪里跑"。
-
-**采用顺序建议**：
-
-1. 先用 Driver 单独接入现有 Agent（Claude Code、Cursor 等），验证后台操控是否满足需求。
-2. 如果需要隔离或复现，引入 Sandbox，把任务从宿主迁到沙箱镜像。
-3. 当 Agent 数量或任务复杂度上来后，再用 Bench 做评估和 RL 训练。
+建议的采用顺序:第一步,装 Driver 并把现有 Agent 经 MCP 接上,拿计算器验证流确认你的目标应用在平台支持范围内;第二步,任务涉及环境变更时引入沙箱或 Spaces,固化镜像引用;第三步,要量化效果再上 Bench,从模拟任务开始,固定版本后做对比。三步都可以独立停下来,前一步的投入不会被后一步作废。
 
 ## 常见问题
 
-**Driver 装完后点击没反应？**
-检查 macOS 辅助功能权限是否已授予 `cua-driver`。权限被撤销后不会自动恢复，需要重新勾选。
+**Driver 支持哪些系统?**
 
-**Sandbox 在 macOS 上能跑 macOS 镜像吗？**
-可以，通过 Lume 虚拟化层实现。这是 Cua 与其他容器方案的一个差异点。
+macOS、Windows、Linux(X11 与 Wayland)。各平台的后台交付边界不同,Wayland 下裸输入受合成器限制,AT-SPI 语义动作不受影响;细节以官方平台支持页为准。
 
-**Bench 的分数能直接用来对比不同模型吗？**
-不能直接对比。需要先固定 Driver、Sandbox 版本和任务子集，再在同一环境下跑，并标注置信区间。详见「Cua Bench」一节关于测量边界的讨论。
+**装完 Driver 点了没反应?**
 
-**Driver 支持 Windows/Linux 桌面控制吗？**
-目前不支持。Driver 仅覆盖 macOS。Sandbox 可以跑 Linux 镜像，但 Sandbox 内的操控逻辑仍需要对应的 Driver 实现。
+先查 macOS 的辅助功能和屏幕录制权限是否都已授予;再确认操作类型是否落在平台边界内——部分后台滚动、拖拽、提权目标是明确拒绝的,拒绝会以结构化错误返回,而不是静默失败。
 
-**轨迹文件格式是什么？**
-轨迹文件由 Driver 自动录制，包含每一步的截图、决策、操作和验证结果，可直接送入 Bench 做评估或 RL 训练。
+**沙箱里要装 Agent 吗?**
 
-## 自测题
+不需要。就绪判定来自运行时和端口探针;镜像自带 `cua-spacesd` 时才额外提供进程、文件、截图、输入与音视频流。
 
-完成阅读后，尝试回答以下问题以检验理解：
+**Bench 分数能直接比较两个模型吗?**
 
-1. **Cua 的三层架构（Driver、Sandbox、Bench）各自的职责是什么？它们之间如何协同工作？**
+不能直接比。先固定运行时、镜像与任务集版本,用 `--attempts` 取 pass@k;Bench 量的是端到端链路,不是模型能力。
 
-2. **Cua Driver 如何解决"后台操控 macOS 桌面"的问题？它如何处理非 AX 表面？**
+**想拿轨迹训练自己的模型?**
 
-3. **Cua Sandbox 与 Cua Driver 的关系是什么？为什么需要隔离执行环境？**
+`trajectory.json` 是 ATIF-v1.8 格式,`cb dataset build` 导出 aguvis-stage-1、gui-r1 训练格式;表单类决策可以参考 CUA-S1 的模型卡与数据集(权重在 Hugging Face,源码 MIT)。
 
-4. **Cua Bench 的测量边界是什么？为什么不能直接用 Bench 分数对比不同模型？**
+**Spaces 免费吗?商用要注意什么?**
 
-5. **Cua 与 Browser Use 的核心区别是什么？什么场景应该用 Cua 而不是 Browser Use？**
-
----
-
-## 练习
-
-### 练习 1：安装 Cua Driver 并验证后台操控
-
-**任务**：
-1. 安装 Cua Driver：`/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/trycua/cua/main/libs/cua-driver/scripts/install.sh)"`
-2. 授予 macOS 辅助功能权限（系统设置 → 隐私与安全性 → 辅助功能）
-3. 验证安装：`cua-driver --version`
-4. 测试后台操控：让 Agent 在后台打开 Chrome 并访问一个网页
-
-**参考答案**：
-- 安装后得到 `cua-driver` 命令行工具、Claude Code Skill、可配置端口的 MCP Server
-- 首次运行需要授予 macOS 辅助功能权限，否则点击和键盘事件会被系统拦截
-- Driver 的点击、输入、验证在后台完成，用户当前窗口焦点不被抢占
-
-### 练习 2：使用 Cua Sandbox 运行隔离任务
-
-**任务**：
-1. 安装 Python SDK：`pip install cua`
-2. 验证环境：`python -c "from cua import Sandbox; print('Cua installed successfully')"`
-3. 创建一个 Sandbox 会话并运行简单任务
-4. 检查轨迹文件是否自动生成
-
-**提示**：
-```python
-from cua import Sandbox, Image
-
-sandbox = Sandbox(
-    image=Image("ubuntu:22.04"),
-    os="linux"
-)
-session = sandbox.session()
-result = session.run("在浏览器中打开 github.com 并登录")
-```
-
-### 练习 3：评估 Agent 性能 with Cua Bench
-
-**任务**：
-1. 了解 Cua Bench 的任务集覆盖哪些场景（文件操作、浏览器操作、文档编辑等）
-2. 理解 Bench 如何自动评分操作的准确性与效率
-3. 思考：如果你要对比两个模型的桌面操控能力，应该如何设计实验？
-
-**参考答案**：
-- Bench 测的是端到端任务完成度，不是单测模型推理或 API 调用准确率
-- 数字反映的是"操控+决策+验证"整条链路，不能直接推出模型能力对比
-- 要做模型对比，需要先固定 Driver 和 Sandbox 版本，再在同一份任务子集上跑，并标注置信区间
-
----
-
-## 进阶路径
-
-### 路径一：深入研究 Cua Driver 实现
-
-如果你想理解"如何让 AI 操控桌面"：
-1. 阅读 `libs/cua-driver/` 源码，理解 AXUIElement API 和 non-AX 表面覆盖机制
-2. 研究 MCP Server 实现，理解如何让 Claude Code、Cursor 等 Agent 接入
-3. 尝试扩展 Driver 支持更多应用类型
-
-### 路径二：构建自定义 Sandbox 镜像
-
-如果你想定制隔离执行环境：
-1. 学习如何创建自定义 Sandbox 镜像（预装应用和工具）
-2. 理解 Sandbox 的生命周期管理（创建、暂停、恢复、销毁）
-3. 研究如何在 Sandbox 内录制和回放轨迹
-
-### 路径三：扩展 Cua Bench 评估集
-
-如果你想改进 Agent 评估：
-1. 为 Cua Bench 贡献新的评估任务（覆盖更多真实 GUI 场景）
-2. 研究如何定义任务的"成功条件"
-3. 探索如何将轨迹数据用于 RL 训练
-
----
-
----
+个人免费,Pro/Teams 计划在计划中。Spaces 应用与相关组件按 FSL-1.1-MIT 提供,把它做成托管或管理服务对外提供前,先读仓库的 COMMERCIAL.md;仓库其余部分(含 Driver、SDK、Bench)是 MIT。
 
 ## 资源链接
 
-- 官网：[https://cua.ai](https://cua.ai)
-- 文档：[https://cua.ai/docs](https://cua.ai/docs)
-- GitHub：[https://github.com/trycua/cua](https://github.com/trycua/cua)
+| 资源 | 链接 |
+|------|------|
+| GitHub 仓库 | [github.com/trycua/cua](https://github.com/trycua/cua) |
+| 官网与文档 | [cua.ai](https://cua.ai) / [cua.ai/docs](https://cua.ai/docs) |
+| Driver 平台支持 | [cua.ai/docs/cua-driver/concepts/platform-support](https://cua.ai/docs/cua-driver/concepts/platform-support) |
+| Bench 注册表 | [cua.ai/cuabench/registry](https://cua.ai/cuabench/registry) |
+| CUA-S1 模型权重 | [huggingface.co/cua-ai/cua-s1-forms](https://huggingface.co/cua-ai/cua-s1-forms) |
+| 社区 | [Discord](https://discord.gg/mVnXXpdE85) |

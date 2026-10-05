@@ -1,44 +1,50 @@
 ---
-title: "Claude Code from Source：18 章深度拆解 Anthropic 最畅销 AI 编程工具的架构精髓"
+title: "Claude Code from Source：18 章深度拆解 Anthropic AI 编程工具的架构精髓"
 date: "2026-04-12T18:03:00+08:00"
 slug: claude-code-from-source-ai-agent-architecture-guide
-description: "Claude Code from Source（2,742 Stars）用 npm 源码地图逆向分析 Anthropic Claude Code 的完整架构。36 个 AI Agent 历时 6 小时写成，覆盖 Agent 循环、工具执行、多 Agent 编排、内存系统、性能工程等 10 大核心架构模式。"
+github_repo: "alejandrobalderas/claude-code-from-source"
+source_key: "gh:alejandrobalderas/claude-code-from-source"
+description: "Claude Code from Source（2,950 Stars）用 npm 源码地图逆向分析 Anthropic Claude Code 的完整架构。36 个 AI Agent 历时 6 小时写成，覆盖 Agent 循环、工具执行、多 Agent 编排、记忆系统、性能工程等 10 大核心架构模式。"
 draft: false
 categories: ["技术笔记"]
 tags: ["Claude Code", "Anthropic", "AI Agent", "架构分析", "MCP"]
 ---
 
-# Claude Code from Source：18 章深度拆解 Anthropic 最畅销 AI 编程工具的架构精髓
+# Claude Code from Source：18 章深度拆解 Anthropic AI 编程工具的架构精髓
 
 Claude Code 要同时满足流式生成、工具调度、成本控制三个互相冲突的约束——这三者工程上几乎不可能同时满足，它的解法值得拆开看。
 
-本文的素材来自 *Claude Code from Source*，一本从 npm source maps 逆向分析 Claude Code 完整源码架构的技术书籍，由 Alejandro Balderas 带着 36 个 AI Agent 用时 6 小时写成。下面从 18 章里挑出能直接搬进自己 Agent 项目的架构模式。
+本文的素材来自 [*Claude Code from Source*](https://claude-code-from-source.com)，一本从 npm source maps 逆向分析 Claude Code 完整源码架构的技术书籍（[GitHub 仓库](https://github.com/alejandrobalderas/claude-code-from-source)），由 Alejandro Balderas 带着 36 个 AI Agent 用时 6 小时写成。下面从 18 章里挑出能直接搬进自己 Agent 项目的架构模式。
 
 | 指标 | 数值 |
 |------|------|
-| 源仓库 | alejandrobalderas/claude-code-from-source |
-| Stars / Forks | 2,742 / 747（GitHub API 2026-08-05 验证） |
-| 章数 | 18 章，分为 7 个部分 |
+| 源仓库 | [alejandrobalderas/claude-code-from-source](https://github.com/alejandrobalderas/claude-code-from-source) |
+| Stars / Forks | 2,950 / 817（GitHub API 2026-09-29 验证） |
+| 章数 | 18 章，分为 7 个部分，约 400 页印刷当量 |
 | 参与 Agent | 36 个（6 探索 + 12 分析 + 15 写作 + 3 审核） |
 | 创作耗时 | 6 小时，从源码提取到最终修订 |
 | 产出 | 494KB 原始技术文档 → 叙事化书籍 |
+
+一个前提需要说明：仓库声明书中不含 Claude Code 的任何一行源码，所有代码块都是为讲解架构模式重写的教学用伪代码。本文引用的代码同样如此——看结构，不要抠字面。
 
 ## 目录
 
 1. [六大核心抽象：理解 Claude Code 的骨架](#六大核心抽象理解-claude-code-的骨架)
 2. [Agent 循环：一个 AsyncGenerator 驱动的状态机](#agent-循环一个-asyncgenerator-驱动的状态机)
-3. [工具执行管道：14 步中暗藏的并发智慧](#工具执行管道14-步中暗藏的并发智慧)
-4. [多 Agent 编排：Fork 模式与 90% 的成本魔法](#多-agent-编排fork-模式与-90-的成本魔法)
-5. [内存系统：为什么选择 LLM 召回而不是向量搜索](#内存系统为什么选择-llm-召回而不是向量搜索)
-6. [性能工程：冷启动与上下文预算](#性能工程冷启动与上下文预算)
-7. [可扩展性：两阶段加载与生命周期钩子](#可扩展性两阶段加载与生命周期钩子)
-8. [安全设计：默认拒绝 + 七种权限模式](#安全设计默认拒绝--七种权限模式)
-9. [MCP：8 种传输协议的统一抽象](#mcp8-种传输协议的统一抽象)
-10. [一个任务如何流过系统](#一个任务如何流过系统)
-11. [10 个可迁移的架构模式与采用顺序](#10-个可迁移的架构模式与采用顺序)
-12. [常见问题](#常见问题)
-13. [错误处理与排查指引](#错误处理与排查指引)
-14. [自检测试](#自检测试)
+3. [工具系统：从定义到执行的 14 步管道](#工具系统从定义到执行的-14-步管道)
+4. [并发执行：分区与推测执行](#并发执行分区与推测执行)
+5. [多 Agent 编排：Fork 模式与 90% 的成本节省](#多-agent-编排fork-模式与-90-的成本节省)
+6. [记忆系统：文件 + LLM 召回，而不是向量数据库](#记忆系统文件--llm-召回而不是向量数据库)
+7. [性能工程：冷启动与上下文预算](#性能工程冷启动与上下文预算)
+8. [可扩展性：两阶段加载与生命周期钩子](#可扩展性两阶段加载与生命周期钩子)
+9. [安全设计：默认拒绝 + 七种权限模式](#安全设计默认拒绝--七种权限模式)
+10. [MCP：8 种传输协议的统一抽象](#mcp8-种传输协议的统一抽象)
+11. [一个任务如何流过系统](#一个任务如何流过系统)
+12. [10 个可迁移的架构模式与采用顺序](#10-个可迁移的架构模式与采用顺序)
+13. [18 章内容速览](#18-章内容速览)
+14. [常见问题](#常见问题)
+15. [错误处理与排查指引](#错误处理与排查指引)
+16. [自检测试](#自检测试)
 
 ## 六大核心抽象：理解 Claude Code 的骨架
 
@@ -68,15 +74,15 @@ LLM-powered relevance"] -->|injected into system prompt| QL
 
 这里每个抽象对应一个或一组核心文件，承担独特的职责：
 
-**1. Query Loop**（`query.ts`，~1,700 行）。整个系统的心跳，一个 async generator。它流式输出模型响应，收集工具调用，执行工具，把结果追加到消息历史，然后循环。每一次交互——REPL、SDK、子代理、无头 `--print`——都流经这个单一函数。它产出 `Message` 对象供 UI 消费，返回值是编码了停止原因的 discriminated union。generator 模式（而非回调或事件发射器）天然提供背压、干净取消和类型化终止状态。
+**1. Query Loop**（`query.ts`，~1,700 行）。整个系统的心跳，一个 async generator。它流式输出模型响应，收集工具调用，执行工具，把结果追加到消息历史，然后循环。每一次交互——REPL、SDK、子 Agent、无头 `--print`——都流经这个单一函数。它产出 `Message` 对象供 UI 消费，返回值是编码了停止原因的 discriminated union。generator 模式（而非回调或事件发射器）天然提供背压、干净取消和类型化终止状态。
 
 **2. Tool System**（`Tool.ts`、`tools.ts`）。工具就是 Agent 能在世界上做的任何事情：读文件、运行 shell、编辑代码、搜索网页。每个工具实现了丰富接口：身份、schema、执行、权限、渲染。系统会把工具调用分区为并发和串行批，流式执行器会在模型还没完成响应前就启动并发安全工具。
 
-**3. Tasks**（`Task.ts`、`tasks/`）。任务是后台工作单元——主要是子代理。它们遵循状态机：`pending -> running -> completed | failed | killed`。`AgentTool` 会 spawn 一个新的 `query()` generator，自带消息历史、工具集和权限模式。任务给 Claude Code 带来递归能力：一个 Agent 可以委托给子代理，子代理还能进一步委托。
+**3. Tasks**（`Task.ts`、`tasks/`）。任务是后台工作单元——主要是子 Agent。它们遵循状态机：`pending -> running -> completed | failed | killed`。`AgentTool` 会 spawn 一个新的 `query()` generator，自带消息历史、工具集和权限模式。任务给 Claude Code 带来递归能力：一个 Agent 可以委托给子 Agent，子 Agent 还能进一步委托。
 
 **4. State**（两层）。系统在两个层级维护状态：一个可变单例（`STATE`）保存约 80 个会话级基础设施字段：工作目录、模型配置、成本追踪、遥测计数、会话 ID。启动时设置一次，直接修改——不需要响应式。最小响应式 store（34 行，Zustand 形态）驱动 UI：消息、输入模式、工具审批、进度指示器。分离是有意设计的：基础设施状态很少变化，不需要触发重渲染；UI 状态变化频繁，必须。
 
-**5. Memory**（`memdir/`）。跨会话的持久化上下文，基于文件系统。分三级：项目级（仓库中的 `CLAUDE.md` 文件）、用户级（`~/.claude/MEMORY.md`）、团队级（通过符号链接共享）。会话启动时，系统扫描所有内存文件，解析 frontmatter，由 LLM 选择哪些记忆与当前对话相关。这就是 Claude Code"记住"你的代码库约定、架构决策和调试历史的方式。
+**5. Memory**（`memdir/`）。跨会话的持久化上下文，基于文件系统。分三级：项目级（仓库中的 `CLAUDE.md` 文件）、用户级（`~/.claude/MEMORY.md`）、团队级（通过符号链接共享）。会话启动时，系统扫描所有记忆文件，解析 frontmatter，由 LLM 选择哪些记忆与当前对话相关。这就是 Claude Code"记住"你的代码库约定、架构决策和调试历史的方式。
 
 **6. Hooks**（`hooks/`、`utils/hooks/`）。用户定义的生命周期拦截器，在 27 个不同事件点触发，覆盖四种执行类型：shell 命令、单次 LLM 提示、多轮 Agent 对话、HTTP webhook。钩子可以拦截工具执行、修改输入、注入额外上下文，甚至短路整个查询循环。权限系统本身部分通过钩子实现——`PreToolUse` 钩子可以在交互式权限提示出现前就拒绝工具调用。
 
@@ -86,17 +92,17 @@ LLM-powered relevance"] -->|injected into system prompt| QL
 
 ```typescript
 async function* agentLoop(query: Query): AsyncGenerator<Message> {
- for await (const token of model.stream(query)) {
- yield { type: 'token', value: token }
- }
+  for await (const token of model.stream(query)) {
+    yield { type: 'token', value: token }
+  }
 
- const speculativeReads = await executeReadToolsSpeculatively(query)
+  const speculativeReads = await executeReadToolsSpeculatively(query)
 
- if (error) {
- await recoverAndCompact()
- }
+  if (error) {
+    await recoverAndCompact()   // 错误恢复与压缩
+  }
 
- await compressContextIfNeeded()
+  await compressContextIfNeeded()
 }
 ```
 
@@ -149,7 +155,7 @@ Auto-compact 触发点：  effectiveWindow - 13,000
 
 ## 工具系统：从定义到执行的 14 步管道
 
-工具调用的表面流程很简单——模型输出一个工具名和参数，系统执行并返回结果。Claude Code 的实现把这个流程拆成了 14 步，每一步都对应生产级系统才需要考虑的复杂度。每次工具调用——文件读取、shell 命令、grep、子代理派发——都流经同一条管道，无论它是内置的 Bash 执行器还是第三方 MCP 服务器，都获得同样的校验、权限检查、结果预算和错误分类。
+工具调用的表面流程很简单——模型输出一个工具名和参数，系统执行并返回结果。Claude Code 的实现把这个流程拆成了 14 步，每一步都对应生产级系统才需要考虑的复杂度。每次工具调用——文件读取、shell 命令、grep、子 Agent 派发——都流经同一条管道，无论它是内置的 Bash 执行器还是第三方 MCP 服务器，都获得同样的校验、权限检查、结果预算和错误分类。
 
 入口是 `checkPermissionsAndCallTool()`，意图在这一点变成行动。
 
@@ -183,11 +189,11 @@ graph TD
 
 **第 7-9 步：权限。** `PreToolUse Hooks` 是扩展机制——它们可以做出权限决定、修改输入、注入上下文，或直接停止执行。`Permission Resolution` 桥接钩子和通用权限系统：若钩子已决定则以其为准，否则由 `canUseTool()` 触发规则匹配、工具特检、基于模式（mode）的默认以及交互式提示。`Permission Denied Handling` 构造错误消息并执行 `PermissionDenied` 钩子。
 
-**第 10-14 步：执行与清理。** `Tool Execution` 用原始输入运行真正的 `call()`。`Result Budgeting` 把过大的输出持久化到 `~/.claude/tool-results/{hash}.txt` 并用预览替换。`PostToolUse Hooks` 可以修改 MCP 输出或阻止继续。`New Messages` 追加新消息（子代理转录、系统提醒）。`Error Handling` 为遥测对错误分类，从可能损坏的名字中提取安全字符串，并发出 OTel 事件。
+**第 10-14 步：执行与清理。** `Tool Execution` 用原始输入运行真正的 `call()`。`Result Budgeting` 把过大的输出持久化到 `~/.claude/tool-results/{hash}.txt` 并用预览替换。`PostToolUse Hooks` 可以修改 MCP 输出或阻止继续。`New Messages` 追加新消息（子 Agent 转录、系统提醒）。`Error Handling` 为遥测对错误分类，从可能损坏的名字中提取安全字符串，并发出 OTel 事件。
 
 ### 工具接口与默认值
 
-每个工具都参数化于三个类型：`Tool<Input extends AnyObject, Output, P extends ToolProgressData>`。`Input` 是 Zod 对象 schema，一物两用：既生成发送给 API 的 JSON Schema，又通过 `safeParse` 在运行时校验模型响应。`Output` 是工具结果的 TypeScript 类型。`P` 是工具运行时发出的进度事件类型——`BashTool` 发 stdout 块，`GrepTool` 发匹配计数，`AgentTool` 发子代理转录。
+每个工具都参数化于三个类型：`Tool<Input extends AnyObject, Output, P extends ToolProgressData>`。`Input` 是 Zod 对象 schema，一物两用：既生成发送给 API 的 JSON Schema，又通过 `safeParse` 在运行时校验模型响应。`Output` 是工具结果的 TypeScript 类型。`P` 是工具运行时发出的进度事件类型——`BashTool` 发 stdout 块，`GrepTool` 发匹配计数，`AgentTool` 发子 Agent 转录。
 
 没有工具定义直接构造 `Tool` 对象，全部经过 `buildTool()` 工厂，在具体定义下展开一套故障封闭（fail-closed）的默认值：
 
@@ -240,22 +246,22 @@ canRun = noToolsRunning || (newToolIsSafe && allRunningAreSafe)
 
 错误级联是有选择的：**只有 Bash 错误会级联取消兄弟工具**。Bash 命令常形成隐式依赖链（`mkdir build && cp src/* build/`），`mkdir` 失败后继续跑 `cp` 和 `tar` 没有意义。Read 和 Grep 错误则相互独立——一个文件读取失败与另一个目录的并发 grep 无关，取消它反而浪费工作。结果总是按原始工具顺序产出，保证模型推理确定。
 
-## 多 Agent 编排：Fork 模式与 90% 的成本魔法
+## 多 Agent 编排：Fork 模式与 90% 的成本节省
 
-Claude Code 的多 Agent 系统走的是 Fork 模式，而非简单地启动多个实例。当一个父 Agent 并行 spawn 五个子 Agent，每个子请求的绝大部分是相同的：系统提示词、工具定义、对话历史、触发 spawn 的 assistant 消息都一样，只有最后的指令不同——"你处理数据库迁移""你写测试""你更新文档"。
+Claude Code 的多 Agent 系统走的是 Fork 模式，而不是另起多个独立实例。当一个父 Agent 并行 spawn 五个子 Agent，每个子请求的绝大部分是相同的：系统提示词、工具定义、对话历史、触发 spawn 的 assistant 消息都一样，只有最后的指令不同——"你处理数据库迁移""你写测试""你更新文档"。
 
-在一条已热起来的会话里，共享前缀可能有 80,000 token，每个子 Agent 的专属指令只有 200 token——99.75% 的重叠。Anthropic 的 prompt cache 对命中的输入 token 打 9 折。如果你能让这 80,000 token 对第 2 到第 5 个子 Agent 都命中缓存，这四个请求的输入成本就砍掉 90%。对父 Agent 而言，同样的并行派发从花 $4 变成花 $0.50。
+在一条已热起来的会话里，共享前缀可能有 80,000 token，每个子 Agent 的专属指令只有 200 token——99.75% 的重叠。Anthropic 的 prompt cache 对命中缓存的输入 token 按约一折计费（缓存读取价为基础输入价的 10%）。如果你能让这 80,000 token 对第 2 到第 5 个子 Agent 都命中缓存，这四个请求的输入成本就砍掉 90%。对父 Agent 而言，同样的并行派发从花 $4 变成花 $0.50。
 
 代价是 prompt cache 是**逐字节精确**匹配。不是"差不多"，不是"语义等价"，而是从系统提示词第一个字节到专属内容分叉前最后一个字节，字符必须完全一致。多一个空格、重排一个工具定义、一个过期 feature flag 改变系统提示词片段——缓存就 miss，整个前缀全价重算。
 
-Fork 是不伪装成编排功能的 prompt cache 利用机制。它的每一个设计决定都回溯到同一个问题：如何保证并行子 Agent 之间前缀字节完全一致？
+Fork 本质上是一个 prompt cache 利用机制，编排能力只是随之而来的结果。它的每一个设计决定都回溯到同一个问题：如何保证并行子 Agent 之间前缀字节完全一致？
 
 ### Fork 子 Agent 继承什么
 
 Fork 子 Agent 从父 Agent 继承四样东西，且都是以引用或逐字节精确拷贝的方式，而非重新计算：
 
 1. **系统提示词**。不重新生成，而是线程传递——父 Agent 最近一次 API 调用实际发送的渲染后字节，通过 `override.systemPrompt` 传入。如果重新调用 `getSystemPrompt()`，GrowthBook feature flag 从冷到热的状态转移可能让条件块多一个字符，缓存就炸了。线程化渲染字节消除了这类分歧。
-2. **工具定义**。普通子代理走 `resolveAgentTools()`，会按工具子集、顺序和权限注解重排。Fork 跳过这一步：`useExactTools` 为 true 时，子 Agent 直接拿到父 Agent 组装好的工具数组，包括把 `Agent` 工具本身留在池里——移除它会改变工具数组、弄坏缓存。
+2. **工具定义**。普通子 Agent 走 `resolveAgentTools()`，会按工具子集、顺序和权限注解重排。Fork 跳过这一步：`useExactTools` 为 true 时，子 Agent 直接拿到父 Agent 组装好的工具数组，包括把 `Agent` 工具本身留在池里——移除它会改变工具数组、弄坏缓存。
 3. **对话历史**。父 Agent 与 API 交换的每一条消息——用户轮、assistant 轮、工具调用、工具结果——都通过 `forkContextMessages` 克隆进子 Agent 上下文。
 4. **推理配置与模型**。Fork 定义 `model: 'inherit'`，解析为父 Agent 的精确模型。相同模型意味着相同 tokenizer、相同上下文窗口、相同缓存命名空间。
 
@@ -274,7 +280,7 @@ function buildChildMessages(directive, parentAssistant) {
 }
 ```
 
-克隆父 Agent 的 assistant 消息（保留所有 `tool_use` 块的原始 ID），为每个 `tool_use` 块构造一个恒定占位符字符串的 `tool_result`（跨所有子 Agent 一致），然后构造一条包含全部占位符结果和 per-child 指令的 user 消息。`FORK_PLACEHOLDER_RESULT` 是常量字符串 `'Fork started -- processing in background'`，保证工具结果块也字节一致。缓存边界正好落在最后这条文本块之前——它之上可能数万 token 的系统提示词、工具定义、对话历史、占位符结果，对第一个之后的每个子 Agent 都以 9 折命中。
+克隆父 Agent 的 assistant 消息（保留所有 `tool_use` 块的原始 ID），为每个 `tool_use` 块构造一个恒定占位符字符串的 `tool_result`（跨所有子 Agent 一致），然后构造一条包含全部占位符结果和 per-child 指令的 user 消息。`FORK_PLACEHOLDER_RESULT` 是常量字符串 `'Fork started -- processing in background'`，保证工具结果块也字节一致。缓存边界正好落在最后这条文本块之前——它之上可能数万 token 的系统提示词、工具定义、对话历史、占位符结果，对第一个之后的每个子 Agent 都按一折计费命中。
 
 递归 fork 用双重守卫防止：主守卫是 `querySource === 'agent:builtin:fork'`（子 Agent 的 options 里设置，单字符串比较，极快）；回退守卫扫描消息历史里的 `<fork-boilerplate>` 标签。因为 autocompact 会重写消息数组但保留 options 里的 `querySource`，主守卫理论上足够，回退只在 `querySource` 没被正确线程化时兜底。
 
@@ -284,13 +290,13 @@ function buildChildMessages(directive, parentAssistant) {
 
 15 步从模型解析开始。**第 1 步：模型解析**——解析链是**调用方覆盖 > Agent 定义 > 父模型 > 默认**。`getAgentModel()` 处理 `'inherit'` 这类特殊值（用父 Agent 的模型）和 GrowthBook 门控的覆盖。Explore 代理对外部用户默认用 Haiku——最便宜最快的模型，适合每秒大量运行、只读的搜索专家。调用方覆盖排在第一位，意味着父模型可以给一个通常便宜的代理传入更强大的模型，用于特别复杂的搜索。
 
-## 内存系统：文件 + LLM 召回，而不是向量数据库
+## 记忆系统：文件 + LLM 召回，而不是向量数据库
 
-Claude Code 的内存是一场不同的赌注：磁盘上的文件、Markdown 格式、LLM 驱动的召回、零基础设施。赌注是存储上的简单加上检索上的智能，会比两者都复杂更好。行业标准解 RAG 会把文档嵌入成向量、存进向量数据库、查询时检索——这对知识库（文档、FAQ）很好，但对 Agent 需要跨会话记住的东西是架构错配。Agent 的记忆不是知识库，而是一组观察：用户是谁、被纠正过什么、项目当前约束是什么、东西在哪里找。这些观察很小、变化频繁、且必须人能编辑。
+Claude Code 的记忆系统在走另一条路线：磁盘上的文件、Markdown 格式、LLM 驱动的召回、零基础设施。它赌的是存储从简、检索靠智能，胜过把两边都做复杂。行业标准的 RAG 做法会把文档嵌入成向量、存进向量数据库、查询时检索——这对知识库（文档、FAQ）很好，但对 Agent 需要跨会话记住的东西是架构错配。Agent 的记忆不是知识库，而是一组观察：用户是谁、被纠正过什么、项目当前约束是什么、东西在哪里找。这些观察很小、变化频繁、且必须人能编辑。
 
 这套设计哲学带来一系列后果：**人类可读**——打开 `~/.claude/projects/<slug>/memory/MEMORY.md` 就能看到全部记忆，无需导出工具；**人类可编辑**——过时记忆用 vim 改、错误记忆用 `rm` 删；**可版本控制**——团队记忆能提交进 git，Markdown 让 diff 干净；**零基础设施**——离线可用、无服务端、无迁移路径因为无 schema；**可调试**——出问题时用 `ls` 和 `cat` 排查，不用查日志和数据库。
 
-记忆通过 `FileWriteTool` 和 `FileEditTool` 读写——和编辑源码用的是同一套工具，没有专门的记忆 API。这是工具复用作为架构原则：记忆系统不是挂在 Agent 上的一坨子系统，而是 Agent 用现有能力在指令下涌现出的行为。
+记忆通过 `FileWriteTool` 和 `FileEditTool` 读写——和编辑源码用的是同一套工具，没有专门的记忆 API。这是工具复用作为架构原则：记忆系统不是挂在 Agent 之外的一套独立子系统，而是 Agent 用现有能力在指令下涌现出的行为。
 
 ### 四类记忆：当过滤器用的分类
 
@@ -319,7 +325,7 @@ type: feedback
 
 ### 召回：MEMORY.md 常载 + Sonnet 侧询
 
-检索比写入更难。几百万个记忆文件，哪些该载入上下文？全载会耗尽 token 预算，全不载则毫无用处，载错则浪费token还没用上。召回分两层：`MEMORY.md` 索引在会话启动时总是载入，提供方向；单个记忆文件按需浮现——通过 LLM 相关性查询，每轮最多选 5 条。
+检索比写入更难。记忆文件一多，哪些该载入上下文？全载会耗尽 token 预算，全不载则毫无用处，载错则浪费 token 还没用上。召回分两层：`MEMORY.md` 索引在会话启动时总是载入，提供方向；单个记忆文件按需浮现——通过 LLM 相关性查询，每轮最多选 5 条。
 
 完整管线：用户提交查询 → `startRelevantMemoryPrefetch` 异步启动（与主模型并行）→ `scanMemoryFiles` 读所有 `.md` 文件、解析 frontmatter（每个文件最多读 30 行）→ 过滤已浮现路径 → `formatMemoryManifest` 每行一条（类型、名称、日期、描述）→ Sonnet 侧询收到 manifest + 用户查询 + 最近用到的工具 → Sonnet 通过结构化 JSON 返回最多 5 个文件名 → 校验文件名在已知集合内（捕捉幻觉名字）→ 完整读取选中文件，作为 `relevant_memories` 附加，带上陈旧警告。
 
@@ -343,7 +349,7 @@ Claude Code 的启动优化集中在一个判断上：把 I/O（keychain 读取�
 
 比启动更值钱的是上下文预算——它直接决定每次调用付多少钱。两个关键优化：
 
-**Slot Reservation（输出槽位预留）** 处理的是输出溢出的成本问题。Anthropic 会按 `max_output_tokens` 预留响应容量，SDK 默认给 32K-64K，但生产数据里 p99 输出长度只有 4,911 token，默认值多预留了 8-16 倍，每轮白白浪费 24,000-59,000 token。Claude Code 把默认压到 8K，只在罕见解码截断（<1% 的请求）时扩容到 64K 重试。对 200K 窗口来说，这是白捡 12-28% 的可用上下文。
+**Slot Reservation（输出槽位预留）** 处理的是输出溢出的成本问题。Anthropic 会按 `max_output_tokens` 预留响应容量，SDK 默认给 32K-64K，但生产数据里 p99 输出长度只有 4,911 token——预留量是实际需求的 6-13 倍，每轮白白锁住约 27,000-59,000 token 的上下文。Claude Code 把默认压到 8K，只在罕见解码截断（<1% 的请求）时扩容到 64K 重试。对 200K 窗口来说，这相当于白捡约 13-29% 的可用上下文。
 
 **Bitmap 预过滤** 用于加速文件搜索。模糊搜索在每次按键时跑，面对的是 27 万+ 路径的代码库。Claude Code 给每个路径预计算一个 26-bit 位图，记录它包含哪些小写字母，搜索时先做一次整数位运算 `(charBits[i] & needleBitmap) !== needleBitmap`——缺失任一查询字母的路径立刻被跳过，一次整数比较就能挡掉约 10%（宽泛查询如 "test"）到 90%+（罕见字母）的候选。每个路径只占 4 字节，27 万路径约 1MB。剩下的候选才进入昂贵的边界/camelCase 打分。
 
@@ -353,17 +359,17 @@ Claude Code 的技能系统采用两阶段加载：
 
 ```typescript
 const skillMeta = {
- name: 'git操作',
- triggers: ['git commit', 'git push'],
- permissions: ['read:repo', 'write:repo'],
+  name: 'git操作',
+  triggers: ['git commit', 'git push'],
+  permissions: ['read:repo', 'write:repo'],
 }
 
 async function invokeSkill(skill: SkillMeta) {
- if (!skill.isLoaded) {
- skill.content = await loadSkillContent(skill.path)
- skill.isLoaded = true
- }
- return execute(skill.content)
+  if (!skill.isLoaded) {
+    skill.content = await loadSkillContent(skill.path)
+    skill.isLoaded = true
+  }
+  return execute(skill.content)
 }
 ```
 
@@ -467,7 +473,7 @@ async function* agentLoop(): AsyncGenerator<Message> {
 
 **推测执行**。在模型流式输出时预启动只读工具。关键约束是只允许无副作用的操作参与推测。适用于任何需要降低首字节延迟的工具调用场景。前提是你的工具调用有明确的读/写分类。
 
-**LLM 召回内存**。用 LLM side-query 选择相关记忆，而非向量搜索。系统不需要处理海量记忆（万条以上）时，这个方案比嵌入搜索更简单且效果更好。
+**LLM 召回记忆**。用 LLM side-query 选择相关记忆，而非向量搜索。系统不需要处理海量记忆（万条以上）时，这个方案比嵌入搜索更简单且效果更好。
 
 **粘性门闩**。Beta 头一旦发送就永不撤销。如果你的缓存系统按字节匹配，这个模式可以最大化缓存命中率。只在你的 LLM 提供商支持前缀缓存时才有意义。
 
@@ -493,7 +499,7 @@ async function* agentLoop(): AsyncGenerator<Message> {
 
 **Part 4: Persistence and Intelligence（第 11-12 章）**
 
-第 11-12 章讲文件式内存系统（四类分类、LLM 召回、陈旧记忆警告）和技能钩子的可扩展性设计。
+第 11-12 章讲文件式记忆系统（四类分类、LLM 召回、陈旧记忆警告）和技能钩子的可扩展性设计。
 
 **Part 5: The Interface（第 13-14 章）**
 
@@ -535,7 +541,7 @@ Function Calling 是 OpenAI 专有的 API 约定，工具定义和调用结果�
 
 **问：这些架构模式能否迁移到基于 OpenAI 或其他模型的 Agent 系统？**
 
-10 个可迁移模式中，除了 Fork 缓存共享依赖 Anthropic 特有的 Prompt Cache 机制（OpenAI 和 Google 也有类似的前缀缓存，但行为和计费方式略有不同），其余 9 个都是模型无关的纯架构模式。AsyncGenerator、并发安全分组、四层压缩、两阶段加载——这些模式在任何语言、任何 LLM 提供商下都可以直接应用。
+可以，细节见「10 个可迁移的架构模式」一节的适用边界提醒：只有 Fork 缓存共享强依赖 Anthropic 特有的 Prompt Cache 机制，其余 9 个都是模型无关的纯架构模式，Python、Go、Rust 项目都能套用。
 
 **问：推测执行会不会带来安全风险？预启动的工具如果选错了怎么办？**
 
@@ -565,7 +571,22 @@ Claude Code 的架构里，错误处理嵌在 14 步管道的第 14 步，而非
 
 这是推测执行的预期行为之一——预判本来就有可能错。但如果浪费的比例偏高，说明推测策略需要调整。排查步骤：统计一段时间内推测执行的工具列表和最终实际使用的工具列表，计算交集。如果交集很小，说明推测策略的预测准确率太低，可能需要调整推测的触发条件或收窄参与推测的工具范围（比如只对历史命中率高的工具做推测）。
 
+## 自检测试
+
+以下问题都能从本文找到答案，试着不看正文回答。
+
+1. Claude Code 的四层上下文压缩按什么顺序执行？为什么 Context Collapse 要排在 Auto-Compact 之前？
+2. `[Read, Read, Grep, Edit, Read]` 这串工具调用会被 `partitionToolCalls()` 拆成几个批次？划分依据是什么？
+3. Fork 子 Agent 为什么直接线程传递父 Agent 渲染后的系统提示词字节，而不重新调用 `getSystemPrompt()`？
+4. 记忆分类的过滤标准是什么？把架构决策存进记忆会带来什么问题？
+5. 一个新工具省略了 `isConcurrencySafe` 定义，它在并发调度中会被如何对待？这个默认值背后的设计原则叫什么？
+
+**答案要点**
+
+1. 顺序是 Tool Result Budget → Snip → Microcompact → Collapse → Auto-Compact，按成本从低到高。Collapse 排在前是为了先把上下文压到 Auto-Compact 阈值以下，让最重的全量摘要变成空操作，保留更细粒度的上下文。
+2. 3 个批次：`[Read, Read, Grep]` 并发、`[Edit]` 单独串行、`[Read]` 并发。依据是 `isConcurrencySafe(parsedInput)` 的返回值——并发安全是按调用而非按工具类型决定的。
+3. 因为 prompt cache 按字节精确匹配。重新生成系统提示词时，feature flag 状态变化可能让条件块多出一个字符，整个前缀缓存就失效了；线程传递渲染后字节消除了这类分歧。
+4. 标准是"这条知识能否从当前项目状态重新推导"。把架构决策存成记忆会让模型不再读代码理解架构——记忆变成拐杖，还制造了一份可能过期的平行副本。
+5. 默认按串行执行处理（`false`），绝不并行。这套默认值的设计原则是故障封闭（fail-closed）：忘记声明的工具宁可慢，不可错。
+
 ---
-
-
-

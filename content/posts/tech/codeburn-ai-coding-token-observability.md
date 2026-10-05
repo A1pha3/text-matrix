@@ -2,149 +2,74 @@
 title: "CodeBurn：AI 编码 Token 消耗可视化仪表盘"
 date: "2026-04-16T11:32:26+08:00"
 slug: "codeburn-ai-coding-token-observability"
-github_repo: "BerriAI/litellm"
-source_key: "gh:BerriAI/litellm"
-description: "本文从问题动机、架构设计、数据采集原理、任务分类机制等维度，对 AI 编码 Token 可视化工具 CodeBurn 进行了深度剖析，涵盖交互式 TUI 仪表盘、多 Provider 支持、One-Shot 成功率等核心功能的完整使用指南与开发扩展路径。"
+github_repo: "getagentseal/codeburn"
+source_key: "gh:getagentseal/codeburn"
+description: "CodeBurn 读取 AI 编码工具写在本地磁盘的会话文件，把账单算不到的细节——按项目、模型、任务类型的 Token 去向，以及一次性编辑成功率——全部算出来。本文拆解它的数据采集、任务分类与定价引擎，并给出从查账到省钱的完整命令路径。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Claude Code", "Cursor", "Token", "TypeScript"]
+tags: ["Claude Code", "Cursor", "Codex", "Token", "TypeScript"]
+lastmod: "2026-10-02T00:00:00+08:00"
 ---
 
 # CodeBurn：AI 编码 Token 消耗可视化仪表盘 ⭐⭐⭐ 进阶分析
 
-> **目标读者**：使用 Claude Code、Codex、Cursor 等 AI 编码工具的开发者
-> **核心问题**：你的 AI 编程工具烧了多少钱？Token 花在了哪里？如何优化？
-> **预计时间**：约 20 分钟
-> **前置知识**：了解 Claude Code 或类似 AI 编程工具的基本使用
+账单只告诉你这个月花了多少钱，不告诉你钱花在哪个项目、哪个模型、哪类任务上，更不告诉你其中有多少是白烧的。CodeBurn 解决的就是这个断层：它读取 AI 编码工具已经写在磁盘上的会话文件，把每一笔 Token 消耗还原成可追问的明细——按项目、按模型、按任务类型，甚至按 git 分支。
 
----
+它做这件事的方式决定了它的天花板：不装代理、不要 API Key、不改变任何工具的工作方式，纯被动地解析本地文件。代价也同样来自这里——工具改了存储格式，它就得跟着改。这个项目 2026 年 4 月 13 日创建，当天发布 npm 首版，半年内迭代 56 个版本、适配 40 种工具，是这种模式的最新注脚。
 
-## 目录
+## 项目坐标
 
-- [§1 学习目标](#§1-学习目标)
-- [§2 原理分析](#§2-原理分析)
-  - [2.1 问题动机：为什么需要 CodeBurn？](#21-问题动机为什么需要-codeburn)
-  - [2.2 核心设计原则](#22-核心设计原则)
-  - [2.3 数据采集原理](#23-数据采集原理)
-  - [2.4 任务分类机制](#24-任务分类机制)
-  - [2.5 成本计算引擎](#25-成本计算引擎)
-- [§3 架构分析](#§3-架构分析)
-  - [3.1 整体架构](#31-整体架构)
-  - [3.2 项目结构详解](#32-项目结构详解)
-  - [3.3 关键设计决策](#33-关键设计决策)
-- [§4 功能详解](#§4-功能详解)
-  - [4.1 交互式 TUI 仪表盘](#41-交互式-tui-仪表盘)
-  - [4.2 命令行模式](#42-命令行模式)
-  - [4.3 Provider 过滤](#43-provider-过滤)
-  - [4.4 多货币支持](#44-多货币支持)
-  - [4.5 菜单栏小组件](#45-菜单栏小组件)
-  - [4.6 One-Shot 成功率](#46-one-shot-成功率)
-- [§5 使用说明](#§5-使用说明)
-  - [5.1 安装](#51-安装)
-  - [5.2 快速开始](#52-快速开始)
-  - [5.3 环境变量](#53-环境变量)
-  - [5.4 数据目录结构](#54-数据目录结构)
-- [§6 开发扩展](#§6-开发扩展)
-  - [6.1 添加新的 Provider](#61-添加新的-provider)
-  - [6.2 自定义任务分类规则](#62-自定义任务分类规则)
-  - [6.3 导出到自有监控系统](#63-导出到自有监控系统)
-- [§7 实践建议](#§7-实践建议)
-  - [7.1 成本优化策略](#71-成本优化策略)
-  - [7.2 数据分析工作流](#72-数据分析工作流)
-  - [7.3 团队共享](#73-团队共享)
-  - [7.4 与 CI/CD 集成](#74-与-cicd-集成)
-- [§8 FAQ](#§8-faq)
-- [自测问题](#自测问题)
-- [练习](#练习)
-- [§9 总结速查](#§9-总结速查)
+| 项 | 值 | 来源 |
+|------|------|------|
+| 仓库 | [getagentseal/codeburn](https://github.com/getagentseal/codeburn) | GitHub |
+| 许可证 | MIT | `LICENSE` |
+| 语言 | TypeScript | GitHub API |
+| 星标 / 复刻 | 11299 / 869 | GitHub API，2026-10-02 取 |
+| 创建时间 | 2026-04-13，npm 0.1.0 同日发布 | GitHub API / npm registry |
+| 当前版本 | v0.9.25（2026-09-21） | GitHub Releases / npm |
+| Node 要求 | 22.13+ | `package.json` engines |
+| 运行形态 | CLI（npm / Homebrew）、桌面应用（macOS / Windows / Linux）、菜单栏常驻 | README |
+| 官网 | [codeburn.app](https://codeburn.app/) | GitHub API homepage |
 
----
+上手只要一行 `npx codeburn`，没有账号、没有注册。想留下就用 `npm install -g codeburn` 或 `brew install codeburn`。
 
-## §1 学习目标
+## 一条引擎，四个界面
 
-完成本教程后，你将能够：
+CodeBurn 的所有数字来自同一份本地数据，四个界面只是四种看法：
 
-- [ ] 理解 CodeBurn 的核心定位与解决的问题
-- [ ] 掌握 CodeBurn 的技术架构与数据采集原理
-- [ ] 熟练使用 CodeBurn 的交互式 TUI 仪表盘
-- [ ] 配置多币种结算与菜单栏小组件
-- [ ] 基于 CodeBurn 数据优化 AI 编码成本
+| 界面 | 形态 | 适合 |
+|------|------|------|
+| 终端仪表盘 | `codeburn`（Ink TUI） | 快速查看，脚本友好 |
+| 桌面应用 | Electron，macOS / Windows / Linux | 深挖会话明细，优化配置 |
+| 菜单栏常驻 | macOS 原生 app、Windows 托盘、GNOME 扩展 | 时刻可见的今日花费与额度 |
+| 浏览器 | `codeburn web` | 跨设备汇总，大屏查看 |
 
----
+macOS 桌面版用 Developer ID 签名并通过 Apple 公证；Windows 推荐从 Microsoft Store 安装；Linux 提供 deb、rpm 和 AppImage。如果你在 WSL 里跑 agent，Windows 版会同时读取各个发行版的 home 目录，Linux 侧的会话不会漏计。
 
-## §2 原理分析
+## 数据从哪来
 
-### 2.1 问题动机：为什么需要 CodeBurn？
+每个 AI 编码工具都会把会话写进磁盘：Claude Code 写 JSONL，Codex 写 rollout 文件，Cursor 和 OpenCode 写 SQLite。CodeBurn 内置 40 个 provider，各管一种工具的目录结构和文件格式。安装了哪个、哪个有会话数据，界面上就会出现哪一行，`p` 键在它们之间切换。
 
-AI 编程工具正在成为开发者的日常生产力引擎，但与此同时，一个被忽视的问题是：**Token 成本的不透明性**。
+四个有代表性的 provider，基本覆盖了它要处理的全部数据形态：
 
-当你使用 Claude Code 完成一个项目时，你往往只看到"用了多少钱"的模糊数字，却无法回答以下问题：
+**Claude Code**——会话以 JSONL（每行一条 JSON 记录）存在 `~/.claude/projects/<项目路径>/<会话ID>.jsonl`，每条记录带模型名、input/output/cache read/cache write 四类 Token、工具调用和时间戳。解析时按 API message ID 去重，避免同一条消息被流式写入的多个分片重复计数。
 
-- 这周花在调试（Debugging）上的 Token 占比是多少？
-- 哪个项目的 AI 成本最高？是新功能开发还是代码审查？
-- Claude Opus 和 Sonnet 的使用比例是否合理？是否过度使用了昂贵模型？
-- Cursor 的"Auto"模式实际消耗了多少 Token？
+**Codex（OpenAI）**——会话在 `~/.codex/sessions/YYYY/MM/DD/rollout-*.jsonl`，用 `token_count` 事件记录 Token，用 `function_call` 条目记录工具调用。它的工具名与 Claude 习惯不同，CodeBurn 做一层规范化映射（比如 `exec_command` 归到 `Bash`），保证跨工具的统计口径一致。
 
-这些问题催生了 CodeBurn 的设计：**一个无代理、无侵入的 Token 消耗可视化工具**。
+**Cursor**——数据在 SQLite 里（macOS 路径 `~/Library/Application Support/Cursor/User/globalStorage/state.vscdb`）。数据库可能很大，CodeBurn 把解析结果缓存到 `~/.cache/codeburn/`，按源文件的修改时间和大小判断失效，后续运行基本即时。要留意的是精度：Cursor 的本地库没有每次请求的 Token 明细，CodeBurn 官方 CHANGELOG 承认在某个真实月份里，本地估算约 700 万 Token，而 Cursor 仪表盘显示 6.44 亿——差了两个数量级。精确对账用 `codeburn import cursor <导出.csv>`：在 cursor.com/dashboard/usage 导出 CSV 导入，导出区间内的官方数字会替换本地估算。
 
-### 2.2 核心设计原则
+**OpenCode**——同样是 SQLite（`~/.local/share/opencode/opencode*.db`），查询 `session`、`message`、`part` 三张表。成本按模型重新计算，而不是直接用 OpenCode 自带的成本字段，避免不同定价标准混入。
 
-CodeBurn 遵循三个核心设计原则：
+数据目录不标准时，环境变量可以逐个覆盖：`CLAUDE_CONFIG_DIR`、`CODEX_HOME`，以及二十多个各工具专属的变量（完整清单在 `docs/configuration.md`）。多套 Claude 配置并存时，`CLAUDE_CONFIG_DIRS`（注意复数）用系统路径分隔符列出多个目录一起扫描，优先级高于单数版本。
 
-**1. 无 API Key 依赖**
-大多数 Token 监控工具需要你提供 AI 平台的 API Key，这带来额外的安全风险和配置成本。CodeBurn 另辟蹊径，直接读取本地会话文件——这是 AI 编码工具在磁盘上存储的原始数据，不涉及任何第三方服务。
+## 十三类任务分类
 
-**2. 无需 Wrapper 或代理**
-不像一些方案需要你通过代理路由流量，CodeBurn 完全是被动的——它只是读取已有的数据文件，不影响 AI 工具的正常运行。
-
-**3. 提供上下文，而不只是数字**
-单纯的"今天花了 $X"没有太大意义。CodeBurn 将消费数据与任务类型、使用的模型、提供商进行交叉分析，帮助你理解**钱花在哪里、为什么花在那里**。
-
-### 2.3 数据采集原理
-
-CodeBurn 支持六种主流 AI 编码工具，数据采集方式各有不同：
-
-#### Claude Code
-
-Claude Code 将每次会话的完整交互记录为 JSONL 文件，存储在 `~/.claude/projects/<项目路径>/<会话ID>.jsonl`。每条记录包含：
-
-- 模型名称（opus-3-5, sonnet-4-20250514 等）
-- Token 消耗明细（input tokens、output tokens、cache read、cache write）
-- 工具调用记录（tool_use 块）
-- 时间戳
-
-CodeBurn 的 `providers/claude.ts` 模块负责发现这些文件、解析 JSONL 并进行去重（通过 API message ID）。
-
-#### Codex (OpenAI)
-
-Codex 将会话存储在 `~/.codex/sessions/YYYY/MM/DD/rollout-*.jsonl`，格式与 Claude Code 不同：
-
-- 使用 `token_count` 事件记录每次调用的 Token 总量和累计量
-- 使用 `function_call` 条目记录工具调用
-
-CodeBurn 的 `providers/codex.ts` 还需要做额外的**工具名规范化**：因为 Codex 的工具名（如 `exec_command`）与 Claude 的命名习惯不同，CodeBurn 将其映射到统一名称（如 `Bash`），确保跨提供商的统计口径一致。
-
-#### Cursor
-
-Cursor 将数据存储在 SQLite 数据库中（macOS: `~/Library/Application Support/Cursor/User/globalStorage/state.vscdb`），这带来两个挑战：
-
-1. **数据量大**：首次运行时，数据库可能非常大，解析时间长达一分钟
-2. **模型不可见**：Cursor 的"Auto"模式不记录实际使用的模型
-
-针对第一个挑战，CodeBurn 实现了文件缓存（`~/.cache/codeburn/cursor-results.json`），并在数据库变更时自动失效。第二个挑战通过估算解决——Auto 模式的成本按 Sonnet 定价计算，并在界面中标注为"Auto (Sonnet est.)"。
-
-#### OpenCode
-
-OpenCode 同样使用 SQLite，数据库路径为 `~/.local/share/opencode/opencode*.db`。CodeBurn 查询 `session`、`message`、`part` 三张表，提取 Token 数量，并按模型重新计算成本（而非直接使用 OpenCode 自带的成本字段，因为该字段可能使用了不同的定价标准）。
-
-### 2.4 任务分类机制
-
-CodeBurn 的核心分析能力之一是将 AI 的工作分类为 13 种任务类型。这是**纯规则判断**，不涉及 LLM 调用，完全确定性地分类：
+CodeBurn 把每一轮 AI 工作归入 13 类任务。这是纯规则判断——看工具调用模式和用户消息里的关键词，不调 LLM，完全确定：
 
 | 任务类型 | 触发条件 |
 |---------|---------|
 | Coding | Edit、Write 工具被调用 |
-| Debugging | 错误关键词出现 + 工具使用模式 |
+| Debugging | 错误/修复关键词 + 工具使用模式 |
 | Feature Dev | "add"、"create"、"implement" 等关键词 |
 | Refactoring | "refactor"、"rename"、"simplify" 等关键词 |
 | Testing | Bash 中出现 pytest/vitest/jest |
@@ -155,557 +80,195 @@ CodeBurn 的核心分析能力之一是将 AI 的工作分类为 13 种任务类
 | Build/Deploy | npm build、docker、pm2 等命令 |
 | Brainstorming | "brainstorm"、"what if"、"design" 等关键词 |
 | Conversation | 无工具调用的纯文本对话 |
-| General | Skill 工具被调用或无法分类 |
+| General | Skill 工具被调用或无法归类 |
 
-### 2.5 成本计算引擎
+规则分类省了 Token、也省了不确定性，但边界案例靠关键词难免误判——它回答的是"大概把钱花在哪类事上"，不是逐轮精确审计。
 
-CodeBurn 使用 [LiteLLM](https://github.com/BerriAI/litellm) 的定价数据作为基准，缓存 24 小时在 `~/.cache/codeburn/`。成本计算涵盖：
+## One-Shot 成功率：钱花得值不值
 
-- **Input tokens**：模型处理输入的费用
-- **Output tokens**：模型生成输出的费用
-- **Cache write tokens**：写入上下文缓存的费用
-- **Cache read tokens**：读取缓存的费用（通常大幅低于 input）
-- **Web search tokens**：网络搜索调用的费用
+只看花费，看不出模型质量。CodeBurn 用 **One-Shot 成功率** 补上这一维：对涉及代码编辑的任务，统计"一次编辑就成功、无需重试"的比例。
 
-Claude 的"快速模式"（Haiku）有额外的价格倍数，CodeBurn 也会处理。缓存机制确保每次启动无需重新拉取定价数据，同时保证数据相对新鲜。
+对重试的判定是文件级的：同一文件在被 shell 命令隔开后再次被编辑（Edit foo.ts → Bash → Edit foo.ts）才算一次重试；中间编辑的是不同文件，不算。文件级跟踪目前支持 Claude、Codex 和 Goose，其余工具回退到按工具名模式检测。
 
----
+Coding 类别 90% 的 One-Shot 意味着十次编辑九次到位。这个数字和花费放在一起看才有意义：Debugging 花钱多但 One-Shot 低，说明模型在反复试错，这时换更强的模型或改提示词，比继续堆 Token 划算。
 
-## §3 架构分析
+## 定价引擎
 
-### 3.1 整体架构
+价格数据来自 [LiteLLM](https://github.com/BerriAI/litellm) 维护的全模型价目表，本地缓存 24 小时。每笔调用按 input、output、cache write、cache read、web search 五类 Token 分别计价，Claude 的快速模式（fast mode）按额外倍数处理，超过长上下文阈值（如 272k）的调用套用更高档价。
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                        CLI 入口                          │
-│                    (Commander.js)                        │
-│         codeburn [command] [options]                    │
-└──────────────────────┬──────────────────────────────────┘
-                       │
-                       ▼
-┌─────────────────────────────────────────────────────────┐
-│                      Parser 层                           │
-│              (JSONL 读取、去重、日期过滤)                  │
-│   ┌─────────────────────────────────────────────────┐   │
-│   │         Provider Registry (Lazy Load)           │   │
-│   │  ┌─────────┐ ┌─────────┐ ┌─────────┐            │   │
-│   │  │ Claude  │ │  Codex  │ │ Cursor  │ │ OpenCode │   │
-│   │  └─────────┘ └─────────┘ └─────────┘ └─────────┘   │
-│   └─────────────────────────────────────────────────┘   │
-└──────────────────────┬──────────────────────────────────┘
-                       │
-                       ▼
-┌─────────────────────────────────────────────────────────┐
-│                   Classifier 层                          │
-│              (13 类任务分类器)                             │
-└──────────────────────┬──────────────────────────────────┘
-                       │
-                       ▼
-┌─────────────────────────────────────────────────────────┐
-│                   Models 层                              │
-│        (LiteLLM 定价数据 + 成本计算引擎)                  │
-└──────────────────────┬──────────────────────────────────┘
-                       │
-         ┌─────────────┼─────────────┐
-         ▼             ▼             ▼
-┌─────────────┐ ┌─────────────┐ ┌─────────────┐
-│  Dashboard  │ │   Export    │ │   Menubar   │
-│  (Ink TUI)  │ │  CSV/JSON   │ │  SwiftBar   │
-└─────────────┘ └─────────────┘ └─────────────┘
-```
+定价有两层兜底：
 
-### 3.2 项目结构详解
+- **内置快照**。npm 包里带一份 LiteLLM 价目快照和 fallback 定价表（当前 5896 条主条目、543 条 fallback），离线或上游拉取失败时用快照，常见 Claude 和 GPT 模型另有硬编码价格防止模糊匹配错价。
+- **手动覆盖**。`codeburn price-override <model>` 改指定模型单价，`codeburn model-alias <from> <to>` 把内部端点或别名模型映射到标准价目行。走公司内部 LLM 时靠这两个命令对齐真实价格。
 
-```
-src/
-├── cli.ts              # Commander.js CLI 入口，命令路由
-├── dashboard.tsx       # Ink（React for Terminal）TUI 仪表盘
-├── parser.ts           # JSONL 读取器、Provider 协调、去重逻辑
-├── models.ts           # LiteLLM 定价数据获取与成本计算
-├── classifier.ts       # 13 类任务分类规则引擎
-├── types.ts            # TypeScript 类型定义
-├── format.ts           # 文本渲染（状态栏）
-├── menubar.ts          # SwiftBar/xbar 插件生成器
-├── export.ts           # CSV/JSON 多周期导出
-├── config.ts           # 配置文件读写 (~/.config/codeburn/)
-├── currency.ts         # 货币转换（Frankfurter API）
-├── sqlite.ts           # SQLite 适配器（lazy-loads better-sqlite3）
-├── cursor-cache.ts     # Cursor 结果文件缓存
-└── providers/
-    ├── types.ts        # Provider 接口定义
-    ├── index.ts        # Provider 注册表
-    ├── claude.ts       # Claude Code 会话发现与解析
-    ├── codex.ts        # Codex 会话发现与解析
-    ├── cursor.ts       # Cursor SQLite 解析
-    └── opencode.ts     # OpenCode SQLite 解析
-```
+展示货币可以随时切换：`codeburn currency JPY`。汇率来自 [Frankfurter](https://www.frankfurter.app/)（欧洲央行参考汇率，免费无 Key），同样缓存 24 小时，任何合法 ISO 4217 代码都能用，`--symbol` 可自定义货币符号，`--reset` 回到 USD。
 
-### 3.3 关键设计决策
+## 终端仪表盘
 
-**决策 1：Provider 插件化架构**
-
-添加新的 AI 编码工具支持，只需要实现一个新的 Provider 文件，遵循 `types.ts` 中定义的接口。这种设计使得代码维护成本低，扩展性强。参考 `src/providers/codex.ts` 的实现即可快速添加 Pi、Amp 等新 Provider。
-
-**决策 2：SQLite 懒加载**
-
-`better-sqlite3` 是原生 Node.js 模块，在 Cursor/OpenCode 支持时才需要加载。如果用户只使用 Claude Code，该依赖不会被加载，保持了零额外开销。
-
-**决策 3：文件缓存机制**
-
-对于大文件（如 Cursor 的 SQLite 数据库），CodeBurn 在 `~/.cache/codeburn/` 中维护缓存，并在源文件变更时自动失效。这解决了首次运行慢（最长达一分钟）的问题，后续运行几乎是即时的。
-
-**决策 4：多货币支持**
-
-货币转换使用 [Frankfurter](https://www.frankfurter.app/) API（欧洲央行数据，免费无需 API Key），汇率缓存 24 小时。任何 ISO 4217 货币代码（162 种）都支持，满足国际化团队的需求。
-
----
-
-## §4 功能详解
-
-### 4.1 交互式 TUI 仪表盘
-
-启动 CodeBurn 不带任何参数，默认进入 7 天视图的交互式仪表盘：
-
-```bash
-codeburn
-```
-
-界面布局（从上到下）：
-
-- **Header**：总成本、Token 总量、模型分布概览
-- **时间维度切换**：Today / 7 Days / 30 Days / Month，通过方向键切换
-- **Provider 切换**：按 `p` 键在 Claude / Codex / Cursor / OpenCode 之间切换
-- **主图表区**：成本趋势折线图（渐变色）
-- **详细面板**：按项目、按模型、按任务类型的成本分解
-
-**键盘快捷键**：
+不带参数启动 `codeburn` 进入交互式仪表盘。方向键切换时间范围，数字键直达：
 
 | 按键 | 功能 |
 |------|------|
-| `↑` / `↓` | 切换时间范围 |
-| `1` / `2` / `3` / `4` | 直接跳转到 Today / 7 Days / 30 Days / Month |
-| `p` | 切换 Provider |
-| `q` | 退出 |
+| `←` / `→` / `Tab` | 上一个 / 下一个时间范围 |
+| `1` – `6` | Today / Week / 30 Days / Month / All / Lifetime |
+| `p` | 切换 Provider（工具） |
+| `c` | 模型对比视图 |
+| `o` | 配置体检（Optimize） |
+| `m` | 开关鼠标跟踪（滚轮翻页） |
+| `q` 或 `Ctrl+C` | 退出 |
 
-### 4.2 命令行模式
+总数字下面是四张表：按工具、按模型、按项目、按任务类型的成本分解。每个数字都可以继续下钻——桌面版里点击今日总额落到 Sessions 页，一行一个会话；再点一行，展开这个会话里的每一轮对话和各自的花费。
 
-CodeBurn 支持纯命令行输出，适合集成到脚本或 CI 流程中：
-
-```bash
-# 今日概览（单行）
-codeburn today
-
-# 本月概览
-codeburn month
-
-# 报告模式（可带刷新间隔）
-codeburn report -p 30days
-codeburn report --refresh 60   # 每 60 秒自动刷新
-
-# 状态查询（JSON 格式，便于程序处理）
-codeburn status --format json
-
-# 导出数据
-codeburn export             # CSV（含今日、7 天、30 天）
-codeburn export -f json     # JSON 导出
-```
-
-### 4.3 Provider 过滤
-
-使用 `--provider` 参数限制统计范围：
+偏好纯文本输出的话：
 
 ```bash
-codeburn report --provider claude    # 仅 Claude Code
-codeburn today --provider codex      # 仅 Codex 今日数据
-codeburn export --provider cursor    # 仅 Cursor 导出
+codeburn today                  # 今日概览
+codeburn month                  # 本月概览
+codeburn report -p 30days       # 30 天报告（report 是默认命令）
+codeburn report --refresh 120   # 每 120 秒自动刷新（最小 60）
+codeburn status --format json   # 紧凑状态，供程序消费
+codeburn export -f json         # 导出 JSON（-f csv 为表格）
+codeburn export --provider claude   # 只导出指定工具
 ```
 
-### 4.4 多货币支持
+`report`/`today`/`month` 都支持 `--project`（只看匹配的项目，可重复）、`--exclude`（排除）、`--from`/`--to`（自定义区间）、`--day`（单日回看）。
+
+## 让花费降下来：四组命令
+
+看数据只是第一步，CodeBurn 把"发现问题 → 验证改进 → 守住预算"做成了完整链路。
+
+**配置体检：optimize**
 
 ```bash
-codeburn currency GBP          # 切换为英镑
-codeburn currency AUD          # 切换为澳元
-codeburn currency JPY          # 切换为日元
-codeburn currency              # 查看当前货币
-codeburn currency --reset      # 重置为 USD
+codeburn optimize           # 扫描最近 30 天会话 + ~/.claude 配置
+codeburn optimize --apply   # 确认后代为修改
+codeburn act undo --last    # 撤销上一次修改
+codeburn act report         # 数天后核对每项修复的实际效果
 ```
 
-### 4.5 菜单栏小组件
+它找的是"花 Token 却不产出"的东西：agent 每轮都重读的文件、装了几个月从没调用过的 MCP server、长得太长以至于塞进每一次请求的 `CLAUDE.md`。每条发现标明是实测还是模型推算，给出修复方法和预计节省额。整体配置打 A–F 等级——注意评的是配置不是花费，花得多但配置干净照样是 A。修改前有备份，应用前能看到改动内容。
+
+**预算与额度：plan / quota / guard**
 
 ```bash
-codeburn install-menubar    # 安装 SwiftBar 插件
-codeburn uninstall-menubar  # 移除插件
+codeburn plan set claude-max   # 声明你订阅的套餐
+codeburn quota                 # 各工具实时剩余额度
+codeburn guard install         # 给 Claude Code 装花费护栏
 ```
 
-要求已安装 [SwiftBar](https://github.com/swiftbar/SwiftBar)（`brew install --cask swiftbar`）。菜单栏显示：
+`quota` 读取你已登录工具的实时限额——五小时窗口和每周窗口都来自工具本身。长任务跑之前先看一眼，比跑一半被限额打断强。
 
-- 今日成本（火焰图标）
-- 下拉菜单：活动类型分解、各模型成本、Token 统计、提供商对比
-- 货币选择器（17 种常用货币）
+`guard` 是可选的本地护栏：给 Claude Code 装 hooks，会话花费超过软上限（默认 $5）时警告，超过硬上限（默认 $15）时停止。两个数字都可以改，`codeburn guard status` 查看 hooks 位置，`codeburn guard uninstall` 移除。
 
-每 5 分钟自动刷新。
-
-### 4.6 One-Shot 成功率
-
-CodeBurn 独特的 **One-Shot 成功率**指标，衡量 AI 在首次尝试中成功完成任务的比率：
-
-- **检测逻辑**：当检测到"编辑 → Bash → 编辑"模式时，表明首次编辑触发了错误，需要重试
-- **统计口径**：仅针对有编辑操作的回合，计算一次编辑就成功的比例
-- **用途**：Coding 类别 90% 的一键成功率意味着 AI 在 90% 的情况下第一次编辑就做对了
-
-这个指标是评估 AI 编程效率的重要维度——不仅仅是花了多少钱，更是钱花得值不值。
-
----
-
-## §5 使用说明
-
-### 5.1 安装
+**模型对比：compare**
 
 ```bash
-# 全局安装（推荐）
-npm install -g codeburn
-
-# 不安装直接运行
-npx codeburn
+codeburn compare    # 或在仪表盘按 c
 ```
 
-**前置条件**：
+在你自己的历史数据上并排比较两个模型：One-Shot 率、重试率、自我纠正、单次调用成本、单次编辑成本、缓存命中率。cohorts 模式把范围收窄到同类工作，给出每次编辑回合的成本中位数和 P90。混用两个模型的回合被剔除并计数，不硬分给任何一方。样本足够时，`optimize` 会直接给出"这个项目用某个更便宜的模型、One-Shot 率没有下降"的建议，`codeburn act apply-model <project>` 一键应用。
 
-- Node.js 20+
-- 至少一种 AI 编码工具的会话数据：
-  - Claude Code: `~/.claude/projects/`
-  - Codex: `~/.codex/sessions/`
-  - Cursor: macOS `~/Library/Application Support/Cursor/User/globalStorage/state.vscdb`
-  - OpenCode: `~/.local/share/opencode/`
+**花得值不值：yield 与 context**
 
-### 5.2 快速开始
+`yield` 把花费和会话记录的 pull request 关联，看哪些花费真正交付了代码；`codeburn spend` 输出模型 × 项目的花费流向，`--format branch-json` 换到 git 分支维度，一个功能分支从头到尾烧了多少钱一目了然。某个会话花了一小时干五分钟的活？`codeburn context <session>` 拆开看上下文窗口里到底塞了什么——assistant 的文本、推理、工具调用，user 的文本和图片，以及压缩（compaction）次数。压缩次数偏多通常意味着模型在反复重读。
 
-**步骤 1：安装**
+## 架构与关键决策
+
+```text
+┌─────────────────────────────────────────────────────┐
+│              CLI 入口（Commander.js）                │
+│   report · today · month · optimize · quota · ...   │
+└────────────────────────┬────────────────────────────┘
+                         ▼
+┌─────────────────────────────────────────────────────┐
+│      Provider 层（40 个单文件适配器，按需加载）        │
+│   claude · codex · cursor · opencode · gemini · …   │
+└────────────────────────┬────────────────────────────┘
+                         ▼
+┌─────────────────────────────────────────────────────┐
+│      解析与缓存（多进程解析、按天分片会话缓存）         │
+├─────────────────────────────────────────────────────┤
+│      Classifier（13 类任务 · One-Shot 判定）          │
+│      Models（LiteLLM 定价 · 快照兜底 · 覆盖）         │
+└────────────────────────┬────────────────────────────┘
+                         ▼
+┌──────────────┬──────────────┬──────────────┬─────────┐
+│  终端 TUI    │  桌面应用     │  菜单栏/托盘  │  Web    │
+│  (Ink)       │  (Electron)  │  原生/Tauri  │ (serve) │
+└──────────────┴──────────────┴──────────────┴─────────┘
+```
+
+几个影响日常体验的决策：
+
+**Provider 是单文件插件。** 每种工具一个文件（`src/providers/codex.ts` 是官方推荐的参考实现），实现会话发现、解析和工具名规范化三个接口。新工具的适配成本被压到"一个文件"，这是它能半年覆盖 40 种工具的结构原因。反过来，工具停服它也跟得紧：Roo Code 2026 年 5 月归档，支持随即移除。
+
+**SQLite 读取零原生依赖。** Cursor 和 OpenCode 的数据库通过 Node 内置的 `node:sqlite` 模块读取（早期用 `better-sqlite3`，后来换掉，摆脱了原生编译链）。只读访问，不碰工具自己的数据库。
+
+**会话缓存按天分片。** 缓存按"每天一个文件"组织，查今天只读今天。官方在重负载语料上测得 `overview -p today` 从约 3.1 秒 / 690 MB 内存降到 0.8 秒 / 560 MB；更极端的场景从 3.4 GB 降到 1.2 GB，不再撑爆 1 GB 堆限制。数字口径是官方 CHANGELOG 的对比测试，普通语料上提升小得多。
+
+**四个界面一个引擎。** 终端、桌面、菜单栏、浏览器读同一批文件，数字一致，差别只在各自的刷新时刻。菜单栏组件不再依赖第三方（早期版本的 SwiftBar 方案已弃用）：macOS 是原生 CodeBurnMenubar.app（要求 macOS 14+），Windows 是 Tauri 托盘应用，Linux 走 GNOME Shell 扩展，`codeburn menubar` 一键安装。
+
+## 隐私与边界
+
+CodeBurn 读的是已经在磁盘上的文件，没有账号、没有 API Key、不在你和 agent 之间加任何一层——它哪天坏了，工具照常工作。提示词、代码、项目名都留在本机；给 agent 用的 MCP server（`claude mcp add codeburn -- npx -y codeburn mcp`）从同一批本地文件取数，自己不做网络调用，项目名默认假名化处理。
+
+需要联网的只有两件事：LiteLLM 价目表和 Frankfurter 汇率，都是每天一次的公开数据拉取。断网时用内置快照，功能不中断。
+
+两个已知的精度边界：
+
+- **Cursor 估算**。如前所述，本地库没有请求级 Token 明细，本地数字可能显著偏离 Cursor 官方账目，精确对账走 `codeburn import cursor`。
+- **非标准端点**。公司内部 LLM 或中转网关的模型名对不上 LiteLLM 价目时，用 `price-override` / `model-alias` 手工对齐，否则可能计为 $0 或错价。
+
+## 常见问题
+
+**Q：多个工具的数据会重复计算吗？**
+
+不会。去重在每个 provider 内部独立进行，不同工具的会话没有交叉。但同一个任务用两个工具各做一遍，花费会各记各的——它们确实各烧了各的 Token。
+
+**Q：怎么确认某个工具被正确识别了？**
+
+`codeburn doctor` 专门诊断检测问题：各工具的数据目录是否找到、解析出多少会话。某工具升级后换了存储路径，也是先跑它。
+
+**Q：能把数据接进自己的监控系统吗？**
+
+`codeburn report -p today --format json` 输出完整 JSON（顶层 `totalCostUSD`，每日行带 `oneShotRate`），配合 `jq` 和 cron 就能接进任何监控系统：
 
 ```bash
-npm install -g codeburn
+codeburn report -p today --format json | jq '.totalCostUSD'
 ```
 
-**步骤 2：验证安装**
+**Q：第一次跑 Cursor 支持很慢？**
 
-```bash
-codeburn --version
-```
+正常。数 GB 的 SQLite 首次解析需要时间，之后走缓存基本即时。缓存异常时删除 `~/.cache/codeburn/` 下对应的 Cursor 缓存文件重建即可。
 
-**步骤 3：运行仪表盘**
+## 采用建议
 
-```bash
-codeburn
-```
+个人开发者重度使用 Claude Code 或 Codex 的，直接 `npx codeburn` 跑一次——看到按项目和按任务的花费分解后，大概率会留下来。订阅制用户（claude-max 之类）加上 `plan set` + `quota`，把"花了多少"变成"还剩多少"。
 
-你应该能看到过去 7 天的 Token 使用情况概览。
+团队场景的起点是 `export` 和 `status --format json`：先汇总成员的本地数据看结构，再决定要不要把它纳入常规报表。`optimize --apply` 这类会改配置的功能，团队里建议先个人试用、确认回滚路径（`act undo --last`）再推广。
 
-**步骤 4：查看今日数据**
+只用 Cursor 且在意精确数字的，先跑 `import cursor` 对一次账，再决定信不信本地估算。
 
-```bash
-codeburn today
-```
-
-**步骤 5：尝试导出**
-
-```bash
-codeburn export -f json > usage.json
-```
-
-### 5.3 环境变量
-
-| 变量 | 默认值 | 说明 |
-|------|--------|------|
-| `CLAUDE_CONFIG_DIR` | `~/.claude` | 覆盖 Claude Code 数据目录 |
-| `CODEX_HOME` | `~/.codex` | 覆盖 Codex 数据目录 |
-
-### 5.4 数据目录结构
-
-```
-~/.cache/codeburn/
-├── litellm-prices.json     # LiteLLM 定价缓存（24h）
-├── currency-rates.json     # 汇率缓存（24h）
-└── cursor-results.json     # Cursor SQLite 解析结果缓存
-
-~/.config/codeburn/
-└── config.json            # 用户配置（货币、Provider 等）
-```
-
----
-
-## §6 开发扩展
-
-### 6.1 添加新的 Provider
-
-假设你需要为新 AI 编程工具 `MyAI` 添加支持，只需创建 `src/providers/myai.ts`：
-
-```typescript
-import type { Provider, Session } from './types';
-
-export class MyAIProvider implements Provider {
-  name = 'myai';
-
-  async discoverSessions(): Promise<string[]> {
-    // 返回会话文件路径列表
-  }
-
-  async parseSession(path: string): Promise<Session> {
-    // 读取并解析会话文件
-    // 返回标准化 Session 对象
-  }
-
-  normalizeTool(toolName: string): string {
-    // 将工具名映射到 CodeBurn 标准工具名
-    return toolName;
-  }
-
-  getModelDisplayName(model: string): string {
-    // 返回人类可读的模型名称
-    return model;
-  }
-}
-```
-
-然后在 `src/providers/index.ts` 中注册：
-
-```typescript
-import { MyAIProvider } from './myai';
-
-// 在 providerMap 中添加
-const providerMap = {
-  claude: ClaudeProvider,
-  codex: CodexProvider,
-  cursor: CursorProvider,
-  opencode: OpenCodeProvider,
-  myai: MyAIProvider,  // 新增
-};
-```
-
-### 6.2 自定义任务分类规则
-
-当前 13 类分类规则定义在 `src/classifier.ts` 中。每个规则由**触发条件**和**权重**组成。添加自定义分类：
-
-```typescript
-// src/classifier.ts
-const customRules: ClassificationRule[] = [
-  {
-    name: 'Database Ops',
-    keywords: ['sql', 'migration', 'schema', 'prisma'],
-    weight: 1.5,  // 权重高于默认规则
-    tools: ['Bash'],  // 特定工具触发
-  },
-];
-```
-
-### 6.3 导出到自有监控系统
-
-CodeBurn 的 `status --format json` 输出可以重定向到任何监控系统：
-
-```bash
-# 每分钟采集一次并推送到 Prometheus
-while true; do
-  codeburn status --format json | jq '{codeburn_cost: .totalCostUSD, timestamp}'
-  sleep 60
-done
-```
-
----
-
-## §7 实践建议
-
-### 7.1 成本优化策略
-
-**策略 1：监控 One-Shot 成功率低的类别**
-
-如果 Debugging 的 One-Shot 成功率只有 40%，说明 AI 在调试时频繁需要多次尝试。可以通过：
-
-- 提供更清晰的错误信息上下文
-- 让 AI 先分析错误再动手修改
-- 使用更强大的模型（如 Opus 而非 Sonnet）处理复杂调试
-
-**策略 2：按项目分配成本**
-
-通过 CodeBurn 的 per-project 视图，找出成本异常高的项目。常见原因：
-
-- 频繁的大规模重构（触发高比例 Refactoring）
-- 测试覆盖率不足导致反复修复（低 Testing One-Shot）
-- 缺乏设计规划导致大量 Delegation
-
-**策略 3：模型使用配比优化**
-
-观察 Opus / Sonnet / Haiku 的使用比例。如果 Opus 使用占比超过 60%，考虑将简单任务（如 Exploration、Conversation）配置为使用 Sonnet 或 Haiku，节省成本同时不影响效率。
-
-### 7.2 数据分析工作流
-
-```bash
-# 每周一生成上周周报
-codeburn report -p 7days > weekly-report-$(date +%Y-%m-%d).txt
-
-# 按项目导出并对比
-codeburn export -f json --provider claude | \
-  jq '.projects | to_entries | sort_by(.value.totalCostUSD) | reverse | .[:5]'
-```
-
-### 7.3 团队共享
-
-CodeBurn 支持将 CSV 导出分享给团队成员：
-
-```bash
-codeburn export --provider claude
-# 输出: codeburn-export-2026-04-16.csv
-```
-
-可以在表格工具中进一步分析，绘制趋势图。
-
-### 7.4 与 CI/CD 集成
-
-在 CI 中运行 AI 编码任务后，采集成本数据：
-
-```bash
-# 在 CI job 结束时记录成本
-codeburn status --format json > ci-artifacts/codeburn-status.json
-```
-
----
-
-## §8 FAQ
-
-### Q1: CodeBurn 读取我的数据，会上传到服务器吗？
-
-**A**: 不会。CodeBurn 是纯本地工具，所有数据处理都在本机完成。它读取的是本地会话文件（JSONL 或 SQLite），不与任何外部服务器通信。定价数据从 LiteLLM 公开定价页面获取，汇率从欧洲央行 API 获取，均为公开数据。
-
-### Q2: Cursor 的"Auto"模式成本是估算的，误差有多大？
-
-**A**: Cursor Auto 模式使用 Sonnet 4 的定价作为估算基准。由于 Auto 模式实际可能使用 Opus、Sonnet 或 Haiku，误差范围大约在 ±50%。这个估算在缺乏实际数据的情况下已经是最优近似，界面中已明确标注为"Auto (Sonnet est.)"。
-
-### Q3: 首次运行 Cursor 支持很慢，怎么办？
-
-**A**: 这是正常现象。Cursor 的 SQLite 数据库可能非常大（数 GB），首次解析需要时间。CodeBurn 会缓存解析结果到 `~/.cache/codeburn/cursor-results.json`，后续运行几乎瞬间完成。如果想主动重建缓存，删除该文件后重新运行即可。
-
-### Q4: 我同时使用多个 AI 编码工具，数据会重复计算吗？
-
-**A**: 不会。CodeBurn 的去重机制针对每个 Provider 独立运行，不同 Provider 的会话数据不会有交叉重复。但是，如果同一个 AI 编码任务同时被多个工具处理（如同时打开 Cursor 和 Claude Code 做同一件事），成本会分别计算——这符合预期，因为两者确实各自消耗了 Token。
-
-### Q5: CodeBurn 支持企业防火墙后的 AI 编码工具吗？
-
-**A**: CodeBurn 读取的是本地会话文件，不受网络限制。但如果你的 AI 编码工具使用了自定义端点（如公司内部 LLM 服务器），定价可能与 LiteLLM 默认数据不符。可以通过环境变量覆盖或修改 `src/models.ts` 中的硬编码定价来实现自定义。
-
-### Q6: 如何查看某个特定项目的 Token 消耗？
-
-**A**: 在仪表盘界面中，主图表区会显示 per-project 的成本分解。或者使用 `codeburn export -f json` 导出完整数据后用 `jq` 筛选：
-
-```bash
-codeburn export -f json | jq '.projects | to_entries[] | select(.key | contains("my-project"))'
-```
-
-### Q7: 菜单栏小组件刷新频率可以调整吗？
-
-**A**: 目前刷新频率固定为 5 分钟（300 秒），暂不支持自定义调整。如果需要更频繁的更新，可以考虑修改 `src/menubar.ts` 中的刷新逻辑，但这需要重新生成 SwiftBar 插件。
-
----
-
-## 自测问题
-
-完成阅读后，尝试回答以下问题以检验理解：
-
-1. **CodeBurn 的"无 API Key 依赖"设计有什么优势？**
-   <details>
-   <summary>参考答案</summary>
-   不需要用户提供 AI 平台的 API Key，避免了额外的安全风险和配置成本。直接读取本地会话文件，不涉及任何第三方服务。
-   </details>
-
-2. **13 类任务分类是如何实现的？为什么它比 LLM 调用更高效？**
-   <details>
-   <summary>参考答案</summary>
-   纯规则判断（基于关键词、工具调用模式），不涉及 LLM 调用，完全确定性地分类。这比用 LLM 做分类更快、更便宜、不消耗 Token。
-   </details>
-
-3. **Cursor 的"Auto"模式成本估算误差范围大约是多少？为什么会有误差？**
-   <details>
-   <summary>参考答案</summary>
-   误差范围大约 ±50%。因为 Cursor Auto 模式不记录实际使用的模型，CodeBurn 按 Sonnet 定价估算。实际可能使用 Opus、Sonnet 或 Haiku。
-   </details>
-
-4. **CodeBurn 的缓存机制解决了什么问题？**
-   <details>
-   <summary>参考答案</summary>
-   解决首次运行慢的问题（Cursor 的 SQLite 数据库可能非常大，解析时间长达一分钟）。缓存存储在 `~/.cache/codeburn/`，数据库变更时自动失效。
-   </details>
-
-5. **如果你想基于 CodeBurn 数据优化 AI 编码成本，你会从哪三个策略入手？**
-   <details>
-   <summary>参考答案</summary>
-   ① 监控 One-Shot 成功率低的类别，提供更清晰的错误信息上下文；② 按项目分配成本，找出成本异常高的项目；③ 模型使用配比优化，将简单任务配置为使用 Sonnet 或 Haiku。
-   </details>
-
-## 练习
-
-### 练习 1：导出并分析你的 CodeBurn 数据
-
-**任务**：
-1. 运行 `codeburn export -f json > my-usage.json`
-2. 用 `jq` 分析哪个项目的成本最高
-3. 找出 One-Shot 成功率最低的 3 个任务类型
-
-**参考答案**：
-```bash
-# 按项目排序成本
-codeburn export -f json | jq '.projects | to_entries | sort_by(.value.totalCostUSD) | reverse | .[:5]'
-
-# 找出 One-Shot 成功率
-codeburn status --format json | jq '.oneShotSuccessRate'
-```
-
-### 练习 2：配置多货币结算
-
-**任务**：
-1. 将 CodeBurn 切换为你的本地货币
-2. 运行 `codeburn today` 查看以本地货币显示的成本
-3. 切换回 USD
-
-**参考答案**：
-```bash
-codeburn currency CNY   # 切换为人民币
-codeburn today
-codeburn currency --reset  # 重置为 USD
-```
-
-### 练习 3：添加自定义任务分类规则
-
-**任务**：
-1. 打开 `src/classifier.ts`
-2. 添加一条自定义规则，识别"数据库迁移"任务
-3. 重启 CodeBurn，验证新规则是否生效
-
-**提示**：参考 `src/classifier.ts` 中现有规则的结构。
-
----
-
-## 📊 总结速查
-
-### 核心要点
-
-1. **CodeBurn 是本地工具**，不收集数据，不上传信息
-2. **支持 4 大主流 AI 编码工具**：Claude Code、Codex、Cursor、OpenCode（Pi/Amp 计划中）
-3. **13 类任务分类**，帮助你理解 Token 消耗的具体去向
-4. **One-Shot 成功率**是衡量 AI 编程效率的核心指标
-5. **多货币支持**，通过 Frankfurter API 实时汇率转换
-
-### 快速命令
+## 总结速查
 
 | 命令 | 用途 |
 |------|------|
-| `codeburn` | 交互式仪表盘（默认 7 天） |
-| `codeburn today` | 今日概览 |
-| `codeburn report -p 30days` | 30 天报告 |
-| `codeburn status --format json` | JSON 状态（程序化使用） |
-| `codeburn export -f json` | 导出 JSON 数据 |
-| `codeburn install-menubar` | 安装菜单栏小组件 |
-| `codeburn currency JPY` | 切换为日元结算 |
+| `npx codeburn` | 零安装启动交互式仪表盘 |
+| `codeburn report -p 30days` | 30 天报告（report 为默认命令） |
+| `codeburn status --format json` | 紧凑 JSON 状态 |
+| `codeburn export -f csv` | 导出 CSV / JSON |
+| `codeburn optimize` | 配置体检，`--apply` 代为修复 |
+| `codeburn plan set <plan>` / `quota` | 声明订阅套餐 / 查实时额度 |
+| `codeburn guard install` | Claude Code 花费护栏（默认 $5 警告 / $15 停止） |
+| `codeburn compare` | 两个模型在你的数据上对比 |
+| `codeburn import cursor <csv>` | 用官方导出替换 Cursor 本地估算 |
+| `codeburn web` | 浏览器仪表盘 |
+| `codeburn menubar` | 安装菜单栏 / 托盘常驻 |
+| `codeburn currency JPY` | 切换展示货币 |
 
 ---
 
 **文档信息**
 
-- 难度：⭐⭐⭐ | 类型：进阶分析 | 更新日期：2026-04-16 | 预计阅读时间：20 分钟
-
+- 难度：⭐⭐⭐ | 类型：进阶分析 | 更新日期：2026-10-02 | 预计阅读时间：20 分钟
+- 数据口径：GitHub API、npm registry、仓库源码与文档（v0.9.25，2026-09-21），2026-10-02 核实

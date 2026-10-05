@@ -1,810 +1,236 @@
 ---
-title: "QMD：本地文档语义搜索完全指南"
+title: "QMD：把整条混合检索管线搬回本地机器"
 date: "2026-04-06T21:33:00+08:00"
+lastmod: "2026-10-05"
 slug: "qmd-local-document-semantic-search-guide"
 github_repo: "tobi/qmd"
 source_key: "gh:tobi/qmd"
-description: "全面介绍 21.8k Stars 的 QMD 本地文档语义搜索工具，涵盖语义搜索+BM25 混合搜索、10+ 文档格式支持、Python API、MCP Server 集成，以及 Ollama 向量嵌入的工作原理。"
+description: "QMD（Query Markup Documents）用 SQLite、sqlite-vec 和三个本地 GGUF 模型跑通 BM25、向量检索与 LLM 重排的完整管线，并为 AI Agent 提供 CLI、SDK、MCP、HTTP 四套接口。本文按 2026-10-05 复核的 main 分支（v2.8.3）撰写。"
 draft: false
 categories: ["技术笔记"]
-tags: ["Ollama", "MCP"]
+tags: ["本地检索", "BM25", "MCP", "AI Agent"]
 ---
 
-## 学习目标
+本地文档搜索并不缺工具，缺的是另一件事：把"查询扩展、多路召回、融合排序、LLM 重排"这条真正决定检索质量的完整管线，在不碰任何云服务的前提下跑起来。QMD（Query Markup Documents）把这条管线整体塞进一台笔记本——SQLite 存索引，sqlite-vec 存向量，三个合计约 2GB 的 GGUF 模型分别负责嵌入、重排和查询扩展，全部经 node-llama-cpp 在本地推理。仓库描述里那句 "Tracking current sota approaches while being all local"（跟进当下最好的检索做法，同时保持全本地），就是这个项目的全部野心。
 
-通过本文，你将全面掌握以下核心能力：
+它的第二个身份是 Agent 检索后端。每条搜索结果都带稳定的 docid（`#abc123` 形式的六位哈希）、`qmd://collection/path` 虚拟路径和行号锚点，输出格式专门为机器消费设计；官方同时交付 MCP server、Claude Code 插件和一套 Agent 技能文件。也就是说，它不只是"人用的 grep 替代品"，而是按"让 LLM 拿着检索结果回答问题"来设计的。
 
-- 深入理解 QMD 的项目定位、技术架构和工作原理
-- 学会安装和配置 QMD（pip/curl 两种方式）
-- 掌握 QMD 的语义搜索和关键词搜索（BM25）混合搜索功能
-- 学会使用 CLI 和 Python API 进行文档搜索
-- 理解 MCP Server 与 AI Agent 的集成方式
-- 掌握增量索引和实时更新的配置
-- 支持的文档格式详解（PDF、Markdown、Office 文件等）
+资料口径：本文初版发布于 2026-04-06，当时项目最新版本为 v2.1.0；现在的内容按 2026-10-05 复核的 main 分支与 npm 最新版 v2.8.3（2026-08-16 发布）全面重写，机制描述以当次 README 和源码为准。文中单独标注了哪些能力尚未进正式版。项目由 Shopify 联合创始人 Tobi Lütke 开源，MIT 许可，2026-10-05 读数为 30,188 stars、1,888 forks。
 
----
+## 系统地图：三个入口、三个模型、四套接口
 
-## 1. 项目概述
+QMD 的结构可以压缩成一张图：
 
-### 1.1 是什么
-
-QMD（Query Matching on Documents）是一个**本地文档语义搜索工具**，它结合了语义搜索和关键词搜索，让用户能够快速在本地文档中找到相关内容。
-
-**核心理念**：你的数据永远留在你自己的机器上，不会上传到任何云服务。
-
-### 1.2 核心数据
-
-| 指标 | 数值 |
-|------|------|
-| GitHub Stars | **27k** |
-| GitHub Forks | **1.7k** |
-| 最新提交 | **2026-06-24**（2 天前） |
-| License | **Apache-2.0** |
-| 语言 | **TypeScript** |
-
-### 1.3 技术栈
-
-| 组件 | 技术 | 作用 |
-|------|------|------|
-| **嵌入模型** | Ollama | 将文本转换为向量 |
-| **向量存储** | SQLite + vecsimgrocerydemo | 高效存储和检索 |
-| **关键词搜索** | BM25 | 传统关键词匹配 |
-| **文档格式** | pdfminer/docling | 解析各类文档 |
-
-### 1.4 与竞品对比
-
-| 特性 | QMD | Semantic Scholar | Elasticsearch |
-|------|-----|-----------------|----------------|
-| **部署方式** | 本地 | 云服务 | 自托管 |
-| **数据隐私** | 完全本地 | 上传云端 | 自托管 |
-| **语义搜索** | ✅ Ollama | ✅ | ⚠️ 需要插件 |
-| **BM25 搜索** | ✅ | ❌ | ✅ |
-| **多格式支持** | ✅ 10+ 格式 | ❌ 仅 PDF | ⚠️ 需插件 |
-| **MCP 支持** | ✅ | ❌ | ❌ |
-
----
-
-## 2. 核心功能详解
-
-### 2.1 混合搜索
-
-QMD 的核心特点是**语义搜索 + 关键词搜索（BM25）**的混合搜索：
-
-```bash
-# 语义搜索示例
-qmd search "machine learning optimization techniques"
-# 返回语义上相关的内容，不一定包含这些词
-
-# 关键词搜索示例
-qmd search "machine learning" --method bm25
-# 只返回包含 "machine" 和 "learning" 的文档
+```mermaid
+flowchart LR
+  Q[用户查询] --> X[查询扩展模型]
+  Q --> FTS[BM25 全文检索]
+  Q --> VS[向量检索]
+  X --> LEX[lex 关键词子查询]
+  X --> VEC[vec 语义子查询]
+  X --> HYDE[hyde 假想文档]
+  LEX --> FTS
+  VEC --> VS
+  HYDE --> VS
+  FTS --> RRF[RRF 融合]
+  VS --> RRF
+  RRF --> RR[LLM 重排]
+  RR --> OUT[最终排序结果]
 ```
 
-### 2.2 支持的文档格式
+三个搜索入口的分工：
 
-| 格式 | 扩展名 | 支持情况 |
-|------|--------|---------|
-| **PDF** | .pdf | ✅ |
-| **Markdown** | .md, .markdown | ✅ |
-| **纯文本** | .txt | ✅ |
-| **Word** | .docx | ✅ |
-| **Excel** | .xlsx, .xls | ✅ |
-| **PowerPoint** | .pptx | ✅ |
-| **EPUB** | .epub | ✅ |
-| **CSV** | .csv | ✅ |
-| **JSON** | .json | ✅ |
-| **HTML** | .html, .htm | ✅ |
-| **XML** | .xml | ✅ |
+| 命令 | 路径 | 依赖模型 | 什么时候用 |
+|------|------|---------|-----------|
+| `qmd search` | BM25 全文（SQLite FTS5） | 无 | 已知确切的词、代号、标题、罕见短语 |
+| `qmd vsearch` | 向量相似（sqlite-vec） | 嵌入模型 | 换一种说法的概念召回 |
+| `qmd query` | 扩展 + 双路 + RRF + 重排 | 三个全部 | 质量优先时的默认选择 |
 
-### 2.3 实时索引
+`vsearch` 和 `query` 各有一个别名（`vector-search`、`deep-search`），源码注释标注为 undocumented alias，日常不必用。
 
-```bash
-# 初始化索引（扫描文档并创建数据库）
-qmd index ~/documents
+三个本地模型在首次使用时自动从 HuggingFace 下载，缓存在 `~/.cache/qmd/models/`：
 
-# 增量更新（只索引新文档或修改过的文档）
-qmd index ~/documents --incremental
+| 模型 | 职责 | 体积（官方标注） |
+|------|------|-----------------|
+| `embeddinggemma-300M-Q8_0` | 查询与文档块嵌入（默认） | ~300MB |
+| `qwen3-reranker-0.6b-q8_0` | 对候选逐个做 yes/no 重排 | ~640MB |
+| `qmd-query-expansion-1.7B-q4_k_m` | 生成 typed 子查询（作者微调） | ~1.1GB |
 
-# 查看索引状态
-qmd stats
+所有状态落在两个位置：索引是 `~/.cache/qmd/index.sqlite` 一个文件，内部七张表——`collections`（集合注册）、`path_contexts`（上下文描述）、`documents`（正文与 docid）、`documents_fts`（FTS5 全文索引）、`content_vectors`（嵌入块）、`vectors_vec`（sqlite-vec 向量索引）、`llm_cache`（扩展与重排的 LLM 响应缓存）。配置是 `~/.config/qmd/index.yml`，一份 YAML。
+
+对外有四套接口：CLI、TypeScript SDK（`@tobilu/qmd`）、MCP server、HTTP 端点。后文分别展开。
+
+## 查询文档：把"怎么问"当成一等输入
+
+QMD 里最值得琢磨的设计是查询本身的结构。`docs/SYNTAX.md` 把一次查询定义成"查询文档"：可以是一行裸文本，也可以是多行的 typed 行——`intent:` 说明意图，`lex:` 给关键词子查询，`vec:` 给语义子查询，`hyde:` 给一段"理想答案长什么样"的假想文档（即 HyDE，Hypothetical Document Embeddings，arXiv:2212.10496）。
+
+```text
+intent: Find the concept note about metrics as instruments without letting OKRs replace judgment.
+lex: cockpit instruments OKR Goodhart metrics judgment
+vec: data informed not metric driven product judgment
+hyde: A concept note says metrics are useful like cockpit instruments, but leaders
+should remain data-informed rather than metric-driven because OKRs and dashboards
+can Goodhart product judgment.
 ```
 
-### 2.4 MCP Server
+这个例子逐字来自仓库自带的 Agent 技能文件（`skills/qmd/SKILL.md`），那里面有一句相当直白的判断："You are a better query expander than the built-in model"——你比内置扩展模型更清楚用户真正想要什么、领域词汇是什么、哪些是"看起来相关其实不对"的概念。所以官方对 Agent 的建议是：别把用户的原话直接丢给 `qmd query` 指望扩展模型猜对，自己写 `intent:` 和 `lex:`。
 
-QMD 内置 **MCP Server**，可以与 AI Agent（如 Claude Code）集成：
+当确实让模型来扩展时（单行裸文本查询，或用户手写 `expand:`），内部流程是确定的：查询交给微调过的 1.7B 模型，输出被一条 GBNF 语法硬约束成 `lex:/vec:/hyde:` 行格式（`src/llm.ts` 里的 grammar 定义只允许这三个前缀），采样参数取 Qwen3 非思考模式的推荐值（temperature 0.7、topK 20、topP 0.8）。格式错误的可能性被语法消掉了，剩下的解析逻辑只做过滤。
 
-```bash
-# 启动 MCP Server
-qmd mcp
+这个 1.7B 扩展模型是 Tobi 自己训的：基座 Qwen3-1.7B，仓库里的 `finetune/` 目录完整保留了训练管线——SFT 数据集、评估脚本、GRPO 与 GEPA 实验、GGUF 转换脚本。`finetune/README.md` 自述 SFT 一轮约 45 分钟 A10G、成本约 $1.50，属于"小模型 + 任务足够窄"的典型做法。
 
-# 输出示例
-QMD MCP Server running on http://localhost:8080
-MCP JSON-RPC endpoint: http://localhost:8080/mcp
-```
+lex 子查询有一套自己的小语法：`word` 是前缀匹配（`perf` 能命中 performance）、`"exact phrase"` 短语精确匹配、`-term` 和 `-"phrase"` 排除。vec/hyde 子查询则必须是自然语言——源码会显式拒绝在 vec/hyde 里用 `-` 排除语法，提示"用 lex 做排除"。
 
-在 Claude Code 的 CLAUDE.md 中配置：
+## 从多路召回到最终排序
 
-```markdown
-<!-- CLAUDE.md -->
-For any question about your local documents, use the qmd tool.
-```
+`qmd query` 的完整管线有七步，每一步的参数都能在源码或 README 里找到：
 
----
+1. **BM25 探针**。先跑一次原始查询的 FTS 搜索；如果最高分不低于 0.85 且领先第二名 0.15 以上（`src/store.ts` 的 `STRONG_SIGNAL_MIN_SCORE` 和 `STRONG_SIGNAL_MIN_GAP`），直接认为关键词已经命中，跳过昂贵的 LLM 扩展。显式给了 `intent` 时这个旁路失效——"performance"这个词的强信号匹配，可能恰恰不是带着"网页加载耗时"意图的调用方想要的。
+2. **类型路由**。原始查询同时进 FTS 和向量两路；`lex` 子查询只走 FTS，`vec`/`hyde` 只走向量。所有待嵌入文本（原始查询 + vec/hyde 子查询）合并成一次 `embedBatch()` 调用，省掉多次模型往返。
+3. **RRF 融合**。所有结果列表用 Reciprocal Rank Fusion 合并，`score = Σ(1/(k+rank+1))`，k=60；原始查询的列表权重 2.0，扩展列表 1.0。这个权重分配是 v2.5.x 一轮修复（issue #591）的产物——此前"首条 lex 扩展"会意外抢走本该属于原始查询的加权。
+4. **头名加分**。在任何一条列表里排第一的文档加 0.05，第二三名加 0.02。README 解释了动机：纯 RRF 会在扩展查询不命中时稀释精确匹配，加分保住"原始查询的头名"。
+5. **截取候选**。取前 40 个候选进重排（源码常量 `RERANK_CANDIDATE_LIMIT = 40`，CLI 可用 `-C/--candidate-limit` 调整）。README 的 ASCII 架构图里仍写着 "Top 30 Kept"，图滞后于代码，以源码为准。
+6. **块级重排**。重排打分的是文档里与查询最相关的块，而不是全文——源码注释原话称之为 "O(tokens) trap"，对全文重排是给 1 万 token 而不是 1 千 token 付费。
+7. **位置感知混合**。按 RRF 排名分段加权：第 1-3 名 75% 检索分 + 25% 重排分（保住精确匹配），第 4-10 名 60/40，第 11 名以后 40/60（更信任重排器）。
 
-## 3. 工作原理深度解析
+最终分数可以按这张表读（README 口径）：
 
-### 3.1 整体架构
-
-```
-┌─────────────────────────────────────────────────┐
-│                   QMD 用户                       │
-│            (CLI / Python API)                   │
-└─────────────────┬───────────────────────────────┘
-                    │
-        ┌──────────┴──────────┐
-        ▼                     ▼
-┌───────────────┐     ┌─────────────────┐
-│  CLI 接口     │     │  Python API     │
-└───────┬───────┘     └────────┬────────┘
-        │                      │
-        └──────────┬───────────┘
-                   │
-        ┌─────────┴──────────┐
-        ▼                    ▼
-┌───────────────┐     ┌─────────────────┐
-│ BM25 索引    │     │  Ollama 嵌入    │
-│ (关键词搜索)  │     │ (语义搜索)       │
-└───────────────┘     └────────┬────────┘
-        │                      │
-        └──────────┬───────────┘
-                   │
-        ┌─────────┴──────────┐
-        ▼                    ▼
-┌───────────────┐     ┌─────────────────┐
-│  SQLite      │     │  向量数据库     │
-│ (BM25 结果)   │     │ (语义相似度)    │
-└───────────────┘     └─────────────────┘
-```
-
-### 3.2 语义搜索流程
-
-```python
-# QMD 语义搜索流程
-def semantic_search(query, top_k=5):
-    # 1. 使用 Ollama 将查询文本转换为向量
-    query_embedding = ollama.embeddings(
-        model="nomic-embed-text",
-        prompt=query
-    )
-    
-    # 2. 在向量数据库中搜索最相似的文档片段
-    results = vector_db.search(
-        query_embedding,
-        n=top_k
-    )
-    
-    # 3. 返回最相关的文档
-    return results
-```
-
-### 3.3 BM25 关键词搜索
-
-BM25（Best Matching 25）是一种经典的**概率关键词排序算法**：
-
-```python
-# BM25 算法核心思想
-def bm25_score(doc, query, k1=1.5, b=0.75):
-    """
-    - k1: 词频饱和参数（控制词频影响力）
-    - b: 文档长度归一化参数
-    """
-    scores = []
-    for term in query:
-        tf = doc.term_freq(term)           # 词频
-        df = corpus.doc_freq(term)        # 文档频率
-        idf = log((N - df + 0.5) / (df + 0.5))  # 逆文档频率
-        
-        # BM25 公式
-        score = idf * (tf * (k1 + 1)) / (tf + k1 * (1 - b + b * doc.len / avg_doc_len))
-        scores.append(score)
-    
-    return sum(scores)
-```
-
-### 3.4 混合搜索融合
-
-```python
-def hybrid_search(query, alpha=0.5):
-    """
-    alpha: 语义搜索权重 (1-alpha 是 BM25 权重)
-    """
-    # 获取语义搜索结果
-    semantic_results = semantic_search(query)
-    
-    # 获取 BM25 结果
-    bm25_results = bm25_search(query)
-    
-    # RRFR 融合
-    fused_results = []
-    for doc in corpus:
-        rrf_score = 0
-        for rank, result in enumerate(semantic_results[:k]):
-            if result.doc == doc:
-                rrf_score += 1 / (k + rank + 1)
-        
-        for rank, result in enumerate(bm25_results[:k]):
-            if result.doc == doc:
-                rrf_score += alpha / (k + rank + 1)
-        
-        fused_results.append((doc, rrf_score))
-    
-    return sorted(fused_results, key=lambda x: x[1], reverse=True)
-```
-
----
-
-## 4. 安装指南
-
-### 4.1 pip 安装（推荐）
-
-```bash
-# 安装 QMD
-pip install qmd
-
-# 验证安装
-qmd --version
-```
-
-### 4.2 curl 脚本安装（无需 pip）
-
-```bash
-# 一键安装
-curl -fsSL https://raw.githubusercontent.com/tobi/qmd/main/install.sh | sh
-
-# 安装到指定目录
-curl -fsSL https://raw.githubusercontent.com/tobi/qmd/main/install.sh | sh -s -- --prefix ~/.local
-```
-
-### 4.3 Ollama 安装（必需）
-
-QMD 需要 **Ollama** 作为嵌入模型的后端：
-
-```bash
-# macOS/Linux 安装 Ollama
-curl -fsSL https://ollama.com/install.sh | sh
-
-# Windows: 下载安装包 https://ollama.com/download
-
-# 启动 Ollama 服务
-ollama serve
-
-# 下载嵌入模型（推荐）
-ollama pull nomic-embed-text
-
-# 验证
-ollama list
-```
-
-### 4.4 Shell 自动补全
-
-```bash
-# Bash
-qmd --completion bash >> ~/.bashrc
-
-# Zsh
-qmd --completion zsh >> ~/.zshrc
-
-# Fish
-qmd --completion fish > ~/.config/fish/completions/qmd.fish
-```
-
----
-
-## 5. 快速上手
-
-### 5.1 初始化索引
-
-```bash
-# 创建索引（会扫描所有支持的文件）
-qmd index ~/documents
-
-# 指定目录
-qmd index /path/to/papers
-
-# 递归扫描子目录
-qmd index ~/documents --recursive
-
-# 查看索引统计
-qmd stats
-```
-
-### 5.2 基本搜索
-
-```bash
-# 语义搜索（默认）
-qmd search "What is transformer architecture?"
-
-# 关键词搜索
-qmd search "transformer attention" --method bm25
-
-# 混合搜索
-qmd search "neural network optimization" --method hybrid
-
-# 显示更多结果
-qmd search "machine learning" --top 10
-```
-
-### 5.3 搜索输出
-
-```bash
-# 简短输出
-qmd search "python async"
-
-# 输出示例
----
-Score: 0.89
-File: /docs/python-guide.md
-Line: 42
-Snippet: "Python's async/await syntax provides..."
----
-
-Score: 0.85
-File: /docs/advanced-python.md
-Line: 128
-Snippet: "Asynchronous programming in Python uses..."
-```
-
-### 5.4 增量更新
-
-```bash
-# 增量索引（只处理新文件）
-qmd index ~/documents --incremental
-
-# 强制重建索引
-qmd index ~/documents --rebuild
-```
-
----
-
-## 6. Python API 使用
-
-### 6.1 基本用法
-
-```python
-from qmd import QMD
-
-# 初始化
-qmd = QMD(
-    data_dir="~/.local/share/qmd",  # 数据目录
-    embed_model="nomic-embed-text"    # 嵌入模型
-)
-
-# 添加文档
-qmd.add("~/documents/python-guide.md")
-qmd.add("~/documents/notes/")
-
-# 搜索
-results = qmd.search("async programming in Python")
-for result in results:
-    print(f"{result.file}:{result.line} - {result.snippet}")
-```
-
-### 6.2 高级配置
-
-```python
-from qmd import SearchMethod
-
-# 配置搜索参数
-results = qmd.search(
-    query="machine learning optimization",
-    method=SearchMethod.HYBRID,  # 混合搜索
-    alpha=0.7,                    # 语义权重
-    top_k=10,                     # 返回结果数
-    min_score=0.5                 # 最低分数阈值
-)
-
-# 只搜索特定格式
-results = qmd.search(
-    "Python best practices",
-    extensions=[".md", ".txt"]    # 只搜索 Markdown 和文本
-)
-
-# 排除特定目录
-results = qmd.search(
-    "API design",
-    exclude_dirs=[".git", "node_modules", "__pycache__"]
-)
-```
-
-### 6.3 索引管理
-
-```python
-# 查看索引统计
-stats = qmd.stats()
-print(f"文档数: {stats['num_docs']}")
-print(f"索引大小: {stats['index_size']} bytes")
-
-# 重建索引
-qmd.rebuild()
-
-# 清理缓存
-qmd.clean()
-```
-
----
-
-## 7. MCP Server 集成
-
-### 7.1 启动 MCP Server
-
-```bash
-# 启动 Server
-qmd mcp --port 8080
-
-# 后台运行
-qmd mcp --port 8080 &
-```
-
-### 7.2 MCP Tools
-
-QMD MCP Server 提供以下工具：
-
-| 工具名 | 功能 |
+| 分数段 | 含义 |
 |--------|------|
-| `qmd_search` | 搜索文档 |
-| `qmd_add` | 添加文档到索引 |
-| `qmd_stats` | 查看索引统计 |
-| `qmd_rebuild` | 重建索引 |
+| 0.8 - 1.0 | 高度相关 |
+| 0.5 - 0.8 | 中度相关 |
+| 0.2 - 0.5 | 弱相关 |
+| 0.0 - 0.2 | 基本不相关 |
 
-### 7.3 在 AI Agent 中使用
+想知道每个结果为什么是这个分数，加 `--explain`：JSON 输出会带上每条列表的 FTS/向量得分、RRF 的 rank/weight/bonus 和每条子查询的贡献明细。调检索质量时先看这个，比猜参数有效。
 
-在 Claude Code 的 CLAUDE.md 中添加：
+## 索引侧：collection、context 与切块
 
-```markdown
-# Local Document Search
-For questions about code, documentation, or technical topics, use qmd to search local documents:
+索引的入口是集合。`qmd collection add ~/notes --name notes` 把一个目录注册进 `index.yml`，默认 glob 是 `**/*.md`，可用 `--mask` 改写（逗号分隔或 `{a,b}` 花括号都是并集）。内置排除 `node_modules`、`.git`、`.cache`、`vendor`、`dist`、`build`，且不可解除；另有 YAML 层的 `ignore` 字段处理"集合嵌套集合"这类情况。
 
-1. First, index the documents if not already done:
-   `qmd index ~/path/to/documents`
+索引刷新是显式的，没有后台文件监听进程。`qmd update` 扫描文件系统，按内容哈希比对，只处理新增、修改和删除的文件，并报告各集合的 indexed/updated/unchanged/removed 计数。每个集合可以配一个 `update` 命令（如 `git pull --rebase`），在每次 `qmd update` 时先于重索引执行——命令通过 `bash -c` 在集合自己的目录里跑，非零退出会中止整轮更新。顺带一提，早期 README 宣传过 `qmd update --pull`，v2.6.3 的更新日志承认这个 flag "被解析但从未被消费"（parsed but never consumed），真正机制就是 per-collection 的 update 命令，误导性示例随之撤下。
 
-2. Search using semantic or keyword search:
-   `qmd search "your question here"`
+`qmd context` 是官方反复强调的功能。它给集合或路径前缀挂一段描述文字，搜索命中子路径时随结果返回。README 在快速上手里写："This is the key feature of QMD as it allows LLMs to make much better contextual choices when selecting documents. Don't sleep on it!"——对 Agent 场景，这段描述就是"这条命中大概是什么"的先验。context 按 `qmd://` 虚拟路径组织成树：`qmd context add qmd://notes "Personal notes and ideas"` 挂整个集合，`qmd context add qmd://notes/work "Work-related notes"` 挂子树，`qmd context add / "..."` 挂全局。
 
-3. For technical queries, prefer semantic search for best results.
+切块决定向量质量。QMD 不按固定 token 硬切，而是给 Markdown 的各类断点打分——一级标题 100 分、二级 90、代码围栏边界 80、水平线 60、空行 20、列表项 5、普通换行 1——临近 900 token 目标时回看一个 200 token 的窗口，按 `finalScore = baseScore × (1 − (distance/window)² × 0.7)` 选最高分断点下刀，块间留 15% 重叠。代码围栏内部不打断点，代码尽量保持完整。对代码文件（`.ts`/`.tsx`/`.js`/`.jsx`/`.py`/`.go`/`.rs`），`--chunk-strategy auto` 启用 tree-sitter 的 AST 切块，在类、函数、导入边界下刀（此能力为 v2.1.0 引入；缺 grammar 时自动回退正则切块）。
+
+配置文件 `index.yml` 收拢了上面所有东西：`global_context`、`editor_uri`、`models`（embed/rerank/generate 三个角色的 HF URI 覆盖，解析顺序 config > 环境变量 > 内置默认）、每个集合的 `path`/`pattern`/`ignore`/`update`/`includeByDefault`/`context`。改完 `path`/`pattern`/`ignore` 要手动 `qmd update`，换 `models.embed` 要手动 `qmd embed -f`——改配置不会自动重索引。`qmd init` 可以在项目里建 `.qmd/` 目录，配置和索引都落在项目内而不是用户主目录。
+
+## 一次检索任务流过 QMD 的完整路径
+
+以官方技能文件演示的场景为准：在一份本地 wiki 里找"指标是有用的仪表盘，但别让 OKR 替你做判断"这条概念笔记。
+
+建库与索引：
+
+```sh
+qmd collection add ~/wiki --name wiki
+qmd context add qmd://wiki/concepts "产品理念与原则类笔记"
+qmd embed          # 首次运行会下载三个模型，约 2GB
 ```
 
-### 7.4 MCP 配置示例
+Agent 写一条结构化查询（示例来自 `skills/qmd/SKILL.md`）：
 
-```json
-{
-  "mcpServers": {
-    "qmd": {
-      "command": "qmd",
-      "args": ["mcp", "--port", "8080"],
-      "env": {
-        "QMD_DATA_DIR": "~/.local/share/qmd"
-      }
-    }
-  }
-}
+```sh
+qmd query $'intent: Find the concept note about metrics as instruments without letting OKRs replace judgment.\nlex: cockpit instruments OKR Goodhart metrics judgment\nvec: data informed not metric driven product judgment\nhyde: A concept note says metrics are useful like cockpit instruments, but leaders should remain data-informed rather than metric-driven because OKRs and dashboards can Goodhart product judgment.'
 ```
 
+命中的输出长这样（同样来自官方技能文件）：
+
+```text
+qmd://concepts/note.md  #abc123
 ---
 
-## 8. 配置选项
-
-### 8.1 配置文件
-
-QMD 配置文件位于 `~/.config/qmd/config.toml`（Linux/macOS）或 `%APPDATA%\qmd\config.toml`（Windows）：
-
-```toml
-[general]
-# 数据目录
-data_dir = "~/.local/share/qmd"
-
-# 索引目录
-index_dir = "~/.local/share/qmd/index"
-
-# 日志级别
-log_level = "INFO"
-
-[search]
-# 默认搜索方法 (semantic, bm25, hybrid)
-default_method = "hybrid"
-
-# 默认返回结果数
-default_top_k = 5
-
-# 语义搜索权重（用于混合搜索）
-semantic_weight = 0.7
-
-[embed]
-# Ollama 服务地址
-ollama_base_url = "http://localhost:11434"
-
-# 嵌入模型
-model = "nomic-embed-text"
-
-# 批处理大小
-batch_size = 32
-
-[index]
-# 并行线程数
-num_workers = 4
-
-# 文件大小限制（MB）
-max_file_size = 50
-
-# 排除的目录
-exclude_dirs = [".git", "node_modules", "__pycache__", ".venv"]
+1: # Metrics as instruments
+2:
+3: Treat dashboards like cockpit instruments...
 ```
 
-### 8.2 环境变量
+每条结果自带 `qmd://` 路径、docid 和从 1 开始的行号。接下来取原文不需要任何外部工具，`get` 自己会切行窗口：
 
-| 变量 | 说明 | 默认值 |
-|------|------|---------|
-| `QMD_DATA_DIR` | 数据目录 | ~/.local/share/qmd |
-| `QMD_OLLAMA_URL` | Ollama 地址 | http://localhost:11434 |
-| `QMD_LOG_LEVEL` | 日志级别 | INFO |
-
----
-
-## 9. 性能优化
-
-### 9.1 索引性能
-
-```bash
-# 使用多线程加速索引
-qmd index ~/documents --num-workers 8
-
-# SSD vs HDD
-# SSD: ~1000 docs/min
-# HDD: ~200 docs/min
+```sh
+qmd get "#abc123:120:40"      # 从第 120 行读 40 行，docid 也支持同样后缀
+qmd multi-get "#abc123,#def432" --format md
 ```
 
-### 9.2 搜索性能
+官方技能文件对这一步有明确纪律：不要 `qmd get ... | sed -n '120,160p'`——管道会丢掉 docid 解析、虚拟路径查找和行号头；引用答案时同时给 docid 和行号，下一轮追问可以直接切片。整个循环就是：查询拿线索 → `get`/`multi-get` 取全文 → 带出处回答。搜索结果里没有的事实不要用片段脑补，这是 SKILL.md 的原话逻辑（"Snippets are only leads"）。
 
-| 索引规模 | 首次搜索 | 缓存后 |
-|----------|---------|--------|
-| 1,000 文档 | ~200ms | ~10ms |
-| 10,000 文档 | ~500ms | ~20ms |
-| 100,000 文档 | ~2s | ~50ms |
+## 给 Agent 用的四套接口
 
-### 9.3 内存使用
+**CLI** 是第一接口，输出设计处处向机器倾斜：`--format` 统一选 cli/json/csv/md/xml/files（`--json` 等旧 flag 保留为别名）；非 TTY 环境自动去掉颜色和超链接转义；`get`/`multi-get` 默认带行号；`--full-path` 把 `qmd://` URI 换成磁盘绝对路径（文件已移动或删除的结果保留 URI 和 docid，并向 stderr 提示跑 `qmd update`）。`-c` 可重复传多个集合（OR 语义），官方提醒：多集合时结果出自一个全局 top-K 池再过滤，小集合可能被挤出默认条数，需要调大 `-n` 或用 `--all`。
 
-```bash
-# 查看内存使用
-qmd stats
+**MCP server** 默认走 stdio，`qmd mcp` 即启动。npm v2.8.3 暴露四个工具：`query`（typed 子查询搜索）、`get`（按路径或 docid 取文档，支持 `#abc123:120:40` 形式）、`multi_get`（glob/逗号列表批量取）、`status`（索引健康与集合信息）。main 分支已加入第五个工具 `metadata`（元数据发现，见下文版本一节，尚未发版）。`query` 工具的参数表里最值得注意的是 `searches` 数组——一到十条 typed 子查询，第一条自动拿 2 倍权重——以及 `rerank` 默认开、`candidateLimit` 默认 40。
 
-# 典型内存占用
-# 10,000 文档: ~500MB RAM
-# 100,000 文档: ~4GB RAM
+长期运行的场景用 HTTP 传输，避免每个客户端重复加载模型：`qmd mcp --http` 监听 8181（`--port` 可改，`--daemon` 后台化，`qmd mcp stop` 按 PID 文件停止）。端点有 `POST /mcp`（MCP Streamable HTTP）、`POST /query`（免 MCP 协议的结构化搜索）、`GET /health`。模型常驻显存，嵌入/重排上下文闲置 5 分钟后回收，下个请求约 1 秒重建。
+
+**Claude Code 插件**两条命令装完：
+
+```sh
+claude plugin marketplace add tobi/qmd
+claude plugin install qmd@qmd
 ```
 
----
+仓库的 `.claude-plugin/marketplace.json` 同时注册了 `qmd` 技能和 MCP server 条目，装完即用；Claude Desktop 则在配置文件里手动加 `mcpServers` 条目（`command: "qmd"`, `args: ["mcp"]`）。
 
-## 10. 常见问题
+**SDK** 面向 Node.js/Bun 应用：`import { createStore } from '@tobilu/qmd'`，支持内联配置、YAML 配置文件、纯重开三种模式。`dbPath` 是显式必填——官方说明这是为了避免库带着隐式副作用嵌进别人的应用。SDK 与 CLI 共享同一套 `search`/`searchLex`/`searchVector`/`get`/`multiGet`/`update`/`embed` 接口和类型定义。
 
-### 10.1 Ollama 连接失败
+v2.5.0 起还有一组 `qmd skills`/`qmd skill` 命令：从安装的 CLI 里输出与当前版本匹配的技能指令，`qmd skill install` 写入一个稳定的发现桩（discovery stub），QMD 升级后 Agent 读到的用法说明不会过期。
 
-```bash
-# 检查 Ollama 是否运行
-ollama list
+## 检索质量自测：qmd bench 该怎么读
 
-# 如果没有运行，启动它
-ollama serve
+QMD 自带基准命令 `qmd bench`，读它的数字之前先回答三个问题。
 
-# 检查端口
-curl http://localhost:11434
-```
+**测的是什么？** 一份 JSON 夹具（每条含 query、expected_files、expected_in_top_k）跑四个后端——`bm25`（纯关键词）、`vector`（纯语义）、`hybrid`（BM25+向量融合，无重排）、`full`（完整管线含 LLM 重排）——报 precision@k、recall、MRR、F1。
 
-### 10.2 嵌入模型加载失败
+**数字反映系统的哪部分？** README 给的示例夹具典型读数是 bm25 约 0.50、vector 约 0.70、hybrid 和 full 约 1.00。从 bm25 到 vector 的提升来自嵌入模型的语义召回，从 hybrid 到 full 的提升主要来自 RRF 融合与重排——也就是说，这套管线里"融合与重排"环节对最终排序的贡献，比换嵌入模型更大。
 
-```bash
-# 重新下载嵌入模型
-ollama pull nomic-embed-text
+**不能推出什么？** 这些读数来自仓库自带的示例夹具和 `test/eval-docs/` 测试语料，属于官方自报口径，且两者只存在于 git checkout——npm 安装包不包含，用户要自带夹具对着自己的集合跑。另外官方给了一个 heads-up：夹具指向的集合没建索引时，bench 会跑完并全部报零，没有任何警告，跑之前先用 `qmd ls` 确认。
 
-# 使用其他模型
-export QMD_EMBED_MODEL="mxbai-embed-large"
-```
+## 安全模型：卖"本地"就要守住本地
 
-### 10.3 索引损坏
+"数据不出机器"是 QMD 的卖点，但 v2.8.3（2026-08-16）整版都在补本地图景下的安全洞，这说明作者清楚"本地"不等于"无攻击面"。三件事值得所有本地工具作者参考：
 
-```bash
-# 备份并重建索引
-cp -r ~/.local/share/qmd ~/.local/share/qmd.bak
-qmd index ~/documents --rebuild
-```
+**项目内配置不可信。** `.qmd/index.yml` 会随 `git clone` 落地，在其中任何目录里跑 QMD 都会自动采纳它——而配置里的 `update` 命令是别人写的 shell 脚本。修复前，"克隆一个仓库然后跑 qmd update"等于执行了仓库作者选定的任意命令。现在终端会列出这些受门控字段并询问；没有终端可问（Agent、CI）就跳过并继续索引项目内文件。批准记录在 `~/.config/qmd/trusted.json`，改一个字符就要重新批。`qmd trust`/`trust list`/`trust revoke` 管理审批，`QMD_TRUST_LOCAL_CONFIG=1` 供 CI 显式放行。同一道门也罩住了指向项目外的集合路径和非默认模型 URI。
 
----
+**HTTP 端口防 DNS rebinding。** 绑定 localhost 挡不住用户自己的浏览器：恶意网页可以把域名解析指到 127.0.0.1，借浏览器之手读取本机索引。修复后每个请求都校验 `Origin` 和 `Host` 头，非回环地址一律 403；curl 和 MCP 客户端这类不带 Origin 的请求不受影响。例外放行走 `QMD_ALLOWED_ORIGINS`/`QMD_ALLOWED_HOSTS`。注意 `--host 0.0.0.0` 会跳过 Host 校验并在启动时警告——HTTP 端点本身无鉴权，暴露到外网前必须自己加认证层。
 
-## 10. 常见问题
+**路径逃逸封堵。** 索引不再跟随文件符号链接，glob 的 `../` 和绝对路径模式也无法越出集合目录；`qmd://collection/../../../etc/passwd` 这类虚拟路径在解析时做同样的围栏检查。
 
-### 10.1 Ollama 连接失败
+## 版本漂移：发文时的 v2.1.0 与今天的差别
 
-```bash
-# 检查 Ollama 是否运行
-ollama list
+QMD 迭代很快，把版本线摆出来有助于判断旧资料的时效性：
 
-# 如果没有运行，启动它
-ollama serve
+| 版本 | 日期 | 主线 |
+|------|------|------|
+| 0.1.0 | 2025-12-07 | CHANGELOG 首个条目，项目起步 |
+| 1.0.0 | 2026-02-15 | npm 包首发（`@tobilu/qmd`） |
+| 2.0.0 | 2026-03-10 | 架构整备 |
+| 2.1.0 | 2026-04-05 | AST 切块、`qmd bench`、`models:` 配置段、OSC 8 可点击链接、`--no-rerank` |
+| 2.5.0-2.5.3 | 2026-05 | `qmd skills`/`skill`、`qmd doctor` 诊断、Windows 启动器重写、npm Trusted Publishing、`get :from:count`、默认行号、`--format` 统一 |
+| 2.6.3 | 2026-06-24 | `index.yml` 文档化、update 钩子文档化、撤下假的 `--pull` 示例、`embed --timeout` |
+| 2.8.3 | 2026-08-16 | 安全专项：信任门、DNS rebinding 防护、路径逃逸封堵；MCP SDK 2.x、node-llama-cpp 3.20 |
+| Unreleased | — | 文档元数据过滤与发现（见下） |
 
-# 检查端口
-curl http://localhost:11434
-```
+热度轨迹：GitHub 存档实拍 2026-04-07 为 19,247 stars，2026-10-05 为 30,188 stars，半年间涨了超过一半；npm 包 2026-02-15 首发至今发了 16 个版本。
 
-### 10.2 嵌入模型加载失败
+两处"文档与代码不同步"的现场，查资料时值得知道：README 的 ASCII 架构图仍写截取前 30 候选，源码常量已是 40；多文档批量获取的默认单文件上限从 10KB 提到了 64KB（`DEFAULT_MULTI_GET_MAX_BYTES`），旧文若写 10KB 即已过期。
 
-```bash
-# 重新下载嵌入模型
-ollama pull nomic-embed-text
+Unreleased 里的元数据功能是一个方向性变化：文档可以在 frontmatter 的 `qmd.metadata` 块里声明类型化元数据（字符串、数字、布尔、同构数组），所有搜索面（CLI/SDK/MCP/HTTP）共用一套 `operator` 判别的递归过滤 AST——`eq/ne/gt/gte/lt/lte`、`in/nin/all`、`contains/prefix/suffix`、`type`、`exists` 加 `and/or/not` 组合，过滤发生在 RRF 融合与重排之前；配套的发现命令（`qmd collection metadata`）报告索引里实际存在的键、类型和值分布，让过滤器"照着索引写而不是猜"。这批能力截至复核日只在 main 分支，npm latest 2.8.3 未包含，先用上的办法是等发版或从源码跑。
 
-# 使用其他模型
-export QMD_EMBED_MODEL="mxbai-embed-large"
-```
+## 采用建议与边界
 
-### 10.3 索引损坏
+适合先上：
 
-```bash
-# 备份并重建索引
-cp -r ~/.local/share/qmd ~/.local/share/qmd.bak
-qmd index ~/documents --rebuild
-```
+- 数据敏感的个人知识库、团队 wiki、会议记录、客户资料——要语义检索又不能出本地的场景，QMD 目前几乎是把完整管线装进笔记本的最省心选项；
+- 要给 coding agent 或知识 agent 配检索后端的团队——docid、行号、`qmd://` URI、MCP、版本匹配的技能文件，这条链路是按 Agent 消费设计的，不用自己糊；
+- 想读一个"小而全"的混合检索实现的人——RRF、位置感知混合、HyDE、GBNF 约束、小模型微调管线全部有源码可读，`finetune/` 连训练成本都写明了。
 
----
+先等等或有替代路径：
 
-## 11. 自测题
+- 要索引 PDF、Word、EPUB——没有解析层，默认 glob 只收 `**/*.md`，代码文件可用 `--mask` 纳入并由 AST 切块处理，二进制文档需要先自建转换管道；
+- 中文语料——默认的 embeddinggemma 官方自述为英文优化、CJK 覆盖有限，README 给的解法是 `QMD_EMBED_MODEL` 换 Qwen3-Embedding-0.6B（官方标注支持 119 种语言）并 `qmd embed -f` 全量重嵌，换模型是必要动作而不是可选项；
+- 想服务多人或部署成内网搜索——HTTP 端点无鉴权，`--host 0.0.0.0` 需要自己在前面加认证层；它的设计单位是"一个人和他的机器"；
+- 找 `pip install qmd` 的人——PyPI 上的 `qmd` 包（v0.1.2，2026-04-16 上架）是社区 Python 移植，命令面与官方 CLI 不同，且其元数据指向的仓库已迁移；官方发行渠道只有 npm 的 `@tobilu/qmd`。
 
-### 题目1：混合搜索原理
+落地顺序建议：装好先对一两个真实目录建集合、写 context、跑 `qmd query` 看质量，再接 Claude Code 插件；确认日常可用后用 `qmd mcp --http --daemon` 常驻；上量之前自建 bench 夹具测一遍。前置条件记住三条：Node 22+（或 Bun 1.0+）、macOS 需要 Homebrew SQLite（扩展加载需要）、首次使用合计约 2GB 的模型下载；Windows 可用（启动器已在 v2.5.2 重写，CUDA 场景注意 `QMD_EMBED_PARALLELISM` 默认串行）。
 
-**问题**：QMD 的混合搜索是如何结合语义搜索和 BM25 关键词搜索的？为什么这种结合比单一搜索方式更好？
-
-<details>
-<summary>参考答案</summary>
-
-QMD 的混合搜索通过以下步骤结合两种搜索方式：
-1. 分别执行语义搜索和 BM25 搜索，获得两个独立的结果列表
-2. 使用 RRF（Reciprocal Rank Fusion）算法融合两个结果列表
-3. 通过 alpha 参数控制语义搜索的权重（1-alpha 是 BM25 的权重）
-
-**为什么更好**：
-- 语义搜索能理解查询意图，但可能错过关键词精确匹配
-- BM25 能精确匹配关键词，但无法理解语义
-- 混合搜索取长补短，提高召回率和准确率
-</details>
-
-### 题目2：Ollama 的作用
-
-**问题**：QMD 为什么需要 Ollama？能否使用其他嵌入模型后端？
-
-<details>
-<summary>参考答案</summary>
-
-**Ollama 的作用**：
-- 提供本地运行的嵌入模型（如 nomic-embed-text）
-- 将文本转换为向量表示，供语义搜索使用
-- 完全本地运行，无需云服务，保护隐私
-
-**能否使用其他后端**：
-- QMD 目前只支持 Ollama 作为嵌入模型后端
-- 但 Ollama 支持多种嵌入模型（nomic-embed-text、mxbai-embed-large 等）
-- 可以通过 `ollama pull <model>` 下载不同模型，然后通过配置指定使用哪个模型
-</details>
-
-### 题目3：增量索引
-
-**问题**：QMD 的增量索引是如何工作的？它如何判断哪些文件需要重新索引？
-
-<details>
-<summary>参考答案</summary>
-
-**增量索引原理**：
-1. QMD 记录每个文件的元数据（修改时间、文件大小、内容哈希等）
-2. 执行增量索引时，对比文件的当前状态和已记录的状态
-3. 只重新索引满足以下任一条件的文件：
-   - 文件内容发生变化（内容哈希不同）
-   - 文件被新增
-   - 文件被删除（从索引中移除）
-
-**优势**：
-- 大幅减少索引时间（只处理变化的文件）
-- 适合持续更新的文档库
-</details>
-
-### 题目4：MCP Server 集成
-
-**问题**：QMD 的 MCP Server 有什么用？如何在 Claude Code 中使用它？
-
-<details>
-<summary>参考答案</summary>
-
-**MCP Server 的作用**：
-- 提供标准协议（MCP）让 AI Agent 能够搜索本地文档
-- AI Agent（如 Claude Code）可以通过 MCP 工具调用 QMD 的搜索功能
-- 使 AI Agent 能够基于本地文档回答问题，而不仅仅是依赖训练数据
-
-**在 Claude Code 中使用**：
-1. 启动 QMD MCP Server：`qmd mcp --port 8080`
-2. 在 Claude Code 的 MCP 配置中添加 QMD Server
-3. 在 CLAUDE.md 中指示 Claude Code 使用 qmd 工具搜索本地文档
-4. 当询问技术问题时，Claude Code 会自动调用 QMD 搜索相关文档
-</details>
-
-### 题目5：性能优化
-
-**问题**：如果你的文档库有 10 万个文件，你会如何优化 QMD 的索引和搜索性能？
-
-<details>
-<summary>参考答案</summary>
-
-**索引性能优化**：
-1. 增加并行线程数：`qmd index ~/documents --num-workers 8`
-2. 使用 SSD 存储索引（SSD 比 HDD 快 5 倍）
-3. 排除不需要索引的目录（如 `.git`、`node_modules`）
-4. 定期清理缓存：`qmd clean`
-
-**搜索性能优化**：
-1. 使用增量索引减少索引规模
-2. 调整 `top_k` 参数，只返回最相关的结果
-3. 使用 `min_score` 阈值过滤低分结果
-4. 对于大文档库，考虑分片索引（按主题或时间分片）
-</details>
-
----
-
-## 12. 进阶路径
-
-### 阶段1：深入语义搜索原理
-
-- 学习向量嵌入（embedding）的原理和算法（Word2Vec、BERT、Sentence Transformers）
-- 理解向量数据库的工作机制（ANN、HNSW、IVF）
-- 探索不同的相似度度量方法（余弦相似度、欧氏距离、点积）
-
-### 阶段2：自定义 QMD
-
-- 阅读 QMD 源码，理解其架构和实现细节
-- 为 QMD 添加新的文档格式支持
-- 自定义混合搜索的融合算法（当前使用 RRF，可以尝试其他算法）
-
-### 阶段3：构建基于 QMD 的应用
-
-- 将 QMD 集成到自己的知识管理系统（如 Obsidian、Notion）
-- 构建基于 QMD 的文档问答系统（结合 LLM）
-- 使用 QMD 的 Python API 构建自定义搜索界面
-
-### 阶段4：探索其他语义搜索技术
-
-- 学习 Elasticsearch 的语义搜索插件（ELSER、kNN）
-- 探索专用向量数据库（Milvus、Qdrant、Weaviate）
-- 了解多模态搜索（文本+图片+音频）
-
----
-
-## 13. 总结
-
-QMD 是一个**功能完备的本地文档语义搜索工具**，具有以下优势：
-
-**为什么选择 QMD：**
-
-| 优势 | 说明 |
-|------|------|
-| **完全隐私** | 数据永不离开本地机器 |
-| **混合搜索** | 语义 + BM25，取长补短 |
-| **多格式支持** | PDF、Office、EPUB 等 10+ 格式 |
-| **MCP 集成** | 与 AI Agent 无缝配合 |
-| **增量索引** | 自动处理新文档 |
-| **轻量级** | 纯 Python 实现 |
-
-**适用场景：**
-
-- 代码库文档搜索
-- 技术文档检索
-- 个人知识库搜索
-- AI Agent 文档问答
-
-**官方资源：**
-
-- GitHub：https://github.com/tobi/qmd
-- 文档：https://github.com/tobi/qmd#readme
-- PyPI：https://pypi.org/project/qmd
-- Ollama：https://ollama.com
+回头看，QMD 的价值不在"又一个本地搜索工具"，而在于它验证了一个判断：2025-2026 年检索圈收敛出的那套做法——查询扩展、多路召回、RRF、LLM 重排——并不天然属于云服务，用三个小模型加一个 SQLite 文件就能整体搬回本地，而且可以把"给 Agent 用"当成一等设计约束。对被云端 RAG 锁住的团队，这是一个值得认真评估的对照组。
