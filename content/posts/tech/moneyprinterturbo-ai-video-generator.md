@@ -13,7 +13,7 @@ tags: ["AI视频生成", "Python"]
 
 [harry0703/MoneyPrinterTurbo](https://github.com/harry0703/MoneyPrinterTurbo) 做的事情一句话能说完：给它一个主题或一段现成文案，它把脚本生成、配音、素材匹配、字幕、配乐、合成整条链跑完，交给你一条 9:16、16:9 或 1:1 的高清短视频。它自己不训练任何视频模型，而是把成熟的云服务（大语言模型、语音合成（TTS）、素材库、可选的文生视频 API）和本地的 MoviePy/FFmpeg 串成一条流水线——理解这一点，后面所有配置项的用途都由此展开。
 
-本文是上手指南，回答四个问题：选哪个入口、怎么装、填什么配置、怎么跑通第一条视频，外加出错了去哪查。想看流水线内部结构（五个 stage 的边界、可插拔点），可以读本站另一篇[架构拆解](/posts/harry0703-moneyprinterturbo-short-video-automation-guide-2026/)。文中仓库数据在 2026-10-02 通过 GitHub API 核对：127,933 stars / 20,016 forks，MIT 协议，最新 release v1.3.7（2026-09-13），`main` 分支最近推送 2026-10-01。本文的命令与配置对照的正是这一天前后的 `main` 分支。
+本文是上手指南，回答四个问题：选哪个入口、怎么装、填什么配置、怎么跑通第一条视频，外加出错了去哪查。想看流水线内部结构（五个 stage 的边界、可插拔点），可以读本站另一篇[架构拆解](/posts/tech/harry0703-moneyprinterturbo-short-video-automation-guide-2026/)。文中仓库数据在 2026-10-02 通过 GitHub API 核对：127,933 stars / 20,016 forks，MIT 协议，最新 release v1.3.7（2026-09-13），`main` 分支最近推送 2026-10-01。本文的命令与配置对照的正是这一天前后的 `main` 分支。
 
 ## 一、四种使用方式，先选一条
 

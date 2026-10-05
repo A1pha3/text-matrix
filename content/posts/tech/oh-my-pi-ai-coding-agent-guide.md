@@ -52,7 +52,7 @@ irm https://omp.sh/install.ps1 | iex
 
 传统 agent 调用 `edit` 时，模型输出 diff 格式，解析器提取行号，内容写入文件。问题在于：模型对行号没有视觉验证，一旦文件在模型上下文之外被修改，行号就指向了错误位置，反复重试消耗 token 和时间。
 
-omp 的解决方案是 **hashline**（内容哈希锚定编辑）。模型不指向行号，而指向一段内容及其哈希值——文件被修改后，锚点发散，系统在 apply 之前就拒绝这次 patch，而不是把错误内容写入磁盘。Grok 4 Fast 同一个任务，输出 token 下降 61%，不是因为模型变了，是因为 retry loop 消失了。现行语法的完整规则（PUT/CUT、@寄存器、ABORT）见笔者的[另一篇 omp 深读](/posts/can1357-oh-my-pi-hash-anchored-terminal-coding-agent-guide/)，此处不展开。
+omp 的解决方案是 **hashline**（内容哈希锚定编辑）。模型不指向行号，而指向一段内容及其哈希值——文件被修改后，锚点发散，系统在 apply 之前就拒绝这次 patch，而不是把错误内容写入磁盘。Grok 4 Fast 同一个任务，输出 token 下降 61%，不是因为模型变了，是因为 retry loop 消失了。现行语法的完整规则（PUT/CUT、@寄存器、ABORT）见笔者的[另一篇 omp 深读](/posts/tech/can1357-oh-my-pi-hash-anchored-terminal-coding-agent-guide/)，此处不展开。
 
 ### fork-exec 开销
 

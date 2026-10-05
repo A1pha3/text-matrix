@@ -11,7 +11,7 @@ source_key: "gh:tirth8205/code-review-graph"
 slug: "code-review-graph-ai-knowledge-graph"
 ---
 
-[code-review-graph](https://github.com/tirth8205/code-review-graph)（下称 CRG）把"理解一个代码库"从每次 AI 会话里的临时开销，变成一份存在仓库里的持久资产：Tree-sitter 解析出函数、类、导入、调用点和继承关系，连同测试覆盖一起存进一个 SQLite 文件。这份资产有两种用法。第一种你已经猜到——审查时算出变更的爆炸半径，只让 agent 读受影响的文件，六仓库基准中位约 63 倍的 token 缩减就来自这条路（工作流细节见[姊妹篇](/posts/tirth8205-code-review-graph-context-reduction/)，本文不重复）。第二种用得少得多，也更可惜：把图本身当作架构分析工具，回答"这个系统的社区结构长什么样、哪里是瓶颈、哪些依赖出乎意料、哪里没有测试"。
+[code-review-graph](https://github.com/tirth8205/code-review-graph)（下称 CRG）把"理解一个代码库"从每次 AI 会话里的临时开销，变成一份存在仓库里的持久资产：Tree-sitter 解析出函数、类、导入、调用点和继承关系，连同测试覆盖一起存进一个 SQLite 文件。这份资产有两种用法。第一种你已经猜到——审查时算出变更的爆炸半径，只让 agent 读受影响的文件，六仓库基准中位约 63 倍的 token 缩减就来自这条路（工作流细节见[姊妹篇](/posts/tech/tirth8205-code-review-graph-context-reduction/)，本文不重复）。第二种用得少得多，也更可惜：把图本身当作架构分析工具，回答"这个系统的社区结构长什么样、哪里是瓶颈、哪些依赖出乎意料、哪里没有测试"。
 
 第二种用法不需要换任何工具。同一张图、同一个 MCP（Model Context Protocol，AI 工具接外部能力的标准协议）server，30 个工具里有一整组是给架构分析准备的——本文就把这半边讲清楚。
 
@@ -105,7 +105,7 @@ token 效率基准（2026-08-02 capture，全部固定 SHA）：
 | httpx | 142,356 | 2,661 | 53.5x |
 | express | 136,052 | 3,936 | 34.6x |
 
-中位约 63x。三个读数前提：全量基线是理论上限，真实 agent 会先 grep 再读最匹配的几个文件，官方的 `agent_baseline` 基准已实现但尚未发布正式捕获；357.6x 出自语料最大的 fastapi，是最好情况不是典型值；这组数字比上一轮 capture 低，原因是节点嵌入文本变丰富后 graph_tokens 在每个仓库都升高——一个会把自家 headline 数字主动改小的项目，基准纪律本身就是稀缺品质。数字的完整解读（包括影响精度 F1 0.693 的含义和 co-change 模式为何暂不可用）在[姊妹篇](/posts/tirth8205-code-review-graph-context-reduction/)里有逐项拆解。
+中位约 63x。三个读数前提：全量基线是理论上限，真实 agent 会先 grep 再读最匹配的几个文件，官方的 `agent_baseline` 基准已实现但尚未发布正式捕获；357.6x 出自语料最大的 fastapi，是最好情况不是典型值；这组数字比上一轮 capture 低，原因是节点嵌入文本变丰富后 graph_tokens 在每个仓库都升高——一个会把自家 headline 数字主动改小的项目，基准纪律本身就是稀缺品质。数字的完整解读（包括影响精度 F1 0.693 的含义和 co-change 模式为何暂不可用）在[姊妹篇](/posts/tech/tirth8205-code-review-graph-context-reduction/)里有逐项拆解。
 
 对本篇的主题，benchmark 只说明一件事：图查询响应被刻意控制在 2,000–4,000 token 量级，所以"顺手问一句架构问题"的成本低到可以随时发生——架构分析不需要专门立项，它可以是日常工作流里的一条命令。
 

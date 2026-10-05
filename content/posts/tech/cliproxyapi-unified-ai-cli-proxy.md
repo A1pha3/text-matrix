@@ -15,7 +15,7 @@ CLIProxyAPI 把 Claude Code、Codex、Gemini、Kimi 这类原本依赖本地 OAu
 
 项目于 2025 年 7 月创建，一年出头冲到 53,800+ Stars、870+ 个 Release，节奏几乎是日更。它已经不只是"把几个 CLI 包一层"：README 的 provider 表按模型家族组织——OpenAI GPT-6 系（走 Codex OAuth）、Anthropic Claude 系、Google Gemini 系（Gemini API、AI Studio、Vertex AI、Gemini CLI、Antigravity 五类渠道）、xAI Grok 系、Moonshot Kimi 系、Meta Muse 系和 Devin，每家都能用订阅账号登录。
 
-只打算调用官方按 Token 计费的稳定 API，直接接官方接口更省事。本文讨论的是另一类场景：要复用这些订阅制能力，并把它们接进 Cursor、Cline、Amp、自写桌面应用或自动化服务，就得处理认证、路由和运行态这一层。本文以 2026 年 10 月 2 日的 main 分支源码（v8.0.10）、官方中文手册和管理 API 文档为准，重点放在它的定位、部署顺序和实际边界。安装与迁移的完整步骤见姊妹篇[《CLIProxyAPI 上手与迁移指南》](/posts/cliproxyapi-openai-compatible-api-proxy-guide/)，本文不重复那些内容。
+只打算调用官方按 Token 计费的稳定 API，直接接官方接口更省事。本文讨论的是另一类场景：要复用这些订阅制能力，并把它们接进 Cursor、Cline、Amp、自写桌面应用或自动化服务，就得处理认证、路由和运行态这一层。本文以 2026 年 10 月 2 日的 main 分支源码（v8.0.10）、官方中文手册和管理 API 文档为准，重点放在它的定位、部署顺序和实际边界。安装与迁移的完整步骤见姊妹篇[《CLIProxyAPI 上手与迁移指南》](/posts/tech/cliproxyapi-openai-compatible-api-proxy-guide/)，本文不重复那些内容。
 
 ## 这篇文章适合哪三类读者
 

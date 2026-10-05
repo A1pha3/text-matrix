@@ -187,7 +187,7 @@ pi-subagents 自己还有一层配置，在 `~/.pi/agent/extensions/subagent/con
 
 **不适合**：
 
-- 父会话必须是 Pi。不用 Pi 的用户装不了这套东西；Pi 生态概览可以看站内那篇 oh-my-pi 的[深度解读](/posts/oh-my-pi-coding-agent-deep-dive/)。
+- 父会话必须是 Pi。不用 Pi 的用户装不了这套东西；Pi 生态概览可以看站内那篇 oh-my-pi 的[深度解读](/posts/tech/oh-my-pi-coding-agent-deep-dive/)。
 - 找企业级多代理平台的请绕行。VISION.md 写得直白：这个项目服务"一个 Pi 操作者"，单个人用一场会话撬动更多产出；它不做通用项目管理、不碰 CI 和发布策略，只向这些系统报告证据。
 - 需要"后台默默替我审查每次改动"的默认行为——这违反项目原则，委托必须由你直接或通过指令发起。
 

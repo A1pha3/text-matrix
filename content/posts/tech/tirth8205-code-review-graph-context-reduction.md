@@ -17,7 +17,7 @@ source_key: "gh:tirth8205/code-review-graph"
 
 code-review-graph（下称 CRG）解决的问题是 **"AI Coding Agent 在 review 时应该读哪些文件"**。它用 Tree-sitter 把代码库解析成 AST，再整理成 nodes（函数、类、导入）+ edges（调用、继承、测试覆盖）的图，持久化到仓库里的一个 SQLite 文件。文件一改，CRG 用图算出 blast radius（爆炸半径）——所有可能受影响的 callers、dependents 和测试——agent 只读这批文件，而不是在整库里翻。
 
-这张图不止服务 review 工作流。社区检测、枢纽与桥、意外耦合、知识缺口那一组架构分析能力共用同一张图，在[姊妹篇](/posts/code-review-graph-ai-knowledge-graph/)里单独展开。
+这张图不止服务 review 工作流。社区检测、枢纽与桥、意外耦合、知识缺口那一组架构分析能力共用同一张图，在[姊妹篇](/posts/tech/code-review-graph-ai-knowledge-graph/)里单独展开。
 
 它的价值判断要放在两处看：headline 数字（六仓库基准中位数 63x 的 token 削减）建立在一个真实 agent 不会付的全库基线上，水分要挤；但 blast radius、callers-of-callers、tests-for 这类多跳结构查询，是 grep 和向量检索都给不了的，这部分才是它区别于 RAG 工具的立身之本。
 

@@ -20,7 +20,7 @@ tags: ["AI Agent", "CLI", "Claude Code", "Python", "开源项目"]
 - **只想用现成的**：装 `cli-hub` 包管理器，从注册表里挑一个装好即用。适合目标软件已经有社区 CLI 的场景。
 - **要造新的**：在 Claude Code 等 Agent 里装插件，一条 `/cli-anything <软件路径>` 跑完七阶段流水线，产出可 `pip install` 的独立 CLI。适合注册表里还没有的软件、内部工具或代码库。
 
-本文按"装好 → 生成 → 用起来 → 精化 → 测试发布"的顺序走完两条路径，所有命令示例逐一对照过仓库源码（核对基线见文末口径说明）。项目的方法论与生态分析见[方法论深读](/posts/tech/cli-anything-universal-cli-framework/)、[harness 设计解析](/posts/tech/cli-anything-agent-native-software-harness/)与[生态版图](/posts/tech/hkuds-cli-anything-universal-cli-ai-agent/)，此处不重复。
+本文按"装好 → 生成 → 用起来 → 精化 → 测试发布"的顺序走完两条路径，所有命令示例逐一对照过仓库源码（核对基线见文末口径说明）。项目的方法论与生态分析见[方法论深读](/posts/tech/cli-anything-universal-cli-framework/)、[harness 设计解析](/posts/tech/cli-anything-agent-native-software-harness/)与[生态版图](/posts/tech/cli-anything-universal-cli-ai-agent/)，此处不重复。
 
 ## 准备环境
 
@@ -258,7 +258,7 @@ npx skills add HKUDS/CLI-Anything --skill cli-hub-meta-skill -g -y
 - 中文文档：[README_CN.md](https://github.com/HKUDS/CLI-Anything/blob/main/README_CN.md)
 - 技术报告：arXiv:2606.03854
 - 包管理器：[PyPI cli-anything-hub](https://pypi.org/project/cli-anything-hub/)（0.4.1）
-- 站内相关：[CLI-Anything 方法论深读](/posts/tech/cli-anything-universal-cli-framework/) · [harness 设计解析](/posts/tech/cli-anything-agent-native-software-harness/) · [导论判断篇](/posts/tech/hkuds-cli-anything-universal-cli-ai/) · [生态版图与采用判断](/posts/tech/hkuds-cli-anything-universal-cli-ai-agent/)
+- 站内相关：[CLI-Anything 方法论深读](/posts/tech/cli-anything-universal-cli-framework/) · [harness 设计解析](/posts/tech/cli-anything-agent-native-software-harness/) · [导论判断篇](/posts/tech/hkuds-cli-anything-universal-cli-ai/) · [生态版图与采用判断](/posts/tech/cli-anything-universal-cli-ai-agent/)
 
 ## 口径说明
 

@@ -11,7 +11,7 @@ categories: ["技术笔记"]
 author: 钳岳星君
 ---
 
-[Odoo](https://github.com/odoo/odoo) 是 GitHub 上最受欢迎的开源企业管理系统之一：截至 2026-10-03，odoo/odoo 仓库 54,809 Stars、33,916 Forks，在 Python 项目中长期位居前列。它远不止一个 ERP——从销售、采购到财务、人资，全球大量中小企业用它把分散的业务环节收拢进同一个平台。本文覆盖它的演进历史、模块地图、技术栈与开发入门；若你更关心架构细节与社区版/企业版边界的深度拆解，可先读[姊妹篇](/posts/odoo-open-source-erp-business-platform-guide/)。
+[Odoo](https://github.com/odoo/odoo) 是 GitHub 上最受欢迎的开源企业管理系统之一：截至 2026-10-03，odoo/odoo 仓库 54,809 Stars、33,916 Forks，在 Python 项目中长期位居前列。它远不止一个 ERP——从销售、采购到财务、人资，全球大量中小企业用它把分散的业务环节收拢进同一个平台。本文覆盖它的演进历史、模块地图、技术栈与开发入门；若你更关心架构细节与社区版/企业版边界的深度拆解，可先读[姊妹篇](/posts/tech/odoo-open-source-erp-business-platform-guide/)。
 
 ## 从 TinyERP 到 Odoo 20：二十年时间线
 

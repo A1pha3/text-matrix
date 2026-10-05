@@ -62,7 +62,7 @@ LibreChat 自家镜像托管在 registry.librechat.ai；admin-panel 的镜像挂
 
 ## Agents 与 MCP：v0.8.8 的能力长在哪里
 
-近一年的迭代重心都摆在 README 顶部的 "What's New in v0.8.8"：Agent Management API（beta，配 OpenAPI 与 Swagger）、Attached Workspaces（官方标注 highly experimental）、Skills（`SKILL.md` 指令包，手动/自动/常驻三种触发）、Subagents（独立上下文的子代理）、Trace Viewer（按角色、工具轮次、成本拆解一次运行）。平台能力的全景与 ClickHouse 收购背景，见站内另一篇[《把 20 家 AI 厂商塞进一个自托管界面》](/posts/librechat-self-hosted-multi-model-ai-platform/)，这里只谈和部署有关的部分。
+近一年的迭代重心都摆在 README 顶部的 "What's New in v0.8.8"：Agent Management API（beta，配 OpenAPI 与 Swagger）、Attached Workspaces（官方标注 highly experimental）、Skills（`SKILL.md` 指令包，手动/自动/常驻三种触发）、Subagents（独立上下文的子代理）、Trace Viewer（按角色、工具轮次、成本拆解一次运行）。平台能力的全景与 ClickHouse 收购背景，见站内另一篇[《把 20 家 AI 厂商塞进一个自托管界面》](/posts/tech/librechat-self-hosted-multi-model-ai-platform/)，这里只谈和部署有关的部分。
 
 MCP 的可靠性是 v0.8.8 系列实打实修出来的，changelog 里每条都有 PR 号：按请求透传 MCP headers 且不隐藏工具目录（#15988）；同一用户对同一 server 的 OAuth 刷新合并为单飞（#14596）、跨 Pod 协调 OAuth 就绪状态（#14629）；凭据刷新失败不再阻塞自身连接与目录恢复（#15863、#15865）。这类修复是它被真实多副本生产环境使用的直接证据。
 
@@ -108,7 +108,7 @@ MCP 的可靠性是 v0.8.8 系列实打实修出来的，changelog 里每条都�
 
 LibreChat 的价值不在"复刻了 ChatGPT 界面"，而在于它是开源世界里部署形态最完整的自托管 AI 入口之一：多用户、代理、检索、沙箱执行、可观测性（OpenTelemetry/Langfuse 导出）都按生产标准在做，v0.8.8 转正之后，迭代仍在往 Agent 平台方向加码。团队正被"AI 工具散装化"困扰的话，官方预估五分钟的 Docker 路径跑完，就能见到第一屏对话。
 
-> 仓库：https://github.com/LibreChat-AI/LibreChat ｜ 文档：https://www.librechat.ai/docs ｜ 平台能力全景：[LibreChat 多模型网关真相](/posts/librechat-self-hosted-multi-model-ai-platform/)
+> 仓库：https://github.com/LibreChat-AI/LibreChat ｜ 文档：https://www.librechat.ai/docs ｜ 平台能力全景：[LibreChat 多模型网关真相](/posts/tech/librechat-self-hosted-multi-model-ai-platform/)
 
 ---
 

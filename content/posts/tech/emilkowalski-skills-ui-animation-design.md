@@ -37,7 +37,7 @@ tags: ["UI设计", "动画", "AI代理", "开源", "用户体验"]
 
 这套协议还配合一个开关：`review-animations`、`prototype`、`pick-ui-library` 的 frontmatter 都标了 `disable-model-invocation: true`——模型不会自作主张调用它们，必须人显式点名。审查、原型这类高成本操作不允许代理偷偷启动。
 
-对作者设计哲学与四问判断框架的解读，站内另有一篇[把设计工程师的判断顺序交给代理](/posts/emilkowalski-skills-design-taste/)，本文不重复，下面按岗位拆规则细节。
+对作者设计哲学与四问判断框架的解读，站内另有一篇[把设计工程师的判断顺序交给代理](/posts/tech/emilkowalski-skills-design-taste/)，本文不重复，下面按岗位拆规则细节。
 
 ## 审查：十项不可协商的标准
 

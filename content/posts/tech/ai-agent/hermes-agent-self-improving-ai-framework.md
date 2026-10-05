@@ -7,11 +7,11 @@ github_repo: "NousResearch/hermes-agent"
 source_key: "gh:NousResearch/hermes-agent"
 aliases:
   - /posts/tech/hermes-agent-self-improving-ai-framework/
-    - /posts/tech/hermes-agent-curator/
-    - /posts/tech/hermes-agent-growing-ai-agent-framework/
-    - /posts/tech/hermes-agent-nous-self-improving-ai-agent/
-    - /posts/tech/hermes-agent-self-improving-ai-agent/
-    - /posts/tech/hermes-agent-orange-book-complete-guide/
+  - /posts/tech/hermes-agent-curator/
+  - /posts/tech/hermes-agent-growing-ai-agent-framework/
+  - /posts/tech/hermes-agent-nous-self-improving-ai-agent/
+  - /posts/tech/hermes-agent-self-improving-ai-agent/
+  - /posts/tech/hermes-agent-orange-book-complete-guide/
 description: "深度解析 Nous Research 的 Hermes Agent：内置学习循环（skill_manage、持久记忆、会话搜索、Curator）、21+ 平台消息网关、Skills 系统与模型无关架构，详解原理、安装、使用与二次开发。"
 draft: false
 categories: ["技术笔记"]

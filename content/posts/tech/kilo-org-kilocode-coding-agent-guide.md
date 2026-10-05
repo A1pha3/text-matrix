@@ -43,7 +43,7 @@ Kilo Code 的架构可以拆成三层，每层都能单独替换：
 
 注意两点。第一，新版 VS Code 扩展内置了 Kilo CLI 运行时，装扩展不需要单独装 CLI——两者共享同一套 Agent 和配置体系。第二，2026 年 6 月 README 还列着第五个入口 KiloClaw（常驻后台 Agent），现在已从 README 和公开文档撤下（产品页 app.kilo.ai/claw 目前仍可访问），官方重心明显转向了 Code Reviews 和下文的 Agent Manager，不建议新用户押注这个入口。
 
-CLI 这条线有个常被忽略的出身：README 的 FAQ 写明 **Kilo CLI fork 自 OpenCode**，在此之上接入 Kilo 的模型网关和账号体系。所以你在终端里能看到不少 OpenCode 的影子——TUI 交互、`/` 命令风格都一脉相承。感兴趣可以对照阅读[OpenCode 解读](/posts/opencode-open-source-coding-agent-guide/)。
+CLI 这条线有个常被忽略的出身：README 的 FAQ 写明 **Kilo CLI fork 自 OpenCode**，在此之上接入 Kilo 的模型网关和账号体系。所以你在终端里能看到不少 OpenCode 的影子——TUI 交互、`/` 命令风格都一脉相承。感兴趣可以对照阅读[OpenCode 解读](/posts/tech/opencode-open-source-coding-agent-guide/)。
 
 ## 三、Agent 层：四个内置角色，外加一套自定义机制
 

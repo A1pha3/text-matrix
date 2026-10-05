@@ -17,7 +17,7 @@ tags: ["Cloudflare", "TypeScript", "自托管", "开源项目"]
 
 [dreamhunter2333/cloudflare_temp_email](https://github.com/dreamhunter2333/cloudflare_temp_email) 是一个跑在 Cloudflare 免费套餐上的临时邮箱系统：收件靠 Email Routing 转发进 Worker，邮件存 D1（SQLite），前端是 Vue 3 单页应用，验证码提取默认在 Worker 内用本地规则完成，一分钱不花也能跑起来。项目 2023 年 8 月建仓，截至 2026-10-02 已有 11,893 stars、694 次提交、33 位贡献者，最新版本 v1.12.0（2026-09-13），仍在高频迭代。
 
-它适合的场景：注册各类服务时要一堆一次性邮箱、想自己持有域名收发件、或者给 AI agent 配一个能收验证码的信箱。不适合的场景同样明确——你必须有一个托管在 Cloudflare 的域名（这是收件的硬前提），整套系统绑定 Workers/D1/KV/R2，迁去别的平台等于重写；另外项目的定位是"轻量收发与验证码场景"，做正式的企业邮箱或邮件营销，应该看 [listmonk](/posts/listmonk-self-hosted-email-newsletter-platform-guide/) 这类专业系统。
+它适合的场景：注册各类服务时要一堆一次性邮箱、想自己持有域名收发件、或者给 AI agent 配一个能收验证码的信箱。不适合的场景同样明确——你必须有一个托管在 Cloudflare 的域名（这是收件的硬前提），整套系统绑定 Workers/D1/KV/R2，迁去别的平台等于重写；另外项目的定位是"轻量收发与验证码场景"，做正式的企业邮箱或邮件营销，应该看 [listmonk](/posts/tech/listmonk-self-hosted-email-newsletter-platform-guide/) 这类专业系统。
 
 读源码时把它拆成五个部件最省事：`worker/` 是 TypeScript + Hono 写的后端；`frontend/` 是 Vue 3 界面，部署到 Pages；`db/` 是 D1 的建表与迁移 SQL；`mail-parser-wasm/` 是 Rust 编译的 WASM 解析器，专门对付 Node 解析失败的怪邮件；`smtp_proxy_server/` 是一个独立的 Python 服务，给邮件客户端提供 SMTP 发信和 IMAP 收信入口。这五件里只有最后一件需要自己找台机器跑，其余全部落在 Cloudflare 上。
 
@@ -230,6 +230,6 @@ docker-compose up -d
 | 部署文档（中文） | https://temp-mail-docs.awsl.uk/zh/guide/quick-start |
 | 在线演示 | https://mail.awsl.uk/ |
 | Telegram 社区 | https://t.me/cloudflare_temp_email |
-| 站内相关 | [listmonk：自托管邮件营销系统](/posts/listmonk-self-hosted-email-newsletter-platform-guide/) · [karakeep：自托管书签库](/posts/karakeep-self-hosted-bookmark-ai-tag-guide/) |
+| 站内相关 | [listmonk：自托管邮件营销系统](/posts/tech/listmonk-self-hosted-email-newsletter-platform-guide/) · [karakeep：自托管书签库](/posts/tech/karakeep-self-hosted-bookmark-ai-tag-guide/) |
 
 本文数据核对于 2026-10-02：GitHub API 读数（stars/forks/提交/贡献者）、v1.12.0 release、main 分支源码（worker 路由、`wrangler.toml.template`、CHANGELOG、内置 skill 与 VitePress 文档）逐项比对。项目迭代很快，配置类细节以官方文档站的[变量说明](https://temp-mail-docs.awsl.uk/zh/guide/worker-vars)为最新口径；Cloudflare 免费额度为官方牌价，以 Cloudflare 文档为准。项目仅供学习和个人用途，请遵守当地法律，勿用于违法行为（README 原文警告）。
