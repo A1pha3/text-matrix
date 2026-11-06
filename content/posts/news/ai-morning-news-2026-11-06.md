@@ -115,5 +115,5 @@ hiddenFromHomePage: true
 
 ### 投资者质疑 Anthropic IPO 能否撑起 1.5 万亿美元估值
 来源: WSJ（Hacker News 64 分）
-原文: [原文](https://www.wsj.com/finance/major-investors-are-skeptical-anthropic-ipo-can-achieve-1-5-trillion-valuation-ca965d8b')
+原文: [原文](https://www.wsj.com/finance/major-investors-are-skeptical-anthropic-ipo-can-achieve-1-5-trillion-valuation-ca965d8b)
 摘要: 据华尔街日报，主要投资者对 Anthropic 以 1.5 万亿美元估值上市持怀疑态度。头部 AI 实验室的估值叙事与真实收入结构之间的差距，正在接受资本市场更严格的检验。
