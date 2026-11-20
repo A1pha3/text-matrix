@@ -1,6 +1,6 @@
 ---
 title: "AI 副业早报 2026-11-21：Hipo Hipo 招 AI 产品全栈、21 岁中医生开源 Agent 记忆系统跑赢基线、GTA 6 照片小站"
-date: 2026-11-21T07:36:00+08:00
+date: 2026-11-21T07:32:13+08:00
 slug: ai-side-hustle-morning-news-2026-11-21
 description: "2026年11月21日 AI副业早报：Hipo Hipo（AI 记忆层工具，清华系 VC 投资）招 AI 产品全栈工程师，要求能识别 AI 的错误决定、有 Agent/MCP/RAG 实战；21 岁中医学大三学生开源 WhaleYing Memory，无独显轻薄本跑出 MemoryAgentBench 单跳 262k 93.2%；GTA 6 发售后照片转风格小站；反向薅 Claude 的 PC 工具；爸妈锻炼打卡提现 App。"
 draft: false
