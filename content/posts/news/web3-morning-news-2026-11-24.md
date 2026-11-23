@@ -1,6 +1,6 @@
 ---
 title: "Web3 早报 2026-11-24：比特币站上 61000 美元、CFTC 认可加密资产计入财务资源、DOJ 追索 11.7 亿美元 USDC、Grayscale 称比特币超卖、2 倍 Zcash ETF 首日暴跌 13%"
-date: 2026-11-24T06:41:10+08:00
+date: 2026-11-24T07:23:03+08:00
 slug: web3-morning-news-2026-11-24
 description: "2026年11月24日 Web3 早报：比特币 61145 美元（+0.65%）站上 61000 上方，SOL +2.84% 领涨；CFTC 明确加密资产可计入财务资源要求；DOJ 寻求 11.7 亿美元与 Binance 黑客相关 USDC，Circle 可能配合冻结；Grayscale 称比特币及主流山寨币看起来'超卖'；Grayscale 2 倍杠杆 Zcash ETF 首日暴跌 13%；CFTC 预测市场规则进入白宫审议；Sky 联合创始人考虑出售 SKY 偿债 7700 万美元；DeFi Development 连续 11 周增持 Solana；Bitmine 增持 7819 枚 ETH，Tom Lee 主张'硬通货'论；OKXICE 上线代币化证券交易场所（113 种资产）。"
 draft: false
@@ -29,7 +29,7 @@ hiddenFromHomePage: true
 
 来源: The Block
 原文: [原文](https://www.theblock.co/news/regulation/2026-11-23-doj-1-17-billion-usdc-binance-hack-circle-r)
-摘要: 美国司法部寻求**11.7 亿美元与 Binance 黑客相关的 USDC**，Circle 可能配合冻结。这条延续了本周"被盗资金洗白链条"的追踪线：从交易所流向 THORChain、Chainflip 等跨链通道，而稳定币是这条链上唯一有中心化发行方、因此**可以被冻结的环节**。**11.7 亿美元的规模也侧面说明了这条链的规模**——比此前报道的 6 亿美元 ETH 转移更大。
+摘要: 美国司法部寻求**11.7 亿美元与 Binance 黑客相关的 USDC**，Circle 可能配合冻结。**美国机构已将此次攻击归因于朝鲜的 Lazarus Group**，DOJ 对损失总额的表述为"超过 11 亿美元"。这条延续了本周"被盗资金洗白链条"的追踪线：从交易所流向 THORChain、Chainflip 等跨链通道，而稳定币是这条链上唯一有中心化发行方、因此**可以被冻结的环节**。**归因 Lazarus + 11 亿美元量级，意味着这是国家级攻击者对中心化交易所最重的一次打击**——追索的司法路径（冻结 USDC）也因此成了检验"稳定币可冻结性"的实战案例。
 
 ## 📉 Grayscale：比特币及主流山寨币看起来"超卖"
 
