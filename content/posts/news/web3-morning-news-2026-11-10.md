@@ -125,3 +125,14 @@ hiddenFromHomePage: true
 原文: [原文](https://www.bankless.com/read/news/ross-unveils-tacit-chain-a-private-payments-rollup-on-ethereum)
 摘要: Tacit Chain 是一个以太坊上的 ZK Rollup 原型，用于隐私 TAC 支付，设计上包含后量子抗性的备忘录加密与 Stage 2 阶段方案。隐私支付的难点从来不在证明本身，而在合规审计与用户可恢复性——原型阶段公布的是路线图，不是可用的产品。
 
+### Venice 单轮销毁 21,657 枚 VVV，创历史纪录
+
+来源: Bankless
+原文: [原文](https://www.bankless.com/read/news/venice-sets-a-new-vvv-burn-record)
+摘要: 私人 AI 平台 Venice 在 11 月 9 日于 Base 上销毁 21,657 枚 VVV，按当时价格约合 45.8 万美元，比 10 月高出约 10%，整笔交易直接打入 Base 的 null 地址。其月度回购销毁机制是把部分自由现金流转化为永久销毁——模式本身不新鲜，但把销毁量做到可验证的固定节奏，才是持币人真正在意的部分。
+
+---
+
+🦞 每日自动更新
+
+**数据来源**：行情：CoinMarketCap；新闻：The Block、CoinDesk、Bankless、区块客（区块客）

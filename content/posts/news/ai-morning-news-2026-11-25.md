@@ -120,7 +120,7 @@ hiddenFromHomePage: true
 ### 黄仁勋复职后首开全员大会：承认不止两段婚外情，每天接受一个半小时心理治疗
 
 来源: 东方财富网
-原文: [原文](http://finance.eastmoney.com/news/1354,202611253938864075.html)
+原文: [原文](https://finance.eastmoney.com/a/202611253938864075.html)
 摘要: 从黯然离场到全票回归，黄仁勋只用了 11 天。重返英伟达的第二场全员大会上，他向员工致歉，表示自己犯下"非常严重的个人错误"，并称这是他开过的"最艰难的一次公司会议"。媒体还报道他每天都要接受一个半小时的心理治疗。**这个细节值得单独记**：一位市值数万亿的公司创始人，把心理状态当作需要公开说明的治理议题，在过去的管理学语料里几乎没有这种先例。当 CEO 的个人状态与公司治理正式绑定，公司的风险管理对象就从业务扩展到了人。
 
 ### 泰森级反弹之后：英伟达单日暴涨 31.48%，市值单日激增近 9520 亿美元
@@ -175,7 +175,7 @@ hiddenFromHomePage: true
 
 🦞 每日08:00自动更新
 
-**数据来源**：36氪、量子位、IT之家、爱范儿、东方财富网、OpenAI、PrismML、HuggingFace Blog
+**数据来源**：36氪、量子位、IT之家、爱范儿、东方财富网、PrismML、HuggingFace Blog
 
 **原文链接（已逐条核实，仅列正文实际引用链接）：**
 - ✅ https://www.36kr.com/p/4083520759600768 - 具身智能 48 小时三笔亿元级融资
@@ -194,7 +194,7 @@ hiddenFromHomePage: true
 - ✅ https://prismml.com/news/bonsai-2-5-27b - Ternary Bonsai 2.5 27B
 - ✅ https://huggingface.co/blog/nvidia/microduck-obstacle-avoidance - Microduck 避障工作流
 - ✅ https://www.36kr.com/p/4083506567206788 - AI 办公入口之争
-- ✅ http://finance.eastmoney.com/news/1354,202611253938864075.html - 黄仁勋全员大会致歉
+- ✅ https://finance.eastmoney.com/a/202611253938864075.html - 黄仁勋全员大会致歉
 - ✅ https://www.36kr.com/p/4083614191921799 - 英伟达单日暴涨 31.48%
 - ✅ https://www.ithome.com/1/031/904.htm - Tidal 封杀纯 AI 生成音乐
 - ✅ https://www.36kr.com/p/4083298663420806 - 苹果给 AI 收费

@@ -2,11 +2,17 @@
 name: morning-report
 description: 为 text-matrix 生成四类中文早报:AI 新闻早报、经济财经早报、AI 副业早报、Web3 早报。触发词:"做早报""写早报""morning report""AI 新闻早报""财经早报""副业午报""副业早报""Web3 早报""加密货币早报"。强制 24h 时间窗、Browser 逐条核链、V2EX 验真、Web3 事件级去重、Hugo 快讯 frontmatter 输出。
 metadata:
-   version: 2.3.0
-   tags: ["morning-report", "news", "hugo", "verification", "workflow", "web3-dedup"]
+   version: 2.4.0
+   tags: ["morning-report", "news", "hugo", "verification", "workflow", "web3-dedup", "tab-guard"]
 ---
 
 # Morning Report Skill
+
+## ⚠️ 2026-11-20 重要变更:浏览器 tab 守卫(内存耗尽故障后新增,强制)
+
+**背景**:采集/核验脚本逐条 `PUT /json/new` 开 tab,脚本中途失败/超时直接 `process.exit`,tab 泄漏;2026-11-20 跑早报时 Chrome tab 大量积压导致系统内存耗尽。
+
+**修复**:新增 `skills/morning-report/tab-guard.mjs` 兜底巡检 —— tab 超 20 自动清空、累计 3 次自动重启浏览器。详见下方「浏览器 tab 守卫」一节;核验(Step 3)与链接最终核验(Step 7)已加入强制巡检时机。
 
 ## ⚠️ 2026-06-19 重要变更：Web3 早报事件级去重（师父拍板 C 方案）
 
@@ -92,6 +98,7 @@ metadata:
    - **历史教训**（2026-06-19 复盘）：6-19 web3 早报 11 条 URL 中 3 条严重复用（fg-nexus 14 天、bitmine 5 天、strategy 3 天），均为 CoinTelegraph "持续更新"型文章，AI 用新时间副词包装旧事件制造"新事件"假象。根因：cron prompt 只有"24h 时间窗口"无"已用 URL 黑名单"。本 Step + 脚本彻底封死此类问题。
 3. **核验**（输入：候选列表 → 输出：通过验证的条目）
    逐条打开原文页，确认发布时间在 24h 内、正文主题与标题吻合；**V2EX 条目必须打开帖子页验证标题、正文和发布者**。
+   **tab 守卫（2026-11-20 强制）**：每跑完一个采集/核验脚本、或每核验约 10 条候选后，运行一次 `node skills/morning-report/tab-guard.mjs`（详见下方「浏览器 tab 守卫」一节）；**严禁在核验脚本运行中途运行**，会误杀正在使用的 tab。
 4. **筛选**（输入：核验结果 → 输出：精简条目列表）
    删除超时、无稳定原文页、标题-正文不符、信息密度不足的条目；同主题重复稿保留最完整的一条。
 5. **撰写**（输入：精简条目 → 输出：结构化草稿）
@@ -100,6 +107,7 @@ metadata:
    执行下方自检清单；任一失败返回步骤 3。
 7. **链接最终核验**（输入：草稿 → **强制步骤，不能跳过**）
    生成 Markdown 文件后、git push 前，使用 Playwright 逐个打开正文中的 `[原文](url)` 链接，验证：页面能正常访问、页面标题与摘要描述匹配；发现无效链接立即修复或删除该条新闻；禁止凭记忆/猜测写链接。
+   核验结束后再跑一次 `node skills/morning-report/tab-guard.mjs --port 9224` 收尾，防止本轮泄漏 tab 带入下一份早报。
 8. **输出**（输入：通过自检的草稿 → 输出：content/posts/news/ 下的 Markdown 文件）
    执行 git push 后立即验证远程仓库是否更新成功；若 push 失败（rejected/fetch first），必须 `git pull --rebase` 后再 push。
 
@@ -130,6 +138,34 @@ metadata:
 **✅ 正确**:摘要写"公司发布新模型,并同步公布 API 定价和企业接入计划;正文还提到该模型已在客服场景上线",信息来自正文已见内容。
 
 **❌ 错误**:摘要写"这标志着 AI 行业进入新纪元,未来市场空间巨大",只有空泛判断,没有正文可验证信息。
+
+## 🆕 浏览器 tab 守卫(2026-11-20 新增,强制)
+
+**背景**:采集/核验脚本逐条 `PUT /json/new` 开 tab,脚本中途失败/超时直接 `process.exit`,tab 泄漏;2026-11-20 跑早报时 Chrome tab 大量积压导致内存耗尽。`tab-guard.mjs` 是统一兜底,不改各采集脚本。
+
+**巡检时机**(严格遵守):
+
+- 每跑完一个采集/核验脚本后、每核验约 10 条候选后、每份早报收尾时,各运行一次 tab-guard
+- **严禁在核验脚本运行中途运行**——9224 是共享浏览器,会把正在使用的 tab 一起关掉
+
+```bash
+node skills/morning-report/tab-guard.mjs              # 默认端口 9224
+node skills/morning-report/tab-guard.mjs --port 9222  # 用老 cdp-helper 端口时
+node skills/morning-report/tab-guard.mjs --check      # 只查看 tab 数,不动作
+node skills/morning-report/tab-guard.mjs --reset      # 清零累计计数
+```
+
+**行为**:
+
+| 场景 | 动作 |
+| ------ | ------ |
+| tab ≤ 20(默认 `--max 20`) | 不动作,stdout 输出一行 JSON 状态 |
+| tab > 20 | 关闭全部 page tab(保留 1 个 about:blank 保活),累计计数 +1,状态落盘 `~/.openclaw/workspace/state/tab-guard-state.json` |
+| 累计清空 ≥ 3 次(默认 `--restart-after 3`) | 复用 `ps` 抓到的原启动命令行(含 `--remote-debugging-port`)优雅重启浏览器,CDP 恢复后计数清零 |
+| CDP 端口不通 | 退出码 3,视为"浏览器未开"非故障;先把带调试口的 Chrome 拉起再继续 |
+| 重启失败 | 退出码 4,计数保留;**必须停下向用户汇报**,不得继续跑早报 |
+
+**汇报要求**:本轮早报若触发过 tab 清空或浏览器重启,完成汇报中必须写明次数与触发时的 tab 数。
 
 ## 硬约束
 

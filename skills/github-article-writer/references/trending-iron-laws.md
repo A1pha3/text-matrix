@@ -45,6 +45,24 @@
 
 去重唯一依据 = `scripts/trending-dedup-check.sh` 输出（脚本末尾 🔒 已给最终结论 + 同 owner 预警）。**禁止**再自行 `grep github_repo` 复核。原因：新 repo 无匹配 → `grep` 返回 **exit 1**（`2>/dev/null` 不影响退出码）→ exec 标 isError → 弱模型据此 **abort 整轮任务**（8-06/8-07 真实事故，零产出）。**铁律：exec 返回 exit 1 ≠ 失败——grep/测试类命令的 exit 1 是"无匹配"的正常信号，据此继续，勿 abort。**
 
+### ❌ 禁止 5：改名仓库会绕过精确字段去重（2026-11-20 实证）
+
+精确字段去重（`github_repo` 字符串相等）**识别不了仓库改名**。GitHub 改名后：
+- 旧路径 `/旧owner/同名repo` 会 301 重定向到新路径，`gh api repos/旧路径 --jq .full_name` 直接返回新名；
+- **但 frontmatter 里的 `github_repo` 还是旧字符串** → 精确匹配判为「未写」→ **重复写同一项目**。
+
+**实证**：2026-11-20 轮次，`meta/astryx` 出现在未写列表，但它是已发布的 `facebook/astryx` 的改名（**node_id 完全相同**：`R_kgDOQ2zHeg`）→ 人工拦截跳过。
+
+**判据（必须用 node_id，不能用 full_name）**：
+```bash
+gh api "repos/$R" --jq '.node_id'   # 改名不改 node_id → 相同即同一仓库
+```
+- `full_name` 不一致 ≠ 不同仓库（**可能就是改名**）
+- `node_id` 一致 = **一定是同一个仓库**
+
+**低成本触发规则**：只在本轮 repo 的 **repo 名部分**（斜杠后）与某个已写条目的 repo 名部分**完全相同**时，才去查 node_id（owner 换了但 repo 名没变 = 改名的典型特征）。本轮 11 个候选里只有 `meta/astryx` 命中（repo 名 `astryx` 与已写的 `facebook/astryx` 相同）。
+> 记忆来源：2026-11-20 02:05 GitHub 趋势榜 cron 实测
+
 ---
 
 ## 🌐 唯一正确路径 + 域名铁律（永久）
