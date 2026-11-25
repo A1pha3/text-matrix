@@ -93,3 +93,27 @@ article-scoring-progress.md
 
 .chrome-profile
 
+
+# === 一次性采集/探测脚本（并发 session 产物，不进仓库，per 2026-06-12 仓库边界铁律）===
+# 命名含日期后缀的一次性脚本：cdp-*-1105.mjs / hn-probe-1104.mjs / fulltext-1123.mjs / probe-0907.mjs
+skills/morning-report/cdp-*-*.mjs
+skills/morning-report/hn-*-*.mjs
+skills/morning-report/fulltext-*-*.mjs
+skills/morning-report/fulltext*.mjs
+skills/morning-report/probe-*-*.mjs
+skills/morning-report/lib-*-*.mjs
+skills/morning-report/ifanr-*.mjs
+skills/morning-report/jin10-*.mjs
+skills/morning-report/kr-dom-*.mjs
+skills/morning-report/*-verify-*.sh
+skills/morning-report/*-verify-*.mjs
+skills/morning-report/final-verify-*.mjs
+skills/morning-report/extract-web3-body.py
+skills/morning-report/curl-verify-web3.sh
+skills/morning-report/cdp-eval.mjs
+skills/morning-report/lib-1123.mjs
+skills/morning-report/probe-*.mjs
+skills/morning-report/*-1123.mjs
+skills/morning-report/*-1104.mjs
+skills/morning-report/*-1105.mjs
+skills/morning-report/*-1106.mjs
