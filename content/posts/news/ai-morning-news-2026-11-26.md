@@ -69,7 +69,7 @@ hiddenFromHomePage: true
 
 ### GPT-6.2 Astra 成为首个超越谷歌 2015 年人类代码高尔夫纪录的前沿模型
 
-来源: 个人基准站
+来源: go/codegolf benchmark
 原文: [原文](https://bjin.github.io/go-codegolf-benchmark/)
 摘要: 作者把 2015 年谷歌内部 go/codegolf 竞赛的 32 道题搬回今天，做成 32 题 × 8 种语言 = 256 格的基准，每模型每题限时 30 分钟，按字节数计分而非只看能否跑通，规则宽松到允许未定义行为、编译器怪癖、非标准库特性甚至硬编码测试用例。JS/PY/C++ 合并分上，GPT-6.2 Astra 拿到 92.265%，人类纪录为 87.533%，且在三种语言上分别高于人类，是目前唯一超过人类线的模型；96 格中模型赢了 62 格，但仍有 14 格人类的解法仍比所有模型更短。基准里有两个反直觉的观察：GPT-6 Sol 即使在最高推理强度下通常 5 到 10 分钟就停手，而所有 GPT-5 系列模型在大多数格子上仍会跑满 30 分钟，作者认为这解释了不少排名差距；而语言集合横跨命令式、Haskell 的函数式、Racket 的 Lisp 前缀记法和训练数据稀缺的栈式深奥语言 GolfScript，跨语言 golf 靠的不是重复熟悉模式。**"击败没人认真优化的参考答案"没有意义，击败花了整整一周比赛的真实纪录才是**——这正是这份基准想衡量的东西。
 
@@ -121,4 +121,4 @@ hiddenFromHomePage: true
 
 🦞 每日08:00自动更新
 
-**数据来源**：36氪、量子位、Anthropic 官方博客、GitHub（Google Research / Cogentic）、Hacker News
+**数据来源**：36氪、量子位、Anthropic 官方博客、go/codegolf benchmark、GitHub（Google Research / Cogentic）
