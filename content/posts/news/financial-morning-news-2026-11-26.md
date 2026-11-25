@@ -192,3 +192,45 @@ hiddenFromHomePage: true
 来源: 金十数据
 原文: [原文](https://flash.jin10.com/detail/20261126054830756800)
 摘要: 华尔街同一家研究机构的两名股票分析师罕见地对 Anthropic 给出截然相反的前景判断。**Hedgeye Risk Management 通信与软件分析师 Andrew Freedman 表示目前股价处于对长期投资者具吸引力的水平，合理估值目标为 92 美元**；而**同事、全球科技分析师 Felix Wang 建议做空该股，预计将跌至 59 美元**，其悲观看法主要基于**数据中心融资难度日益增加**以及**市场对其模型长期商业需求的担忧**。相较之下，Freedman 看好 Anthropic 成为商业世界全新操作系统的潜力，并认为短期需求表现强劲。
+
+---
+
+🦞 每日自动更新
+
+**数据来源**：华尔街见闻、新浪财经、金十数据
+
+**原文链接（已逐条核实，仅列正文实际引用链接）：**
+- ✅ https://wallstreetcn.com/articles/3786656 - 纳指100一度跌超4%恐陷熊市，道指转涨
+- ✅ https://flash.jin10.com/detail/20261126051318844800 - 道琼斯指数收盘涨164.25点报50182.95点
+- ✅ https://finance.sina.com.cn/7x24/2026-11-26/doc-inizzftt3812109.shtml - 11月26日隔夜要闻一览
+- ✅ https://finance.sina.com.cn/7x24/2026-11-26/doc-inizyzmr1484061.shtml - 纳斯达克中国金龙指数收涨1.91%
+- ✅ https://wallstreetcn.com/articles/3786653 - 沪指失守3500点，创业板跌4.19%
+- ✅ https://wallstreetcn.com/articles/3786699 - 美国10月PCE同比3.8%创三年半新高
+- ✅ https://wallstreetcn.com/articles/3786700 - 美国三季度实际GDP修正值升至4.3%
+- ✅ https://wallstreetcn.com/articles/3786701 - 美国10月耐用品订单环比初值0.2%
+- ✅ https://wallstreetcn.com/articles/3786712 - 美联储褐皮书：AI基建支撑工业扩张
+- ✅ https://finance.sina.com.cn/7x24/2026-11-26/doc-inizyzms8296797.shtml - CME：12月加息25基点概率97.2%
+- ✅ https://finance.sina.com.cn/7x24/2026-11-26/doc-inizyzmr1489351.shtml - 美国财政部：距债务上限仅剩5111亿美元
+- ✅ https://finance.sina.com.cn/7x24/2026-11-26/doc-inizyvcu8348536.shtml - 美国货币市场基金资产规模7.979万亿美元
+- ✅ https://wallstreetcn.com/articles/3786708 - 胡塞袭击沙特最大炼油厂，布油重回92美元
+- ✅ https://finance.sina.com.cn/7x24/2026-11-26/doc-inizyzmv3897540.shtml - 国际油价25日上涨，布伦特94.61美元
+- ✅ https://finance.sina.com.cn/7x24/2026-11-26/doc-inizyzmr1520466.shtml - 现货黄金V形反转报3580.93美元
+- ✅ https://finance.sina.com.cn/7x24/2026-11-26/doc-inizyzmp9116259.shtml - 美元指数跌0.14%收103.666
+- ✅ https://finance.sina.com.cn/7x24/2026-11-26/doc-inizyvcx3964765.shtml - 亚洲12月美国原油采购量降至2018年低位
+- ✅ https://finance.sina.com.cn/wm/2026-11-26/doc-inizyzmv3910760.shtml - 国内成品油调价窗口，汽柴油每吨下调470元
+- ✅ https://finance.sina.com.cn/7x24/2026-11-26/doc-inizyvct1577982.shtml - 胡塞武装称袭击沙特吉达港和吉赞港
+- ✅ https://finance.sina.com.cn/7x24/2026-11-26/doc-inizyzms8264930.shtml - 沙特首都利雅得传出爆炸声
+- ✅ https://flash.jin10.com/detail/20261126055225028800 - 美强化金融制裁，霍尔木兹海峡多船触雷
+- ✅ https://wallstreetcn.com/articles/3786718 - 关税压顶：市场有多害怕
+- ✅ https://flash.jin10.com/detail/20261126063120895800 - 昨日今晨重要新闻汇总
+- ✅ https://finance.sina.com.cn/7x24/2026-11-26/doc-inizzftp1414058.shtml - 欧盟修订电动汽车补贴，日系电动车被排除
+- ✅ https://wallstreetcn.com/articles/3786717 - CoreWeave、英伟达信用违约风险指标创历史新高
+- ✅ https://finance.sina.com.cn/7x24/2026-11-26/doc-inizyvcu8319412.shtml - CoreWeave合作银行出售45亿美元贷款
+- ✅ https://wallstreetcn.com/articles/3786678 - 甲骨文CDS利差超越2008年贝尔斯登
+- ✅ https://wallstreetcn.com/articles/3786715 - 标普将英伟达列入信用观察负面名单
+- ✅ https://flash.jin10.com/detail/20261126060557891800 - 穆迪维持英伟达Aa1评级
+- ✅ https://flash.jin10.com/detail/20261126052922582800 - 摩根大通：AI资本支出明年逼近1.4万亿美元
+- ✅ https://wallstreetcn.com/articles/3786711 - 高盛策略师：AI抛售尚未见底
+- ✅ https://wallstreetcn.com/articles/3786681 - 韩国酝酿扩大股市稳定基金
+- ✅ https://wallstreetcn.com/articles/3786688 - 德银：标普500明年底有望冲上9000点
+- ✅ https://flash.jin10.com/detail/20261126054830756800 - Anthropic成华尔街多空分歧焦点
