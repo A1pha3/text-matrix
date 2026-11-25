@@ -117,3 +117,16 @@ skills/morning-report/*-1123.mjs
 skills/morning-report/*-1104.mjs
 skills/morning-report/*-1105.mjs
 skills/morning-report/*-1106.mjs
+
+# ⚠️ 2026-11-25 对抗审查收口：临时诊断脚本一律本地保存，不进 GitHub
+# （AGENTS.md 仓库边界铁律）。此前逐条追加命名模式打地鼠仍有 13 个漏网
+# （probe36/probe_deep/probe_ov/qbit-*/ts-*/src-date/verify2-* 等），
+# 改为宽泛规则 + 显式白名单：正式文件用 ! 登记，临时文件一律排除。
+skills/morning-report/*.mjs
+skills/morning-report/*.py
+skills/morning-report/*.sh
+skills/morning-report/*.bak
+# 白名单：skill 正式依赖（新增正式脚本必须在此显式登记，否则会被上面的规则排除）
+!skills/morning-report/SKILL.md
+!skills/morning-report/tab-guard.mjs
+!skills/morning-report/references/
