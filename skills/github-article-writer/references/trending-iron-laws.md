@@ -65,6 +65,28 @@ gh api "repos/$R" --jq '.node_id'   # 改名不改 node_id → 相同即同一�
 
 ---
 
+## 📅 daily 榜筛选规则（2026-11-26 恢复 daily 榜）
+
+**背景**：6-25 裁决「只抓 weekly + monthly，跳过 daily」（理由：波动大、昀花多）。但 weekly/monthly 更新慢，**候选池枯竭**——11-25 实测两榜合并去重后 29 个候选里 **28 个早已写过**（已写库 970 repo），每天增量仅 0-1 篇。daily 提供「当天新冒出来」的时效性增量，故恢复。
+
+**daily 的价值是「新」不是「多」**：天天霸榜的老面孔（nginx / firecrawl 常年霸位）写过一次就没必要再写，它们的机会在 weekly/monthly 渠道，挤占 daily 名额没有价值。
+
+**筛选由脚本执行，agent 不要自己判断**（`scripts/trending-daily-filter.py`）：
+```bash
+CACHE=~/.openclaw/workspace/.cache/github-trending
+python3 scripts/parse-trending.py --cache=$CACHE daily weekly monthly > $CACHE/parsed-all.json
+python3 scripts/trending-daily-filter.py --cache=$CACHE $CACHE/parsed-all.json > $CACHE/filtered-all.json
+```
+- **筛选只作用于 daily**，weekly/monthly 原样透传（去重仍由 `trending-dedup-check.sh` 统一负责）
+- **硬门槛（兜底昀花）**：stars≥1000 + forks≥50 + 90 天内有提交 + 非归档 + 有 description
+- **老面孔抑制**：连续 3 天在 daily 榜 → 移出 daily 候选
+- 状态文件 `$CACHE/daily-seen.json` 记录每日上榜历史（**本地状态，严禁进仓库**）
+
+> ⚠️ `--cache=` 必须用等号形式（`--cache=<dir>`）。写成空格分隔会被 argparse 当成位置参数落到 `dims` 上，
+> 导致 cache 仍走默认值、dims 里多出一个无效维度。`parse-trending.py` 输出到 **stdout**（不写文件），必须重定向。
+
+---
+
 ## 🌐 唯一正确路径 + 域名铁律（永久）
 
 > **pwd 必须显示 `~/.openclaw/workspace/github/text-matrix`，baseURL 必须 `txtmix.com`。**
@@ -125,8 +147,8 @@ DATE=$(date -v-10M '+%Y-%m-%dT%H:%M:%S+08:00')  # macOS
 使用 github-article-writer skill 写 GitHub 趋势榜项目技术文章（凌晨3:00 唯一窗口）。
 
 # Step 2: 9 步任务清单
-1. 抓取 GitHub 趋势榜 3 个维度（curl UA 直连 https://github.com/trending）
-2. 合并 3 个榜单项目（去重），进入唯一正确路径
+1. 抓取 GitHub 趋势榜 3 个维度（daily / weekly / monthly，curl UA 直连 https://github.com/trending）
+2. 解析 + daily 筛选（scripts/trending-daily-filter.py，只筛 daily）→ 合并 3 榜项目（去重），进入唯一正确路径
 3. 逐个检查项目是否已写过技术文章
 4. 对【未写过】的项目：写一篇高质量中文技术文章
 5. git config core.hooksPath .githooks（仓库级已激活，cron payload 可省）
